@@ -1,0 +1,58 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "engine", "engine", "{5B54F488-44F9-4D22-AD98-5AF9B29D27F9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "botlib", "botlib.vcxproj", "{A410161F-AE9F-485D-A01F-5294891430A6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cgame", "cgame.vcxproj", "{C878E295-CB82-4B40-8ECF-5CE5525466FA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game", "game.vcxproj", "{F9EE10DA-2404-4154-B904-F93C936C040A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "q3_ui", "q3_ui.vcxproj", "{D454C4C7-7765-4149-ABAD-05FDEB9D94F8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "quake3", "quake3.vcxproj", "{81CB51C4-B434-4E12-B69B-BAEE102F2852}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "renderer", "renderer.vcxproj", "{AB424155-FBED-4D8D-B007-5B6CF93EA395}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A410161F-AE9F-485D-A01F-5294891430A6}.Debug|x64.ActiveCfg = Debug|x64
+		{A410161F-AE9F-485D-A01F-5294891430A6}.Debug|x64.Build.0 = Debug|x64
+		{A410161F-AE9F-485D-A01F-5294891430A6}.Release|x64.ActiveCfg = Release|x64
+		{A410161F-AE9F-485D-A01F-5294891430A6}.Release|x64.Build.0 = Release|x64
+		{C878E295-CB82-4B40-8ECF-5CE5525466FA}.Debug|x64.ActiveCfg = Debug|x64
+		{C878E295-CB82-4B40-8ECF-5CE5525466FA}.Debug|x64.Build.0 = Debug|x64
+		{C878E295-CB82-4B40-8ECF-5CE5525466FA}.Release|x64.ActiveCfg = Release|x64
+		{C878E295-CB82-4B40-8ECF-5CE5525466FA}.Release|x64.Build.0 = Release|x64
+		{F9EE10DA-2404-4154-B904-F93C936C040A}.Debug|x64.ActiveCfg = Debug|x64
+		{F9EE10DA-2404-4154-B904-F93C936C040A}.Debug|x64.Build.0 = Debug|x64
+		{F9EE10DA-2404-4154-B904-F93C936C040A}.Release|x64.ActiveCfg = Release|x64
+		{F9EE10DA-2404-4154-B904-F93C936C040A}.Release|x64.Build.0 = Release|x64
+		{D454C4C7-7765-4149-ABAD-05FDEB9D94F8}.Debug|x64.ActiveCfg = Debug|x64
+		{D454C4C7-7765-4149-ABAD-05FDEB9D94F8}.Debug|x64.Build.0 = Debug|x64
+		{D454C4C7-7765-4149-ABAD-05FDEB9D94F8}.Release|x64.ActiveCfg = Release|x64
+		{D454C4C7-7765-4149-ABAD-05FDEB9D94F8}.Release|x64.Build.0 = Release|x64
+		{81CB51C4-B434-4E12-B69B-BAEE102F2852}.Debug|x64.ActiveCfg = Debug|x64
+		{81CB51C4-B434-4E12-B69B-BAEE102F2852}.Debug|x64.Build.0 = Debug|x64
+		{81CB51C4-B434-4E12-B69B-BAEE102F2852}.Release|x64.ActiveCfg = Release|x64
+		{81CB51C4-B434-4E12-B69B-BAEE102F2852}.Release|x64.Build.0 = Release|x64
+		{AB424155-FBED-4D8D-B007-5B6CF93EA395}.Debug|x64.ActiveCfg = Debug|x64
+		{AB424155-FBED-4D8D-B007-5B6CF93EA395}.Debug|x64.Build.0 = Debug|x64
+		{AB424155-FBED-4D8D-B007-5B6CF93EA395}.Release|x64.ActiveCfg = Release|x64
+		{AB424155-FBED-4D8D-B007-5B6CF93EA395}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A410161F-AE9F-485D-A01F-5294891430A6} = {5B54F488-44F9-4D22-AD98-5AF9B29D27F9}
+		{81CB51C4-B434-4E12-B69B-BAEE102F2852} = {5B54F488-44F9-4D22-AD98-5AF9B29D27F9}
+		{AB424155-FBED-4D8D-B007-5B6CF93EA395} = {5B54F488-44F9-4D22-AD98-5AF9B29D27F9}
+	EndGlobalSection
+EndGlobal
