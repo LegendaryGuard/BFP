@@ -28,6 +28,10 @@ We're doing a recreation of the lost source code. <br/>
 The highest priority goal is to completely copy BFP game logical structure. <br/>
 Any fixes, improvements and contributions are welcome. But we still can't accept secondary things until it's completely finished and becomes stable.
 
+- [Guide](Guide)
+
+- [Creating custom plugin models](Create_Custom_Models)
+
 <br/><br/>
 
 This repository was initialized from https://github.com/marconett/q3a.
