@@ -474,7 +474,7 @@ one skin shared between all Vegetas.   
 
 **Custom Player Models:**
 
-A separate doc, CustomModels.rtf, explains how to create custom models
+[A separate doc](Create_Custom_Models.md), explains how to create custom models
 for BFP.
 
 **[Troubleshooting:]{.ul}**
