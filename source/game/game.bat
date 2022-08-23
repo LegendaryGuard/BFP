@@ -6,7 +6,7 @@ mkdir ..\..\intermediate\vm\game
 cd ..\..\intermediate\vm\game
 
 set src=..\..\..\source
-set cc=lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\cgame -I%src%\game -I%src%\ui %1
+set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\cgame -I%src%\game -I%src%\q3_ui %1
 
 %cc%  %src%/game/g_main.c
 @if errorlevel 1 goto quit
@@ -81,6 +81,6 @@ set cc=lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\cgame -I%src%\game -
 %cc%  %src%/game/ai_vcmd.c
 @if errorlevel 1 goto quit
 
-q3asm.exe -f %src%/game/game
+..\..\..\tools\bin\q3asm.exe -f %src%/game/game
 :quit
 cd %src%/game
