@@ -6,7 +6,7 @@ mkdir ..\..\intermediate\vm\ui
 cd ..\..\intermediate\vm\ui
 
 set src=..\..\..\source
-set cc=lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\cgame -I%src%\game -I%src%\ui %1
+set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\cgame -I%src%\game -I%src%\q3_ui %1
 
 %cc% %src%/q3_ui/ui_main.c
 @if errorlevel 1 goto quit
@@ -91,6 +91,6 @@ set cc=lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\cgame -I%src%\game -
 %cc% %src%/q3_ui/ui_mods.c
 @if errorlevel 1 goto quit
 
-q3asm.exe -f %src%/q3_ui/q3_ui
+..\..\..\tools\bin\q3asm.exe -f %src%/q3_ui/q3_ui
 :quit
-cd %src%/q3_ui
+cd %src%\q3_ui
