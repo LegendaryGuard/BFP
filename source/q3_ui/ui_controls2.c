@@ -122,6 +122,8 @@ typedef struct
 #define ID_JOYTHRESHOLD	40
 #define ID_SMOOTHMOUSE	41
 
+// TODO: BFP - Add animations as listed on the docs
+
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
 #define ANIM_WALK		2
@@ -224,6 +226,8 @@ typedef struct
 static controls_t s_controls;
 
 static vec4_t controls_binding_color  = {1.00f, 0.43f, 0.00f, 1.00f}; // bk: Win32 C4305
+
+// TODO: BFP - Add animations as listed on the docs, bind key to toggle the flight, bind key to recover ki energy, bind key to toggle speed (ki boost)
 
 static bind_t g_bindings[] = 
 {
