@@ -1,0 +1,23 @@
+{
+	"C_Cpp.formatting": "vcFormat",
+	"C_Cpp.vcFormat.space.beforeConstructorColon": false,
+	"C_Cpp.vcFormat.space.beforeBlockOpenBrace": false,
+	"C_Cpp.vcFormat.space.beforeInheritanceColon": false,
+	"C_Cpp.vcFormat.space.afterKeywordsInControlFlowStatements": false,
+	"C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "sameLine",
+	"C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "sameLine",
+	"C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "sameLine",
+	"C_Cpp.vcFormat.newLine.beforeOpenBrace.function": "sameLine",
+	"C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "sameLine",
+	"C_Cpp.vcFormat.newLine.beforeElse": false,
+	"C_Cpp.vcFormat.newLine.beforeWhileInDoWhile": false,
+	"C_Cpp.vcFormat.space.afterComma": false,
+	"C_Cpp.vcFormat.space.aroundBinaryOperator": "remove",
+	"C_Cpp.vcFormat.space.aroundAssignmentOperator": "remove",
+	"C_Cpp.inlayHints.parameterNames.enabled": true,
+	"C_Cpp.inlayHints.autoDeclarationTypes.enabled": true,
+	"C_Cpp.inlayHints.autoDeclarationTypes.showOnLeft": true,
+	"C_Cpp.inlayHints.referenceOperator.showSpace": true,
+	"C_Cpp.inlayHints.referenceOperator.enabled": true,
+	"files.autoSave": "afterDelay"
+}
