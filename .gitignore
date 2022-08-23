@@ -1,9 +1,1 @@
-binaries
-intermediate
-config/vs2015/*.user
-config/vs2015/*.log
-config/vs2015/.vs/
-*.opendb
-*.opensdf
-*.sdf
-*.suo
+pak9.pk3
