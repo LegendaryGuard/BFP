@@ -1129,6 +1129,8 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.clientNum = index;
 
+	// TODO: BFP - list of 5 skills
+	
 	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 	if ( g_gametype.integer == GT_TEAM ) {
 		client->ps.ammo[WP_MACHINEGUN] = 50;
@@ -1136,6 +1138,15 @@ void ClientSpawn(gentity_t *ent) {
 		client->ps.ammo[WP_MACHINEGUN] = 100;
 	}
 
+	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ROCKET_LAUNCHER );
+	client->ps.ammo[WP_ROCKET_LAUNCHER] = 100;
+
+	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_PLASMAGUN );
+	client->ps.ammo[WP_PLASMAGUN] = 100;
+	
+	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_RAILGUN );
+	client->ps.ammo[WP_RAILGUN] = 100;
+	
 	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
 	client->ps.ammo[WP_GAUNTLET] = -1;
 	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
