@@ -32,6 +32,15 @@ Any fixes, improvements and contributions are welcome. But we still can't accept
 
 - [Creating custom plugin models](Create_Custom_Models.md)
 
+### How to build
+
+- Windows:
+
+Execute `make_qvms.bat` to compile qvms, keep in mind you must be in the repository directory to execute these .bat files.
+
+Once compiled successfully, look into `binaries` directory and copy qvms into `baseq3/vm/` Q3 game directory. <br/>
+Alternatively, copy `pak9.pk3` inside `binaries` directory and paste inside `baseq3/` or mod Q3 game directory.
+
 <br/><br/>
 
 This repository was initialized from https://github.com/marconett/q3a.
