@@ -1,9 +1,9 @@
-**Creating custom plugin models for Bid For Power**
+# Creating custom plugin models for Bid For Power
 
 This document assumes an understanding of how to create models for Quake
 3 Arena.
 
-**Attacksets:**
+### Attacksets
 
 All BFP models must use one of the attacksets defined in the file
 *bfp_attacksets.cfg*. Attacksets are assigned to models by comparing
@@ -13,7 +13,7 @@ attacks for the matching attackset.
 
 In order to create a model named \"bob\" that uses the first attackset, bob must exist in the directory \"models/players/bfp1-bob\".
 
-**Animations:**
+### Animations
 
 All BFP Models must have the following animations in the following
 order.
@@ -91,7 +91,7 @@ TORSO_ATTACK4_PREPARE
 TORSO_ATTACK4_STRIKE
 ```
 
-**Tags:**
+### Tags
 
 All bfp models are required to have a tag named \"tag_eyes\" on the
 model\' head. This tag should be appropriate for placing a viewpoint.
@@ -100,7 +100,7 @@ Models should make use of additional tags placed on the torso in order
 to position attacks. The use of these tags is defined by the skin
 config file.
 
-**Transformations:**
+### Transformations
 
 Each model is allowed to have 1 transformation which is shared by all
 skins for that model. This transformation happens when the player
@@ -110,7 +110,7 @@ files ssjtorso.md3 and ssjtorso.skin exist, those files will be used for
 the transformed torso. Likewise if the files ssjlegs.md3 and
 ssjlegs.skin exist, they will define how the transformed legs will look.
 
-**The Skin Config File:**
+### The Skin Config File
 
 The skin config file can be used to define attack names, how attacks are
 positioned on the model, how the attacks look, and how the attacks
