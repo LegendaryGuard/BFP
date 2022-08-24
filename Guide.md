@@ -42,7 +42,7 @@ person vis mode.
 
 ## Installation
 
-**Windows
+#### Windows
 
 -  Install the full retail version of Quake 3 Arena. The demo version
 will NOT work with BFP.
@@ -175,9 +175,9 @@ boost key. Do not overlook this feature. Being able to knock
 people into hit stun with ki-boosted melee is one of the keys to being
 good at BFP.
 
-\*The melee stun can be avoided by holding melee while you are attacked.
+-  The melee stun can be avoided by holding melee while you are attacked.
 
-\*Hit stun can be ended by teleporting after one second.
+-  Hit stun can be ended by teleporting after one second.
 
 ## Short-Range Teleport
 
@@ -380,51 +380,51 @@ die can not respawn until the next round.
 
 ## CVARS
 
-If you don\'t already know what a cvar is you should probably ignore
+If you don't already know what a cvar is you should probably ignore
 this section. These can be used from the q3 console to access
 features. Most of these features can be set from within the menu.
 
-\* g_basepl \[1-999\]: set the starting power level from one thousand to
+-  `g_basepl [1-999]`: set the starting power level from one thousand to
 one mil.
 
-\* g_hitStun \[0/1\]: turn on or off the melee hit stun.
+-  `g_hitStun [0/1]`: turn on or off the melee hit stun.
 
-\* cg_kitrail \[0-99\]: set the length of the ki trail. 0 turns it
+-  `cg_kitrail [0-99]`: set the length of the ki trail. 0 turns it
 off.
 
-\* cg_crosshairhealth \[0/1\]: turn on or off the feature that makes the
+-  `cg_crosshairhealth [0/1]`: turn on or off the feature that makes the
 crosshair turn red when you score a hit.
 
-\* cg_lightauras \[0/1\]: turn on or off the aura dynamic lights.
+-  `cg_lightauras [0/1]`: turn on or off the aura dynamic lights.
 
-\* cg_lightexplosions \[0/1\]: turn on or off the explosion dynamic
+-  `cg_lightexplosions [0/1]`: turn on or off the explosion dynamic
 lights.
 
-\* cg_drawKIWarning \[0/1\]: turn on or off the low ki warning.
+-  `cg_drawKIWarning [0/1]`: turn on or off the low ki warning.
 
-\* cg_chargeupAlert \[0/1\]: turn on or off the \"ready\" message when
+-  `cg_chargeupAlert [0/1]`: turn on or off the \"ready\" message when
 charging attacks.
 
-\* cg_stfu \[0/1\]: disable character voices when firing attacks.
+-  `cg_stfu [0/1]`: disable character voices when firing attacks.
 
-\* cg_lowpolysphere \[0/1\]: force the use of a lower polycount sphere.
+-  `cg_lowpolysphere [0/1]`: force the use of a lower polycount sphere.
 
-\* cg_explosionShell \[0/1\]: turn on or off the explosion shell.
+-  `cg_explosionShell [0/1]`: turn on or off the explosion shell.
 
-\* cg_explosionSmoke \[0/1\]: turn on or off the explosion smoke.
+-  `cg_explosionSmoke [0/1]`: turn on or off the explosion smoke.
 
-\* cg_explosionRing \[0/1\]: turn on or off the explosion ring.
+-  `cg_explosionRing [0/1]`: turn on or off the explosion ring.
 
-\* cg_particles \[0/1\]: turn on or off particle effects.
+-  `cg_particles [0/1]`: turn on or off particle effects.
 
-\* cg_playHitSound \[0/1\]: turn on or off the q3 hit \"ping\".
+-  `cg_playHitSound [0/1]`: turn on or off the q3 hit \"ping\".
 
-\* cg_drawOwnModel \[0/1\]: toggle first person between traditional and
+-  `cg_drawOwnModel [0/1]`: toggle first person between traditional and
 vis modes.
 
-\* cg_flytilt \[0/1\]: toggle the tilting during flight.
+-  `cg_flytilt [0/1]`: toggle the tilting during flight.
 
-\* cg_stableCrosshair \[0/1\]: turn off the accurate crosshair
+-  `cg_stableCrosshair [0/1]`: turn off the accurate crosshair
 
 ## Custom Player Models
 
