@@ -36,7 +36,7 @@ Any fixes, improvements and contributions are welcome. But we still can't accept
 
 - Windows:
 
-Execute `build.bat` to compile qvms, keep in mind you must be in the repository directory to execute these .bat files.
+Execute `build.bat` to compile qvms, keep in mind you must be in the repository directory.
 
 Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
 
