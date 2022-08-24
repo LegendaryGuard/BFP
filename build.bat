@@ -1,4 +1,4 @@
-set PATH=.\tools\bin;%PATH%
+set PATH=%~dp0\tools\bin;%PATH%
 
 cd source\game
 CALL game.bat
