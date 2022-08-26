@@ -10,13 +10,23 @@ on:
 
 jobs:
   build-windows-i386:
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
     - name: Build windows-i386
       run: |
         ./build.bat
+
+  build-linux-amd64:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build linux-amd64
+      run: |
+        sudo apt-get update && sudo apt-get install wine64
+        wine cmd /c build.bat
 
     - name: Store artifacts
       uses: actions/upload-artifact@v2
