@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build linux-amd64
       run: |
-        sudo apt-get update && sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install wine32
+        sudo apt-get update && sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install wine-stable wine64 wine32:i386 wine64
         wine cmd /c build.bat
 
     - name: Store artifacts
