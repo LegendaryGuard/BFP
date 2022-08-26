@@ -19,7 +19,7 @@ jobs:
         ./build.bat
 
   build-linux-i386:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
