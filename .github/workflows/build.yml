@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build linux-i386
       run: |
-        sudo apt-get update && sudo apt-get update && sudo apt-get install wine-stable wine32:i386
+        sudo apt-get update && sudo apt-get update && sudo apt-get install wine-stable wine32
         wine cmd /c build.bat
 
     - name: Store artifacts
