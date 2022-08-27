@@ -1,0 +1,7 @@
+{
+	"Add BFP comment": {
+		"prefix": "BFP",
+		"body": " // BFP",
+		"description": "Add `// BFP` comment"
+	}
+}
