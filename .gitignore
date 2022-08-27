@@ -1,2 +1,7 @@
-pak9.pk3
-.vscode/*
+/build/linux/build
+/build/debug*
+/.vscode
+/build/*/Makefile.local
+/build/*.pk3
+/build/*/*.pk3
+*.pk3
