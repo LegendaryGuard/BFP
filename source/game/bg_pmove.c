@@ -43,7 +43,7 @@ float	pm_flyaccelerate = 8.0f;
 
 float	pm_friction = 6.0f;
 float	pm_waterfriction = 1.0f;
-float	pm_flightfriction = 3.0f;
+float	pm_flightfriction = 3.0f; // BFP // Q3 Original: 3.0f 
 float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
@@ -184,6 +184,7 @@ static void PM_Friction( void ) {
 
 	speed = VectorLength(vec);
 	if (speed < 1) {
+		drop = 0;
 		vel[0] = 0;
 		vel[1] = 0;		// allow sinking underwater
 		// FIXME: still have z friction underwater?
@@ -209,8 +210,30 @@ static void PM_Friction( void ) {
 	}
 
 	// apply flying friction
-	if ( pm->ps->pm_flags & PMF_FLYING ) { // BFP
-		drop += speed*pm_flightfriction*pml.frametime;
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		if (pm->ps->pm_type == PM_DEAD)
+			pm->ps->pm_flags &= ~PMF_FLYING;
+
+		PM_ContinueLegsAnim( LEGS_FLYIDLE );
+
+		control = speed < pm_stopspeed ? pm_stopspeed : speed;
+		drop += control*pm_flightfriction*pml.frametime;
+
+		if ( pm->cmd.forwardmove >= 0 ) {
+			PM_StartTorsoAnim( TORSO_FLYA );
+			PM_StartLegsAnim( LEGS_FLYA );
+		}
+		else {
+			PM_StartTorsoAnim( TORSO_FLYB );
+			PM_StartLegsAnim( LEGS_FLYB );
+		}
+
+		G_Printf( "----------------\n");
+		G_Printf( "^1drop: \"%f\n", drop);
+		G_Printf( "^2speed: \"%f\n", speed);
+		G_Printf( "^3pm_flightfriction: \"%f\n", pm_flightfriction);
+		G_Printf( "^4pml.frametime: \"%f\n", pml.frametime);
+		G_Printf( "^5pm->ps->velocity[2]: \"%f\n", pm->ps->velocity[2]);
 	}
 
 	if ( pm->ps->pm_type == PM_SPECTATOR) {
@@ -1314,6 +1337,8 @@ static void PM_Footsteps( void ) {
 	//
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
+	
+	// TODO: BFP -> Check for flying animation
 
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
 
@@ -1899,7 +1924,14 @@ void PmoveSingle (pmove_t *pmove) {
 
 	PM_DropTimers();
 
-	if ( pm->ps->pm_flags & PMF_FLYING ) { // BFP
+	// BFP
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		
+		// TODO: BFP -> add little hop here
+		if ( pm->ps->pm_flags & PMF_JUMP_HELD )
+			pm->ps->pm_flags &= ~PMF_JUMP_HELD;
+
+
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
 	} else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {
