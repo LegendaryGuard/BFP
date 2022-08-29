@@ -1,24 +1,4 @@
-/*
-===========================================================================
-Copyright (C) 1999-2005 Id Software, Inc.
-
-This file is part of Quake III Arena source code.
-
-Quake III Arena source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake III Arena source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Foobar; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
+// Copyright (C) 1999-2000 Id Software, Inc.
 //
 /*
 =======================================================================
@@ -89,29 +69,29 @@ typedef struct
 #define ID_LEFT			9	
 #define ID_RIGHT		10	
 #define ID_STRAFE		11	
-#define ID_LOOKUP		12	
-#define ID_LOOKDOWN		13
-#define ID_MOUSELOOK	14
-#define ID_CENTERVIEW	15
-#define ID_ZOOMVIEW		16
-#define ID_WEAPON1		17	
-#define ID_WEAPON2		18	
-#define ID_WEAPON3		19	
-#define ID_WEAPON4		20	
-#define ID_WEAPON5		21	
-#define ID_WEAPON6		22	
-#define ID_WEAPON7		23	
-#define ID_WEAPON8		24	
-#define ID_WEAPON9		25	
-#define ID_ATTACK		26
-#define ID_WEAPPREV		27
-#define ID_WEAPNEXT		28
-#define ID_GESTURE		29
-#define ID_CHAT			30
-#define ID_CHAT2		31
-#define ID_CHAT3		32
-#define ID_CHAT4		33
-#define ID_FLIGHT		34 // BFP
+#define ID_ENABLEFLIGHT	12	
+#define ID_LOOKUP		13	
+#define ID_LOOKDOWN		14
+#define ID_MOUSELOOK	15
+#define ID_CENTERVIEW	16
+#define ID_ZOOMVIEW		17
+#define ID_WEAPON1		18	
+#define ID_WEAPON2		19	
+#define ID_WEAPON3		20	
+#define ID_WEAPON4		21	
+#define ID_WEAPON5		22	
+#define ID_WEAPON6		23	
+#define ID_WEAPON7		24	
+#define ID_WEAPON8		25	
+#define ID_WEAPON9		26	
+#define ID_ATTACK		27
+#define ID_WEAPPREV		28
+#define ID_WEAPNEXT		29
+#define ID_GESTURE		30
+#define ID_CHAT			31
+#define ID_CHAT2		32
+#define ID_CHAT3		33
+#define ID_CHAT4		34
 
 // all others
 #define ID_FREELOOK		35
@@ -122,8 +102,6 @@ typedef struct
 #define ID_JOYENABLE	40
 #define ID_JOYTHRESHOLD	41
 #define ID_SMOOTHMOUSE	42
-
-// TODO: BFP - Add animations as listed on the docs
 
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
@@ -151,7 +129,7 @@ typedef struct
 #define ANIM_GESTURE	23
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
-#define ANIM_FLY		26 // BFP
+#define ANIM_FLY		26
 
 typedef struct
 {
@@ -173,10 +151,10 @@ typedef struct
 	menuaction_s		stepright;
 	menuaction_s		moveup;
 	menuaction_s		movedown;
-	menuaction_s		fly; // BFP - flight menu action
 	menuaction_s		turnleft;
 	menuaction_s		turnright;
 	menuaction_s		sidestep;
+	menuaction_s		enableflight;
 	menuaction_s		run;
 	menuaction_s		machinegun;
 	menuaction_s		chainsaw;
@@ -219,7 +197,7 @@ typedef struct
 	vec3_t				playerMoveangles;
 	int					playerLegs;
 	int					playerTorso;
-	int					playerWeapon;
+	weapon_t			playerWeapon;
 	qboolean			playerChat;
 
 	menubitmap_s		back;
@@ -230,13 +208,10 @@ static controls_t s_controls;
 
 static vec4_t controls_binding_color  = {1.00f, 0.43f, 0.00f, 1.00f}; // bk: Win32 C4305
 
-// TODO: BFP - Add animations as listed on the docs, bind key to toggle the flight, bind key to recover ki energy, bind key to toggle speed (ki boost)
-
 static bind_t g_bindings[] = 
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
-	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
 	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
@@ -244,10 +219,10 @@ static bind_t g_bindings[] =
 	{"+moveright", 		"step right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.',			-1,		-1, -1},
 	{"+moveup",			"up / jump",		ID_MOVEUP,		ANIM_JUMP,		K_SPACE,		-1,		-1, -1},
 	{"+movedown",		"down / crouch",	ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
-	{"+button12", 		"fly",				ID_FLIGHT,		ANIM_FLY,		'f',			-1,		-1, -1}, // BFP - flight control
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
+	{"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1},
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
@@ -265,6 +240,7 @@ static bind_t g_bindings[] =
 	{"+attack", 		"attack",			ID_ATTACK,		ANIM_ATTACK,	K_CTRL,			-1,		-1, -1},
 	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[',			-1,		-1, -1},
 	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
+	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
 	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,		't',			-1,		-1, -1},
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
@@ -294,8 +270,8 @@ static menucommon_s *g_movement_controls[] =
 	(menucommon_s *)&s_controls.stepleft,      
 	(menucommon_s *)&s_controls.stepright,     
 	(menucommon_s *)&s_controls.moveup,        
-	(menucommon_s *)&s_controls.movedown,   
-	(menucommon_s *)&s_controls.fly, // BFP
+	(menucommon_s *)&s_controls.movedown,
+	(menucommon_s *)&s_controls.enableflight,
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,     
 	(menucommon_s *)&s_controls.sidestep,
@@ -450,12 +426,6 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_WALK:	
 		s_controls.playerLegs = LEGS_WALK;
 		break;
-	
-	// BFP - Menu animation
-	case ANIM_FLY:
-		s_controls.playerLegs = LEGS_FLYIDLE; //LEGS_FLYIDLE;
-		//s_controls.playerTorso = TORSO_FLYA;
-		break;
 
 	case ANIM_BACK:	
 		s_controls.playerLegs = LEGS_BACK;
@@ -467,6 +437,10 @@ static void Controls_UpdateModel( int anim ) {
 
 	case ANIM_CROUCH:	
 		s_controls.playerLegs = LEGS_IDLECR;
+		break;
+
+	case ANIM_FLY:
+		s_controls.playerLegs = LEGS_IDLE;
 		break;
 
 	case ANIM_TURNLEFT:
@@ -577,7 +551,7 @@ static void Controls_Update( void ) {
 	for( i = 0; i < C_MAX; i++ ) {
 		controls = g_controls[i];
 		// bk001204 - parentheses
-		for( j = 0;  (control = controls[j]) ; j++ ) {
+		for( j = 0;  (control = controls[j]) != NULL ; j++ ) {
 			control->flags |= (QMF_HIDDEN|QMF_INACTIVE);
 		}
 	}
@@ -586,14 +560,14 @@ static void Controls_Update( void ) {
 
 	// enable controls in active group (and count number of items for vertical centering)
 	// bk001204 - parentheses
-	for( j = 0;  (control = controls[j]) ; j++ ) {
+	for( j = 0;  (control = controls[j]) != NULL ; j++ ) {
 		control->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
 	}
 
 	// position controls
 	y = ( SCREEN_HEIGHT - j * SMALLCHAR_HEIGHT ) / 2;
 	// bk001204 - parentheses
-	for( j = 0;	(control = controls[j]) ; j++, y += SMALLCHAR_HEIGHT ) {
+	for( j = 0;	(control = controls[j]) != NULL; j++, y += SMALLCHAR_HEIGHT ) {
 		control->x      = 320;
 		control->y      = y;
 		control->left   = 320 - 19*SMALLCHAR_WIDTH;
@@ -1332,13 +1306,6 @@ static void Controls_MenuInit( void )
 	s_controls.movedown.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.movedown.generic.id        = ID_MOVEDOWN;
 
-	// BFP - flight control option
-	s_controls.fly.generic.type	     = MTYPE_ACTION;
-	s_controls.fly.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.fly.generic.callback  = Controls_ActionEvent;
-	s_controls.fly.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.fly.generic.id        = ID_FLIGHT;
-
 	s_controls.turnleft.generic.type	  = MTYPE_ACTION;
 	s_controls.turnleft.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.turnleft.generic.callback  = Controls_ActionEvent;
@@ -1356,6 +1323,12 @@ static void Controls_MenuInit( void )
 	s_controls.sidestep.generic.callback  = Controls_ActionEvent;
 	s_controls.sidestep.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.sidestep.generic.id        = ID_STRAFE;
+
+	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
+	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
+	s_controls.enableflight.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.enableflight.generic.id        = ID_ENABLEFLIGHT;
 
 	s_controls.run.generic.type	     = MTYPE_ACTION;
 	s_controls.run.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1456,7 +1429,7 @@ static void Controls_MenuInit( void )
 	s_controls.freelook.generic.type		= MTYPE_RADIOBUTTON;
 	s_controls.freelook.generic.flags		= QMF_SMALLFONT;
 	s_controls.freelook.generic.x			= SCREEN_WIDTH/2;
-	s_controls.freelook.generic.name		= "free look";
+	s_controls.freelook.generic.name		= "Free Look";
 	s_controls.freelook.generic.id			= ID_FREELOOK;
 	s_controls.freelook.generic.callback	= Controls_MenuEvent;
 	s_controls.freelook.generic.statusbar	= Controls_StatusBar;
@@ -1488,7 +1461,7 @@ static void Controls_MenuInit( void )
 	s_controls.invertmouse.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.invertmouse.generic.flags	 = QMF_SMALLFONT;
 	s_controls.invertmouse.generic.x	     = SCREEN_WIDTH/2;
-	s_controls.invertmouse.generic.name	     = "invert mouse";
+	s_controls.invertmouse.generic.name	     = "Invert Mouse";
 	s_controls.invertmouse.generic.id        = ID_INVERTMOUSE;
 	s_controls.invertmouse.generic.callback  = Controls_MenuEvent;
 	s_controls.invertmouse.generic.statusbar = Controls_StatusBar;
@@ -1496,7 +1469,7 @@ static void Controls_MenuInit( void )
 	s_controls.smoothmouse.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.smoothmouse.generic.flags	 = QMF_SMALLFONT;
 	s_controls.smoothmouse.generic.x	     = SCREEN_WIDTH/2;
-	s_controls.smoothmouse.generic.name	     = "smooth mouse";
+	s_controls.smoothmouse.generic.name	     = "Smooth Mouse";
 	s_controls.smoothmouse.generic.id        = ID_SMOOTHMOUSE;
 	s_controls.smoothmouse.generic.callback  = Controls_MenuEvent;
 	s_controls.smoothmouse.generic.statusbar = Controls_StatusBar;
@@ -1504,7 +1477,7 @@ static void Controls_MenuInit( void )
 	s_controls.alwaysrun.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.alwaysrun.generic.flags	   = QMF_SMALLFONT;
 	s_controls.alwaysrun.generic.x	       = SCREEN_WIDTH/2;
-	s_controls.alwaysrun.generic.name	   = "always run";
+	s_controls.alwaysrun.generic.name	   = "Always Run";
 	s_controls.alwaysrun.generic.id        = ID_ALWAYSRUN;
 	s_controls.alwaysrun.generic.callback  = Controls_MenuEvent;
 	s_controls.alwaysrun.generic.statusbar = Controls_StatusBar;
@@ -1512,7 +1485,7 @@ static void Controls_MenuInit( void )
 	s_controls.autoswitch.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.autoswitch.generic.flags	    = QMF_SMALLFONT;
 	s_controls.autoswitch.generic.x	        = SCREEN_WIDTH/2;
-	s_controls.autoswitch.generic.name	    = "autoswitch weapons";
+	s_controls.autoswitch.generic.name	    = "Autoswitch Weapons";
 	s_controls.autoswitch.generic.id        = ID_AUTOSWITCH;
 	s_controls.autoswitch.generic.callback  = Controls_MenuEvent;
 	s_controls.autoswitch.generic.statusbar = Controls_StatusBar;
@@ -1520,7 +1493,7 @@ static void Controls_MenuInit( void )
 	s_controls.sensitivity.generic.type	     = MTYPE_SLIDER;
 	s_controls.sensitivity.generic.x		 = SCREEN_WIDTH/2;
 	s_controls.sensitivity.generic.flags	 = QMF_SMALLFONT;
-	s_controls.sensitivity.generic.name	     = "mouse speed";
+	s_controls.sensitivity.generic.name	     = "Mouse Speed";
 	s_controls.sensitivity.generic.id 	     = ID_MOUSESPEED;
 	s_controls.sensitivity.generic.callback  = Controls_MenuEvent;
 	s_controls.sensitivity.minvalue		     = 2;
@@ -1560,7 +1533,7 @@ static void Controls_MenuInit( void )
 	s_controls.joyenable.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.joyenable.generic.flags	   = QMF_SMALLFONT;
 	s_controls.joyenable.generic.x	       = SCREEN_WIDTH/2;
-	s_controls.joyenable.generic.name	   = "joystick";
+	s_controls.joyenable.generic.name	   = "Joystick";
 	s_controls.joyenable.generic.id        = ID_JOYENABLE;
 	s_controls.joyenable.generic.callback  = Controls_MenuEvent;
 	s_controls.joyenable.generic.statusbar = Controls_StatusBar;
@@ -1568,7 +1541,7 @@ static void Controls_MenuInit( void )
 	s_controls.joythreshold.generic.type	  = MTYPE_SLIDER;
 	s_controls.joythreshold.generic.x		  = SCREEN_WIDTH/2;
 	s_controls.joythreshold.generic.flags	  = QMF_SMALLFONT;
-	s_controls.joythreshold.generic.name	  = "joystick threshold";
+	s_controls.joythreshold.generic.name	  = "Joystick Threshold";
 	s_controls.joythreshold.generic.id 	      = ID_JOYTHRESHOLD;
 	s_controls.joythreshold.generic.callback  = Controls_MenuEvent;
 	s_controls.joythreshold.minvalue		  = 0.05f;
@@ -1614,10 +1587,10 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.stepright );
 	Menu_AddItem( &s_controls.menu, &s_controls.moveup );
 	Menu_AddItem( &s_controls.menu, &s_controls.movedown );
-	Menu_AddItem( &s_controls.menu, &s_controls.fly ); // BFP
 	Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );
+	Menu_AddItem( &s_controls.menu, &s_controls.enableflight );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.attack );
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );
