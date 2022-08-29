@@ -103,6 +103,8 @@ typedef struct
 #define ID_JOYTHRESHOLD	41
 #define ID_SMOOTHMOUSE	42
 
+// TODO: BFP - Add animations as listed on the docs
+
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
 #define ANIM_WALK		2
@@ -129,7 +131,7 @@ typedef struct
 #define ANIM_GESTURE	23
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
-#define ANIM_FLY		26
+#define ANIM_FLY		26 // BFP
 
 typedef struct
 {
@@ -154,7 +156,7 @@ typedef struct
 	menuaction_s		turnleft;
 	menuaction_s		turnright;
 	menuaction_s		sidestep;
-	menuaction_s		enableflight;
+	menuaction_s		enableflight; // BFP - flight menu action
 	menuaction_s		run;
 	menuaction_s		machinegun;
 	menuaction_s		chainsaw;
@@ -208,6 +210,8 @@ static controls_t s_controls;
 
 static vec4_t controls_binding_color  = {1.00f, 0.43f, 0.00f, 1.00f}; // bk: Win32 C4305
 
+// TODO: BFP - Add animations as listed on the docs, bind key to toggle the flight, bind key to recover ki energy, bind key to toggle speed (ki boost)
+
 static bind_t g_bindings[] = 
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
@@ -222,7 +226,7 @@ static bind_t g_bindings[] =
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
-	{"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1},
+	{"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1}, // BFP - flight control
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
@@ -438,9 +442,11 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_CROUCH:	
 		s_controls.playerLegs = LEGS_IDLECR;
 		break;
-
+	
+	// BFP - Menu animation
 	case ANIM_FLY:
-		s_controls.playerLegs = LEGS_IDLE;
+		s_controls.playerLegs = LEGS_IDLE; //LEGS_FLYIDLE;
+		//s_controls.playerTorso = TORSO_FLYA;
 		break;
 
 	case ANIM_TURNLEFT:
@@ -1324,6 +1330,7 @@ static void Controls_MenuInit( void )
 	s_controls.sidestep.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.sidestep.generic.id        = ID_STRAFE;
 
+	// BFP - flight control option
 	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
 	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
