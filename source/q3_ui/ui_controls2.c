@@ -86,7 +86,7 @@ typedef struct
 #define ID_MOVERIGHT	6
 #define ID_MOVEUP		7	
 #define ID_MOVEDOWN		8
-#define ID_FLIGHT		9 // BFP
+#define ID_FLIGHT		9 // BFP - flight id, raised next items by +1
 #define ID_LEFT			10	
 #define ID_RIGHT		11	
 #define ID_STRAFE		12	
@@ -173,7 +173,7 @@ typedef struct
 	menuaction_s		stepright;
 	menuaction_s		moveup;
 	menuaction_s		movedown;
-	menuaction_s		fly;
+	menuaction_s		fly; // BFP - flight menu action
 	menuaction_s		turnleft;
 	menuaction_s		turnright;
 	menuaction_s		sidestep;
@@ -243,7 +243,7 @@ static bind_t g_bindings[] =
 	{"+moveright", 		"step right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.',			-1,		-1, -1},
 	{"+moveup",			"up / jump",		ID_MOVEUP,		ANIM_JUMP,		K_SPACE,		-1,		-1, -1},
 	{"+movedown",		"down / crouch",	ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
-	{"+button12",		"enable flight",	ID_FLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1},
+	{"+button12",		"enable flight",	ID_FLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1}, // BFP - flight control
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
@@ -295,7 +295,7 @@ static menucommon_s *g_movement_controls[] =
 	(menucommon_s *)&s_controls.stepright,     
 	(menucommon_s *)&s_controls.moveup,        
 	(menucommon_s *)&s_controls.movedown,      
-	(menucommon_s *)&s_controls.fly,
+	(menucommon_s *)&s_controls.fly, // BFP - flight control
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,     
 	(menucommon_s *)&s_controls.sidestep,
@@ -463,6 +463,7 @@ static void Controls_UpdateModel( int anim ) {
 		s_controls.playerLegs = LEGS_IDLECR;
 		break;
 
+	// BFP - Menu animation
 	case ANIM_FLY:
 		s_controls.playerLegs = LEGS_IDLECR;
 		break;
@@ -1330,6 +1331,7 @@ static void Controls_MenuInit( void )
 	s_controls.movedown.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.movedown.generic.id        = ID_MOVEDOWN;
 
+	// BFP - flight control option
 	s_controls.fly.generic.type	  = MTYPE_ACTION;
 	s_controls.fly.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.fly.generic.callback  = Controls_ActionEvent;
@@ -1611,7 +1613,7 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.stepright );
 	Menu_AddItem( &s_controls.menu, &s_controls.moveup );
 	Menu_AddItem( &s_controls.menu, &s_controls.movedown );
-	Menu_AddItem( &s_controls.menu, &s_controls.fly );
+	Menu_AddItem( &s_controls.menu, &s_controls.fly ); // BFP
 	Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );

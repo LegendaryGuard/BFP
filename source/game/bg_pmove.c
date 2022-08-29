@@ -209,7 +209,7 @@ static void PM_Friction( void ) {
 	}
 
 	// apply flying friction
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
+	if ( pm->ps->pm_flags & PMF_FLYING ) { // BFP
 		drop += speed*pm_flightfriction*pml.frametime;
 	}
 
@@ -1899,7 +1899,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 	PM_DropTimers();
 
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
+	if ( pm->ps->pm_flags & PMF_FLYING ) { // BFP
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
 	} else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {
