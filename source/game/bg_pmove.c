@@ -220,20 +220,20 @@ static void PM_Friction( void ) {
 		drop += control*pm_flightfriction*pml.frametime;
 
 		if ( pm->cmd.forwardmove >= 0 ) {
-			PM_StartTorsoAnim( TORSO_FLYA );
+			PM_StartTorsoAnim( TORSO_FLYB );
 			PM_StartLegsAnim( LEGS_FLYA );
 		}
 		else {
-			PM_StartTorsoAnim( TORSO_FLYB );
+			PM_StartTorsoAnim( TORSO_FLYA );
 			PM_StartLegsAnim( LEGS_FLYB );
 		}
 
-		G_Printf( "----------------\n");
-		G_Printf( "^1drop: \"%f\n", drop);
-		G_Printf( "^2speed: \"%f\n", speed);
-		G_Printf( "^3pm_flightfriction: \"%f\n", pm_flightfriction);
-		G_Printf( "^4pml.frametime: \"%f\n", pml.frametime);
-		G_Printf( "^5pm->ps->velocity[2]: \"%f\n", pm->ps->velocity[2]);
+		Com_Printf( "----------------\n");
+		Com_Printf( "^1drop: \"%f\n", drop);
+		Com_Printf( "^2speed: \"%f\n", speed);
+		Com_Printf( "^3pm_flightfriction: \"%f\n", pm_flightfriction);
+		Com_Printf( "^4pml.frametime: \"%f\n", pml.frametime);
+		Com_Printf( "^5pm->ps->velocity[2]: \"%f\n", pm->ps->velocity[2]);
 	}
 
 	if ( pm->ps->pm_type == PM_SPECTATOR) {
@@ -1929,8 +1929,12 @@ void PmoveSingle (pmove_t *pmove) {
 		
 		// TODO: BFP -> add little hop here
 		if ( pm->ps->pm_flags & PMF_JUMP_HELD )
+		{
+			pmove->cmd.upmove = 20;
 			pm->ps->pm_flags &= ~PMF_JUMP_HELD;
-
+			pm->ps->pm_flags &= ~PMF_DUCKED;
+			pm->ps->pm_flags &= ~PMF_BACKWARDS_RUN;
+		}
 
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
