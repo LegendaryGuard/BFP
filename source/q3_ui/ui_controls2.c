@@ -111,17 +111,17 @@ typedef struct
 #define ID_CHAT2		31
 #define ID_CHAT3		32
 #define ID_CHAT4		33
-#define ID_FLIGHT			34
+#define ID_FLIGHT		34 // BFP
 
 // all others
-#define ID_FREELOOK		34
-#define ID_INVERTMOUSE	35
-#define ID_ALWAYSRUN	36
-#define ID_AUTOSWITCH	37
-#define ID_MOUSESPEED	38
-#define ID_JOYENABLE	39
-#define ID_JOYTHRESHOLD	40
-#define ID_SMOOTHMOUSE	41
+#define ID_FREELOOK		35
+#define ID_INVERTMOUSE	36
+#define ID_ALWAYSRUN	37
+#define ID_AUTOSWITCH	38
+#define ID_MOUSESPEED	39
+#define ID_JOYENABLE	40
+#define ID_JOYTHRESHOLD	41
+#define ID_SMOOTHMOUSE	42
 
 // TODO: BFP - Add animations as listed on the docs
 
@@ -151,7 +151,7 @@ typedef struct
 #define ANIM_GESTURE	23
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
-#define ANIM_FLY		26
+#define ANIM_FLY		26 // BFP
 
 typedef struct
 {
@@ -187,7 +187,7 @@ typedef struct
 	menuaction_s		plasma;
 	menuaction_s		bfg;
 	menuaction_s		attack;
-	menuaction_s		fly;
+	menuaction_s		fly; // BFP - flight menu action
 	menuaction_s		prevweapon;
 	menuaction_s		nextweapon;
 	menuaction_s		lookup;
@@ -237,7 +237,7 @@ static bind_t g_bindings[] =
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
 	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
-	{"+button12", 		"fly",				ID_FLIGHT,		ANIM_FLY,		'f',			-1,		-1, -1}, // BFP
+	{"+button12", 		"fly",				ID_FLIGHT,		ANIM_FLY,		'f',			-1,		-1, -1}, // BFP - flight control
 	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
