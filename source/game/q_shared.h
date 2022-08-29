@@ -1232,9 +1232,10 @@ typedef struct playerState_s {
 #define BUTTON_GETFLAG		128
 #define BUTTON_GUARDBASE	256
 #define BUTTON_PATROL		512
-#define BUTTON_FOLLOWME		1024
+#define BUTTON_TEST123 2048
+#define BUTTON_FLIGHT 4096
 
-#define	BUTTON_ANY			2048			// any key whatsoever
+#define	BUTTON_ANY			8192			// any key whatsoever
 
 #define	MOVE_RUN			120			// if forwardmove or rightmove are >= MOVE_RUN,
 										// then BUTTON_WALKING should be set

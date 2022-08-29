@@ -86,41 +86,42 @@ typedef struct
 #define ID_MOVERIGHT	6
 #define ID_MOVEUP		7	
 #define ID_MOVEDOWN		8
-#define ID_LEFT			9	
-#define ID_RIGHT		10	
-#define ID_STRAFE		11	
-#define ID_LOOKUP		12	
-#define ID_LOOKDOWN		13
-#define ID_MOUSELOOK	14
-#define ID_CENTERVIEW	15
-#define ID_ZOOMVIEW		16
-#define ID_WEAPON1		17	
-#define ID_WEAPON2		18	
-#define ID_WEAPON3		19	
-#define ID_WEAPON4		20	
-#define ID_WEAPON5		21	
-#define ID_WEAPON6		22	
-#define ID_WEAPON7		23	
-#define ID_WEAPON8		24	
-#define ID_WEAPON9		25	
-#define ID_ATTACK		26
-#define ID_WEAPPREV		27
-#define ID_WEAPNEXT		28
-#define ID_GESTURE		29
-#define ID_CHAT			30
-#define ID_CHAT2		31
-#define ID_CHAT3		32
-#define ID_CHAT4		33
+#define ID_FLIGHT		9 // BFP
+#define ID_LEFT			10	
+#define ID_RIGHT		11	
+#define ID_STRAFE		12	
+#define ID_LOOKUP		13	
+#define ID_LOOKDOWN		14
+#define ID_MOUSELOOK	15
+#define ID_CENTERVIEW	16
+#define ID_ZOOMVIEW		17
+#define ID_WEAPON1		18	
+#define ID_WEAPON2		19	
+#define ID_WEAPON3		20	
+#define ID_WEAPON4		21	
+#define ID_WEAPON5		22	
+#define ID_WEAPON6		23	
+#define ID_WEAPON7		24	
+#define ID_WEAPON8		25	
+#define ID_WEAPON9		26	
+#define ID_ATTACK		27
+#define ID_WEAPPREV		28
+#define ID_WEAPNEXT		29
+#define ID_GESTURE		30
+#define ID_CHAT			31
+#define ID_CHAT2		32
+#define ID_CHAT3		33
+#define ID_CHAT4		34
 
 // all others
-#define ID_FREELOOK		34
-#define ID_INVERTMOUSE	35
-#define ID_ALWAYSRUN	36
-#define ID_AUTOSWITCH	37
-#define ID_MOUSESPEED	38
-#define ID_JOYENABLE	39
-#define ID_JOYTHRESHOLD	40
-#define ID_SMOOTHMOUSE	41
+#define ID_FREELOOK		35
+#define ID_INVERTMOUSE	36
+#define ID_ALWAYSRUN	37
+#define ID_AUTOSWITCH	38
+#define ID_MOUSESPEED	39
+#define ID_JOYENABLE	40
+#define ID_JOYTHRESHOLD	41
+#define ID_SMOOTHMOUSE	42
 
 // TODO: BFP - Add animations as listed on the docs
 
@@ -150,6 +151,7 @@ typedef struct
 #define ANIM_GESTURE	23
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
+#define ANIM_FLY		26 // BFP
 
 typedef struct
 {
@@ -171,6 +173,7 @@ typedef struct
 	menuaction_s		stepright;
 	menuaction_s		moveup;
 	menuaction_s		movedown;
+	menuaction_s		fly;
 	menuaction_s		turnleft;
 	menuaction_s		turnright;
 	menuaction_s		sidestep;
@@ -240,6 +243,7 @@ static bind_t g_bindings[] =
 	{"+moveright", 		"step right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.',			-1,		-1, -1},
 	{"+moveup",			"up / jump",		ID_MOVEUP,		ANIM_JUMP,		K_SPACE,		-1,		-1, -1},
 	{"+movedown",		"down / crouch",	ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
+	{"+button12",		"enable flight",	ID_FLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1},
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
@@ -291,6 +295,7 @@ static menucommon_s *g_movement_controls[] =
 	(menucommon_s *)&s_controls.stepright,     
 	(menucommon_s *)&s_controls.moveup,        
 	(menucommon_s *)&s_controls.movedown,      
+	(menucommon_s *)&s_controls.fly,
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,     
 	(menucommon_s *)&s_controls.sidestep,
@@ -455,6 +460,10 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case ANIM_CROUCH:	
+		s_controls.playerLegs = LEGS_IDLECR;
+		break;
+
+	case ANIM_FLY:
 		s_controls.playerLegs = LEGS_IDLECR;
 		break;
 
@@ -1321,6 +1330,12 @@ static void Controls_MenuInit( void )
 	s_controls.movedown.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.movedown.generic.id        = ID_MOVEDOWN;
 
+	s_controls.fly.generic.type	  = MTYPE_ACTION;
+	s_controls.fly.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.fly.generic.callback  = Controls_ActionEvent;
+	s_controls.fly.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.fly.generic.id        = ID_FLIGHT;
+
 	s_controls.turnleft.generic.type	  = MTYPE_ACTION;
 	s_controls.turnleft.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.turnleft.generic.callback  = Controls_ActionEvent;
@@ -1596,6 +1611,7 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.stepright );
 	Menu_AddItem( &s_controls.menu, &s_controls.moveup );
 	Menu_AddItem( &s_controls.menu, &s_controls.movedown );
+	Menu_AddItem( &s_controls.menu, &s_controls.fly );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );
