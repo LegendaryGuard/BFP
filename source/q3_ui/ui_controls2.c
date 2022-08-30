@@ -66,10 +66,10 @@ typedef struct
 #define ID_MOVERIGHT	6
 #define ID_MOVEUP		7	
 #define ID_MOVEDOWN		8
-#define ID_ENABLEFLIGHT	9
-#define ID_LEFT			10	
-#define ID_RIGHT		11	
-#define ID_STRAFE		12	
+#define ID_LEFT			9	
+#define ID_RIGHT		10	
+#define ID_STRAFE		11	
+#define ID_ENABLEFLIGHT	12	
 #define ID_LOOKUP		13	
 #define ID_LOOKDOWN		14
 #define ID_MOUSELOOK	15
@@ -153,7 +153,7 @@ typedef struct
 	menuaction_s		stepright;
 	menuaction_s		moveup;
 	menuaction_s		movedown;
-	menuaction_s		enableflight;
+	menuaction_s		enableflight; // BFP - flight menu action
 	menuaction_s		turnleft;
 	menuaction_s		turnright;
 	menuaction_s		sidestep;
@@ -216,6 +216,8 @@ static bind_t g_bindings[] =
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
+	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
+	{"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1}, // BFP - flight control
 	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
@@ -223,7 +225,6 @@ static bind_t g_bindings[] =
 	{"+moveright", 		"step right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.',			-1,		-1, -1},
 	{"+moveup",			"up / jump",		ID_MOVEUP,		ANIM_JUMP,		K_SPACE,		-1,		-1, -1},
 	{"+movedown",		"down / crouch",	ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
-	{"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1},
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
@@ -244,7 +245,6 @@ static bind_t g_bindings[] =
 	{"+attack", 		"attack",			ID_ATTACK,		ANIM_ATTACK,	K_CTRL,			-1,		-1, -1},
 	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[',			-1,		-1, -1},
 	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
-	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
 	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,		't',			-1,		-1, -1},
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
@@ -447,10 +447,6 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_FLY:
 		s_controls.playerLegs = LEGS_IDLE; //LEGS_FLYIDLE;
 		//s_controls.playerTorso = TORSO_FLYA;
-		break;
-
-	case ANIM_FLY:
-		s_controls.playerLegs = LEGS_IDLE;
 		break;
 
 	case ANIM_TURNLEFT:
@@ -1316,6 +1312,13 @@ static void Controls_MenuInit( void )
 	s_controls.movedown.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.movedown.generic.id        = ID_MOVEDOWN;
 
+	// BFP - flight control option
+	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
+	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
+	s_controls.enableflight.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.enableflight.generic.id        = ID_ENABLEFLIGHT;
+
 	s_controls.turnleft.generic.type	  = MTYPE_ACTION;
 	s_controls.turnleft.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.turnleft.generic.callback  = Controls_ActionEvent;
@@ -1333,13 +1336,6 @@ static void Controls_MenuInit( void )
 	s_controls.sidestep.generic.callback  = Controls_ActionEvent;
 	s_controls.sidestep.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.sidestep.generic.id        = ID_STRAFE;
-
-	// BFP - flight control option
-	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
-	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
-	s_controls.enableflight.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.enableflight.generic.id        = ID_ENABLEFLIGHT;
 
 	s_controls.run.generic.type	     = MTYPE_ACTION;
 	s_controls.run.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1672,4 +1668,3 @@ void UI_ControlsMenu( void ) {
 	Controls_MenuInit();
 	UI_PushMenu( &s_controls.menu );
 }
->>>>>>> 180e6449a177bb963719e955214e04c6a4283fcf

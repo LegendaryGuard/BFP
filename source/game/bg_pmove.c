@@ -219,12 +219,12 @@ static void PM_Friction( void ) {
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
 
-		if ( pm->cmd.forwardmove >= 0 ) {
-			PM_StartTorsoAnim( TORSO_FLYB );
+		if ( pm->cmd.forwardmove > 0 ) {
+			PM_StartTorsoAnim( TORSO_FLYA );
 			PM_StartLegsAnim( LEGS_FLYA );
 		}
 		else {
-			PM_StartTorsoAnim( TORSO_FLYA );
+			PM_StartTorsoAnim( TORSO_FLYB );
 			PM_StartLegsAnim( LEGS_FLYB );
 		}
 	}
@@ -549,40 +549,6 @@ static void PM_WaterMove( void ) {
 
 	PM_SlideMove( qfalse );
 }
-
-
-/**
- * @brief Toggles PMF_FLYING with some stupid cooldown and trace thing.
- *
- * @return qboolean
- */
-static qboolean PM_CheckFlying( void ) {
-	vec3_t		point;
-	trace_t		trace;
-
-	point[0] = pm->ps->origin[0];
-	point[1] = pm->ps->origin[1];
-	point[2] = pm->ps->origin[2] - 0.5;
-
-	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
-	pml.groundTrace = trace;
-
-	if ( pm->ps->pm_time ) {
-		return qfalse;
-	}
-
-	if ( pm->ps->pm_time < 250 ) {
-		pm->ps->pm_time += 500;
-		pm->ps->pm_flags ^= PMF_FLYING;
-		if ( trace.contents == 1 ) {
-			pm->ps->velocity[2] = 600;
-		}
-		return qfalse;
-	}
-
-	return qtrue;
-}
-
 
 /*
 ===================
@@ -1949,24 +1915,14 @@ void PmoveSingle (pmove_t *pmove) {
 		PM_DeadMove ();
 	}
 
-	// BFP - check if player is pressing Fly button.
-	if ( pm->cmd.buttons & BUTTON_FLYING ) {
-		// go 
-		PM_CheckFlying();
-	}
-
 	PM_DropTimers();
 
 	// BFP
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
-
-		// TODO: BFP -> add little hop here
-		if ( pm->ps->pm_flags & PMF_JUMP_HELD )
-		{
-			pmove->cmd.upmove = 20;
-			pm->ps->pm_flags &= ~PMF_JUMP_HELD;
-			pm->ps->pm_flags &= ~PMF_DUCKED;
-			pm->ps->pm_flags &= ~PMF_BACKWARDS_RUN;
+		
+		// TODO: BFP -> little hop here
+		if ( pml.groundTrace.contents == 1 ) {
+			pm->ps->velocity[2] = 300;
 		}
 
 		// flight powerup doesn't allow jump and has different friction
