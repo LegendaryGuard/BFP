@@ -6,6 +6,6 @@
 	},
 	"Com_Printf": {
 		"prefix": ".pr",
-		"body": "Com_Printf( \"${1:prop}: ${2:%d}\n\", ${1:prop} );"
+		"body": "Com_Printf( \"${1:prop}: ${2:%d}\\n\", ${1:prop} );"
 	}
 }
