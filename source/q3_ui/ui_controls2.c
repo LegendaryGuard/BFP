@@ -103,6 +103,8 @@ typedef struct
 #define ID_JOYTHRESHOLD	41
 #define ID_SMOOTHMOUSE	42
 
+// TODO: BFP - Add animations as listed on the docs
+
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
 #define ANIM_WALK		2
@@ -129,7 +131,7 @@ typedef struct
 #define ANIM_GESTURE	23
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
-#define ANIM_FLY		26
+#define ANIM_FLY		26 // BFP
 
 typedef struct
 {
@@ -207,6 +209,8 @@ typedef struct
 static controls_t s_controls;
 
 static vec4_t controls_binding_color  = {1.00f, 0.43f, 0.00f, 1.00f}; // bk: Win32 C4305
+
+// TODO: BFP - Add animations as listed on the docs, bind key to toggle the flight, bind key to recover ki energy, bind key to toggle speed (ki boost)
 
 static bind_t g_bindings[] = 
 {
@@ -437,6 +441,12 @@ static void Controls_UpdateModel( int anim ) {
 
 	case ANIM_CROUCH:	
 		s_controls.playerLegs = LEGS_IDLECR;
+		break;
+	
+	// BFP - Menu animation
+	case ANIM_FLY:
+		s_controls.playerLegs = LEGS_IDLE; //LEGS_FLYIDLE;
+		//s_controls.playerTorso = TORSO_FLYA;
 		break;
 
 	case ANIM_FLY:
@@ -1294,12 +1304,6 @@ static void Controls_MenuInit( void )
 	s_controls.stepright.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.stepright.generic.id        = ID_MOVERIGHT;
 
-	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
-	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
-	s_controls.enableflight.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.enableflight.generic.id        = ID_ENABLEFLIGHT;
-
 	s_controls.moveup.generic.type	    = MTYPE_ACTION;
 	s_controls.moveup.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.moveup.generic.callback  = Controls_ActionEvent;
@@ -1329,6 +1333,13 @@ static void Controls_MenuInit( void )
 	s_controls.sidestep.generic.callback  = Controls_ActionEvent;
 	s_controls.sidestep.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.sidestep.generic.id        = ID_STRAFE;
+
+	// BFP - flight control option
+	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
+	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
+	s_controls.enableflight.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.enableflight.generic.id        = ID_ENABLEFLIGHT;
 
 	s_controls.run.generic.type	     = MTYPE_ACTION;
 	s_controls.run.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1661,3 +1672,4 @@ void UI_ControlsMenu( void ) {
 	Controls_MenuInit();
 	UI_PushMenu( &s_controls.menu );
 }
+>>>>>>> 180e6449a177bb963719e955214e04c6a4283fcf

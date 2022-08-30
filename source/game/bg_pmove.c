@@ -220,11 +220,11 @@ static void PM_Friction( void ) {
 		drop += control*pm_flightfriction*pml.frametime;
 
 		if ( pm->cmd.forwardmove >= 0 ) {
-			PM_StartTorsoAnim( TORSO_FLYA );
+			PM_StartTorsoAnim( TORSO_FLYB );
 			PM_StartLegsAnim( LEGS_FLYA );
 		}
 		else {
-			PM_StartTorsoAnim( TORSO_FLYB );
+			PM_StartTorsoAnim( TORSO_FLYA );
 			PM_StartLegsAnim( LEGS_FLYB );
 		}
 	}
@@ -1962,8 +1962,12 @@ void PmoveSingle (pmove_t *pmove) {
 
 		// TODO: BFP -> add little hop here
 		if ( pm->ps->pm_flags & PMF_JUMP_HELD )
+		{
+			pmove->cmd.upmove = 20;
 			pm->ps->pm_flags &= ~PMF_JUMP_HELD;
-
+			pm->ps->pm_flags &= ~PMF_DUCKED;
+			pm->ps->pm_flags &= ~PMF_BACKWARDS_RUN;
+		}
 
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
