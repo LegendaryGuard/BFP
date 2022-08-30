@@ -18,6 +18,5 @@ cd ..
 
 rd binaries /s /q
 rd intermediate /q /s
-pause
 
 :quit
