@@ -3,5 +3,9 @@
 		"prefix": ".BFP",
 		"body": "// BFP - ${0:description}",
 		"description": "Add `// BFP` comment"
+	},
+	"Com_Printf": {
+		"prefix": ".pr",
+		"body": "Com_Printf( \"${1:prop}: ${2:%d}\\n\", ${1:prop} );"
 	}
 }

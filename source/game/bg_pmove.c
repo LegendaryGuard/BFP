@@ -184,6 +184,7 @@ static void PM_Friction( void ) {
 
 	speed = VectorLength(vec);
 	if (speed < 1) {
+		drop = 0;
 		vel[0] = 0;
 		vel[1] = 0;		// allow sinking underwater
 		// FIXME: still have z friction underwater?
@@ -209,8 +210,25 @@ static void PM_Friction( void ) {
 	}
 
 	// apply flying friction
-	if ( pm->ps->powerups[PW_FLIGHT]) {
-		drop += speed*pm_flightfriction*pml.frametime;
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		if (pm->ps->pm_type == PM_DEAD)
+			pm->ps->pm_flags &= ~PMF_FLYING;
+
+		PM_ContinueLegsAnim( LEGS_FLYIDLE );
+
+		control = speed < pm_stopspeed ? pm_stopspeed : speed;
+		drop += control*pm_flightfriction*pml.frametime;
+
+		if ( pm->cmd.forwardmove >= 0 ) {
+			PM_ContinueTorsoAnim( TORSO_FLYA );
+			//PM_ContinueLegsAnim( LEGS_FLYA );
+			PM_ForceLegsAnim( LEGS_FLYA );
+		}
+		else {
+			PM_ContinueTorsoAnim( TORSO_FLYB );
+			//PM_ContinueLegsAnim( LEGS_FLYB );
+			PM_ForceLegsAnim( LEGS_FLYB );
+		}
 	}
 
 	if ( pm->ps->pm_type == PM_SPECTATOR) {
@@ -1755,6 +1773,20 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 
 }
 
+// BFP
+static qboolean PM_StartFlying( void ) {
+	if ( pm->ps->pm_time ) {
+		return qfalse;
+	}
+	
+	if ( pm->ps->pm_time < 250 ) {
+		pm->ps->pm_time += 500;
+		pm->ps->pm_flags ^= PMF_FLYING;
+		return qfalse;
+	}
+	return qtrue;
+}
+
 
 /*
 ================
@@ -1897,9 +1929,21 @@ void PmoveSingle (pmove_t *pmove) {
 		PM_DeadMove ();
 	}
 
+	// BFP
+	if ( pmove->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
+
+		// little hop here when touching the ground
+		if ( pml.groundTrace.contents & CONTENTS_SOLID ) {
+			pm->ps->velocity[2] = JUMP_VELOCITY;
+			PM_AddEvent( EV_JUMP );
+		}
+		PM_StartFlying(); // fly!
+	}
+
 	PM_DropTimers();
 
-	if ( pm->ps->powerups[PW_FLIGHT] ) {
+	// BFP
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
 	} else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {

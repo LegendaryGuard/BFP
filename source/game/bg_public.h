@@ -142,6 +142,7 @@ typedef enum {
 // pmove->pm_flags
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
+#define PMF_FLYING 			4 		// BFP
 #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
 #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
 #define	PMF_TIME_LAND		32		// pm_time is time before rejump
@@ -449,14 +450,16 @@ typedef enum {
 
 // animations
 typedef enum {
-	BOTH_DEATH1,
-	BOTH_DEAD1,
-	BOTH_DEATH2,
-	BOTH_DEAD2,
-	BOTH_DEATH3,
-	BOTH_DEAD3,
+	BOTH_DEATH1, // BFP animation uses this
+	BOTH_DEAD1, // BFP animation uses this
+	BOTH_DEATH2, // BFP animation uses this
+	BOTH_DEAD2, // BFP animation uses this
+	BOTH_DEATH3, // BFP animation uses this
+	BOTH_DEAD3, // BFP animation uses this
 
-	TORSO_GESTURE,
+	TORSO_GESTURE, // BFP animation uses this
+	
+	TORSO_STAND, // moved under TORSO_GESTURE according to BFP animations order
 
 	TORSO_ATTACK,
 	TORSO_ATTACK2,
@@ -464,25 +467,31 @@ typedef enum {
 	TORSO_DROP,
 	TORSO_RAISE,
 
-	TORSO_STAND,
 	TORSO_STAND2,
 
-	LEGS_WALKCR,
-	LEGS_WALK,
-	LEGS_RUN,
-	LEGS_BACK,
-	LEGS_SWIM,
+	TORSO_FLYA, // BFP
+	TORSO_FLYB, // BFP
 
-	LEGS_JUMP,
+	LEGS_WALKCR, // BFP animation uses this
+	LEGS_WALK, // BFP animation uses this
+	LEGS_RUN, // BFP animation uses this
+	LEGS_BACK, // BFP animation uses this
+	LEGS_SWIM, // BFP animation uses this
+
+	LEGS_JUMP, // BFP animation uses this
 	LEGS_LAND,
 
-	LEGS_JUMPB,
+	LEGS_JUMPB, // BFP animation uses this
 	LEGS_LANDB,
 
-	LEGS_IDLE,
-	LEGS_IDLECR,
+	LEGS_IDLE, // BFP animation uses this
+	LEGS_IDLECR, // BFP animation uses this
 
-	LEGS_TURN,
+	LEGS_TURN, // BFP animation uses this
+
+	LEGS_FLYIDLE, // BFP
+	LEGS_FLYA, // BFP
+	LEGS_FLYB, // BFP
 
 	TORSO_GETFLAG,
 	TORSO_GUARDBASE,
@@ -501,6 +510,94 @@ typedef enum {
 
 	MAX_TOTALANIMATIONS
 } animNumber_t;
+
+// TODO: BFP - Remove the enum below and uncomment that 
+// until BFP animations are completed!
+// animations
+/*typedef enum {
+	BOTH_DEATH1,
+	BOTH_DEAD1,
+	BOTH_DEATH2,
+	BOTH_DEAD2,
+	BOTH_DEATH3,
+	BOTH_DEAD3,
+
+	TORSO_GESTURE,
+	
+	TORSO_STAND, // moved under TORSO_GESTURE according to BFP animations order
+
+	TORSO_RUN, // BFP
+
+	TORSO_BLOCK, // BFP
+	
+	TORSO_STUN, // BFP
+
+	TORSO_FLYA, // BFP
+	TORSO_FLYB, // BFP
+
+	TORSO_CHARGE, // BFP
+
+	TORSO_MELEE_READY, // BFP
+	TORSO_MELEE, // BFP
+	TORSO_MELEE_STRIKE, // BFP
+	TORSO_MELEE_AXEHANDLE, // BFP
+
+	LEGS_WALKCR, // BFP animation uses this
+	LEGS_WALK, // BFP animation uses this
+	LEGS_RUN, // BFP animation uses this
+	LEGS_BACK, // BFP animation uses this
+	LEGS_SWIM, // BFP animation uses this
+
+	LEGS_JUMP, // BFP animation uses this
+	LEGS_JUMPB, // BFP animation uses this
+
+	LEGS_IDLE, // BFP animation uses this
+	LEGS_IDLECR, // BFP animation uses this
+
+	LEGS_TURN, // BFP animation uses this
+
+	LEGS_FLYIDLE, // BFP
+	LEGS_FLYA, // BFP
+	LEGS_FLYB, // BFP
+
+	LEGS_CHARGE, // BFP
+
+	LEGS_MELEE, // BFP
+	LEGS_MELEE_STRIKE, // BFP
+
+	TORSO_ATTACK0_PREPARE, // BFP
+	TORSO_ATTACK0_STRIKE, // BFP
+
+	TORSO_ATTACK1_PREPARE, // BFP
+	TORSO_ATTACK1_STRIKE, // BFP
+
+	TORSO_ATTACK2_PREPARE, // BFP
+	TORSO_ATTACK2_STRIKE, // BFP
+
+	TORSO_ATTACK3_PREPARE, // BFP
+	TORSO_ATTACK3_STRIKE, // BFP
+
+	TORSO_ATTACK4_PREPARE, // BFP
+	TORSO_ATTACK4_STRIKE, // BFP
+
+	TORSO_GETFLAG,
+	TORSO_GUARDBASE,
+	TORSO_PATROL,
+	TORSO_FOLLOWME,
+	TORSO_AFFIRMATIVE,
+	TORSO_NEGATIVE,
+
+	MAX_ANIMATIONS,
+
+	LEGS_BACKCR,
+	LEGS_BACKWALK,
+	FLAG_RUN,
+	FLAG_STAND,
+	FLAG_STAND2RUN,
+
+	MAX_TOTALANIMATIONS
+} animNumber_t;
+*/
 
 
 typedef struct animation_s {
