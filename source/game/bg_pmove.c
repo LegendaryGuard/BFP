@@ -43,7 +43,7 @@ float	pm_flyaccelerate = 8.0f;
 
 float	pm_friction = 6.0f;
 float	pm_waterfriction = 1.0f;
-float	pm_flightfriction = 3.0f; // BFP // Q3 Original: 3.0f 
+float	pm_flightfriction = 3.0f;
 float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
@@ -1777,14 +1777,6 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 
 // BFP
 static qboolean PM_StartFlying( void ) {
-	vec3_t  point;
-	trace_t  trace;
-	point[0] = pm->ps->origin[0];
-	point[1] = pm->ps->origin[1];
-	point[2] = pm->ps->origin[2]; // - 0.5;
-	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
-	pml.groundTrace = trace;
-	
 	if ( pm->ps->pm_time ) {
 		return qfalse;
 	}
