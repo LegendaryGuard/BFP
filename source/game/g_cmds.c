@@ -1595,17 +1595,19 @@ void Cmd_Stats_f( gentity_t *ent ) {
 Cmd_ToggleBFPFly_f
 =====================
 */
-void Cmd_ToggleBFPFly_f( gentity_t* ent ) {
+void Cmd_ToggleBFPFly_f( gentity_t* ent ) { // BFP
     gclient_t *client;
-    const char *msg;
 
     client = ent->client;
     client->ps.pm_flags ^= PMF_FLYING;
-    if ( !( client->ps.pm_flags & PMF_FLYING ) )
+/*
+    const char *msg;
+	if ( !( client->ps.pm_flags & PMF_FLYING ) )
         msg = "flight OFF\n";
     else
         msg = "flight ON\n";
     trap_SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
+*/
 }
 
 /*
@@ -1714,7 +1716,7 @@ void ClientCommand( int clientNum ) {
 		Cmd_SetViewpos_f( ent );
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
-	else if (Q_stricmp (cmd, "fly") == 0)
+	else if (Q_stricmp (cmd, "fly") == 0) // BFP
 		Cmd_ToggleBFPFly_f( ent );
 	else
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );

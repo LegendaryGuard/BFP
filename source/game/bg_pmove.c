@@ -1332,8 +1332,6 @@ static void PM_Footsteps( void ) {
 	//
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
-	
-	// TODO: BFP -> Check for flying animation
 
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
 
