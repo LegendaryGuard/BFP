@@ -153,10 +153,10 @@ typedef struct
 	menuaction_s		stepright;
 	menuaction_s		moveup;
 	menuaction_s		movedown;
-	menuaction_s		enableflight; // BFP - flight menu action
 	menuaction_s		turnleft;
 	menuaction_s		turnright;
 	menuaction_s		sidestep;
+	menuaction_s		enableflight; // BFP - flight menu action
 	menuaction_s		run;
 	menuaction_s		machinegun;
 	menuaction_s		chainsaw;
@@ -217,7 +217,6 @@ static bind_t g_bindings[] =
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
 	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
-	{"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',			-1,		-1, -1}, // BFP - flight control
 	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
@@ -228,6 +227,7 @@ static bind_t g_bindings[] =
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
+	{/*"fly"*/"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',	-1,		-1, -1}, // BFP - flight control
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
@@ -275,10 +275,10 @@ static menucommon_s *g_movement_controls[] =
 	(menucommon_s *)&s_controls.stepright,     
 	(menucommon_s *)&s_controls.moveup,        
 	(menucommon_s *)&s_controls.movedown,
-	(menucommon_s *)&s_controls.enableflight,
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,     
 	(menucommon_s *)&s_controls.sidestep,
+	(menucommon_s *)&s_controls.enableflight,
 	NULL
 };
 
@@ -445,7 +445,7 @@ static void Controls_UpdateModel( int anim ) {
 	
 	// BFP - Menu animation
 	case ANIM_FLY:
-		s_controls.playerLegs = LEGS_IDLE; //LEGS_FLYIDLE;
+		s_controls.playerLegs = LEGS_FLYIDLE; //LEGS_FLYIDLE;
 		//s_controls.playerTorso = TORSO_FLYA;
 		break;
 
@@ -1594,10 +1594,10 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.stepright );
 	Menu_AddItem( &s_controls.menu, &s_controls.moveup );
 	Menu_AddItem( &s_controls.menu, &s_controls.movedown );
-	Menu_AddItem( &s_controls.menu, &s_controls.enableflight );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );
+	Menu_AddItem( &s_controls.menu, &s_controls.enableflight );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.attack );
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );

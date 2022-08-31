@@ -219,13 +219,15 @@ static void PM_Friction( void ) {
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
 
-		if ( pm->cmd.forwardmove > 0 ) {
-			PM_StartTorsoAnim( TORSO_FLYA );
-			PM_StartLegsAnim( LEGS_FLYA );
+		if ( pm->cmd.forwardmove >= 0 ) {
+			PM_ContinueTorsoAnim( TORSO_FLYA );
+			//PM_ContinueLegsAnim( LEGS_FLYA );
+			PM_ForceLegsAnim( LEGS_FLYA );
 		}
 		else {
-			PM_StartTorsoAnim( TORSO_FLYB );
-			PM_StartLegsAnim( LEGS_FLYB );
+			PM_ContinueTorsoAnim( TORSO_FLYB );
+			//PM_ContinueLegsAnim( LEGS_FLYB );
+			PM_ForceLegsAnim( LEGS_FLYB );
 		}
 	}
 
@@ -1773,6 +1775,28 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 
 }
 
+// BFP
+static qboolean PM_StartFlying( void ) {
+	vec3_t  point;
+	trace_t  trace;
+	point[0] = pm->ps->origin[0];
+	point[1] = pm->ps->origin[1];
+	point[2] = pm->ps->origin[2]; // - 0.5;
+	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
+	pml.groundTrace = trace;
+	
+	if ( pm->ps->pm_time ) {
+		return qfalse;
+	}
+	
+	if ( pm->ps->pm_time < 250 ) {
+		pm->ps->pm_time += 500;
+		pm->ps->pm_flags ^= PMF_FLYING;
+		return qfalse;
+	}
+	return qtrue;
+}
+
 
 /*
 ================
@@ -1915,16 +1939,21 @@ void PmoveSingle (pmove_t *pmove) {
 		PM_DeadMove ();
 	}
 
+	// BFP
+	if ( pmove->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
+
+		// little hop here when touching the ground
+		if ( pml.groundTrace.contents & CONTENTS_SOLID ) {
+			pm->ps->velocity[2] = JUMP_VELOCITY;
+			PM_AddEvent( EV_JUMP );
+		}
+		PM_StartFlying(); // fly!
+	}
+
 	PM_DropTimers();
 
 	// BFP
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		
-		// TODO: BFP -> little hop here
-		if ( pml.groundTrace.contents == 1 ) {
-			pm->ps->velocity[2] = 300;
-		}
-
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
 	} else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {
