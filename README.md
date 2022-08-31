@@ -12,7 +12,7 @@ A legendary Quake 3 Arena mod from the 90's era.
 
 # TODO list:
 
-- [ ] Toggeable flight (bind key). Hint: FLIGHT POWERUP
+- [x] Toggeable flight (bind key). Hint: FLIGHT POWERUP
 - [ ] Gauntlet logic must be replaced as a bind key, it will use fight animation (using kicks and fists)
 - [ ] Remove weapon visuals (models and stuff)
 - [ ] Animations as listed on the old docs
