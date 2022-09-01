@@ -357,7 +357,7 @@ void BotRefuseOrder(bot_state_t *bs) {
 		return;
 	// if the bot was ordered to do something
 	if ( bs->order_time && bs->order_time > FloatTime() - 10 ) {
-		trap_EA_Action(bs->client, ACTION_NEGATIVE);
+		// trap_EA_Action(bs->client, ACTION_NEGATIVE);
 		BotVoiceChat(bs, bs->decisionmaker, VOICECHAT_NO);
 		bs->order_time = 0;
 	}

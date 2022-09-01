@@ -344,7 +344,7 @@ int BotGetLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) 
 			BotAI_BotInitialChat(bs, "help_start", EasyClientName(bs->teammate, netname, sizeof(netname)), NULL);
 			trap_BotEnterChat(bs->cs, bs->decisionmaker, CHAT_TELL);
 			BotVoiceChatOnly(bs, bs->decisionmaker, VOICECHAT_YES);
-			trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
+			// trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
 			bs->teammessage_time = 0;
 		}
 		//if trying to help the team mate for more than a minute
@@ -389,7 +389,7 @@ int BotGetLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) 
 			BotAI_BotInitialChat(bs, "accompany_start", EasyClientName(bs->teammate, netname, sizeof(netname)), NULL);
 			trap_BotEnterChat(bs->cs, bs->decisionmaker, CHAT_TELL);
 			BotVoiceChatOnly(bs, bs->decisionmaker, VOICECHAT_YES);
-			trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
+			// trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
 			bs->teammessage_time = 0;
 		}
 		//if accompanying the companion for 3 minutes
@@ -591,7 +591,7 @@ int BotGetLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) 
 			BotAI_BotInitialChat(bs, "getitem_start", buf, NULL);
 			trap_BotEnterChat(bs->cs, bs->decisionmaker, CHAT_TELL);
 			BotVoiceChatOnly(bs, bs->decisionmaker, VOICECHAT_YES);
-			trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
+			// trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
 			bs->teammessage_time = 0;
 		}
 		//set the bot goal
@@ -623,7 +623,7 @@ int BotGetLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) 
 				BotAI_BotInitialChat(bs, "camp_start", EasyClientName(bs->teammate, netname, sizeof(netname)), NULL);
 				trap_BotEnterChat(bs->cs, bs->decisionmaker, CHAT_TELL);
 				BotVoiceChatOnly(bs, bs->decisionmaker, VOICECHAT_YES);
-				trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
+				// trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
 			}
 			bs->teammessage_time = 0;
 		}
@@ -705,7 +705,7 @@ int BotGetLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) 
 			BotAI_BotInitialChat(bs, "patrol_start", buf, NULL);
 			trap_BotEnterChat(bs->cs, bs->decisionmaker, CHAT_TELL);
 			BotVoiceChatOnly(bs, bs->decisionmaker, VOICECHAT_YES);
-			trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
+			// trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
 			bs->teammessage_time = 0;
 		}
 		//
