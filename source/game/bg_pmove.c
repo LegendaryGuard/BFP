@@ -295,7 +295,6 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
 }
 
 
-
 /*
 ============
 PM_CmdScale
@@ -1630,17 +1629,18 @@ static void PM_Weapon( void ) {
 
 	pm->ps->weaponstate = WEAPON_FIRING;
 
+	// BFP - disable ammo stuff, take ki instead \o/
 	// check for out of ammo
-	if ( ! pm->ps->ammo[ pm->ps->weapon ] ) {
-		PM_AddEvent( EV_NOAMMO );
-		pm->ps->weaponTime += 500;
-		return;
-	}
+	// if ( ! pm->ps->ammo[ pm->ps->weapon ] ) {
+	// 	PM_AddEvent( EV_NOAMMO );
+	// 	pm->ps->weaponTime += 500;
+	// 	return;
+	// }
 
 	// take an ammo away if not infinite
-	if ( pm->ps->ammo[ pm->ps->weapon ] != -1 ) {
-		pm->ps->ammo[ pm->ps->weapon ]--;
-	}
+	// if ( pm->ps->ammo[pm->ps->weapon] != -1 ) {
+	// 	pm->ps->ammo[pm->ps->weapon]--;
+	// }
 
 	// fire weapon
 	PM_AddEvent( EV_FIRE_WEAPON );
@@ -1649,37 +1649,47 @@ static void PM_Weapon( void ) {
 	default:
 	case WP_GAUNTLET:
 		addTime = 400;
-		break;
-	case WP_LIGHTNING:
-		addTime = 50;
-		break;
-	case WP_SHOTGUN:
-		addTime = 1000;
+		pm->ps->stats[STAT_KI] -= 0;
 		break;
 	case WP_MACHINEGUN:
 		addTime = 100;
+		pm->ps->stats[STAT_KI] -= 10;
+		break;
+	case WP_SHOTGUN:
+		addTime = 1000;
+		pm->ps->stats[STAT_KI] -= 100;
 		break;
 	case WP_GRENADE_LAUNCHER:
 		addTime = 800;
+		pm->ps->stats[STAT_KI] -= 80;
 		break;
 	case WP_ROCKET_LAUNCHER:
 		addTime = 800;
+		pm->ps->stats[STAT_KI] -= 80;
+		break;
+	case WP_LIGHTNING:
+		addTime = 50;
+		pm->ps->stats[STAT_KI] -= 5;
 		break;
 	case WP_PLASMAGUN:
 		addTime = 100;
+		pm->ps->stats[STAT_KI] -= 10;
 		break;
 	case WP_RAILGUN:
 		addTime = 1500;
+		pm->ps->stats[STAT_KI] -= 150;
 		break;
 	case WP_BFG:
 		addTime = 200;
+		pm->ps->stats[STAT_KI] -= 20;
 		break;
 	case WP_GRAPPLING_HOOK:
 		addTime = 400;
+		pm->ps->stats[STAT_KI] -= 40;
 		break;
 	}
 
-	if ( pm->ps->powerups[PW_HASTE] ) {
+	if ( pm->cmd.buttons & BUTTON_KI_USE ) {
 		addTime /= 1.3;
 	}
 
@@ -1755,22 +1765,24 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
+	// Com_Printf( "pml.groundPlane == qtrue: %d\n", pml.groundPlane == qtrue ? "true" : "false" );
+
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];
-		if ( i == PITCH ) {
+		if ( i == PITCH && !( ps->pm_flags & PMF_FLYING ) ) {
 			// don't let the player look up or down more than 90 degrees
-			if ( temp > 16000 ) {
-				ps->delta_angles[i] = 16000 - cmd->angles[i];
-				temp = 16000;
-			} else if ( temp < -16000 ) {
-				ps->delta_angles[i] = -16000 - cmd->angles[i];
-				temp = -16000;
+			// BFP - & if not flying
+			if ( temp > 16384 ) {
+				ps->delta_angles[i] = 16384 - cmd->angles[i];
+				temp = 16384;
+			} else if ( temp < -16384 ) {
+				ps->delta_angles[i] = -16384 - cmd->angles[i];
+				temp = -16384;
 			}
 		}
 		ps->viewangles[i] = SHORT2ANGLE(temp);
 	}
-
 }
 
 // BFP
@@ -1785,6 +1797,19 @@ static qboolean PM_StartFlying( void ) {
 		return qfalse;
 	}
 	return qtrue;
+}
+
+
+void PM_KiCharge( pmove_t *pmove ) {
+	pm = pmove;
+	if ( ( pmove->cmd.buttons & ( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK ) ) ) {
+		return;
+	}
+
+	pm->ps->velocity[0] = 0;
+	pm->ps->velocity[1] = 0;
+	pm->ps->velocity[2] = 0;
+	pm->ps->stats[STAT_KI]++;
 }
 
 
@@ -1933,11 +1958,16 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( pmove->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
 
 		// little hop here when touching the ground
-		if ( pml.groundTrace.contents & CONTENTS_SOLID ) {
+		if ( pml.groundPlane == qtrue ) {
 			pm->ps->velocity[2] = JUMP_VELOCITY;
 			PM_AddEvent( EV_JUMP );
+			pml.groundPlane = qfalse;
 		}
 		PM_StartFlying(); // fly!
+	}
+
+	if ( pmove->cmd.buttons & BUTTON_KI_CHARGE ) {
+		PM_KiCharge( pmove );
 	}
 
 	PM_DropTimers();
