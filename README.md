@@ -67,3 +67,55 @@ Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` o
 <br/><br/>
 
 Note: This repository was initialized from https://github.com/marconett/q3a.
+
+## Credits
+
+Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their packages.
+
+#### Bid For Power Staff Members	
+<p align="center">
+Ansel<br/>
+Skin Artist<br/>
+
+Anthony<br/>
+2D Artist<br/>
+
+Chris<br/>
+Founder<br/>
+
+Dash<br/>
+Level Designer / Texture Artist<br/>
+
+Disco Stu<br/>
+Web Designer<br/>
+
+Gangsta Poodle<br/>
+Level Designer<br/>
+
+Kit Carson<br/>
+Level Designer / Texture Artist<br/>
+
+NilreMK<br/>
+Modeler / Animator<br/>
+
+Number17<br/>
+Sound Engineer<br/>
+
+Pyrofragger<br/>
+Modeler / Animator<br/>
+
+Remisser<br/>
+Sound / Music Engineer<br/>
+
+Rodney<br/>
+Modeler / Animator<br/>
+
+Yngwie<br/>
+Level Designer / Texture Artist<br/>
+
+Yrgol<br/>
+Project Lead, Lead Programmer<br/>
+
+::Additional Assistance::<br/>
+Mooky, Perfect Chaos, Dakota, Bardock, DethAyngel, Ebola, Badhead, $onik, Gigatron, Timex & Nat.
+</p>
