@@ -73,7 +73,7 @@ Note: This repository was initialized from https://github.com/marconett/q3a.
 Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their packages.
 
 #### Bid For Power Staff Members	
-<p align="center">
+
 Ansel<br/>
 Skin Artist<br/>
 
@@ -118,4 +118,3 @@ Project Lead, Lead Programmer<br/>
 
 ::Additional Assistance::<br/>
 Mooky, Perfect Chaos, Dakota, Bardock, DethAyngel, Ebola, Badhead, $onik, Gigatron, Timex & Nat.
-</p>
