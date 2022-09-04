@@ -48,6 +48,7 @@ float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
 
+void PM_StopFlight( void ); // BFP Flight
 
 /*
 ===============
@@ -210,25 +211,13 @@ static void PM_Friction( void ) {
 	}
 
 	// apply flying friction
+	// BFP
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		if (pm->ps->pm_type == PM_DEAD)
+		if ( pm->ps->pm_type == PM_DEAD )
 			pm->ps->pm_flags &= ~PMF_FLYING;
-
-		PM_ContinueLegsAnim( LEGS_FLYIDLE );
 
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
-
-		if ( pm->cmd.forwardmove >= 0 ) {
-			PM_ContinueTorsoAnim( TORSO_FLYA );
-			//PM_ContinueLegsAnim( LEGS_FLYA );
-			PM_ForceLegsAnim( LEGS_FLYA );
-		}
-		else {
-			PM_ContinueTorsoAnim( TORSO_FLYB );
-			//PM_ContinueLegsAnim( LEGS_FLYB );
-			PM_ForceLegsAnim( LEGS_FLYB );
-		}
 	}
 
 	if ( pm->ps->pm_type == PM_SPECTATOR) {
@@ -930,11 +919,14 @@ static void PM_CrashLand( void ) {
 	float		a, b, c, den;
 
 	// decide which landing animation to use
+	// BFP - Non-existant animations
+	/*
 	if ( pm->ps->pm_flags & PMF_BACKWARDS_JUMP ) {
 		PM_ForceLegsAnim( LEGS_LANDB );
 	} else {
 		PM_ForceLegsAnim( LEGS_LAND );
 	}
+	*/
 
 	pm->ps->legsTimer = TIMER_LAND;
 
@@ -1149,7 +1141,14 @@ static void PM_GroundTrace( void ) {
 		pml.walking = qfalse;
 		return;
 	}
-	
+
+	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
+		if ( pml.groundPlane ) {
+			pm->ps->velocity[2] = JUMP_VELOCITY;
+			PM_AddEvent( EV_JUMP );
+		}
+	}
+
 	// slopes that are too steep will not be considered onground
 	if ( trace.plane.normal[2] < MIN_WALK_NORMAL ) {
 		if ( pm->debugLevel ) {
@@ -1332,6 +1331,26 @@ static void PM_Footsteps( void ) {
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
+	// BFP - Flight
+	if ( pm->ps->pm_flags & PMF_FLYING )
+	{
+		if ( ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) || ( pm->cmd.buttons & BUTTON_WALKING ) ) {
+
+			if ( pm->cmd.forwardmove > 0 ) {
+				PM_ContinueTorsoAnim( TORSO_FLYA );
+				PM_ContinueLegsAnim( LEGS_FLYA );
+			}
+			else if ( pm->cmd.forwardmove < 0 ) {
+				PM_ContinueTorsoAnim( TORSO_FLYB );
+				PM_ContinueLegsAnim( LEGS_FLYB );
+			}
+			else {
+				PM_ContinueLegsAnim( LEGS_FLYIDLE );
+			}
+		}
+		return;
+	}
+
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
 
 		if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
@@ -1363,7 +1382,7 @@ static void PM_Footsteps( void ) {
 	if ( pm->ps->pm_flags & PMF_DUCKED ) {
 		bobmove = 0.5;	// ducked characters bob much faster
 		if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-			PM_ContinueLegsAnim( LEGS_BACKCR );
+			PM_ContinueLegsAnim( LEGS_WALKCR );
 		}
 		else {
 			PM_ContinueLegsAnim( LEGS_WALKCR );
@@ -1392,7 +1411,7 @@ static void PM_Footsteps( void ) {
 		} else {
 			bobmove = 0.3f;	// walking bobs slow
 			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-				PM_ContinueLegsAnim( LEGS_BACKWALK );
+				PM_ContinueLegsAnim( LEGS_BACK );
 			}
 			else {
 				PM_ContinueLegsAnim( LEGS_WALK );
@@ -1483,7 +1502,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 	PM_AddEvent( EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
 	pm->ps->weaponTime += 200;
-	PM_StartTorsoAnim( TORSO_DROP );
+	// PM_StartTorsoAnim( TORSO_DROP );
 }
 
 
@@ -1507,7 +1526,7 @@ static void PM_FinishWeaponChange( void ) {
 	pm->ps->weapon = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
 	pm->ps->weaponTime += 250;
-	PM_StartTorsoAnim( TORSO_RAISE );
+	// PM_StartTorsoAnim( TORSO_RAISE );
 }
 
 
@@ -1520,7 +1539,7 @@ PM_TorsoAnimation
 static void PM_TorsoAnimation( void ) {
 	if ( pm->ps->weaponstate == WEAPON_READY ) {
 		if ( pm->ps->weapon == WP_GAUNTLET ) {
-			PM_ContinueTorsoAnim( TORSO_STAND2 );
+			PM_ContinueTorsoAnim( TORSO_STAND );
 		} else {
 			PM_ContinueTorsoAnim( TORSO_STAND );
 		}
@@ -1600,7 +1619,7 @@ static void PM_Weapon( void ) {
 	if ( pm->ps->weaponstate == WEAPON_RAISING ) {
 		pm->ps->weaponstate = WEAPON_READY;
 		if ( pm->ps->weapon == WP_GAUNTLET ) {
-			PM_StartTorsoAnim( TORSO_STAND2 );
+			PM_StartTorsoAnim( TORSO_STAND );
 		} else {
 			PM_StartTorsoAnim( TORSO_STAND );
 		}
@@ -1622,9 +1641,9 @@ static void PM_Weapon( void ) {
 			pm->ps->weaponstate = WEAPON_READY;
 			return;
 		}
-		PM_StartTorsoAnim( TORSO_ATTACK2 );
+		// PM_StartTorsoAnim( TORSO_ATTACK2 );
 	} else {
-		PM_StartTorsoAnim( TORSO_ATTACK );
+		// PM_StartTorsoAnim( TORSO_ATTACK );
 	}
 
 	pm->ps->weaponstate = WEAPON_FIRING;
@@ -1786,7 +1805,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 }
 
 // BFP
-static qboolean PM_StartFlying( void ) {
+static qboolean PM_StartFlight( void ) {
 	if ( pm->ps->pm_time ) {
 		return qfalse;
 	}
@@ -1955,15 +1974,11 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// BFP
-	if ( pmove->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
+	if ( pmove->cmd.buttons & BUTTON_ENABLEFLIGHT 
+		&& pm->ps->pm_type != PM_DEAD ) {
 
 		// little hop here when touching the ground
-		if ( pml.groundPlane == qtrue ) {
-			pm->ps->velocity[2] = JUMP_VELOCITY;
-			PM_AddEvent( EV_JUMP );
-			pml.groundPlane = qfalse;
-		}
-		PM_StartFlying(); // fly!
+		PM_StartFlight(); // fly!
 	}
 
 	if ( pmove->cmd.buttons & BUTTON_KI_CHARGE ) {
