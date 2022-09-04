@@ -48,7 +48,9 @@ float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
 
-void PM_StopFlight( void ); // BFP Flight
+// BFP - Flight
+void PM_StartFlight( void );
+void PM_StopFlight( void );
 
 /*
 ===============
@@ -211,7 +213,7 @@ static void PM_Friction( void ) {
 	}
 
 	// apply flying friction
-	// BFP
+	// BFP - Flight
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
 		if ( pm->ps->pm_type == PM_DEAD )
 			pm->ps->pm_flags &= ~PMF_FLYING;
@@ -1108,6 +1110,26 @@ static void PM_GroundTrace( void ) {
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
 
+	// BFP - Flight
+	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT 
+		&& ( pm->ps->pm_flags & PMF_FLYING ) ) {
+		PM_StopFlight();
+		return;
+	}
+
+	// BFP - Flight
+	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT 
+		&& !( pm->ps->pm_flags & PMF_FLYING ) 
+		&& pm->ps->pm_type != PM_DEAD ) {
+		// little hop here when touching the ground
+		if ( pml.groundTrace.contents & CONTENTS_SOLID ) {
+			pm->ps->velocity[2] = JUMP_VELOCITY;
+			PM_AddEvent( EV_JUMP );
+		}
+		PM_StartFlight(); // fly!
+		return;
+	}
+
 	// do something corrective if the trace starts in a solid...
 	if ( trace.allsolid ) {
 		if ( !PM_CorrectAllSolid(&trace) )
@@ -1140,13 +1162,6 @@ static void PM_GroundTrace( void ) {
 		pml.groundPlane = qfalse;
 		pml.walking = qfalse;
 		return;
-	}
-
-	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
-		if ( pml.groundPlane ) {
-			pm->ps->velocity[2] = JUMP_VELOCITY;
-			PM_AddEvent( EV_JUMP );
-		}
 	}
 
 	// slopes that are too steep will not be considered onground
@@ -1804,18 +1819,30 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	}
 }
 
-// BFP
-static qboolean PM_StartFlight( void ) {
+// BFP - Flight
+void PM_StartFlight( void ) {
 	if ( pm->ps->pm_time ) {
-		return qfalse;
+		return;
 	}
 	
 	if ( pm->ps->pm_time < 250 ) {
 		pm->ps->pm_time += 500;
-		pm->ps->pm_flags ^= PMF_FLYING;
-		return qfalse;
+		pm->ps->pm_flags |= PMF_FLYING;
 	}
-	return qtrue;
+	return;
+}
+
+// BFP - Flight
+void PM_StopFlight( void ) {
+	if ( pm->ps->pm_time ) {
+		return;
+	}
+	
+	if ( pm->ps->pm_time < 250 ) {
+		pm->ps->pm_time += 500;
+		pm->ps->pm_flags &= ~PMF_FLYING;
+	}
+	return;
 }
 
 
@@ -1987,7 +2014,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 	PM_DropTimers();
 
-	// BFP
+	// BFP - Flight
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
