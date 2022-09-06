@@ -1592,23 +1592,53 @@ void Cmd_Stats_f( gentity_t *ent ) {
 
 /*
 =====================
-Cmd_ToggleBFPFly_f
+Cmd_BFP_Fly
 =====================
 */
-void Cmd_ToggleBFPFly_f( gentity_t* ent ) { // BFP
-    gclient_t *client;
+void Cmd_BFP_Fly( gentity_t* ent ) { // BFP
+	gclient_t *client;
 
-    client = ent->client;
-    client->ps.pm_flags ^= PMF_FLYING;
-/*
-    const char *msg;
-	if ( !( client->ps.pm_flags & PMF_FLYING ) )
-        msg = "flight OFF\n";
-    else
-        msg = "flight ON\n";
-    trap_SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
-*/
+	client = ent->client;
+	client->ps.pm_flags ^= PMF_FLYING;
 }
+
+void Cmd_BFP_SetKiCharge_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_SetKiCharge_f\n" );
+}
+
+void Cmd_BFP_SetKiUse_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_SetKiUse_f\n" );
+}
+
+void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_KiUseToggle_f\n" );
+}
+
+void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_SetKiIdle_f\n" );
+}
+
+void Cmd_BFP_SelectCharacter_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_SelectCharacter_f\n" );
+}
+
+void Cmd_BFP_StartBlock_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_StartBlock_f\n" );
+}
+
+void Cmd_BFP_StopBlock_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_StopBlock_f\n" );
+}
+
+void Cmd_BFP_StartMelee_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_StartMelee_f\n" );
+}
+
+void Cmd_BFP_StopMelee_f( gentity_t* ent ) {
+	Com_Printf( "Cmd_BFP_StopMelee_f\n" );
+}
+
+
 
 /*
 =================
@@ -1717,7 +1747,25 @@ void ClientCommand( int clientNum ) {
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
 	else if (Q_stricmp (cmd, "fly") == 0) // BFP
-		Cmd_ToggleBFPFly_f( ent );
+		Cmd_BFP_Fly( ent );
+	else if (Q_stricmp (cmd, "set_ki_charge") == 0) // BFP
+		Cmd_BFP_SetKiCharge_f( ent );
+	else if (Q_stricmp (cmd, "set_ki_use") == 0) // BFP
+		Cmd_BFP_SetKiUse_f( ent );
+	else if (Q_stricmp (cmd, "kiusetoggle") == 0) // BFP
+		Cmd_BFP_KiUseToggle_f( ent );
+	else if (Q_stricmp (cmd, "set_ki_idle") == 0) // BFP
+		Cmd_BFP_SetKiIdle_f( ent );
+	else if (Q_stricmp (cmd, "selectcharacter") == 0) // BFP
+		Cmd_BFP_SelectCharacter_f( ent );
+	else if (Q_stricmp (cmd, "start_block") == 0) // BFP
+		Cmd_BFP_StartBlock_f( ent );
+	else if (Q_stricmp (cmd, "stop_block") == 0) // BFP
+		Cmd_BFP_StopBlock_f( ent );
+	else if (Q_stricmp (cmd, "start_melee") == 0) // BFP
+		Cmd_BFP_StartMelee_f( ent );
+	else if (Q_stricmp (cmd, "stop_melee") == 0) // BFP
+		Cmd_BFP_StopMelee_f( ent );
 	else
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );
 }

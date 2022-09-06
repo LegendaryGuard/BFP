@@ -69,6 +69,31 @@ vmCvar_t	g_restarted;
 vmCvar_t	g_log;
 vmCvar_t	g_logSync;
 vmCvar_t	g_blood;
+
+vmCvar_t	g_basePL;
+vmCvar_t	g_allowSpectatorChat;
+vmCvar_t	g_meleeDamage;
+vmCvar_t	g_meleeDiveRange;
+vmCvar_t	g_meleeRange;
+vmCvar_t	g_chargeDelay;
+vmCvar_t	g_hitStun;
+vmCvar_t	g_meleeOnly;
+vmCvar_t	g_noFlight;
+vmCvar_t	g_plKillBonusPct;
+vmCvar_t	g_maxSpawnPL;
+vmCvar_t	g_flightCost;
+vmCvar_t	g_flightCostPct;
+vmCvar_t	g_boostCost;
+vmCvar_t	g_boostCostPct;
+vmCvar_t	g_blockCost;
+vmCvar_t	g_blockCostPct;
+vmCvar_t	g_kiRegen;
+vmCvar_t	g_kiRegenPct;
+vmCvar_t	g_kiCharge;
+vmCvar_t	g_kiChargePct;
+vmCvar_t	g_blockDelay;
+vmCvar_t	g_blockLength;
+
 vmCvar_t	g_podiumDist;
 vmCvar_t	g_podiumDrop;
 vmCvar_t	g_allowVote;
@@ -139,6 +164,30 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_debugAlloc, "g_debugAlloc", "0", 0, 0, qfalse },
 	{ &g_motd, "g_motd", "", 0, 0, qfalse },
 	{ &g_blood, "com_blood", "1", 0, 0, qfalse },
+
+	{ &g_basePL, "g_basePL", "150", 0, 0, qtrue },
+	{ &g_allowSpectatorChat, "g_allowSpectatorChat", "", 0, 0, qtrue },
+	{ &g_meleeDamage, "g_meleeDamage", "10", 0, 0, qtrue },
+	{ &g_meleeDiveRange, "g_meleeDiveRange", "700", 0, 0, qtrue },
+	{ &g_meleeRange, "g_meleeRange", "32", 0, 0, qtrue },
+	{ &g_chargeDelay, "g_chargeDelay", "750", 0, 0, qtrue },
+	{ &g_hitStun, "g_hitStun", "", 0, 0, qtrue },
+	{ &g_meleeOnly, "g_meleeOnly", "", 0, 0, qtrue },
+	{ &g_noFlight, "g_noFlight", "", 0, 0, qtrue },
+	{ &g_plKillBonusPct, "g_plKillBonusPct", ".1", 0, 0, qtrue },
+	{ &g_maxSpawnPL, "g_maxSpawnPL", "999", 0, 0, qtrue },
+	{ &g_flightCost, "g_flightCost", "50", 0, 0, qtrue },
+	{ &g_flightCostPct, "g_flightCostPct", "0", 0, 0, qtrue },
+	{ &g_boostCost, "g_boostCost", "350", 0, 0, qtrue },
+	{ &g_boostCostPct, "g_boostCostPct", "3", 0, 0, qtrue },
+	{ &g_blockCost, "g_blockCost", "2", 0, 0, qtrue },
+	{ &g_blockCostPct, "g_blockCostPct", "3", 0, 0, qtrue },
+	{ &g_kiRegen, "g_kiRegen", "0", 0, 0, qtrue },
+	{ &g_kiRegenPct, "g_kiRegenPct", "0.6", 0, 0, qtrue },
+	{ &g_kiCharge, "g_kiCharge", "0", 0, 0, qtrue },
+	{ &g_kiChargePct, "g_kiChargePct", "15", 0, 0, qtrue },
+	{ &g_blockDelay, "g_blockDelay", "2", 0, 0, qtrue },
+	{ &g_blockLength, "g_blockLength", "3", 0, 0, qtrue },
 
 	{ &g_podiumDist, "g_podiumDist", "80", 0, 0, qfalse },
 	{ &g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse },
