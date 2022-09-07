@@ -300,15 +300,18 @@ updates:
 * particle dust trail for boost running or flying close to the ground.
 * particle bubble effects that float to the surface and gather there.
 * particle splash + bubbles for entering water.
-* particle bubble trail for boost swimming,
-https://www.bidforpower.com/images/misc/underwater.jpg
+* particle bubble trail for boost swimming:
+<img src="https://user-images.githubusercontent.com/49716252/188996461-499a7aed-be3d-4cd7-8322-67ac328ec0c1.png" alt="particlebubble" width=640 />
+
 * particle bubble trail for boost flying close to water.
-* particle bubble effects for charging underwater,
-https://www.bidforpower.com/images/misc/underwatercharge.jpg
+* particle bubble effects for charging underwater:
+<img src="https://user-images.githubusercontent.com/49716252/188996690-87659342-a9e3-4007-bea9-9c1ba03aa253.png" alt="underwatercharge" />
+
 * fixed the waterdance bug.
 * lowered zanzoken cost.
-* added antigrav rock particles for charging,
-https://www.bidforpower.com/images/misc/groundcharge1.jpg
+* added antigrav rock particles for charging:
+<img src="https://user-images.githubusercontent.com/49716252/188996766-7c0055fb-2c3a-4cdf-b188-5d70fabd8d69.png" alt="groundcharge" width=640 />
+
 * the antigrav rocks fall to the ground when you stop charging.
 * gave rock particles collision detection and bouncing properties
 
@@ -364,7 +367,7 @@ From memory since I havn't been keeping close logs lately.
 
 I added some particle effects to the game. I havn't really figured out what to do with them yet, but they are there. Just as a start I added the generic explosion sparks. As with every other effect, if you don't like it you can turn it off in the menu.
 
-bunch of renzokus fired at a wall
+<img src="https://user-images.githubusercontent.com/49716252/188996981-5d1d1596-bf19-448c-9f80-819a634ee117.png" alt="bunch of renzokus fired at a wall" width=640 />
 
 
  
