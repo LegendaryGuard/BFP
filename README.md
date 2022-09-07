@@ -29,6 +29,8 @@ A legendary Quake 3 Arena mod from the 90's era.
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. "Custom plugin models")
 - [ ] Playable third person mode and first person vis mode (add the options in the UI Setup menu)
 - [ ] Cvars as described on the old doc
+- [ ] Last Man Standing gamemode
+- [ ] Survival gamemode
 - [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
 - [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
 
