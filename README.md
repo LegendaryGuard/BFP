@@ -47,6 +47,8 @@ The source code was lost, but the assets and some docs are in any place.
 
 - Old dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
 
+Click here to see the [Old dev journal (Markdown edition)](docs/ygorl_dev_journal.md)
+
 ### About the repository
 
 We're doing a recreation of the lost source code. <br/>
