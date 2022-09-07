@@ -83,40 +83,56 @@ if ( killedSomeone ) {
 
 - How should be the main menu:
 
-<img src="" alt="main_menu" />
+<img src="https://user-images.githubusercontent.com/49716252/188994358-3d03ef80-e27f-4e5e-96ac-bd0200134ced.jpg" alt="main_menu" width=560 />
+
+<br/>
 
 - How should be the gameplay menu (when press Esc to go):
 
-<img src="" alt="gameplay_menu" />
+<img src="https://user-images.githubusercontent.com/49716252/188993661-ae80923d-4ec9-47bd-bb65-0b9f036aa241.png" alt="gameplay_menu" width=560 />
+
+<br/>
 
 - How should be the HUD:
 
-<img src="" alt="hud_show" />
+<img src="https://user-images.githubusercontent.com/49716252/188994019-589d3046-e553-47de-afff-5fb0eb2dd7ec.png" alt="hud_display" width=560 />
+
+<br/>
 
 - How should be UI setup:
 
-<img src="" alt="ui_setup" />
+<img src="https://user-images.githubusercontent.com/49716252/188993194-10feb38b-2809-41d1-9e81-1ce96ff1428a.png" alt="ui_setup" width=560 />
+
+<br/>
 
 - How should be UI player settings (keep in mind all players use running animation):
 
-<img src="" alt="ui_player_settings" /><br/>
-<img src="" alt="ui_player_settings2" />
+<img src="https://user-images.githubusercontent.com/49716252/188993401-9e7036e6-cbed-47ac-8aea-431963a343bf.png" alt="ui_player_settings" width=560 /><br/>
+<img src="https://user-images.githubusercontent.com/49716252/188994108-c5bdfa06-32d1-4ebe-beb1-d74e9e6159ac.jpg" alt="ui_player_settings2" width=560 />
+
+<br/>
 
 - How should be UI controls:
 
-<img src="" alt="ui_controls" />
+<img src="https://user-images.githubusercontent.com/49716252/188993792-fd9c4440-3b18-45bf-9964-598459695fd9.png" alt="ui_controls" />
+
+<br/>
 
 - How should be UI BFP options:
 
-<img src="" alt="bfp_options" />
+<img src="https://user-images.githubusercontent.com/49716252/188993293-db531ff5-5754-4ded-99ad-b5f3b2f5fd72.png" alt="bfp_options" width=560 />
+
+<br/>
 
 - When player receives a hit stun (`g_hitStun 1`):
 
-<img src="" alt="hit_stun_received" />
+<img src="https://user-images.githubusercontent.com/49716252/188993948-435cec9c-84a4-477a-b072-1740ca4f1f7d.jpg" alt="hit_stun_received" width=560 />
+
+<br/>
 
 - When player is being ready to shot (holding a key):
 
-<img src="" alt="ready_to_attack" />
+<img src="https://user-images.githubusercontent.com/49716252/188993564-d1d5d9ee-80e3-4c15-b0c4-eb966441e57d.png" alt="ready_to_attack" width=560 />
 
 <br/>
 
