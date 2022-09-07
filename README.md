@@ -4,7 +4,7 @@ Bid For Power (BFP) source code
 A legendary Quake 3 Arena mod from the 90's era.
 
 <p align="center">
-<img alt="zeqlogo" src="https://user-images.githubusercontent.com/49716252/186026745-458849b2-385b-4108-8881-e55e82fb1493.png" width=320 />
+<img src="https://user-images.githubusercontent.com/49716252/186026745-458849b2-385b-4108-8881-e55e82fb1493.png" alt="zeqlogo" width=320 />
 </p>
 
 
@@ -45,6 +45,7 @@ Bid For Power is a total conversion for QuakeIII that plays nothing like the ori
 
 The source code was lost, but the assets and some docs are in any place.
 
+- Old dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
 
 ### About the repository
 
@@ -52,11 +53,100 @@ We're doing a recreation of the lost source code. <br/>
 The highest priority goal is to completely copy BFP game logical structure. <br/>
 Any fixes, improvements and contributions are welcome. But we still can't accept secondary things until it's completely finished and becomes stable.
 
+### References and clues to know how should be the game
+
+Documentations, references and extracted stuff will give us clues to reach the goals. <br/>
+
 - Old documentations:
 
-- - [Guide](Guide.md)
+- - [Guide](docs/Guide.md)
 
-- - [Creating custom plugin models](Create_Custom_Models.md)
+- - [Creating custom plugin models](docs/Create_Custom_Models.md)
+
+<br/>
+
+- Cvars, cmd and bind stuff about the old game:
+
+- - [Bindlist](docs/bind_bfp_list.txt)
+
+- - [Cmdlist](docs/cmd_bfp_list.txt)
+
+- - [Cvarlist](docs/cvar_bfp_list.txt)
+
+We can see, for example, `g_plKillBonusPct`, which means we need to find the function that rewards the player and do something with that. Something like this:
+
+```
+if ( killedSomeone ) {
+   pl = currentPL + (currentPL * g_plKillBonusPct);
+}
+```
+
+- How should be the main menu:
+
+<img src="" alt="main_menu" />
+
+- How should be the gameplay menu (when press Esc to go):
+
+<img src="" alt="gameplay_menu" />
+
+- How should be the HUD:
+
+<img src="" alt="hud_show" />
+
+- How should be UI setup:
+
+<img src="" alt="ui_setup" />
+
+- How should be UI player settings (keep in mind all players use running animation):
+
+<img src="" alt="ui_player_settings" /><br/>
+<img src="" alt="ui_player_settings2" />
+
+- How should be UI controls:
+
+<img src="" alt="ui_controls" />
+
+- How should be UI BFP options:
+
+<img src="" alt="bfp_options" />
+
+- When player receives a hit stun (`g_hitStun 1`):
+
+<img src="" alt="hit_stun_received" />
+
+- When player is being ready to shot (holding a key):
+
+<img src="" alt="ready_to_attack" />
+
+<br/>
+
+- **cfg files**:
+
+A sample inside models/players/player_name/default.cfg:
+
+- - [default.cfg](cfgs/default.cfg)
+
+Server config:
+
+- - [bfp_server.cfg](cfgs/bfp_server.cfg)
+
+Attacksets:
+
+- - [bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg)
+
+Weapon settings:
+
+- - [bfp_weapon.cfg](cfgs/bfp_weapon.cfg)
+- - [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg)
+
+BFP config (general binding and some client stuff):
+
+- - [bfp.cfg](cfgs/bfp.cfg)
+
+Other q3 config:
+
+- - [q3config.cfg](cfgs/q3config.cfg)
+
 
 ### How to build
 
