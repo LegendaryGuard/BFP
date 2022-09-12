@@ -1218,23 +1218,23 @@ typedef struct playerState_s {
 // so they aren't game/cgame only definitions
 //
 #define	BUTTON_ATTACK					1
-#define	BUTTON_TALK						2     // displays talk balloon and disables actions
-#define	BUTTON_USE_HOLDABLE		4
-#define	BUTTON_GESTURE				8
-#define	BUTTON_WALKING				16    // walking can't just be infered from MOVE_RUN because a key pressed late in the frame will only generate a small move value for that frame walking will use different animations and won't generate footsteps
-#define BUTTON_5							32    // BFP - +button5
-#define	BUTTON_6							64    // BFP - +button6
-#define BUTTON_MELEE					128   // BFP - +button7
-#define BUTTON_KI_USE					256   // BFP - +button8
-#define BUTTON_KI_CHARGE			512   // BFP - +button9
-#define BUTTON_BLOCK					1024  // BFP - +button10
-#define BUTTON_11							2048  // BFP - +button11
-#define BUTTON_ENABLEFLIGHT		4096  // BFP - +button12
-#define BUTTON_13							8192  // BFP - +button13
-#define BUTTON_14							16384 // BFP - +button14
-#define BUTTON_ANY						32768 // any key whatsoever
+#define	BUTTON_TALK						2		// displays talk balloon and disables actions
+#define	BUTTON_USE_HOLDABLE				4
+#define	BUTTON_GESTURE					8
+#define	BUTTON_WALKING					16		// walking can't just be infered from MOVE_RUN because a key pressed late in the frame will only generate a small move value for that frame walking will use different animations and won't generate footsteps
+#define BUTTON_5						32		// BFP - +button5
+#define	BUTTON_6						64		// BFP - +button6
+#define BUTTON_MELEE					128		// BFP - +button7
+#define BUTTON_KI_USE					256		// BFP - +button8
+#define BUTTON_KI_CHARGE				512		// BFP - +button9
+#define BUTTON_BLOCK					1024	// BFP - +button10
+#define BUTTON_11						2048	// BFP - +button11
+#define BUTTON_ENABLEFLIGHT				4096	// BFP - +button12
+#define BUTTON_13						8192	// BFP - +button13
+#define BUTTON_14						16384	// BFP - +button14
+#define BUTTON_ANY						32768	// any key whatsoever
 
-#define	MOVE_RUN							120   // if forwardmove or rightmove are >= MOVE_RUN, then BUTTON_WALKING should be set
+#define	MOVE_RUN						120		// if forwardmove or rightmove are >= MOVE_RUN, then BUTTON_WALKING should be set
 
 // usercmd_t is sent to the server each client frame
 typedef struct usercmd_s {
