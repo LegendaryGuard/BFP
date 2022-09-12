@@ -212,24 +212,11 @@ static void PM_Friction( void ) {
 	// apply flying friction
 	// BFP - Flight
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		if (pm->ps->pm_type == PM_DEAD)
+		if ( pm->ps->pm_type == PM_DEAD )
 			pm->ps->pm_flags &= ~PMF_FLYING;
-
-		PM_ContinueLegsAnim( LEGS_FLYIDLE );
 
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
-
-		if ( pm->cmd.forwardmove >= 0 ) {
-			PM_ContinueTorsoAnim( TORSO_FLYA );
-			//PM_ContinueLegsAnim( LEGS_FLYA );
-			PM_ForceLegsAnim( LEGS_FLYA );
-		}
-		else {
-			PM_ContinueTorsoAnim( TORSO_FLYB );
-			//PM_ContinueLegsAnim( LEGS_FLYB );
-			PM_ForceLegsAnim( LEGS_FLYB );
-		}
 	}
 
 	if ( pm->ps->pm_type == PM_SPECTATOR) {
@@ -932,11 +919,14 @@ static void PM_CrashLand( void ) {
 	float		a, b, c, den;
 
 	// decide which landing animation to use
+	// BFP - Non-existant animations
+	/*
 	if ( pm->ps->pm_flags & PMF_BACKWARDS_JUMP ) {
 		PM_ForceLegsAnim( LEGS_LANDB );
 	} else {
 		PM_ForceLegsAnim( LEGS_LAND );
 	}
+	*/
 
 	pm->ps->legsTimer = TIMER_LAND;
 
@@ -1333,12 +1323,28 @@ static void PM_Footsteps( void ) {
 	//
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
+	
+	// BFP - Flight
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		if ( ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) || ( pm->cmd.buttons & BUTTON_WALKING ) ) {
+			if ( pm->cmd.forwardmove > 0 ) {
+				PM_ContinueTorsoAnim( TORSO_FLYA );
+				PM_ContinueLegsAnim( LEGS_FLYA );
+			} else if ( pm->cmd.forwardmove < 0 ) {
+				PM_ContinueTorsoAnim( TORSO_FLYB );
+				PM_ContinueLegsAnim( LEGS_FLYB );
+			} else {
+				PM_ContinueLegsAnim( LEGS_FLYIDLE );
+			}
+		}
+		return;
+	}
 
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
 
-		if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
-			PM_ContinueLegsAnim( LEGS_IDLECR );
-		}
+		// if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
+		// 	PM_ContinueLegsAnim( LEGS_IDLECR );
+		// }
 		// airborne leaves position in cycle intact, but doesn't advance
 		if ( pm->waterlevel > 1 ) {
 			PM_ContinueLegsAnim( LEGS_SWIM );
@@ -1366,8 +1372,7 @@ static void PM_Footsteps( void ) {
 		bobmove = 0.5;	// ducked characters bob much faster
 		if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
 			PM_ContinueLegsAnim( LEGS_BACKCR );
-		}
-		else {
+		} else {
 			PM_ContinueLegsAnim( LEGS_WALKCR );
 		}
 		// ducked characters never play footsteps
@@ -1386,17 +1391,15 @@ static void PM_Footsteps( void ) {
 			bobmove = 0.4f;	// faster speeds bob faster
 			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
 				PM_ContinueLegsAnim( LEGS_BACK );
-			}
-			else {
+			} else {
 				PM_ContinueLegsAnim( LEGS_RUN );
 			}
 			footstep = qtrue;
 		} else {
 			bobmove = 0.3f;	// walking bobs slow
 			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-				PM_ContinueLegsAnim( LEGS_BACKWALK );
-			}
-			else {
+				PM_ContinueLegsAnim( LEGS_BACK );
+			} else {
 				PM_ContinueLegsAnim( LEGS_WALK );
 			}
 		}
@@ -1485,7 +1488,7 @@ static void PM_BeginWeaponChange( int weapon ) {
 	PM_AddEvent( EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
 	pm->ps->weaponTime += 200;
-	PM_StartTorsoAnim( TORSO_DROP );
+	// PM_StartTorsoAnim( TORSO_DROP );
 }
 
 
@@ -1509,7 +1512,7 @@ static void PM_FinishWeaponChange( void ) {
 	pm->ps->weapon = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
 	pm->ps->weaponTime += 250;
-	PM_StartTorsoAnim( TORSO_RAISE );
+	// PM_StartTorsoAnim( TORSO_RAISE );
 }
 
 
@@ -1624,9 +1627,9 @@ static void PM_Weapon( void ) {
 			pm->ps->weaponstate = WEAPON_READY;
 			return;
 		}
-		PM_StartTorsoAnim( TORSO_ATTACK2 );
+		// PM_StartTorsoAnim( TORSO_ATTACK2 );
 	} else {
-		PM_StartTorsoAnim( TORSO_ATTACK );
+		// PM_StartTorsoAnim( TORSO_ATTACK );
 	}
 
 	pm->ps->weaponstate = WEAPON_FIRING;
