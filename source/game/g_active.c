@@ -687,6 +687,11 @@ void ClientThink_real( gentity_t *ent ) {
 		client->ps.speed *= 1.3;
 	}
 
+	// BFP - if BUTTON_ENABLEFLIGHT enable flight
+	if ( ( ucmd->buttons & BUTTON_ENABLEFLIGHT ) && !( pm.cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+		Cmd_BFP_Fly( ent );
+	}
+
 	// Let go of the hook if we aren't firing
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {

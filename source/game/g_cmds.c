@@ -1592,22 +1592,20 @@ void Cmd_Stats_f( gentity_t *ent ) {
 
 /*
 =====================
-Cmd_ToggleBFPFly_f
+Cmd_BFP_Fly
 =====================
 */
-void Cmd_ToggleBFPFly_f( gentity_t* ent ) { // BFP
-    gclient_t *client;
+void Cmd_BFP_Fly( gentity_t* ent ) { // BFP
+	gclient_t *client;
 
-    client = ent->client;
-    client->ps.pm_flags ^= PMF_FLYING;
-/*
-    const char *msg;
-	if ( !( client->ps.pm_flags & PMF_FLYING ) )
-        msg = "flight OFF\n";
-    else
-        msg = "flight ON\n";
-    trap_SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
-*/
+	client = ent->client;
+	if ( client->ps.pm_type != PM_DEAD ) {
+		if ( client->ps.groundEntityNum != ENTITYNUM_NONE ) {
+			client->ps.velocity[2] = 270; //JUMP_VELOCITY
+			G_Sound (ent, CHAN_VOICE, G_SoundIndex( "*jump1.wav" ) );
+		}
+		client->ps.pm_flags ^= PMF_FLYING;
+	}
 }
 
 /*
@@ -1717,7 +1715,7 @@ void ClientCommand( int clientNum ) {
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
 	else if (Q_stricmp (cmd, "fly") == 0) // BFP
-		Cmd_ToggleBFPFly_f( ent );
+		Cmd_BFP_Fly( ent );
 	else
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );
 }
