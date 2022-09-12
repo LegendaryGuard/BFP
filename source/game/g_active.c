@@ -427,17 +427,22 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 		// BFP - Ki up/down when flying/ki use
 		if ( client->ps.pm_flags & PMF_FLYING ) {
-			client->ps.stats[STAT_KI]--;
-			if ( client->pers.cmd.buttons & BUTTON_KI_USE )
+
+			if ( client->ps.stats[STAT_KI] > 0 ) {
 				client->ps.stats[STAT_KI]--;
+			
+				if ( client->pers.cmd.buttons & BUTTON_KI_USE )
+					client->ps.stats[STAT_KI]--;
+			}
 		} else {
 			client->ps.stats[STAT_KI]++;
 		}
 
 		// BFP - if ki drops to 0, disable flight
 		if ( client->ps.stats[STAT_KI] <= 0 ) {
+			client->ps.stats[STAT_KI] = 0;
 			client->ps.pm_flags &= ~PMF_FLYING;
-			Com_Printf( "ki amount: %d\n", client->ps.stats[STAT_KI] );
+			// Com_Printf( "ki amount: %d\n", client->ps.stats[STAT_KI] );
 		}
 
 		// count down armor when over max
@@ -701,6 +706,11 @@ void ClientThink_real( gentity_t *ent ) {
 	// BFP - if BUTTON_KI_USE > speed
 	if ( ucmd->buttons & BUTTON_KI_USE ) {
 		client->ps.speed *= 1.5;
+	}
+
+	// BFP - if BUTTON_ENABLEFLIGHT enable flight
+	if ( ( ucmd->buttons & BUTTON_ENABLEFLIGHT ) && !( pm.cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+		Cmd_BFP_Fly( ent );
 	}
 
 	// Let go of the hook if we aren't firing

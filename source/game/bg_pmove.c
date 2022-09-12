@@ -48,10 +48,6 @@ float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
 
-// BFP - Flight
-void PM_StartFlight( void );
-void PM_StopFlight( void );
-
 /*
 ===============
 PM_AddEvent
@@ -1110,26 +1106,6 @@ static void PM_GroundTrace( void ) {
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
 
-	// BFP - Flight
-	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT 
-		&& ( pm->ps->pm_flags & PMF_FLYING ) ) {
-		PM_StopFlight();
-		return;
-	}
-
-	// BFP - Flight
-	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT 
-		&& !( pm->ps->pm_flags & PMF_FLYING ) 
-		&& pm->ps->pm_type != PM_DEAD ) {
-		// little hop here when touching the ground
-		if ( pml.groundTrace.contents & CONTENTS_SOLID ) {
-			pm->ps->velocity[2] = JUMP_VELOCITY;
-			PM_AddEvent( EV_JUMP );
-		}
-		PM_StartFlight(); // fly!
-		return;
-	}
-
 	// do something corrective if the trace starts in a solid...
 	if ( trace.allsolid ) {
 		if ( !PM_CorrectAllSolid(&trace) )
@@ -1679,6 +1655,23 @@ static void PM_Weapon( void ) {
 	// fire weapon
 	PM_AddEvent( EV_FIRE_WEAPON );
 
+	// BFP - TODO: 
+	// 1st attackset simple ki shot attack: 
+	// pm->ps->stats[STAT_KI] -= 10;
+	
+	// 2nd attackset second simple ki shot attack:
+	// pm->ps->stats[STAT_KI] -= 100;
+	
+	// 3rd attackset ki blasts:
+	// pm->ps->stats[STAT_KI] -= 240;
+
+	// 4th attackset charging some ki attack:
+	// pm->ps->stats[STAT_KI] -= 250; // reduces every time you stand until you shot or stop 
+	
+	// 5th attackset charging some ki attack:
+	// pm->ps->stats[STAT_KI] -= 1000; // reduces every time you stand until you shot or stop 
+
+
 	switch( pm->ps->weapon ) {
 	default:
 	case WP_GAUNTLET:
@@ -1687,7 +1680,11 @@ static void PM_Weapon( void ) {
 		break;
 	case WP_MACHINEGUN:
 		addTime = 100;
+<<<<<<< HEAD
 		pm->ps->stats[STAT_KI] -= 10;
+=======
+		pm->ps->stats[STAT_KI] -= 50;
+>>>>>>> 5fcc080 (Fix toggleable flight glitch when pressing without releasing the key)
 		break;
 	case WP_SHOTGUN:
 		addTime = 1000;
@@ -1695,6 +1692,7 @@ static void PM_Weapon( void ) {
 		break;
 	case WP_GRENADE_LAUNCHER:
 		addTime = 800;
+<<<<<<< HEAD
 		pm->ps->stats[STAT_KI] -= 80;
 		break;
 	case WP_ROCKET_LAUNCHER:
@@ -1708,6 +1706,21 @@ static void PM_Weapon( void ) {
 	case WP_PLASMAGUN:
 		addTime = 100;
 		pm->ps->stats[STAT_KI] -= 10;
+=======
+		pm->ps->stats[STAT_KI] -= 100;
+		break;
+	case WP_ROCKET_LAUNCHER:
+		addTime = 800;
+		pm->ps->stats[STAT_KI] -= 50;
+		break;
+	case WP_LIGHTNING:
+		addTime = 50;
+		pm->ps->stats[STAT_KI] -= 70;
+		break;
+	case WP_PLASMAGUN:
+		addTime = 100;
+		pm->ps->stats[STAT_KI] -= 120;
+>>>>>>> 5fcc080 (Fix toggleable flight glitch when pressing without releasing the key)
 		break;
 	case WP_RAILGUN:
 		addTime = 1500;
@@ -1719,7 +1732,11 @@ static void PM_Weapon( void ) {
 		break;
 	case WP_GRAPPLING_HOOK:
 		addTime = 400;
+<<<<<<< HEAD
 		pm->ps->stats[STAT_KI] -= 40;
+=======
+		pm->ps->stats[STAT_KI] -= 100;
+>>>>>>> 5fcc080 (Fix toggleable flight glitch when pressing without releasing the key)
 		break;
 	}
 
@@ -1819,38 +1836,32 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	}
 }
 
-// BFP - Flight
-void PM_StartFlight( void ) {
-	if ( pm->ps->pm_time ) {
-		return;
-	}
-	
-	if ( pm->ps->pm_time < 250 ) {
-		pm->ps->pm_time += 500;
-		pm->ps->pm_flags |= PMF_FLYING;
-	}
-	return;
-}
+/*
+================
+PM_EnableFlight
 
-// BFP - Flight
-void PM_StopFlight( void ) {
-	if ( pm->ps->pm_time ) {
-		return;
-	}
+Enables/disables flight
+================
+*/
+static qboolean PM_EnableFlight( void ) { // BFP - Flight
+
+	if ( !( pm->ps->pm_flags & PMF_FLYING ) )
+		return qfalse;
 	
-	if ( pm->ps->pm_time < 250 ) {
-		pm->ps->pm_time += 500;
-		pm->ps->pm_flags &= ~PMF_FLYING;
-	}
-	return;
+	return qtrue;
 }
 
 
 void PM_KiCharge( pmove_t *pmove ) {
 	pm = pmove;
-	if ( ( pmove->cmd.buttons & ( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK ) ) ) {
-		return;
+
+	if ( pmove->cmd.buttons & ( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
+		pmove->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
+
+	pmove->cmd.forwardmove = 0;
+	pmove->cmd.rightmove = 0;
+	pmove->cmd.upmove = 0;
 
 	pm->ps->velocity[0] = 0;
 	pm->ps->velocity[1] = 0;
@@ -2015,7 +2026,7 @@ void PmoveSingle (pmove_t *pmove) {
 	PM_DropTimers();
 
 	// BFP - Flight
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
+	if ( PM_EnableFlight() ) {
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
 	} else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {

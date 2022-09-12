@@ -1599,7 +1599,13 @@ void Cmd_BFP_Fly( gentity_t* ent ) { // BFP
 	gclient_t *client;
 
 	client = ent->client;
-	client->ps.pm_flags ^= PMF_FLYING;
+	if ( client->ps.pm_type != PM_DEAD ) {
+		if ( client->ps.groundEntityNum != ENTITYNUM_NONE ) {
+			client->ps.velocity[2] = 270; //JUMP_VELOCITY
+			G_Sound (ent, CHAN_VOICE, G_SoundIndex( "*jump1.wav" ) );
+		}
+		client->ps.pm_flags ^= PMF_FLYING;
+	}
 }
 
 void Cmd_BFP_SetKiCharge_f( gentity_t* ent ) {
@@ -1746,7 +1752,7 @@ void ClientCommand( int clientNum ) {
 		Cmd_SetViewpos_f( ent );
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
-	else if (Q_stricmp (cmd, "fly") == 0) // BFP
+	else if (Q_stricmp (cmd, "fly") == 0)
 		Cmd_BFP_Fly( ent );
 	else if (Q_stricmp (cmd, "set_ki_charge") == 0) // BFP
 		Cmd_BFP_SetKiCharge_f( ent );
