@@ -1752,7 +1752,7 @@ void ClientCommand( int clientNum ) {
 		Cmd_SetViewpos_f( ent );
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
-	else if (Q_stricmp (cmd, "fly") == 0)
+	else if (Q_stricmp (cmd, "fly") == 0) // BFP
 		Cmd_BFP_Fly( ent );
 	else if (Q_stricmp (cmd, "set_ki_charge") == 0) // BFP
 		Cmd_BFP_SetKiCharge_f( ent );
