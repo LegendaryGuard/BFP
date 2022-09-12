@@ -443,21 +443,20 @@ static void CG_DrawStatusBar( void ) {
 	// }
 	// }
 
-	// BFP - draw ki amount
-	value = ps->stats[STAT_KI];
-	string = va( "KI: %d", value );
-	CG_DrawBigString( spacer, SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
+
+	// BFP - TODO: Draw a HUD bar of 6 points to indicate ki attack preparation
+
 
 	//
 	// health
 	//
 	value = ps->stats[STAT_HEALTH];
 	if ( value > 100 ) {
-		trap_R_SetColor( colors[3] );		// white
+		trap_R_SetColor( colors[3] );	// white
 	} else if (value > 25) {
 		trap_R_SetColor( colors[0] );	// green
 	} else if (value > 0) {
-		color = (cg.time >> 8) & 1;	// flash
+		color = (cg.time >> 8) & 1;		// flash
 		trap_R_SetColor( colors[color] );
 	} else {
 		trap_R_SetColor( colors[1] );	// red
@@ -465,10 +464,22 @@ static void CG_DrawStatusBar( void ) {
 
 	// stretch the health up when taking damage
 	// CG_DrawField ( 185, 432, 3, value);
-	string = va( "HP:   %d", value );
-	CG_DrawBigString( spacer, SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
+
+	string = va( "HP: %d%%", value ); // %% is a percentage sign
+	CG_DrawBigString( spacer, SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
+
+	// BFP - draw ki amount
+	value = ps->stats[STAT_KI];
+	string = va( "KI: %d", value );
+	CG_DrawBigString( spacer, SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
+	if (value >= 100) {
+		trap_R_SetColor( colors[3] );	// white
+	} else {
+		trap_R_SetColor( colors[1] );	// red
+	}
+
 
 	// BFP - disable armor
 	//
