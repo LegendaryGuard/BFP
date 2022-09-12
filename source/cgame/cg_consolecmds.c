@@ -181,7 +181,7 @@ static void CG_StartOrbit_f( void ) {
 	}
 	if (cg_cameraOrbit.value != 0) {
 		trap_Cvar_Set ("cg_cameraOrbit", "0");
-		trap_Cvar_Set("cg_thirdPerson", "0");
+		// trap_Cvar_Set("cg_thirdPerson", "0"); // BFP - don't disable even when restarting the server
 	} else {
 		trap_Cvar_Set("cg_cameraOrbit", "5");
 		trap_Cvar_Set("cg_thirdPerson", "1");
