@@ -1596,15 +1596,9 @@ Cmd_BFP_Fly
 =====================
 */
 void Cmd_BFP_Fly( gentity_t* ent ) { // BFP
-	gclient_t *client;
 
-	client = ent->client;
-	if ( client->ps.pm_type != PM_DEAD ) {
-		if ( client->ps.groundEntityNum != ENTITYNUM_NONE ) {
-			client->ps.velocity[2] = 270; //JUMP_VELOCITY
-			G_Sound (ent, CHAN_VOICE, G_SoundIndex( "*jump1.wav" ) );
-		}
-		client->ps.pm_flags ^= PMF_FLYING;
+	if ( ent->client->ps.pm_type != PM_DEAD ) {
+		ent->client->ps.pm_flags ^= PMF_FLYING;
 	}
 }
 

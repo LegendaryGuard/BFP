@@ -168,6 +168,7 @@ typedef struct {
 	int			debugLevel;			// if set, diagnostic output will be printed
 	qboolean	noFootsteps;		// if the game is setup for no footsteps by the server
 	qboolean	gauntletHit;		// true if a gauntlet attack would actually hit something
+	qboolean	isFlying; 			// BFP- Flight
 
 	int			framecount;
 

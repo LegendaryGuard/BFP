@@ -604,6 +604,26 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 }
 
 /*
+=================
+FlyingThink
+=================
+*/
+void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
+	pmove_t	pm;
+	gclient_t	*client;
+
+	client = ent->client;
+
+	client->oldbuttons = client->buttons;
+	client->buttons = ucmd->buttons;
+
+	// enableflight button cycles
+	if ( ( client->buttons & BUTTON_ENABLEFLIGHT ) && ! ( client->oldbuttons & BUTTON_ENABLEFLIGHT ) ) {
+		Cmd_BFP_Fly( ent );
+	}
+}
+
+/*
 ==============
 ClientThink
 
@@ -703,15 +723,16 @@ void ClientThink_real( gentity_t *ent ) {
 	// set speed
 	client->ps.speed = g_speed.value;
 
+	// BFP - TODO: Make sure to spawn aura model when using ki
 	// BFP - if BUTTON_KI_USE > speed
 	if ( ucmd->buttons & BUTTON_KI_USE ) {
-		client->ps.speed *= 1.5;
+		client->ps.speed *= 3.5;
 	}
 
+	// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
+
 	// BFP - if BUTTON_ENABLEFLIGHT enable flight
-	if ( ( ucmd->buttons & BUTTON_ENABLEFLIGHT ) && !( pm.cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
-		Cmd_BFP_Fly( ent );
-	}
+	FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 
 	// Let go of the hook if we aren't firing
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
