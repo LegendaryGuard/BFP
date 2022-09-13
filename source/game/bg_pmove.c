@@ -1179,7 +1179,7 @@ static void PM_GroundTrace( void ) {
 		}
 	}
 
-	if ( !( pm->ps->pm_flags & PMF_FLYING ) )
+	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) // BFP - Flight
 		pm->ps->groundEntityNum = trace.entityNum;
 
 	// don't reset the z velocity for slopes
