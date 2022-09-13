@@ -584,6 +584,26 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 }
 
 /*
+=================
+FlyingThink
+=================
+*/
+void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
+	pmove_t	pm;
+	gclient_t	*client;
+
+	client = ent->client;
+
+	client->oldbuttons = client->buttons;
+	client->buttons = ucmd->buttons;
+
+	// enableflight button cycles
+	if ( ( client->buttons & BUTTON_ENABLEFLIGHT ) && ! ( client->oldbuttons & BUTTON_ENABLEFLIGHT ) ) {
+		Cmd_BFP_Fly( ent );
+	}
+}
+
+/*
 ==============
 ClientThink
 
@@ -812,26 +832,6 @@ void ClientThink_real( gentity_t *ent ) {
 
 	// perform once-a-second actions
 	ClientTimerActions( ent, msec );
-}
-
-/*
-=================
-FlyingThink
-=================
-*/
-void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
-	pmove_t	pm;
-	gclient_t	*client;
-
-	client = ent->client;
-
-	client->oldbuttons = client->buttons;
-	client->buttons = ucmd->buttons;
-
-	// enableflight button cycles
-	if ( ( client->buttons & BUTTON_ENABLEFLIGHT ) && ! ( client->oldbuttons & BUTTON_ENABLEFLIGHT ) ) {
-		Cmd_BFP_Fly( ent );
-	}
 }
 
 /*
