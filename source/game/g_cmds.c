@@ -1595,7 +1595,7 @@ void Cmd_Stats_f( gentity_t *ent ) {
 Cmd_BFP_Fly
 =====================
 */
-void Cmd_BFP_Fly( gentity_t* ent ) { // BFP
+void Cmd_BFP_Fly( gentity_t* ent ) { // BFP - Flight
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		ent->client->ps.pm_flags ^= PMF_FLYING;
@@ -1746,7 +1746,7 @@ void ClientCommand( int clientNum ) {
 		Cmd_SetViewpos_f( ent );
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
-	else if (Q_stricmp (cmd, "fly") == 0) // BFP
+	else if (Q_stricmp (cmd, "fly") == 0) // BFP - Flight
 		Cmd_BFP_Fly( ent );
 	else if (Q_stricmp (cmd, "set_ki_charge") == 0) // BFP
 		Cmd_BFP_SetKiCharge_f( ent );
