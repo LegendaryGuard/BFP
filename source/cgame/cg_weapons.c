@@ -1110,7 +1110,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 	}
 
-	gun.hModel = weapon->weaponModel;
+	// gun.hModel = weapon->weaponModel; // BFP - Hide weapon model
 	if (!gun.hModel) {
 		return;
 	}
