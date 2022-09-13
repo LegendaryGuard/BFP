@@ -726,7 +726,11 @@ void ClientThink_real( gentity_t *ent ) {
 	// BFP - TODO: Make sure to spawn aura model when using ki
 	// BFP - if BUTTON_KI_USE > speed
 	if ( ucmd->buttons & BUTTON_KI_USE ) {
-		client->ps.speed *= 3.5;
+		client->ps.speed *= 2.5;
+	}
+
+	if ( client->ps.pm_flags & PMF_FLYING ) { // BFP - Flight speed
+		client->ps.speed *= 1.5;
 	}
 
 	// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
