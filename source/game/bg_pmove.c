@@ -1741,6 +1741,7 @@ static void PM_Weapon( void ) {
 		break;
 	}
 
+	// BFP - Ki Use
 	if ( pm->cmd.buttons & BUTTON_KI_USE ) {
 		addTime /= 1.3;
 	}
@@ -1866,8 +1867,14 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 	return qtrue;
 }
 
+/*
+================
+PM_KiCharge
 
-void PM_KiCharge( pmove_t *pmove ) {
+Charges ki
+================
+*/
+qboolean PM_KiCharge( pmove_t *pmove ) { // BFP - Ki Charge
 	pm = pmove;
 
 	if ( pmove->cmd.buttons & ( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
