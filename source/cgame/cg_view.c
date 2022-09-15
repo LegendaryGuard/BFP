@@ -250,6 +250,21 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	// view[2] += 8;
 
+	// BFP - TODO: make height view equal to BFP
+	// BFP - Camera height
+	//view[2] += cg_thirdPersonHeight.value + 80;
+
+	// BFP - TODO: The player axis should be manipulated, 
+	// because if you press up while your head is facing right
+	// it should be move respecting axis directions
+
+	// function ideas for Axis, likely would fix, 
+	// but not sure if that should be here:
+	// void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
+	// void AxisClear( vec3_t axis[3] );
+	// void AxisCopy( vec3_t in[3], vec3_t out[3] );
+
+
 	// cg.refdefViewAngles[PITCH] *= 0.5;
 
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
@@ -267,6 +282,8 @@ static void CG_OffsetThirdPersonView( void ) {
 
 		if ( trace.fraction != 1.0 ) {
 			VectorCopy( trace.endpos, view );
+
+			// BFP - TODO: That's where traces when in the back is near a wall or something solid, moves the camera adjusting the position
 			view[2] += (1.0 - trace.fraction) * 32;
 			// try another trace to this position, because a tunnel may have the ceiling
 			// close enogh that this is poking out
