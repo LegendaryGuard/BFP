@@ -723,10 +723,14 @@ void ClientThink_real( gentity_t *ent ) {
 	// set speed
 	client->ps.speed = g_speed.value;
 
-	// BFP - TODO: Make sure to spawn aura model when using ki
+	// BFP - TODO: Make sure to show aura effect when using ki
 	// BFP - if BUTTON_KI_USE > speed
 	if ( ucmd->buttons & BUTTON_KI_USE ) {
 		client->ps.speed *= 2.5;
+		client->ps.eFlags |= EF_AURA;
+	}
+	else {
+		client->ps.eFlags &= ~EF_AURA;
 	}
 
 	if ( client->ps.pm_flags & PMF_FLYING ) { // BFP - Flight speed

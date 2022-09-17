@@ -132,6 +132,8 @@ vmCvar_t	cg_zoomFov;
 vmCvar_t	cg_thirdPerson;
 vmCvar_t	cg_thirdPersonRange;
 vmCvar_t	cg_thirdPersonAngle;
+vmCvar_t	cg_thirdPersonHeight; // BFP - Camera Height
+vmCvar_t	cg_yrgolroxor; // BFP - Ygorl Roxor easter egg
 vmCvar_t	cg_stereoSeparation;
 vmCvar_t	cg_lagometer;
 vmCvar_t	cg_drawAttacker;
@@ -235,7 +237,9 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT },
 	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "110", CVAR_ARCHIVE }, // BFP
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", CVAR_ARCHIVE }, // BFP
+	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "-60", CVAR_ARCHIVE }, // BFP - Camera height
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", 0 }, // BFP
+	{ &cg_yrgolroxor, "cg_yrgolroxor", "0", 0 }, // BFP - Ygorl Roxor easter egg
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE  },
 	{ &cg_teamChatHeight, "cg_teamChatHeight", "0", CVAR_ARCHIVE  },
 	{ &cg_forceModel, "cg_forceModel", "0", CVAR_ARCHIVE  },
@@ -643,6 +647,9 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.n_healthSound = trap_S_RegisterSound("sound/items/n_health.wav", qfalse );
 	cgs.media.hgrenb1aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb1a.wav", qfalse);
 	cgs.media.hgrenb2aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb2a.wav", qfalse);
+
+	cgs.media.kiChargeSound = trap_S_RegisterSound("sound/bfp/kicharge1.wav", qfalse); // BFP - Ki charge sound
+	cgs.media.kiUseSound = trap_S_RegisterSound("sound/bfp/kiuse1.wav", qfalse); // BFP - Ki use sound
 }
 
 
@@ -793,6 +800,11 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.medalAssist = trap_R_RegisterShaderNoMip( "medal_assist" );
 	cgs.media.medalCapture = trap_R_RegisterShaderNoMip( "medal_capture" );
 
+	cgs.media.auraModel = trap_R_RegisterModel( "models/effects/aura.md3" ); // BFP - Aura model
+	cgs.media.backauraModel = trap_R_RegisterModel( "models/effects/backaura.md3" ); // BFP - Back aura model
+	cgs.media.flyauraModel = trap_R_RegisterModel( "models/effects/flyaura.md3" ); // BFP - Fly aura model
+	cgs.media.runauraModel = trap_R_RegisterModel( "models/effects/runaura.md3" ); // BFP - Run aura model
+	cgs.media.auraEffectShader = trap_R_RegisterShader( "powerups/redtiny" ); // BFP - Aura shader
 
 	memset( cg_items, 0, sizeof( cg_items ) );
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );

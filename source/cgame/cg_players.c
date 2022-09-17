@@ -2063,6 +2063,7 @@ void CG_Player( centity_t *cent ) {
 	refEntity_t		legs;
 	refEntity_t		torso;
 	refEntity_t		head;
+	refEntity_t		aura;
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
@@ -2109,6 +2110,34 @@ void CG_Player( centity_t *cent ) {
 
 	// add the talk baloon or disconnect icon
 	CG_PlayerSprites( cent );
+
+	// BFP - Aura ki using
+	if ( cent->currentState.eFlags & EF_AURA ) {
+		aura.reType = RT_MODEL;
+		aura.customShader = cgs.media.auraEffectShader;
+		aura.hModel = cgs.media.auraModel;
+		
+		// re-set axis model postion
+		AxisClear( aura.axis );
+		
+		// fixes rotation when player rotates down/up/right/left... even while flying
+		// according legs position
+		// cent->lerpAngles is according player base entity position
+		AnglesToAxis( &cent->pe.legs.pitchAngle, aura.axis );
+		
+		// rotate aura
+		VectorCopy( cg.autoAngles, cent->lerpAngles );
+		AxisCopy( cg.autoAxis, aura.axis );
+
+		// set aura position to the player
+		VectorCopy( cent->lerpOrigin, aura.origin );
+
+		aura.renderfx = renderfx;
+		trap_R_AddRefEntityToScene( &aura );
+
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			vec3_origin, cgs.media.kiUseSound );
+	}
 
 	// add the shadow
 	shadow = CG_PlayerShadow( cent, &shadowPlane );
@@ -2164,7 +2193,7 @@ void CG_Player( centity_t *cent ) {
 	// add the head
 	//
 	head.hModel = ci->headModel;
-	if (!head.hModel) {
+	if (!head.hModel || cg_yrgolroxor.integer != 0 ) { // BFP - Ygorl Roxor easter egg
 		return;
 	}
 	head.customSkin = ci->headSkin;
