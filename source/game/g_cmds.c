@@ -1592,26 +1592,26 @@ void Cmd_Stats_f( gentity_t *ent ) {
 
 /*
 =====================
-Cmd_BFP_Fly
+Cmd_BFP_Fly_f
 =====================
 */
-void Cmd_BFP_Fly( gentity_t* ent ) { // BFP - Flight
+void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		ent->client->ps.pm_flags ^= PMF_FLYING;
 	}
 }
 
-void Cmd_BFP_SetKiCharge_f( gentity_t* ent ) {
-	Com_Printf( "Cmd_BFP_SetKiCharge_f\n" );
-}
-
-void Cmd_BFP_SetKiUse_f( gentity_t* ent ) {
-	Com_Printf( "Cmd_BFP_SetKiUse_f\n" );
-}
-
+/*
+=====================
+Cmd_BFP_KiUseToggle_f
+=====================
+*/
 void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) {
-	Com_Printf( "Cmd_BFP_KiUseToggle_f\n" );
+
+	if ( ent->client->ps.pm_type != PM_DEAD ) {
+		ent->client->ps.eFlags ^= PMF_KI_BOOST;
+	}
 }
 
 void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) {
@@ -1747,12 +1747,8 @@ void ClientCommand( int clientNum ) {
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
 	else if (Q_stricmp (cmd, "fly") == 0) // BFP - Flight
-		Cmd_BFP_Fly( ent );
-	else if (Q_stricmp (cmd, "set_ki_charge") == 0) // BFP
-		Cmd_BFP_SetKiCharge_f( ent );
-	else if (Q_stricmp (cmd, "set_ki_use") == 0) // BFP
-		Cmd_BFP_SetKiUse_f( ent );
-	else if (Q_stricmp (cmd, "kiusetoggle") == 0) // BFP
+		Cmd_BFP_Fly_f( ent );
+	else if (Q_stricmp (cmd, "kiusetoggle") == 0) // BFP - Ki use toggle
 		Cmd_BFP_KiUseToggle_f( ent );
 	else if (Q_stricmp (cmd, "set_ki_idle") == 0) // BFP
 		Cmd_BFP_SetKiIdle_f( ent );

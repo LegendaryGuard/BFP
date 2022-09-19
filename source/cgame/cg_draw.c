@@ -471,6 +471,8 @@ static void CG_DrawStatusBar( void ) {
 	trap_R_SetColor( hcolor );
 
 	// BFP - draw ki amount
+	if ( ps->stats[STAT_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
+		ps->stats[STAT_KI] = 0;
 	value = ps->stats[STAT_KI];
 	string = va( "KI: %d", value );
 	CG_DrawBigString( spacer, SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
@@ -2154,8 +2156,10 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	}
 
 	// optionally draw the tournement scoreboard instead
-	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR &&
-		( cg.snap->ps.pm_flags & PMF_SCOREBOARD ) ) {
+	// BFP - PMF_SCOREBOARD is unused
+	// if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR &&
+	//	( cg.snap->ps.pm_flags & PMF_SCOREBOARD ) ) {
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		CG_DrawTourneyScoreboard();
 		return;
 	}

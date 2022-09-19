@@ -2135,8 +2135,19 @@ void CG_Player( centity_t *cent ) {
 		aura.renderfx = renderfx;
 		trap_R_AddRefEntityToScene( &aura );
 
+		// light blinking
+		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.2f, 0.002f );
+		trap_R_AddLightToScene( cent->lerpOrigin, 80 + (rand()&11), 1, 0.15f, 0.001f );
+
 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
 			vec3_origin, cgs.media.kiUseSound );
+		
+		// BFP - TODO: Add secondary aura but rotating opposite different from the other, 
+		// who knows why, BFP does that as well
+
+		// BFP - TODO: move this in some part
+		// stop looping sound
+		// trap_S_StopLoopingSound( cent->currentState.number );
 	}
 
 	// add the shadow

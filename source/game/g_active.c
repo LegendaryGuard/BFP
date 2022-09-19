@@ -428,6 +428,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		// BFP - Ki up/down when flying/ki use
 		if ( client->ps.pm_flags & PMF_FLYING ) {
 
+			// BFP - TODO: Add cvar for flight cost
+
 			if ( client->ps.stats[STAT_KI] > 0 ) {
 				client->ps.stats[STAT_KI]--;
 			
@@ -609,7 +611,6 @@ FlyingThink
 =================
 */
 void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
-	pmove_t	pm;
 	gclient_t	*client;
 
 	client = ent->client;
@@ -619,7 +620,7 @@ void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
 
 	// enableflight button cycles
 	if ( ( client->buttons & BUTTON_ENABLEFLIGHT ) && ! ( client->oldbuttons & BUTTON_ENABLEFLIGHT ) ) {
-		Cmd_BFP_Fly( ent );
+		Cmd_BFP_Fly_f( ent );
 	}
 }
 
@@ -724,13 +725,21 @@ void ClientThink_real( gentity_t *ent ) {
 	client->ps.speed = g_speed.value;
 
 	// BFP - TODO: Make sure to show aura effect when using ki
-	// BFP - if BUTTON_KI_USE > speed
-	if ( ucmd->buttons & BUTTON_KI_USE ) {
+	// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
+	// BFP - if BUTTON_KI_USE > speed	
+	if ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
+	|| ( client->ps.pm_flags & PMF_KI_BOOST ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
 		client->ps.speed *= 2.5;
 		client->ps.eFlags |= EF_AURA;
 	}
 	else {
 		client->ps.eFlags &= ~EF_AURA;
+	}
+
+
+	// BFP - Ki Charge
+	if ( ucmd->buttons & BUTTON_KI_CHARGE ) {
+		client->ps.eFlags |= EF_AURA;
 	}
 
 	if ( client->ps.pm_flags & PMF_FLYING ) { // BFP - Flight speed
@@ -935,11 +944,14 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 		}
 	}
 
+	// BFP - PMF_SCOREBOARD is unused
+	/*
 	if ( ent->client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 		ent->client->ps.pm_flags |= PMF_SCOREBOARD;
 	} else {
 		ent->client->ps.pm_flags &= ~PMF_SCOREBOARD;
 	}
+	*/
 }
 
 /*

@@ -211,9 +211,6 @@ static void PM_Friction( void ) {
 	// apply flying friction
 	// BFP - Flight
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		if ( pm->ps->pm_type == PM_DEAD )
-			pm->ps->pm_flags &= ~PMF_FLYING;
-
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
 	}
@@ -1993,6 +1990,11 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	if ( pm->ps->pm_type >= PM_DEAD ) {
+
+		// BFP - If player is dead, disable the following statuses
+		pm->ps->pm_flags &= ~PMF_FLYING;
+		pm->ps->pm_flags &= ~PMF_KI_BOOST;
+
 		pm->cmd.forwardmove = 0;
 		pm->cmd.rightmove = 0;
 		pm->cmd.upmove = 0;
