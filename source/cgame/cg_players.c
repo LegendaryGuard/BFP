@@ -2136,7 +2136,7 @@ void CG_Player( centity_t *cent ) {
 		trap_R_AddRefEntityToScene( &aura );
 
 		// light blinking
-		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.2f, 0.002f );
+		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.01f, 0.002f );
 		trap_R_AddLightToScene( cent->lerpOrigin, 80 + (rand()&11), 1, 0.15f, 0.001f );
 
 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 

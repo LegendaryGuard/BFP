@@ -176,13 +176,13 @@ static void PlayerModel_UpdateModel( void )
 
 	memset( &s_playermodel.playerinfo, 0, sizeof(playerInfo_t) );
 	
-	viewangles[YAW]   = 180 - 30;
+	viewangles[YAW]   = 180;
 	viewangles[PITCH] = 0;
 	viewangles[ROLL]  = 0;
 	VectorClear( moveangles );
 
 	UI_PlayerInfo_SetModel( &s_playermodel.playerinfo, s_playermodel.modelskin );
-	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_IDLE, TORSO_STAND, viewangles, moveangles, WP_MACHINEGUN, qfalse );
+	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_RUN, TORSO_RUN, viewangles, moveangles, qfalse );
 }
 
 /*

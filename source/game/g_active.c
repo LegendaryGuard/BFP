@@ -724,16 +724,15 @@ void ClientThink_real( gentity_t *ent ) {
 	// set speed
 	client->ps.speed = g_speed.value;
 
-	// BFP - TODO: Make sure to show aura effect when using ki
 	// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
 	// BFP - if BUTTON_KI_USE > speed	
 	if ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
-	|| ( client->ps.pm_flags & PMF_KI_BOOST ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
-		client->ps.speed *= 2.5;
-		client->ps.eFlags |= EF_AURA;
+	|| ( ent->client->ps.pm_flags & PMF_KI_BOOST ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
+		ent->client->ps.speed *= 2.5;
+		ent->client->ps.eFlags |= EF_AURA;
 	}
 	else {
-		client->ps.eFlags &= ~EF_AURA;
+		ent->client->ps.eFlags &= ~EF_AURA;
 	}
 
 
