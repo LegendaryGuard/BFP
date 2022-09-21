@@ -561,11 +561,9 @@ static void PM_FlyMove( void ) {
 		wishvel[1] = 0;
 		wishvel[2] = 0;
 	} else {
-		for (i=0 ; i<3 ; i++) {
-			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove;
+		for ( i = 0; i < 3; i++ ) {
+			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
 		}
-
-		wishvel[2] += scale * pm->cmd.upmove;
 	}
 
 	VectorCopy (wishvel, wishdir);
@@ -1351,14 +1349,8 @@ static void PM_Footsteps( void ) {
 	if ( pm->ps->pm_flags & PMF_DUCKED ) {
 		bobmove = 0.5;	// ducked characters bob much faster
 		if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-<<<<<<< HEAD
-			PM_ContinueLegsAnim( LEGS_WALKCR );
-		}
-		else {
-=======
 			PM_ContinueLegsAnim( LEGS_WALKCR ); // BFP - before LEGS_BACKCR
 		} else {
->>>>>>> c449bd8 (Animations major fix)
 			PM_ContinueLegsAnim( LEGS_WALKCR );
 		}
 		// ducked characters never play footsteps
@@ -1376,14 +1368,8 @@ static void PM_Footsteps( void ) {
 		if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
 			bobmove = 0.4f;	// faster speeds bob faster
 			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-<<<<<<< HEAD
-				PM_ContinueLegsAnim( LEGS_BACK );
-			}
-			else {
-=======
 				PM_ContinueLegsAnim( LEGS_RUN ); // BFP - before LEGS_BACK
 			} else {
->>>>>>> c449bd8 (Animations major fix)
 				PM_ContinueLegsAnim( LEGS_RUN );
 				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Torso run animation
 			}
@@ -1524,11 +1510,7 @@ static void PM_TorsoAnimation( void ) {
 
 	if ( pm->ps->weaponstate == WEAPON_READY ) {
 		if ( pm->ps->weapon == WP_GAUNTLET ) {
-<<<<<<< HEAD
-			PM_ContinueTorsoAnim( TORSO_STAND );
-=======
 			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - before TORSO_STAND2
->>>>>>> c449bd8 (Animations major fix)
 		} else {
 			PM_ContinueTorsoAnim( TORSO_STAND );
 		}
@@ -1641,11 +1623,7 @@ static void PM_Weapon( void ) {
 	if ( pm->ps->weaponstate == WEAPON_RAISING ) {
 		pm->ps->weaponstate = WEAPON_READY;
 		if ( pm->ps->weapon == WP_GAUNTLET ) {
-<<<<<<< HEAD
-			PM_StartTorsoAnim( TORSO_STAND );
-=======
 			PM_StartTorsoAnim( TORSO_STAND ); // BFP - before TORSO_STAND2
->>>>>>> c449bd8 (Animations major fix)
 		} else {
 			PM_StartTorsoAnim( TORSO_STAND );
 		}
@@ -1715,11 +1693,7 @@ static void PM_Weapon( void ) {
 		break;
 	case WP_MACHINEGUN:
 		addTime = 100;
-<<<<<<< HEAD
-		pm->ps->stats[STAT_KI] -= 10;
-=======
 		pm->ps->stats[STAT_KI] -= 50;
->>>>>>> 5fcc080 (Fix toggleable flight glitch when pressing without releasing the key)
 		break;
 	case WP_SHOTGUN:
 		addTime = 1000;
@@ -1727,21 +1701,6 @@ static void PM_Weapon( void ) {
 		break;
 	case WP_GRENADE_LAUNCHER:
 		addTime = 800;
-<<<<<<< HEAD
-		pm->ps->stats[STAT_KI] -= 80;
-		break;
-	case WP_ROCKET_LAUNCHER:
-		addTime = 800;
-		pm->ps->stats[STAT_KI] -= 80;
-		break;
-	case WP_LIGHTNING:
-		addTime = 50;
-		pm->ps->stats[STAT_KI] -= 5;
-		break;
-	case WP_PLASMAGUN:
-		addTime = 100;
-		pm->ps->stats[STAT_KI] -= 10;
-=======
 		pm->ps->stats[STAT_KI] -= 100;
 		break;
 	case WP_ROCKET_LAUNCHER:
@@ -1755,7 +1714,6 @@ static void PM_Weapon( void ) {
 	case WP_PLASMAGUN:
 		addTime = 100;
 		pm->ps->stats[STAT_KI] -= 120;
->>>>>>> 5fcc080 (Fix toggleable flight glitch when pressing without releasing the key)
 		break;
 	case WP_RAILGUN:
 		addTime = 1500;
@@ -1767,11 +1725,7 @@ static void PM_Weapon( void ) {
 		break;
 	case WP_GRAPPLING_HOOK:
 		addTime = 400;
-<<<<<<< HEAD
-		pm->ps->stats[STAT_KI] -= 40;
-=======
 		pm->ps->stats[STAT_KI] -= 100;
->>>>>>> 5fcc080 (Fix toggleable flight glitch when pressing without releasing the key)
 		break;
 	}
 
