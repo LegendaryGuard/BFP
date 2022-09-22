@@ -562,8 +562,9 @@ static void PM_FlyMove( void ) {
 		wishvel[2] = 0;
 	} else {
 		for ( i = 0; i < 3; i++ ) {
-			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
+			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove; // BFP -  (+ scale * pml.up[i] * pm->cmd.upmove) used when flying and moving upside/downside instead according the ground
 		}
+		// wishvel[2] += scale * pm->cmd.upmove; // BFP - disabled to work the wished velocity
 	}
 
 	VectorCopy (wishvel, wishdir);
