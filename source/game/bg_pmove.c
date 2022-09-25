@@ -1549,6 +1549,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
 		PM_StartTorsoAnim( TORSO_CHARGE );
 		PM_StartLegsAnim( LEGS_CHARGE );
+		PM_ForceLegsAnim( LEGS_CHARGE );
 	}
 }
 
