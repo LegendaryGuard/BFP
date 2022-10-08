@@ -19,6 +19,7 @@ A legendary Quake 3 Arena mod from the 90's era.
 - [x] ~~Bind key to recover ki energy~~
 - [ ] Bind key to toggle speed (ki boost). HINT: HASTE POWERUP
 - [x] ~~Replace ammo to ki energy stamina~~
+- [x] ~~Third person traceable crosshair~~
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance as indicated on the old docs
 - [ ] Powerlevel and Power Tiers as indicated on the old docs
 - [ ] Hit Stun (makes player can't move, attack, block or charge)

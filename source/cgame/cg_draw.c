@@ -1668,6 +1668,11 @@ static void CG_DrawCrosshair(void) {
 	float		f;
 	float		x, y;
 	int			ca;
+	trace_t		trace;
+	playerState_t	*ps;
+	vec3_t		muzzle, forward, up, start, end;
+
+	ps = &cg.predictedPlayerState;
 
 	if ( !cg_drawCrosshair.integer ) {
 		return;
@@ -1711,9 +1716,30 @@ static void CG_DrawCrosshair(void) {
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
-	trap_R_DrawStretchPic( x + cg.refdef.x + 0.5 * (cg.refdef.width - w), 
+	if ( cg.renderingThirdPerson ) { // BFP - Third person traceable crosshair
+		w = h = cg_crosshairSize.value; // set the same size, if this isn't set here, the size is changed
+		AngleVectors( ps->viewangles, forward, NULL, up );
+		VectorCopy( ps->origin, muzzle );
+		VectorMA( muzzle, ps->viewheight, up, muzzle );
+		VectorMA( muzzle, 14, forward, muzzle );
+		VectorCopy( muzzle, start );
+		VectorMA( start, 131072, forward, end );
+		CG_Trace( &trace, start, NULL, NULL, end, cg.snap->ps.clientNum, CONTENTS_SOLID | CONTENTS_BODY );
+		if ( !CG_WorldCoordToScreenCoordFloat( trace.endpos, &x, &y ) ) {
+			return;
+		}
+
+		CG_AdjustFrom640( &x, &y, &w, &h );
+		trap_R_DrawStretchPic( x - 0.5f * w, // 492.799987
+		y - 0.5f * h,
+		w, h, 0, 0, 1, 1, hShader );
+	} else { // Q3 default crosshair position
+		// x: 492.799987
+		// y: 364.799987
+		trap_R_DrawStretchPic( x + cg.refdef.x + 0.5 * (cg.refdef.width - w), 
 		y + cg.refdef.y + 0.5 * (cg.refdef.height - h), 
 		w, h, 0, 0, 1, 1, hShader );
+	}
 }
 
 
@@ -1784,6 +1810,7 @@ static void CG_DrawCrosshairNames( void ) {
 		return;
 	}
 
+	// BFP - TODO: Draw player powerlevel info
 	name = cgs.clientinfo[ cg.crosshairClientNum ].name;
 	w = CG_DrawStrlen( name ) * BIGCHAR_WIDTH;
 	CG_DrawBigString( 320 - w / 2, 170, name, color[3] * 0.5f );

@@ -250,20 +250,8 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	// view[2] += 8;
 
-	// BFP - TODO: make height view equal to BFP
-	// BFP - Camera height
-	//view[2] += cg_thirdPersonHeight.value + 80;
-
-	// BFP - TODO: The player axis should be manipulated, 
-	// because if you press up while your head is facing right
-	// it should be move respecting axis directions
-
-	// function ideas for Axis, likely would fix, 
-	// but not sure if that should be here:
-	// void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
-	// void AxisClear( vec3_t axis[3] );
-	// void AxisCopy( vec3_t in[3], vec3_t out[3] );
-
+	// BFP - Third person camera height
+	view[2] += cg_thirdPersonHeight.value + 80;
 
 	// cg.refdefViewAngles[PITCH] *= 0.5;
 
@@ -302,12 +290,52 @@ static void CG_OffsetThirdPersonView( void ) {
 	if ( focusDist < 1 ) {
 		focusDist = 1;	// should never happen
 	}
-	// cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
+	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	cg.refdefViewAngles[PITCH] = focusAngles[PITCH];
-	// cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
 	cg.refdefViewAngles[YAW] = focusAngles[YAW];
 }
 
+/*
+=================================
+CG_WorldCoordToScreenCoordFloat
+=================================
+Gives screen projection of point in worldspace.
+Returns false if out of view.
+*/
+qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y ) { // BFP - Crosshair functionality
+	float xcenter, ycenter;
+	vec3_t local, transformed;
+	vec3_t vforward;
+	vec3_t vright;
+	vec3_t vup;
+	float xzi;
+	float yzi;
+
+	xcenter = 640.0f / 2.0f; // gives screen coords in virtual 640x480, to be adjusted when drawn
+	ycenter = 480.0f / 2.0f; // gives screen coords in virtual 640x480, to be adjusted when drawn
+
+	AngleVectors( cg.refdefViewAngles, vforward, vright, vup );
+
+	VectorSubtract( worldCoord, cg.refdef.vieworg, local );
+
+	transformed[0] = DotProduct( local, vright );
+	transformed[1] = DotProduct( local, vup );
+	transformed[2] = DotProduct( local, vforward );
+
+	// Make sure Z is not negative.
+	if ( transformed[2] < 0.01f ) {
+		return qfalse;
+	}
+
+	xzi = xcenter / transformed[2] * ( 96.0f / cg.refdef.fov_x );
+	yzi = ycenter / transformed[2] * ( 102.0f / cg.refdef.fov_y );
+
+	*x = xcenter + xzi * transformed[0];
+	*y = ycenter - yzi * transformed[1];
+
+	return qtrue;
+}
 
 // this causes a compiler bug on mac MrC compiler
 static void CG_StepOffset( void ) {

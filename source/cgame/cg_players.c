@@ -2185,10 +2185,6 @@ void CG_Player( centity_t *cent ) {
 
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
 
-	// BFP - TODO: Make legs rotate correctly to the position when flying
-
-	//VectorCopy( legs.origin, &cent->pe.legs ); // BFP - legs rotate the position when the player is flying
-
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
@@ -2223,8 +2219,11 @@ void CG_Player( centity_t *cent ) {
 	// add the head
 	//
 	head.hModel = ci->headModel;
-	if (!head.hModel || cg_yrgolroxor.integer != 0 ) { // BFP - Ygorl Roxor easter egg
+	if ( !head.hModel ) {
 		return;
+	}
+	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Ygorl Roxor easter egg
+		head.hModel = 0;
 	}
 	head.customSkin = ci->headSkin;
 

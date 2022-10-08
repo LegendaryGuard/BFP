@@ -1133,6 +1133,7 @@ void CG_TestModelPrevSkin_f (void);
 void CG_ZoomDown_f( void );
 void CG_ZoomUp_f( void );
 void CG_AddBufferedSound( sfxHandle_t sfx);
+qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y ); // BFP - Crosshair functionality
 
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback );
 
