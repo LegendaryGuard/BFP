@@ -735,7 +735,6 @@ void ClientThink_real( gentity_t *ent ) {
 		ent->client->ps.eFlags &= ~EF_AURA;
 	}
 
-
 	// BFP - Ki Charge
 	if ( ucmd->buttons & BUTTON_KI_CHARGE ) {
 		client->ps.eFlags |= EF_AURA;
@@ -744,7 +743,6 @@ void ClientThink_real( gentity_t *ent ) {
 	if ( client->ps.pm_flags & PMF_FLYING ) { // BFP - Flight speed
 		client->ps.speed *= 1.5;
 	}
-
 	// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
 
 	// BFP - if BUTTON_ENABLEFLIGHT enable flight

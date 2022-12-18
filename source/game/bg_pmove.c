@@ -1318,12 +1318,28 @@ static void PM_Footsteps( void ) {
 	//
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
+	
+	// BFP - Flight
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		if ( ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) || ( pm->cmd.buttons & BUTTON_WALKING ) ) {
+			if ( pm->cmd.forwardmove > 0 ) {
+				PM_ContinueTorsoAnim( TORSO_FLYA );
+				PM_ContinueLegsAnim( LEGS_FLYA );
+			} else if ( pm->cmd.forwardmove < 0 ) {
+				PM_ContinueTorsoAnim( TORSO_FLYB );
+				PM_ContinueLegsAnim( LEGS_FLYB );
+			} else {
+				PM_ContinueLegsAnim( LEGS_FLYIDLE );
+			}
+		}
+		return;
+	}
 
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
 
-		if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
-			PM_ContinueLegsAnim( LEGS_IDLECR );
-		}
+		// if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
+		// 	PM_ContinueLegsAnim( LEGS_IDLECR );
+		// }
 		// airborne leaves position in cycle intact, but doesn't advance
 		if ( pm->waterlevel > 1 ) {
 			PM_ContinueLegsAnim( LEGS_SWIM );
@@ -1379,8 +1395,7 @@ static void PM_Footsteps( void ) {
 			bobmove = 0.3f;	// walking bobs slow
 			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
 				PM_ContinueLegsAnim( LEGS_BACK );
-			}
-			else {
+			} else {
 				PM_ContinueLegsAnim( LEGS_WALK );
 			}
 		}
@@ -1881,6 +1896,35 @@ qboolean PM_KiCharge( pmove_t *pmove ) { // BFP - Ki Charge
 	pm->ps->stats[STAT_KI]++;
 }
 
+/*
+================
+PM_EnableFlight
+
+Enables/disables flight
+================
+*/
+static qboolean PM_EnableFlight( void ) { // BFP - Flight
+
+	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
+		if ( pm->isFlying && ( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
+			pm->isFlying = qfalse;
+		}
+		return qfalse;
+	}
+
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		if ( !pm->isFlying && ( pml.groundTrace.contents & CONTENTS_SOLID ) 
+			&& pm->ps->groundEntityNum != ENTITYNUM_NONE ) {
+			pm->ps->velocity[2] = JUMP_VELOCITY;
+			PM_AddEvent ( EV_JUMP );
+		}
+		pm->isFlying = qtrue;
+		pm->ps->groundEntityNum = ENTITYNUM_NONE;
+	}
+
+	return qtrue;
+}
+
 
 /*
 ================
@@ -2034,7 +2078,7 @@ void PmoveSingle (pmove_t *pmove) {
 		&& pm->ps->pm_type != PM_DEAD ) {
 
 		// little hop here when touching the ground
-		PM_StartFlight(); // fly!
+		PM_EnableFlight(); // fly!
 	}
 
 	// BFP - Ki Charge
