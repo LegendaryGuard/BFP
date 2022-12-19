@@ -1898,36 +1898,6 @@ qboolean PM_KiCharge( pmove_t *pmove ) { // BFP - Ki Charge
 
 /*
 ================
-PM_EnableFlight
-
-Enables/disables flight
-================
-*/
-static qboolean PM_EnableFlight( void ) { // BFP - Flight
-
-	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
-		if ( pm->isFlying && ( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
-			pm->isFlying = qfalse;
-		}
-		return qfalse;
-	}
-
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		if ( !pm->isFlying && ( pml.groundTrace.contents & CONTENTS_SOLID ) 
-			&& pm->ps->groundEntityNum != ENTITYNUM_NONE ) {
-			pm->ps->velocity[2] = JUMP_VELOCITY;
-			PM_AddEvent ( EV_JUMP );
-		}
-		pm->isFlying = qtrue;
-		pm->ps->groundEntityNum = ENTITYNUM_NONE;
-	}
-
-	return qtrue;
-}
-
-
-/*
-================
 PmoveSingle
 
 ================
