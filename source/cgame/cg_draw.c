@@ -352,6 +352,8 @@ static void CG_DrawStatusBar( void ) {
 	centity_t	*cent;
 	playerState_t	*ps;
 	int			value;
+	char *string;
+	int spacer =  CHAR_WIDTH*2;
 	vec4_t		hcolor;
 	vec3_t		angles;
 	vec3_t		origin;
@@ -375,17 +377,18 @@ static void CG_DrawStatusBar( void ) {
 
 	VectorClear( angles );
 
+	// BFP - disable ammobox
 	// draw any 3D icons first, so the changes back to 2D are minimized
-	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
-		origin[0] = 70;
-		origin[1] = 0;
-		origin[2] = 0;
-		angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
-		CG_Draw3DModel( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
-					   cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
-	}
+	// if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
+	// 	origin[0] = 70;
+	// 	origin[1] = 0;
+	// 	origin[2] = 0;
+	// 	angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
+	// 	CG_Draw3DModel( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
+	// }
 
-	CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
+	// BFP - place head in the corner
+	CG_DrawStatusBarHead( 0 );
 
 	if( cg.predictedPlayerState.powerups[PW_REDFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
@@ -395,84 +398,106 @@ static void CG_DrawStatusBar( void ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_FREE );
 	}
 
-	if ( ps->stats[ STAT_ARMOR ] ) {
-		origin[0] = 90;
-		origin[1] = 0;
-		origin[2] = -10;
-		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
-		CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
-					   cgs.media.armorModel, 0, origin, angles );
-	}
+	// BFP - hide armor
+	// if ( ps->stats[ STAT_ARMOR ] ) {
+	// 	origin[0] = 90;
+	// 	origin[1] = 0;
+	// 	origin[2] = -10;
+	// 	angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
+	// 	CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
+	// 				   cgs.media.armorModel, 0, origin, angles );
+	// }
 
+	// BFP - disable ammo text
 	//
 	// ammo
 	//
-	if ( cent->currentState.weapon ) {
-		value = ps->ammo[cent->currentState.weapon];
-		if ( value > -1 ) {
-			if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
-				&& cg.predictedPlayerState.weaponTime > 100 ) {
-				// draw as dark grey when reloading
-				color = 2;	// dark grey
-			} else {
-				if ( value >= 0 ) {
-					color = 0;	// green
-				} else {
-					color = 1;	// red
-				}
-			}
-			trap_R_SetColor( colors[color] );
+	// if ( cent->currentState.weapon ) {
+		// value = ps->ammo[cent->currentState.weapon];
+	// 	if ( value > -1 ) {
+	// 		if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
+	// 			&& cg.predictedPlayerState.weaponTime > 100 ) {
+	// 			// draw as dark grey when reloading
+	// 			color = 2;	// dark grey
+	// 		} else {
+	// 			if ( value >= 0 ) {
+	// 				color = 0;	// green
+	// 			} else {
+	// 				color = 1;	// red
+	// 			}
+	// 		}
+	// 		trap_R_SetColor( colors[color] );
 			
-			CG_DrawField (0, 432, 3, value);
-			trap_R_SetColor( NULL );
+	//	 CG_DrawField (0, 432, 3, value);
+	//		trap_R_SetColor( NULL );
 
-			// if we didn't draw a 3D icon, draw a 2D icon for ammo
-			if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-				qhandle_t	icon;
+	// 		// if we didn't draw a 3D icon, draw a 2D icon for ammo
+	// 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
+	// 			qhandle_t	icon;
 
-				icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
-				if ( icon ) {
-					CG_DrawPic( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, icon );
-				}
-			}
-		}
-	}
+	// 			icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
+	// 			if ( icon ) {
+	// 				CG_DrawPic( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, icon );
+	// 			}
+	// 		}
+	// }
+	// }
+
+
+	// BFP - TODO: Draw a HUD bar of 6 points to indicate ki attack preparation
+
 
 	//
 	// health
 	//
 	value = ps->stats[STAT_HEALTH];
 	if ( value > 100 ) {
-		trap_R_SetColor( colors[3] );		// white
+		trap_R_SetColor( colors[3] );	// white
 	} else if (value > 25) {
 		trap_R_SetColor( colors[0] );	// green
 	} else if (value > 0) {
-		color = (cg.time >> 8) & 1;	// flash
+		color = (cg.time >> 8) & 1;		// flash
 		trap_R_SetColor( colors[color] );
 	} else {
 		trap_R_SetColor( colors[1] );	// red
 	}
 
 	// stretch the health up when taking damage
-	CG_DrawField ( 185, 432, 3, value);
+	// CG_DrawField ( 185, 432, 3, value);
+
+	string = va( "HP: %d%%", value ); // %% is a percentage sign
+	CG_DrawBigString( spacer, SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
 
+	// BFP - draw ki amount
+	if ( ps->stats[STAT_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
+		ps->stats[STAT_KI] = 0;
+	value = ps->stats[STAT_KI];
+	string = va( "KI: %d", value );
+	CG_DrawBigString( spacer, SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
+	if (value >= 100) {
+		trap_R_SetColor( colors[3] );	// white
+	} else {
+		trap_R_SetColor( colors[1] );	// red
+	}
 
+
+	// BFP - disable armor
 	//
 	// armor
 	//
-	value = ps->stats[STAT_ARMOR];
-	if (value > 0 ) {
-		trap_R_SetColor( colors[0] );
-		CG_DrawField (370, 432, 3, value);
-		trap_R_SetColor( NULL );
-		// if we didn't draw a 3D icon, draw a 2D icon for armor
-		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-			CG_DrawPic( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cgs.media.armorIcon );
-		}
+	// value = ps->stats[STAT_ARMOR];
+	// if (value > 0 ) {
+	// 	trap_R_SetColor( colors[0] );
+	// 	CG_DrawField (370, 432, 3, value);
+	// 	trap_R_SetColor( NULL );
+	// 	// if we didn't draw a 3D icon, draw a 2D icon for armor
+	// 	if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
+	// 		CG_DrawPic( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cgs.media.armorIcon );
+	// 	}
 
-	}
+	// }
 }
 
 /*
@@ -1643,6 +1668,11 @@ static void CG_DrawCrosshair(void) {
 	float		f;
 	float		x, y;
 	int			ca;
+	trace_t		trace;
+	playerState_t	*ps;
+	vec3_t		muzzle, forward, up, start, end;
+
+	ps = &cg.predictedPlayerState;
 
 	if ( !cg_drawCrosshair.integer ) {
 		return;
@@ -1686,9 +1716,30 @@ static void CG_DrawCrosshair(void) {
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
-	trap_R_DrawStretchPic( x + cg.refdef.x + 0.5 * (cg.refdef.width - w), 
+	if ( cg.renderingThirdPerson ) { // BFP - Third person traceable crosshair
+		w = h = cg_crosshairSize.value; // set the same size, if this isn't set here, the size is changed
+		AngleVectors( ps->viewangles, forward, NULL, up );
+		VectorCopy( ps->origin, muzzle );
+		VectorMA( muzzle, ps->viewheight, up, muzzle );
+		VectorMA( muzzle, 14, forward, muzzle );
+		VectorCopy( muzzle, start );
+		VectorMA( start, 131072, forward, end );
+		CG_Trace( &trace, start, NULL, NULL, end, cg.snap->ps.clientNum, CONTENTS_SOLID | CONTENTS_BODY );
+		if ( !CG_WorldCoordToScreenCoordFloat( trace.endpos, &x, &y ) ) {
+			return;
+		}
+
+		CG_AdjustFrom640( &x, &y, &w, &h );
+		trap_R_DrawStretchPic( x - 0.5f * w, // 492.799987
+		y - 0.5f * h,
+		w, h, 0, 0, 1, 1, hShader );
+	} else { // Q3 default crosshair position
+		// x: 492.799987
+		// y: 364.799987
+		trap_R_DrawStretchPic( x + cg.refdef.x + 0.5 * (cg.refdef.width - w), 
 		y + cg.refdef.y + 0.5 * (cg.refdef.height - h), 
 		w, h, 0, 0, 1, 1, hShader );
+	}
 }
 
 
@@ -1759,6 +1810,7 @@ static void CG_DrawCrosshairNames( void ) {
 		return;
 	}
 
+	// BFP - TODO: Draw player powerlevel info
 	name = cgs.clientinfo[ cg.crosshairClientNum ].name;
 	w = CG_DrawStrlen( name ) * BIGCHAR_WIDTH;
 	CG_DrawBigString( 320 - w / 2, 170, name, color[3] * 0.5f );
@@ -2131,8 +2183,10 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 	}
 
 	// optionally draw the tournement scoreboard instead
-	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR &&
-		( cg.snap->ps.pm_flags & PMF_SCOREBOARD ) ) {
+	// BFP - PMF_SCOREBOARD is unused
+	// if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR &&
+	//	( cg.snap->ps.pm_flags & PMF_SCOREBOARD ) ) {
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		CG_DrawTourneyScoreboard();
 		return;
 	}

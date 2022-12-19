@@ -229,6 +229,9 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		focusDist;
 	float		forwardScale, sideScale;
 
+	// BFP - TODO: Improve camera, when player looks at the ground, the view should 
+	// be adjusted where the player position, in the screen, is further down like BFP does
+
 	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 
 	VectorCopy( cg.refdefViewAngles, focusAngles );
@@ -238,21 +241,22 @@ static void CG_OffsetThirdPersonView( void ) {
 		focusAngles[YAW] = cg.predictedPlayerState.stats[STAT_DEAD_YAW];
 		cg.refdefViewAngles[YAW] = cg.predictedPlayerState.stats[STAT_DEAD_YAW];
 	}
-	
-	/*
-	if ( focusAngles[PITCH] > 45 ) {
-		focusAngles[PITCH] = 45;		// don't go too far overhead
-	}
-	*/
+
+	// if ( focusAngles[PITCH] > 45 ) {
+	// 	focusAngles[PITCH] = 45;		// don't go too far overhead
+	// }
 	AngleVectors( focusAngles, forward, NULL, NULL );
 
 	VectorMA( cg.refdef.vieworg, FOCUS_DISTANCE, forward, focusPoint );
 
 	VectorCopy( cg.refdef.vieworg, view );
 
-	view[2] += 8;
+	// view[2] += 8;
 
-	cg.refdefViewAngles[PITCH] *= 0.5;
+	// BFP - Third person camera height
+	view[2] += cg_thirdPersonHeight.value + 80;
+
+	// cg.refdefViewAngles[PITCH] *= 0.5;
 
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 
@@ -269,6 +273,7 @@ static void CG_OffsetThirdPersonView( void ) {
 
 		if ( trace.fraction != 1.0 ) {
 			VectorCopy( trace.endpos, view );
+
 			view[2] += (1.0 - trace.fraction) * 32;
 			// try another trace to this position, because a tunnel may have the ceiling
 			// close enogh that this is poking out
@@ -288,9 +293,51 @@ static void CG_OffsetThirdPersonView( void ) {
 		focusDist = 1;	// should never happen
 	}
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
+	cg.refdefViewAngles[PITCH] = focusAngles[PITCH];
 	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+	cg.refdefViewAngles[YAW] = focusAngles[YAW];
 }
 
+/*
+=================================
+CG_WorldCoordToScreenCoordFloat
+=================================
+Gives screen projection of point in worldspace.
+Returns false if out of view.
+*/
+qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y ) { // BFP - Crosshair functionality
+	float xcenter, ycenter;
+	vec3_t local, transformed;
+	vec3_t vforward;
+	vec3_t vright;
+	vec3_t vup;
+	float xzi;
+	float yzi;
+
+	xcenter = 640.0f / 2.0f; // gives screen coords in virtual 640x480, to be adjusted when drawn
+	ycenter = 480.0f / 2.0f; // gives screen coords in virtual 640x480, to be adjusted when drawn
+
+	AngleVectors( cg.refdefViewAngles, vforward, vright, vup );
+
+	VectorSubtract( worldCoord, cg.refdef.vieworg, local );
+
+	transformed[0] = DotProduct( local, vright );
+	transformed[1] = DotProduct( local, vup );
+	transformed[2] = DotProduct( local, vforward );
+
+	// Make sure Z is not negative.
+	if ( transformed[2] < 0.01f ) {
+		return qfalse;
+	}
+
+	xzi = xcenter / transformed[2] * ( 96.0f / cg.refdef.fov_x );
+	yzi = ycenter / transformed[2] * ( 102.0f / cg.refdef.fov_y );
+
+	*x = xcenter + xzi * transformed[0];
+	*y = ycenter - yzi * transformed[1];
+
+	return qtrue;
+}
 
 // this causes a compiler bug on mac MrC compiler
 static void CG_StepOffset( void ) {

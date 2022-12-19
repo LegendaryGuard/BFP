@@ -734,6 +734,8 @@ VIEW WEAPON
 ========================================================================================
 */
 
+// BFP - TODO: Change animations for BFP
+
 /*
 =================
 CG_MapTorsoToWeaponFrame
@@ -742,22 +744,25 @@ CG_MapTorsoToWeaponFrame
 */
 static int CG_MapTorsoToWeaponFrame( clientInfo_t *ci, int frame ) {
 
+	// BFP - TODO: These animations aren't definitive
+
 	// change weapon
-	if ( frame >= ci->animations[TORSO_DROP].firstFrame 
-		&& frame < ci->animations[TORSO_DROP].firstFrame + 9 ) {
-		return frame - ci->animations[TORSO_DROP].firstFrame + 6;
+	// BFP doesn't use this animation
+	if ( frame >= ci->animations[TORSO_ATTACK0_PREPARE].firstFrame 
+		&& frame < ci->animations[TORSO_ATTACK0_PREPARE].firstFrame + 9 ) {
+		return frame - ci->animations[TORSO_ATTACK0_PREPARE].firstFrame + 6;
 	}
 
 	// stand attack
-	if ( frame >= ci->animations[TORSO_ATTACK].firstFrame 
-		&& frame < ci->animations[TORSO_ATTACK].firstFrame + 6 ) {
-		return 1 + frame - ci->animations[TORSO_ATTACK].firstFrame;
+	if ( frame >= ci->animations[TORSO_STAND].firstFrame 
+		&& frame < ci->animations[TORSO_STAND].firstFrame + 6 ) {
+		return 1 + frame - ci->animations[TORSO_STAND].firstFrame;
 	}
 
 	// stand attack 2
-	if ( frame >= ci->animations[TORSO_ATTACK2].firstFrame 
-		&& frame < ci->animations[TORSO_ATTACK2].firstFrame + 6 ) {
-		return 1 + frame - ci->animations[TORSO_ATTACK2].firstFrame;
+	if ( frame >= ci->animations[TORSO_ATTACK0_PREPARE].firstFrame 
+		&& frame < ci->animations[TORSO_ATTACK0_PREPARE].firstFrame + 6 ) {
+		return 1 + frame - ci->animations[TORSO_ATTACK0_PREPARE].firstFrame;
 	}
 	
 	return 0;
@@ -1110,7 +1115,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 	}
 
-	gun.hModel = weapon->weaponModel;
+	// gun.hModel = weapon->weaponModel; // BFP - Hide weapon model
 	if (!gun.hModel) {
 		return;
 	}

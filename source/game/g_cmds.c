@@ -1592,15 +1592,53 @@ void Cmd_Stats_f( gentity_t *ent ) {
 
 /*
 =====================
-Cmd_BFP_Fly
+Cmd_BFP_Fly_f
 =====================
 */
-void Cmd_BFP_Fly( gentity_t* ent ) { // BFP - Flight
+void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		ent->client->ps.pm_flags ^= PMF_FLYING;
 	}
 }
+
+/*
+=====================
+Cmd_BFP_KiUseToggle_f
+=====================
+*/
+void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) { // BFP - Ki use toggle
+
+	if ( ent->client->ps.pm_type != PM_DEAD ) {
+		ent->client->ps.eFlags ^= PMF_KI_BOOST;
+	}
+}
+
+void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) { // BFP - TODO: Set Ki idle
+	Com_Printf( "Cmd_BFP_SetKiIdle_f\n" );
+}
+
+void Cmd_BFP_SelectCharacter_f( gentity_t* ent ) { // BFP - TODO: Select character
+	Com_Printf( "Cmd_BFP_SelectCharacter_f\n" );
+}
+
+void Cmd_BFP_StartBlock_f( gentity_t* ent ) { // BFP - TODO: Start block
+	Com_Printf( "Cmd_BFP_StartBlock_f\n" );
+}
+
+void Cmd_BFP_StopBlock_f( gentity_t* ent ) { // BFP - TODO: Stop block
+	Com_Printf( "Cmd_BFP_StopBlock_f\n" );
+}
+
+void Cmd_BFP_StartMelee_f( gentity_t* ent ) { // BFP - TODO: Start melee
+	Com_Printf( "Cmd_BFP_StartMelee_f\n" );
+}
+
+void Cmd_BFP_StopMelee_f( gentity_t* ent ) { // BFP - TODO: Stop melee
+	Com_Printf( "Cmd_BFP_StopMelee_f\n" );
+}
+
+
 
 /*
 =================
@@ -1709,7 +1747,21 @@ void ClientCommand( int clientNum ) {
 	else if (Q_stricmp (cmd, "stats") == 0)
 		Cmd_Stats_f( ent );
 	else if (Q_stricmp (cmd, "fly") == 0) // BFP - Flight
-		Cmd_BFP_Fly( ent );
+		Cmd_BFP_Fly_f( ent );
+	else if (Q_stricmp (cmd, "kiusetoggle") == 0) // BFP - Ki use toggle
+		Cmd_BFP_KiUseToggle_f( ent );
+	else if (Q_stricmp (cmd, "set_ki_idle") == 0) // BFP - TODO: Set Ki idle
+		Cmd_BFP_SetKiIdle_f( ent );
+	else if (Q_stricmp (cmd, "selectcharacter") == 0) // BFP - TODO: Select character
+		Cmd_BFP_SelectCharacter_f( ent );
+	else if (Q_stricmp (cmd, "start_block") == 0) // BFP - TODO: Start Block
+		Cmd_BFP_StartBlock_f( ent );
+	else if (Q_stricmp (cmd, "stop_block") == 0) // BFP - TODO: Stop block
+		Cmd_BFP_StopBlock_f( ent );
+	else if (Q_stricmp (cmd, "start_melee") == 0) // BFP - TODO: Start melee
+		Cmd_BFP_StartMelee_f( ent );
+	else if (Q_stricmp (cmd, "stop_melee") == 0) // BFP - TODO: Stop melee
+		Cmd_BFP_StopMelee_f( ent );
 	else
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );
 }

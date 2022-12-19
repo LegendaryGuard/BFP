@@ -425,6 +425,28 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 			}
 		}
 
+		// BFP - Ki up/down when flying/ki use
+		if ( client->ps.pm_flags & PMF_FLYING ) {
+
+			// BFP - TODO: Add cvar for flight cost
+
+			if ( client->ps.stats[STAT_KI] > 0 ) {
+				client->ps.stats[STAT_KI]--;
+			
+				if ( client->pers.cmd.buttons & BUTTON_KI_USE )
+					client->ps.stats[STAT_KI]--;
+			}
+		} else {
+			client->ps.stats[STAT_KI]++;
+		}
+
+		// BFP - if ki drops to 0, disable flight
+		if ( client->ps.stats[STAT_KI] <= 0 ) {
+			client->ps.stats[STAT_KI] = 0;
+			client->ps.pm_flags &= ~PMF_FLYING;
+			// Com_Printf( "ki amount: %d\n", client->ps.stats[STAT_KI] );
+		}
+
 		// count down armor when over max
 		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
 			client->ps.stats[STAT_ARMOR]--;
@@ -589,7 +611,6 @@ FlyingThink
 =================
 */
 void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
-	pmove_t	pm;
 	gclient_t	*client;
 
 	client = ent->client;
@@ -599,7 +620,7 @@ void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
 
 	// enableflight button cycles
 	if ( ( client->buttons & BUTTON_ENABLEFLIGHT ) && ! ( client->oldbuttons & BUTTON_ENABLEFLIGHT ) ) {
-		Cmd_BFP_Fly( ent );
+		Cmd_BFP_Fly_f( ent );
 	}
 }
 
@@ -703,10 +724,25 @@ void ClientThink_real( gentity_t *ent ) {
 	// set speed
 	client->ps.speed = g_speed.value;
 
-	if ( client->ps.powerups[PW_HASTE] ) {
-		client->ps.speed *= 1.3;
+	// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
+	// BFP - if BUTTON_KI_USE > speed	
+	if ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
+	|| ( ent->client->ps.pm_flags & PMF_KI_BOOST ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
+		ent->client->ps.speed *= 2.5;
+		ent->client->ps.eFlags |= EF_AURA;
+	}
+	else {
+		ent->client->ps.eFlags &= ~EF_AURA;
 	}
 
+	// BFP - Ki Charge
+	if ( ucmd->buttons & BUTTON_KI_CHARGE ) {
+		client->ps.eFlags |= EF_AURA;
+	}
+
+	if ( client->ps.pm_flags & PMF_FLYING ) { // BFP - Flight speed
+		client->ps.speed *= 1.5;
+	}
 	// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
 
 	// BFP - if BUTTON_ENABLEFLIGHT enable flight
@@ -905,11 +941,14 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 		}
 	}
 
+	// BFP - PMF_SCOREBOARD is unused
+	/*
 	if ( ent->client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 		ent->client->ps.pm_flags |= PMF_SCOREBOARD;
 	} else {
 		ent->client->ps.pm_flags &= ~PMF_SCOREBOARD;
 	}
+	*/
 }
 
 /*

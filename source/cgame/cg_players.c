@@ -1436,7 +1436,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		vec3_t	axis[3];
 		float	side;
 
-		speed *= 0.05f;
+		speed *= 0.01f; // BFP - adjust legs speed, before 0.05f
 
 		AnglesToAxis( legsAngles, axis );
 		side = speed * DotProduct( velocity, axis[1] );
@@ -1455,6 +1455,13 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 			legsAngles[PITCH] = 0.0f;
 			legsAngles[ROLL] = 0.0f;
 		}
+	}
+
+	// BFP - when flying, set correctly into these angles
+	if ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) {
+		VectorCopy( cent->lerpAngles, headAngles );
+		VectorCopy( cent->lerpAngles, torsoAngles );
+		VectorCopy( cent->lerpAngles, legsAngles );
 	}
 
 	// pain twitch
@@ -2063,6 +2070,7 @@ void CG_Player( centity_t *cent ) {
 	refEntity_t		legs;
 	refEntity_t		torso;
 	refEntity_t		head;
+	refEntity_t		aura;
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
@@ -2110,6 +2118,52 @@ void CG_Player( centity_t *cent ) {
 	// add the talk baloon or disconnect icon
 	CG_PlayerSprites( cent );
 
+	// BFP - Aura ki using
+	if ( cent->currentState.eFlags & EF_AURA ) {
+		aura.reType = RT_MODEL;
+		aura.customShader = cgs.media.auraEffectShader;
+		aura.hModel = cgs.media.auraModel;
+		
+		// reset axis model postion
+		AxisClear( aura.axis );
+		
+		// fixes rotation when player rotates down/up/right/left... even while flying
+		// according legs position
+		// cent->lerpAngles is according player base entity position
+		AnglesToAxis( &cent->pe.legs.pitchAngle, aura.axis );
+
+		// set aura position to the player
+		VectorCopy( cent->lerpOrigin, aura.origin );
+
+		// BFP - when flying, set correctly into these angles
+		if ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) {
+			AnglesToAxis( cent->lerpAngles, aura.axis );
+		}
+
+		aura.renderfx = renderfx;
+		trap_R_AddRefEntityToScene( &aura );
+
+		// BFP - TODO: Add secondary aura and with little size 
+		// who knows why, BFP does that as well
+		//VectorScale( aura.axis[0], 0.9, aura.axis[0] );
+		//VectorScale( aura.axis[1], 0.9, aura.axis[1] );
+		//VectorScale( aura.axis[2], 0.9, aura.axis[2] );
+
+		// BFP - TODO: rotate secondary aura in the opposite direction
+		// it doesn't work as should :(
+		//cg.autoAngles[1] = -( cg.time & 2047 ) * 360 / 2048.0;
+		//VectorCopy( cg.autoAngles, cent->lerpAngles );
+		//trap_R_AddRefEntityToScene( &aura ); // add secondary aura, but it doesn't respect the angles to the player model
+
+		// light blinking
+		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.01f, 0.002f );
+		trap_R_AddLightToScene( cent->lerpOrigin, 80 + (rand()&11), 1, 0.15f, 0.001f );
+
+		// BFP - TODO: Make a charging sound if it's being used
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			vec3_origin, cgs.media.kiUseSound );
+	}
+
 	// add the shadow
 	shadow = CG_PlayerShadow( cent, &shadowPlane );
 
@@ -2130,6 +2184,7 @@ void CG_Player( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, legs.origin );
 
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
+
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
@@ -2164,8 +2219,11 @@ void CG_Player( centity_t *cent ) {
 	// add the head
 	//
 	head.hModel = ci->headModel;
-	if (!head.hModel) {
+	if ( !head.hModel ) {
 		return;
+	}
+	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Ygorl Roxor easter egg
+		head.hModel = 0;
 	}
 	head.customSkin = ci->headSkin;
 

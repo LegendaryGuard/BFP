@@ -147,13 +147,18 @@ typedef enum {
 #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
 #define	PMF_TIME_LAND		32		// pm_time is time before rejump
 #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
+#define PMF_KI_BOOST		128		// BFP - Using Ki
 #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
 #define PMF_GRAPPLE_PULL	2048	// pull towards grapple location
 #define PMF_FOLLOW			4096	// spectate following another player
-#define PMF_SCOREBOARD		8192	// spectate as a scoreboard
+// BFP - PMF_SCOREBOARD is unused
+// #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
+// BFP - TODO: Reuse the following flag (used on Team Arena) , change name if it'll be used
 #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
+// BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
+// #define PMF_SOMEFLAG		65536	// some pm_flag
 
 #define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
 
@@ -204,6 +209,7 @@ void Pmove (pmove_t *pmove);
 // NOTE: may not have more than 16
 typedef enum {
 	STAT_HEALTH,
+	STAT_KI,							// BFP - KI amount
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
@@ -239,6 +245,7 @@ typedef enum {
 
 // entityState_t->eFlags
 #define	EF_DEAD				0x00000001		// don't draw a foe marker over players with EF_DEAD
+#define EF_AURA				0x00000002		// BFP - Aura, used to display players' aura
 #define	EF_TELEPORT_BIT		0x00000004		// toggled every time the origin abruptly changes
 #define	EF_AWARD_EXCELLENT	0x00000008		// draw an excellent sprite
 #define EF_PLAYER_EVENT		0x00000010
@@ -451,49 +458,115 @@ typedef enum {
 
 // animations
 typedef enum {
-	BOTH_DEATH1, // BFP animation uses this
-	BOTH_DEAD1, // BFP animation uses this
-	BOTH_DEATH2, // BFP animation uses this
-	BOTH_DEAD2, // BFP animation uses this
-	BOTH_DEATH3, // BFP animation uses this
-	BOTH_DEAD3, // BFP animation uses this
 
-	TORSO_GESTURE, // BFP animation uses this
+	// BFP - The animations must be set in this order
+
+	BOTH_DEATH1,			// BFP uses this animation
+	BOTH_DEAD1,				// BFP uses this animation
+	BOTH_DEATH2,			// BFP uses this animation
+	BOTH_DEAD2,				// BFP uses this animation
+	BOTH_DEATH3,			// BFP uses this animation
+	BOTH_DEAD3,				// BFP uses this animation
+
+	TORSO_GESTURE,			// BFP uses this animation
 	
-	TORSO_STAND, // moved under TORSO_GESTURE according to BFP animations order
+	TORSO_STAND,			// BFP uses this animation
 
-	TORSO_ATTACK,
-	TORSO_ATTACK2,
+	TORSO_RUN,				// BFP
 
-	TORSO_DROP,
-	TORSO_RAISE,
+	TORSO_BLOCK,			// BFP
 
-	TORSO_STAND2,
+	TORSO_STUN,				// BFP
 
-	TORSO_FLYA, // BFP
-	TORSO_FLYB, // BFP
+	TORSO_FLYA,				// BFP
+	TORSO_FLYB,				// BFP
 
-	LEGS_WALKCR, // BFP animation uses this
-	LEGS_WALK, // BFP animation uses this
-	LEGS_RUN, // BFP animation uses this
-	LEGS_BACK, // BFP animation uses this
-	LEGS_SWIM, // BFP animation uses this
+	TORSO_CHARGE,			// BFP
 
-	LEGS_JUMP, // BFP animation uses this
-	LEGS_LAND,
+	TORSO_MELEE_READY,		// BFP
+	TORSO_MELEE,			// BFP
+	TORSO_MELEE_STRIKE,		// BFP
+	TORSO_MELEE_AXEHANDLE,	// BFP
 
-	LEGS_JUMPB, // BFP animation uses this
-	LEGS_LANDB,
+	LEGS_WALKCR,			// BFP uses this animation
+	LEGS_WALK,				// BFP uses this animation
+	LEGS_RUN,				// BFP uses this animation
+	LEGS_BACK,				// BFP uses this animation
+	LEGS_SWIM,				// BFP uses this animation
 
-	LEGS_IDLE, // BFP animation uses this
-	LEGS_IDLECR, // BFP animation uses this
+	LEGS_JUMP,				// BFP uses this animation
+	LEGS_JUMPB,				// BFP uses this animation
 
-	LEGS_TURN, // BFP animation uses this
+	LEGS_IDLE,				// BFP uses this animation
+	LEGS_IDLECR,			// BFP uses this animation
 
-	LEGS_FLYIDLE, // BFP
-	LEGS_FLYA, // BFP
-	LEGS_FLYB, // BFP
+	LEGS_TURN,				// BFP uses this animation
 
+	LEGS_FLYIDLE,			// BFP
+	LEGS_FLYA,				// BFP
+	LEGS_FLYB,				// BFP
+
+	LEGS_CHARGE,			// BFP
+
+	LEGS_MELEE,				// BFP
+	LEGS_MELEE_STRIKE,		// BFP
+
+
+	// BFP - the following attack animations will be used for attacksets and new config stuff
+
+	// BFP - (push right hand)
+	TORSO_ATTACK0_PREPARE,	// BFP
+	TORSO_ATTACK0_STRIKE,	// BFP
+
+	// BFP - (throw right hand)
+	TORSO_ATTACK1_PREPARE,	// BFP
+	TORSO_ATTACK1_STRIKE,	// BFP
+
+	// BFP - (both hands ki attack)
+	TORSO_ATTACK2_PREPARE,	// BFP
+	TORSO_ATTACK2_STRIKE,	// BFP
+
+	// BFP - (kamehameha or some kinda fourth attack?)
+	TORSO_ATTACK3_PREPARE,	// BFP
+	TORSO_ATTACK3_STRIKE,	// BFP
+
+	// BFP - (some kinda final attack)
+	TORSO_ATTACK4_PREPARE,	// BFP
+	TORSO_ATTACK4_STRIKE,	// BFP
+
+
+	// BFP - These attack animations are just weird, 
+	// these were found inside animation.cfg files of some 'English Bid For Power' modpack models
+
+	/*
+	// BFP - (point finger right hand)
+	TORSO_ATTACK5_PREPARE,	// BFP
+	TORSO_ATTACK5_STRIKE,	// BFP
+
+	// BFP - (big disc hold)	
+	TORSO_ATTACK7_PREPARE,	// BFP
+	TORSO_ATTACK7_STRIKE,	// BFP
+
+	// BFP - (2 hands forehead attack)
+	TORSO_ATTACK10_PREPARE,	// BFP
+	TORSO_ATTACK10_STRIKE,	// BFP
+
+	// BFP - (charge 2 hands center)
+	TORSO_ATTACK13_PREPARE,	// BFP
+	TORSO_ATTACK13_STRIKE,	// BFP
+
+	// BFP - (controlled sphere attack)
+	TORSO_ATTACK14_PREPARE,	// BFP
+	TORSO_ATTACK14_STRIKE,	// BFP
+
+	// BFP - (ken and ryu fireball)
+	TORSO_ATTACK16_PREPARE,	// BFP
+	TORSO_ATTACK16_STRIKE,	// BFP
+	*/
+
+
+	// BFP - The following animations are useless, 
+	// possibly can be removed only if the game works as should
 	TORSO_GETFLAG,
 	TORSO_GUARDBASE,
 	TORSO_PATROL,
@@ -501,7 +574,7 @@ typedef enum {
 	TORSO_AFFIRMATIVE,
 	TORSO_NEGATIVE,
 
-	MAX_ANIMATIONS,
+	MAX_ANIMATIONS,			// BFP - important variable, don't remove!
 
 	LEGS_BACKCR,
 	LEGS_BACKWALK,
@@ -509,7 +582,7 @@ typedef enum {
 	FLAG_STAND,
 	FLAG_STAND2RUN,
 
-	MAX_TOTALANIMATIONS
+	MAX_TOTALANIMATIONS		// BFP - important variable, don't remove!
 } animNumber_t;
 
 // TODO: BFP - Remove the enum below and uncomment that 

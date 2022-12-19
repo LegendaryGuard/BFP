@@ -128,7 +128,7 @@ static gentity_t *SpawnModelOnVictoryPad( gentity_t *pad, vec3_t offset, gentity
 		body->s.weapon = WP_MACHINEGUN;
 	}
 	if( body->s.weapon == WP_GAUNTLET) {
-		body->s.torsoAnim = TORSO_STAND2;
+		body->s.torsoAnim = TORSO_ATTACK0_STRIKE; // BFP - before TORSO_STAND2
 	}
 	body->s.event = 0;
 	body->r.svFlags = ent->r.svFlags;
@@ -165,7 +165,7 @@ static void CelebrateStop( gentity_t *player ) {
 	int		anim;
 
 	if( player->s.weapon == WP_GAUNTLET) {
-		anim = TORSO_STAND2;
+		anim = TORSO_ATTACK0_PREPARE; // BFP - before TORSO_STAND2
 	}
 	else {
 		anim = TORSO_STAND;

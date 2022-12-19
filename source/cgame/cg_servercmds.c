@@ -406,7 +406,7 @@ static void CG_MapRestart( void ) {
 		trap_S_StartLocalSound( cgs.media.countFightSound, CHAN_ANNOUNCER );
 		CG_CenterPrint( "FIGHT!", 120, GIANTCHAR_WIDTH*2 );
 	}
-	trap_Cvar_Set("cg_thirdPerson", "0");
+	// trap_Cvar_Set("cg_thirdPerson", "0"); // BFP - don't disable even when restarting the server
 }
 
 #define MAX_VOICEFILESIZE	16384

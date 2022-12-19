@@ -89,7 +89,7 @@ typedef struct
 #define ID_LEFT			9	
 #define ID_RIGHT		10	
 #define ID_STRAFE		11	
-#define ID_ENABLEFLIGHT	12	
+#define ID_ENABLEFLIGHT	12	// BFP
 #define ID_LOOKUP		13	
 #define ID_LOOKDOWN		14
 #define ID_MOUSELOOK	15
@@ -112,6 +112,9 @@ typedef struct
 #define ID_CHAT2		32
 #define ID_CHAT3		33
 #define ID_CHAT4		34
+#define ID_KICHARGE		35	// BFP
+#define ID_KIUSETOGGLE	36	// BFP
+#define ID_KIUSE		37	// BFP
 
 // all others
 #define ID_FREELOOK		35
@@ -152,6 +155,7 @@ typedef struct
 #define ANIM_DIE		24
 #define ANIM_CHAT		25
 #define ANIM_FLY		26 // BFP
+#define ANIM_KICHARGE	27 // BFP
 
 typedef struct
 {
@@ -210,6 +214,9 @@ typedef struct
 	menuaction_s		chat2;
 	menuaction_s		chat3;
 	menuaction_s		chat4;
+	menuaction_s		kicharge; // BFP - ki charge menu action
+	menuaction_s		kiusetoggle; // BFP - ki use toggle menu action
+	menuaction_s		kiuse; // BFP - ki use menu action
 	menuradiobutton_s	joyenable;
 	menuslider_s		joythreshold;
 	int					section;
@@ -247,7 +254,7 @@ static bind_t g_bindings[] =
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
-	{/*"fly"*/"+button12",		"enable flight",	ID_ENABLEFLIGHT,	ANIM_FLY,	'f',	-1,		-1, -1}, // BFP - flight control
+	{"+button12",		"fly",				ID_ENABLEFLIGHT,    ANIM_FLY,		'f',			-1,		-1, -1}, // BFP - flight control "fly" bind
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
@@ -269,6 +276,9 @@ static bind_t g_bindings[] =
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
+	{"kiusetoggle",		"Use Ki (toggle)",	ID_KIUSETOGGLE,	ANIM_IDLE,		'e',			-1,		-1, -1}, // BFP - use ki toggle control
+	{"+button8",		"Use Ki",			ID_KIUSE,		ANIM_IDLE,		K_SHIFT,		-1,		-1, -1}, // BFP - use ki control
+	{"+button9",		"Charge Ki",		ID_KICHARGE,	ANIM_KICHARGE,	K_MOUSE2,		-1,		-1, -1}, // BFP - charge ki control
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
 
@@ -298,7 +308,7 @@ static menucommon_s *g_movement_controls[] =
 	(menucommon_s *)&s_controls.turnleft,      
 	(menucommon_s *)&s_controls.turnright,     
 	(menucommon_s *)&s_controls.sidestep,
-	(menucommon_s *)&s_controls.enableflight,
+	(menucommon_s *)&s_controls.enableflight, // BFP
 	NULL
 };
 
@@ -342,6 +352,9 @@ static menucommon_s *g_misc_controls[] = {
 	(menucommon_s *)&s_controls.chat2,
 	(menucommon_s *)&s_controls.chat3,
 	(menucommon_s *)&s_controls.chat4,
+	(menucommon_s *)&s_controls.kicharge, // BFP
+	(menucommon_s *)&s_controls.kiusetoggle, // BFP
+	(menucommon_s *)&s_controls.kiuse, // BFP
 	NULL,
 };
 
@@ -462,11 +475,17 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_CROUCH:	
 		s_controls.playerLegs = LEGS_IDLECR;
 		break;
-	
-	// BFP - Menu animation
+
+	// BFP - Flight
 	case ANIM_FLY:
-		s_controls.playerLegs = LEGS_FLYIDLE; //LEGS_FLYIDLE;
-		//s_controls.playerTorso = TORSO_FLYA;
+		s_controls.playerLegs = LEGS_FLYA; //LEGS_FLYIDLE;
+		s_controls.playerTorso = TORSO_FLYA;
+		break;
+
+	// BFP - Ki charge
+	case ANIM_KICHARGE:
+		s_controls.playerLegs = LEGS_CHARGE;
+		s_controls.playerTorso = TORSO_CHARGE;
 		break;
 
 	case ANIM_TURNLEFT:
@@ -536,7 +555,7 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 
 	case ANIM_ATTACK:
-		s_controls.playerTorso = TORSO_ATTACK;
+		s_controls.playerTorso = TORSO_ATTACK0_STRIKE;
 		break;
 
 	case ANIM_GESTURE:
@@ -557,7 +576,7 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 	}
 
-	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerWeapon, s_controls.playerChat );
+	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerChat );
 }
 
 
@@ -1332,13 +1351,6 @@ static void Controls_MenuInit( void )
 	s_controls.movedown.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.movedown.generic.id        = ID_MOVEDOWN;
 
-	// BFP - flight control option
-	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
-	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
-	s_controls.enableflight.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.enableflight.generic.id        = ID_ENABLEFLIGHT;
-
 	s_controls.turnleft.generic.type	  = MTYPE_ACTION;
 	s_controls.turnleft.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.turnleft.generic.callback  = Controls_ActionEvent;
@@ -1356,6 +1368,13 @@ static void Controls_MenuInit( void )
 	s_controls.sidestep.generic.callback  = Controls_ActionEvent;
 	s_controls.sidestep.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.sidestep.generic.id        = ID_STRAFE;
+
+	// BFP - flight control option
+	s_controls.enableflight.generic.type	  = MTYPE_ACTION;
+	s_controls.enableflight.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.enableflight.generic.callback  = Controls_ActionEvent;
+	s_controls.enableflight.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.enableflight.generic.id        = ID_ENABLEFLIGHT;
 
 	s_controls.run.generic.type	     = MTYPE_ACTION;
 	s_controls.run.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1557,6 +1576,27 @@ static void Controls_MenuInit( void )
 	s_controls.chat4.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.chat4.generic.id        = ID_CHAT4;
 
+	// BFP - ki charge control option
+	s_controls.kicharge.generic.type	  = MTYPE_ACTION;
+	s_controls.kicharge.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kicharge.generic.callback  = Controls_ActionEvent;
+	s_controls.kicharge.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.kicharge.generic.id        = ID_KICHARGE;
+
+	// BFP - ki use toggle control option
+	s_controls.kiusetoggle.generic.type	  = MTYPE_ACTION;
+	s_controls.kiusetoggle.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kiusetoggle.generic.callback  = Controls_ActionEvent;
+	s_controls.kiusetoggle.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.kiusetoggle.generic.id        = ID_KIUSETOGGLE;
+
+	// BFP - ki use control option
+	s_controls.kiuse.generic.type	  = MTYPE_ACTION;
+	s_controls.kiuse.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kiuse.generic.callback  = Controls_ActionEvent;
+	s_controls.kiuse.generic.ownerdraw = Controls_DrawKeyBinding;
+	s_controls.kiuse.generic.id        = ID_KIUSE;
+
 	s_controls.joyenable.generic.type      = MTYPE_RADIOBUTTON;
 	s_controls.joyenable.generic.flags	   = QMF_SMALLFONT;
 	s_controls.joyenable.generic.x	       = SCREEN_WIDTH/2;
@@ -1617,7 +1657,7 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.turnleft );
 	Menu_AddItem( &s_controls.menu, &s_controls.turnright );
 	Menu_AddItem( &s_controls.menu, &s_controls.sidestep );
-	Menu_AddItem( &s_controls.menu, &s_controls.enableflight );
+	Menu_AddItem( &s_controls.menu, &s_controls.enableflight ); // BFP
 
 	Menu_AddItem( &s_controls.menu, &s_controls.attack );
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );
@@ -1640,6 +1680,9 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.chat2 );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat3 );
 	Menu_AddItem( &s_controls.menu, &s_controls.chat4 );
+	Menu_AddItem( &s_controls.menu, &s_controls.kicharge ); // BFP
+	Menu_AddItem( &s_controls.menu, &s_controls.kiusetoggle ); // BFP
+	Menu_AddItem( &s_controls.menu, &s_controls.kiuse ); // BFP
 
 	Menu_AddItem( &s_controls.menu, &s_controls.back );
 

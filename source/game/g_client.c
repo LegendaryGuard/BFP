@@ -1130,13 +1130,11 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.clientNum = index;
 
 	// TODO: BFP - list of 5 skills
-	
+
+	client->ps.stats[STAT_KI] = 1000; // BFP - give ki at start
+
 	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
-	if ( g_gametype.integer == GT_TEAM ) {
-		client->ps.ammo[WP_MACHINEGUN] = 50;
-	} else {
-		client->ps.ammo[WP_MACHINEGUN] = 100;
-	}
+	client->ps.ammo[WP_MACHINEGUN] = 100;
 
 	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ROCKET_LAUNCHER );
 	client->ps.ammo[WP_ROCKET_LAUNCHER] = 100;
@@ -1159,6 +1157,8 @@ void ClientSpawn(gentity_t *ent) {
 
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
+
+	ent->kiamount = client->ps.stats[STAT_KI];
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );

@@ -14,11 +14,13 @@ A legendary Quake 3 Arena mod from the 90's era.
 
 - [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
 - [ ] Gauntlet logic must be replaced as a bind key, it will use fight animation (using kicks and fists)
-- [ ] Remove weapon visuals (models and stuff)
-- [ ] Animations as listed on the old docs
-- [ ] Bind key to recover ki energy
+- [x] ~~Remove weapon visuals (models and stuff)~~
+- [x] ~~Animations as listed on the old docs~~
+- [x] ~~Bind key to recover ki energy~~
 - [ ] Bind key to toggle speed (ki boost). HINT: HASTE POWERUP
-- [ ] Replace ammo to ki energy stamina
+- [x] ~~Replace ammo to ki energy stamina~~
+- [x] ~~Third person traceable crosshair~~
+- [ ] Make ki energy regeneration, ki use, attacks, charging balance as indicated on the old docs
 - [ ] Powerlevel and Power Tiers as indicated on the old docs
 - [ ] Hit Stun (makes player can't move, attack, block or charge)
 - [ ] Power Struggles (when two beam attacks collide)

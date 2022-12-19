@@ -762,6 +762,12 @@ typedef struct {
 
 	qhandle_t	invulnerabilityPowerupModel;
 
+	qhandle_t	auraModel; // BFP - Aura model
+	qhandle_t	backauraModel; // BFP - Back aura model
+	qhandle_t	flyauraModel; // BFP - Fly aura model
+	qhandle_t	runauraModel; // BFP - Run aura model
+	qhandle_t	auraEffectShader; // BFP - Aura shader
+
 	// scoreboard headers
 	qhandle_t	scoreboardName;
 	qhandle_t	scoreboardPing;
@@ -891,6 +897,9 @@ typedef struct {
 	sfxHandle_t	wstbimpmSound;
 	sfxHandle_t	wstbimpdSound;
 	sfxHandle_t	wstbactvSound;
+
+	sfxHandle_t kiChargeSound; 	// BFP - Ki charge sound
+	sfxHandle_t kiUseSound;		// BFP - Ki use sound
 
 } cgMedia_t;
 
@@ -1048,6 +1057,8 @@ extern	vmCvar_t		cg_zoomFov;
 extern	vmCvar_t		cg_thirdPersonRange;
 extern	vmCvar_t		cg_thirdPersonAngle;
 extern	vmCvar_t		cg_thirdPerson;
+extern	vmCvar_t		cg_thirdPersonHeight; // BFP - Camera height
+extern	vmCvar_t		cg_yrgolroxor; // BFP - Ygorl Roxor easter egg
 extern	vmCvar_t		cg_stereoSeparation;
 extern	vmCvar_t		cg_lagometer;
 extern	vmCvar_t		cg_drawAttacker;
@@ -1122,6 +1133,7 @@ void CG_TestModelPrevSkin_f (void);
 void CG_ZoomDown_f( void );
 void CG_ZoomUp_f( void );
 void CG_AddBufferedSound( sfxHandle_t sfx);
+qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y ); // BFP - Crosshair functionality
 
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback );
 
