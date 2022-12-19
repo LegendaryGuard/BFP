@@ -229,6 +229,9 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		focusDist;
 	float		forwardScale, sideScale;
 
+	// BFP - TODO: Improve camera, when player looks at the ground, the view should 
+	// be adjusted where the player position, in the screen, is further down like BFP does
+
 	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 
 	VectorCopy( cg.refdefViewAngles, focusAngles );
@@ -271,7 +274,6 @@ static void CG_OffsetThirdPersonView( void ) {
 		if ( trace.fraction != 1.0 ) {
 			VectorCopy( trace.endpos, view );
 
-			// BFP - TODO: That's where traces when in the back is near a wall or something solid, moves the camera adjusting the position
 			view[2] += (1.0 - trace.fraction) * 32;
 			// try another trace to this position, because a tunnel may have the ceiling
 			// close enogh that this is poking out
