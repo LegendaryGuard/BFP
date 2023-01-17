@@ -1385,7 +1385,7 @@ static void PM_Footsteps( void ) {
 		if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
 			bobmove = 0.4f;	// faster speeds bob faster
 			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-				PM_ContinueLegsAnim( LEGS_RUN ); // BFP - before LEGS_BACK
+				PM_ContinueLegsAnim( LEGS_BACK );
 			} else {
 				PM_ContinueLegsAnim( LEGS_RUN );
 				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Torso run animation
@@ -1863,7 +1863,6 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		if ( !pm->isFlying && ( pml.groundTrace.contents & CONTENTS_SOLID ) 
 			&& pm->ps->groundEntityNum != ENTITYNUM_NONE ) {
 			pm->ps->velocity[2] = JUMP_VELOCITY;
-			PM_AddEvent ( EV_JUMP );
 		}
 		pm->isFlying = qtrue;
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;

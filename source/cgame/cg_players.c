@@ -254,8 +254,8 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	memcpy(&animations[LEGS_WALKCR], &animations[LEGS_WALKCR], sizeof(animation_t));
 	animations[LEGS_WALKCR].reversed = qtrue;
 	// walk backward animation
-	memcpy(&animations[LEGS_BACK], &animations[LEGS_WALK], sizeof(animation_t));
-	animations[LEGS_BACK].reversed = qtrue;
+	memcpy(&animations[LEGS_WALK], &animations[LEGS_WALK], sizeof(animation_t));
+	animations[LEGS_WALK].reversed = qtrue;
 	// flag moving fast
 	animations[FLAG_RUN].firstFrame = 0;
 	animations[FLAG_RUN].numFrames = 16;
@@ -2154,6 +2154,8 @@ void CG_Player( centity_t *cent ) {
 		//cg.autoAngles[1] = -( cg.time & 2047 ) * 360 / 2048.0;
 		//VectorCopy( cg.autoAngles, cent->lerpAngles );
 		//trap_R_AddRefEntityToScene( &aura ); // add secondary aura, but it doesn't respect the angles to the player model
+		// or should do that so?
+		// CG_AddRefEntityWithPowerups( &aura, &cent->currentState, 0 );
 
 		// light blinking
 		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.01f, 0.002f );
