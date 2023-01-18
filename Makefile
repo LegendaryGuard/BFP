@@ -83,7 +83,7 @@ TEMPDIR=/tmp
 endif
 
 ifndef MOUNT_DIR
-MOUNT_DIR=./source
+MOUNT_DIR=source
 endif
 
 ifndef DEBUG_CFLAGS
