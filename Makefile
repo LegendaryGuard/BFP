@@ -24,7 +24,7 @@ endif
 -include Makefile.local
 
 ifndef MOD
-MOD=baseq3a
+MOD=bfp
 endif
 
 ifeq ($(COMPILE_PLATFORM),cygwin)
@@ -83,7 +83,7 @@ TEMPDIR=/tmp
 endif
 
 ifndef MOUNT_DIR
-MOUNT_DIR=../../code
+MOUNT_DIR=./source
 endif
 
 ifndef DEBUG_CFLAGS
@@ -188,7 +188,6 @@ ifdef MINGW
 
 endif
 
-
 TARGETS =
 
 ifndef FULLBINEXT
@@ -222,6 +221,13 @@ BASE_CFLAGS += -Wformat=2 -Wno-format-zero-length -Wformat-security -Wno-format-
 BASE_CFLAGS += -Wstrict-aliasing=2 -Wmissing-format-attribute
 BASE_CFLAGS += -Wdisabled-optimization
 BASE_CFLAGS += -Werror-implicit-function-declaration
+
+# TODO: QVM BUILD
+# BASE_CFLAGS += -DNO_VM_COMPILED # compile qvm
+# TARGETS += \ 
+#      $(B)/$(MOD)/vm/cgame.qvm \ 
+#      $(B)/$(MOD)/vm/qagame.qvm \ 
+#      $(B)/$(MOD)/vm/ui.qvm
 
 ifeq ($(V),1)
 echo_cmd=@:
@@ -390,7 +396,6 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/g_misc.o \
   $(B)/$(MOD)/game/g_missile.o \
   $(B)/$(MOD)/game/g_mover.o \
-  $(B)/$(MOD)/game/g_rotation.o \
   $(B)/$(MOD)/game/g_session.o \
   $(B)/$(MOD)/game/g_spawn.o \
   $(B)/$(MOD)/game/g_svcmds.o \
@@ -398,7 +403,6 @@ QAOBJ_ = \
   $(B)/$(MOD)/game/g_team.o \
   $(B)/$(MOD)/game/g_trigger.o \
   $(B)/$(MOD)/game/g_utils.o \
-  $(B)/$(MOD)/game/g_unlagged.o \
   $(B)/$(MOD)/game/g_weapon.o \
   \
   $(B)/$(MOD)/game/q_math.o \
@@ -416,8 +420,6 @@ $(B)/$(MOD)/qagame$(SHLIBNAME): $(QAOBJ)
 
 UIOBJ_ = \
   $(B)/$(MOD)/ui/ui_main.o \
-  $(B)/$(MOD)/ui/bg_misc.o \
-  $(B)/$(MOD)/ui/bg_lib.o \
   $(B)/$(MOD)/ui/ui_addbots.o \
   $(B)/$(MOD)/ui/ui_atoms.o \
   $(B)/$(MOD)/ui/ui_cdkey.o \
@@ -430,7 +432,6 @@ UIOBJ_ = \
   $(B)/$(MOD)/ui/ui_display.o \
   $(B)/$(MOD)/ui/ui_gameinfo.o \
   $(B)/$(MOD)/ui/ui_ingame.o \
-  $(B)/$(MOD)/ui/ui_loadconfig.o \
   $(B)/$(MOD)/ui/ui_menu.o \
   $(B)/$(MOD)/ui/ui_mfield.o \
   $(B)/$(MOD)/ui/ui_mods.o \
@@ -442,7 +443,6 @@ UIOBJ_ = \
   $(B)/$(MOD)/ui/ui_preferences.o \
   $(B)/$(MOD)/ui/ui_qmenu.o \
   $(B)/$(MOD)/ui/ui_removebots.o \
-  $(B)/$(MOD)/ui/ui_saveconfig.o \
   $(B)/$(MOD)/ui/ui_serverinfo.o \
   $(B)/$(MOD)/ui/ui_servers2.o \
   $(B)/$(MOD)/ui/ui_setup.o \
@@ -457,6 +457,8 @@ UIOBJ_ = \
   $(B)/$(MOD)/ui/ui_teamorders.o \
   $(B)/$(MOD)/ui/ui_video.o \
   \
+  $(B)/$(MOD)/game/bg_lib.o \
+  $(B)/$(MOD)/game/bg_misc.o \
   $(B)/$(MOD)/game/q_math.o \
   $(B)/$(MOD)/game/q_shared.o
 
