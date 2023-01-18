@@ -1,4 +1,4 @@
 pak9.pk3
-.vscode/*
 .vscode
-*.bat
+.vscode/*
+build

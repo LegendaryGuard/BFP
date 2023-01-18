@@ -612,6 +612,7 @@ void ClientCommand( int clientNum );
 void ClientThink( int clientNum );
 void ClientEndFrame( gentity_t *ent );
 void G_RunClient( gentity_t *ent );
+void Cmd_BFP_Fly_f( gentity_t *ent ); // BFP - Flight
 
 //
 // g_team.c

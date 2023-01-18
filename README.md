@@ -10,6 +10,15 @@ A legendary Quake 3 Arena mod from the 90's era.
 
 ## **WARNING!** UNDER CONSTRUCTION!
 
+#### Currently non-used source files and not in the build tools:
+
+- cg_particles.c
+- ui_rankings.c
+- ui_rankstatus.c
+- ui_signup.c
+- ui_specifyleague.c
+- ui_spreset.c
+
 # TODO list:
 
 - [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
