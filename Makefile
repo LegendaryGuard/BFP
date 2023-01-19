@@ -188,6 +188,71 @@ ifdef MINGW
 
 endif
 
+# BUILD_GAME_DLL option, if user wants to compile and get .dll files
+ifndef BUILD_GAME_DLL
+  BUILD_GAME_DLL    =
+endif
+
+ifeq ($(BUILD_GAME_DLL), 1)
+  BD=$(BUILD_DIR)/debug-$(ARCH)-windows
+  BR=$(BUILD_DIR)/release-$(ARCH)-windows
+
+  ifeq ($(CROSS_COMPILING),1)
+    # If CC is already set to something generic, we probably want to use
+    # something more specific
+    ifneq ($(findstring $(strip $(CC)),cc gcc),)
+      CC=
+    endif
+  else
+    ifeq ($(call bin_path, $(CC)),)
+      CC=gcc
+    endif
+  endif
+
+  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
+
+  OPTIMIZE = -O2 -fvisibility=hidden -fomit-frame-pointer -ffast-math
+
+  SHLIBEXT=dll
+  SHLIBCFLAGS=-fPIC -fvisibility=hidden
+  SHLIBLDFLAGS=-shared $(LDFLAGS)
+
+  LIBS= -lm
+
+  ifeq ($(ARCH),x86)
+    BASE_CFLAGS += -m32
+  endif
+
+endif # BUILD_GAME_DLL
+
+# BUILD_GAME_SO option, if user wants to compile and get .so files
+ifndef BUILD_GAME_SO
+  BUILD_GAME_SO    =
+endif
+
+ifeq ($(BUILD_GAME_SO), 1)
+  BD=$(BUILD_DIR)/debug-$(ARCH)-linux
+  BR=$(BUILD_DIR)/release-$(ARCH)-linux
+  ifeq ($(ARCH),x86_64)
+    LIB=lib64
+  endif
+
+  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
+
+  OPTIMIZE = -O2 -fvisibility=hidden -fomit-frame-pointer -ffast-math
+
+  SHLIBEXT=so
+  SHLIBCFLAGS=-fPIC -fvisibility=hidden
+  SHLIBLDFLAGS=-shared $(LDFLAGS)
+
+  LIBS= -lm
+
+  ifeq ($(ARCH),x86)
+    BASE_CFLAGS += -m32
+  endif
+
+endif # BUILD_GAME_SO
+
 TARGETS =
 
 ifndef FULLBINEXT
@@ -221,13 +286,6 @@ BASE_CFLAGS += -Wformat=2 -Wno-format-zero-length -Wformat-security -Wno-format-
 BASE_CFLAGS += -Wstrict-aliasing=2 -Wmissing-format-attribute
 BASE_CFLAGS += -Wdisabled-optimization
 BASE_CFLAGS += -Werror-implicit-function-declaration
-
-# TODO: QVM BUILD
-# BASE_CFLAGS += -DNO_VM_COMPILED # compile qvm
-# TARGETS += \ 
-#      $(B)/$(MOD)/vm/cgame.qvm \ 
-#      $(B)/$(MOD)/vm/qagame.qvm \ 
-#      $(B)/$(MOD)/vm/ui.qvm
 
 ifeq ($(V),1)
 echo_cmd=@:
