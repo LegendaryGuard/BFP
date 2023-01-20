@@ -324,7 +324,15 @@ endef
 # MAIN TARGETS
 #############################################################################
 
-default: release
+ifndef BUILD_DEBUG
+  BUILD_DEBUG    =
+endif
+
+ifeq ($(BUILD_DEBUG), 1)
+  default: debug
+else
+  default: release
+endif
 all: debug release
 
 debug:
@@ -386,7 +394,6 @@ makedirs:
 	@if [ ! -d $(B)/$(MOD)/cgame ];then $(MKDIR) $(B)/$(MOD)/cgame;fi
 	@if [ ! -d $(B)/$(MOD)/game ];then $(MKDIR) $(B)/$(MOD)/game;fi
 	@if [ ! -d $(B)/$(MOD)/ui ];then $(MKDIR) $(B)/$(MOD)/ui;fi
-	@if [ ! -d $(B)/$(MOD)/vm ];then $(MKDIR) $(B)/$(MOD)/vm;fi
 
 #############################################################################
 ## BASEQ3 CGAME
