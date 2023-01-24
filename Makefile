@@ -23,10 +23,6 @@ endif
 #############################################################################
 -include Makefile.local
 
-ifndef MOD
-MOD=bfp
-endif
-
 ifeq ($(COMPILE_PLATFORM),cygwin)
   PLATFORM=mingw32
 endif
@@ -188,12 +184,12 @@ ifdef MINGW
 
 endif
 
-# BUILD_GAME_DLL option, if user wants to compile and get .dll files
-ifndef BUILD_GAME_DLL
-  BUILD_GAME_DLL    =
+# BUILD_DLL option, if user wants to compile and get .dll files
+ifndef BUILD_DLL
+  BUILD_DLL    =
 endif
 
-ifeq ($(BUILD_GAME_DLL), 1)
+ifeq ($(BUILD_DLL), 1)
   BD=$(BUILD_DIR)/debug-$(ARCH)-windows
   BR=$(BUILD_DIR)/release-$(ARCH)-windows
 
@@ -223,14 +219,14 @@ ifeq ($(BUILD_GAME_DLL), 1)
     BASE_CFLAGS += -m32
   endif
 
-endif # BUILD_GAME_DLL
+endif # BUILD_DLL
 
-# BUILD_GAME_SO option, if user wants to compile and get .so files
-ifndef BUILD_GAME_SO
-  BUILD_GAME_SO    =
+# BUILD_SO option, if user wants to compile and get .so files
+ifndef BUILD_SO
+  BUILD_SO    =
 endif
 
-ifeq ($(BUILD_GAME_SO), 1)
+ifeq ($(BUILD_SO), 1)
   BD=$(BUILD_DIR)/debug-$(ARCH)-linux
   BR=$(BUILD_DIR)/release-$(ARCH)-linux
   ifeq ($(ARCH),x86_64)
@@ -251,7 +247,7 @@ ifeq ($(BUILD_GAME_SO), 1)
     BASE_CFLAGS += -m32
   endif
 
-endif # BUILD_GAME_SO
+endif # BUILD_SO
 
 TARGETS =
 
@@ -264,9 +260,9 @@ ifndef SHLIBNAME
 endif
 
 TARGETS += \
-  $(B)/$(MOD)/cgame$(SHLIBNAME) \
-  $(B)/$(MOD)/qagame$(SHLIBNAME) \
-  $(B)/$(MOD)/ui$(SHLIBNAME)
+  $(B)/cgame$(SHLIBNAME) \
+  $(B)/qagame$(SHLIBNAME) \
+  $(B)/ui$(SHLIBNAME)
 
 ifeq ("$(CC)", $(findstring "$(CC)", "clang" "clang++"))
   BASE_CFLAGS += -Qunused-arguments
@@ -390,46 +386,45 @@ endif
 makedirs:
 	@if [ ! -d $(BUILD_DIR) ];then $(MKDIR) $(BUILD_DIR);fi
 	@if [ ! -d $(B) ];then $(MKDIR) $(B);fi
-	@if [ ! -d $(B)/$(MOD) ];then $(MKDIR) $(B)/$(MOD);fi
-	@if [ ! -d $(B)/$(MOD)/cgame ];then $(MKDIR) $(B)/$(MOD)/cgame;fi
-	@if [ ! -d $(B)/$(MOD)/game ];then $(MKDIR) $(B)/$(MOD)/game;fi
-	@if [ ! -d $(B)/$(MOD)/ui ];then $(MKDIR) $(B)/$(MOD)/ui;fi
+	@if [ ! -d $(B)/cgame ];then $(MKDIR) $(B)/cgame;fi
+	@if [ ! -d $(B)/game ];then $(MKDIR) $(B)/game;fi
+	@if [ ! -d $(B)/ui ];then $(MKDIR) $(B)/ui;fi
 
 #############################################################################
 ## BASEQ3 CGAME
 #############################################################################
-# $(B)/$(MOD)/cgame/cg_particles.o \
+# $(B)/cgame/cg_particles.o \ 
 
 CGOBJ_ = \
-  $(B)/$(MOD)/cgame/cg_main.o \
-  $(B)/$(MOD)/cgame/bg_lib.o \
-  $(B)/$(MOD)/cgame/bg_misc.o \
-  $(B)/$(MOD)/cgame/bg_pmove.o \
-  $(B)/$(MOD)/cgame/bg_slidemove.o \
-  $(B)/$(MOD)/cgame/cg_consolecmds.o \
-  $(B)/$(MOD)/cgame/cg_draw.o \
-  $(B)/$(MOD)/cgame/cg_drawtools.o \
-  $(B)/$(MOD)/cgame/cg_effects.o \
-  $(B)/$(MOD)/cgame/cg_ents.o \
-  $(B)/$(MOD)/cgame/cg_event.o \
-  $(B)/$(MOD)/cgame/cg_info.o \
-  $(B)/$(MOD)/cgame/cg_localents.o \
-  $(B)/$(MOD)/cgame/cg_marks.o \
-  $(B)/$(MOD)/cgame/cg_players.o \
-  $(B)/$(MOD)/cgame/cg_playerstate.o \
-  $(B)/$(MOD)/cgame/cg_predict.o \
-  $(B)/$(MOD)/cgame/cg_scoreboard.o \
-  $(B)/$(MOD)/cgame/cg_servercmds.o \
-  $(B)/$(MOD)/cgame/cg_snapshot.o \
-  $(B)/$(MOD)/cgame/cg_view.o \
-  $(B)/$(MOD)/cgame/cg_weapons.o \
+  $(B)/cgame/cg_main.o \
+  $(B)/cgame/bg_lib.o \
+  $(B)/cgame/bg_misc.o \
+  $(B)/cgame/bg_pmove.o \
+  $(B)/cgame/bg_slidemove.o \
+  $(B)/cgame/cg_consolecmds.o \
+  $(B)/cgame/cg_draw.o \
+  $(B)/cgame/cg_drawtools.o \
+  $(B)/cgame/cg_effects.o \
+  $(B)/cgame/cg_ents.o \
+  $(B)/cgame/cg_event.o \
+  $(B)/cgame/cg_info.o \
+  $(B)/cgame/cg_localents.o \
+  $(B)/cgame/cg_marks.o \
+  $(B)/cgame/cg_players.o \
+  $(B)/cgame/cg_playerstate.o \
+  $(B)/cgame/cg_predict.o \
+  $(B)/cgame/cg_scoreboard.o \
+  $(B)/cgame/cg_servercmds.o \
+  $(B)/cgame/cg_snapshot.o \
+  $(B)/cgame/cg_view.o \
+  $(B)/cgame/cg_weapons.o \
   \
-  $(B)/$(MOD)/game/q_math.o \
-  $(B)/$(MOD)/game/q_shared.o
+  $(B)/game/q_math.o \
+  $(B)/game/q_shared.o
 
-CGOBJ = $(CGOBJ_) $(B)/$(MOD)/cgame/cg_syscalls.o
+CGOBJ = $(CGOBJ_) $(B)/cgame/cg_syscalls.o
 
-$(B)/$(MOD)/cgame$(SHLIBNAME): $(CGOBJ)
+$(B)/cgame$(SHLIBNAME): $(CGOBJ)
 	$(echo_cmd) "LD $@"
 	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(CGOBJ)
 
@@ -438,44 +433,44 @@ $(B)/$(MOD)/cgame$(SHLIBNAME): $(CGOBJ)
 #############################################################################
 
 QAOBJ_ = \
-  $(B)/$(MOD)/game/g_main.o \
-  $(B)/$(MOD)/game/ai_chat.o \
-  $(B)/$(MOD)/game/ai_cmd.o \
-  $(B)/$(MOD)/game/ai_dmnet.o \
-  $(B)/$(MOD)/game/ai_dmq3.o \
-  $(B)/$(MOD)/game/ai_main.o \
-  $(B)/$(MOD)/game/ai_team.o \
-  $(B)/$(MOD)/game/ai_vcmd.o \
-  $(B)/$(MOD)/game/bg_lib.o \
-  $(B)/$(MOD)/game/bg_misc.o \
-  $(B)/$(MOD)/game/bg_pmove.o \
-  $(B)/$(MOD)/game/bg_slidemove.o \
-  $(B)/$(MOD)/game/g_active.o \
-  $(B)/$(MOD)/game/g_arenas.o \
-  $(B)/$(MOD)/game/g_bot.o \
-  $(B)/$(MOD)/game/g_client.o \
-  $(B)/$(MOD)/game/g_cmds.o \
-  $(B)/$(MOD)/game/g_combat.o \
-  $(B)/$(MOD)/game/g_items.o \
-  $(B)/$(MOD)/game/g_mem.o \
-  $(B)/$(MOD)/game/g_misc.o \
-  $(B)/$(MOD)/game/g_missile.o \
-  $(B)/$(MOD)/game/g_mover.o \
-  $(B)/$(MOD)/game/g_session.o \
-  $(B)/$(MOD)/game/g_spawn.o \
-  $(B)/$(MOD)/game/g_svcmds.o \
-  $(B)/$(MOD)/game/g_target.o \
-  $(B)/$(MOD)/game/g_team.o \
-  $(B)/$(MOD)/game/g_trigger.o \
-  $(B)/$(MOD)/game/g_utils.o \
-  $(B)/$(MOD)/game/g_weapon.o \
+  $(B)/game/g_main.o \
+  $(B)/game/ai_chat.o \
+  $(B)/game/ai_cmd.o \
+  $(B)/game/ai_dmnet.o \
+  $(B)/game/ai_dmq3.o \
+  $(B)/game/ai_main.o \
+  $(B)/game/ai_team.o \
+  $(B)/game/ai_vcmd.o \
+  $(B)/game/bg_lib.o \
+  $(B)/game/bg_misc.o \
+  $(B)/game/bg_pmove.o \
+  $(B)/game/bg_slidemove.o \
+  $(B)/game/g_active.o \
+  $(B)/game/g_arenas.o \
+  $(B)/game/g_bot.o \
+  $(B)/game/g_client.o \
+  $(B)/game/g_cmds.o \
+  $(B)/game/g_combat.o \
+  $(B)/game/g_items.o \
+  $(B)/game/g_mem.o \
+  $(B)/game/g_misc.o \
+  $(B)/game/g_missile.o \
+  $(B)/game/g_mover.o \
+  $(B)/game/g_session.o \
+  $(B)/game/g_spawn.o \
+  $(B)/game/g_svcmds.o \
+  $(B)/game/g_target.o \
+  $(B)/game/g_team.o \
+  $(B)/game/g_trigger.o \
+  $(B)/game/g_utils.o \
+  $(B)/game/g_weapon.o \
   \
-  $(B)/$(MOD)/game/q_math.o \
-  $(B)/$(MOD)/game/q_shared.o
+  $(B)/game/q_math.o \
+  $(B)/game/q_shared.o
 
-QAOBJ = $(QAOBJ_) $(B)/$(MOD)/game/g_syscalls.o
+QAOBJ = $(QAOBJ_) $(B)/game/g_syscalls.o
 
-$(B)/$(MOD)/qagame$(SHLIBNAME): $(QAOBJ)
+$(B)/qagame$(SHLIBNAME): $(QAOBJ)
 	$(echo_cmd) "LD $@"
 	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(QAOBJ)
 
@@ -484,52 +479,52 @@ $(B)/$(MOD)/qagame$(SHLIBNAME): $(QAOBJ)
 #############################################################################
 
 UIOBJ_ = \
-  $(B)/$(MOD)/ui/ui_main.o \
-  $(B)/$(MOD)/ui/ui_addbots.o \
-  $(B)/$(MOD)/ui/ui_atoms.o \
-  $(B)/$(MOD)/ui/ui_cdkey.o \
-  $(B)/$(MOD)/ui/ui_cinematics.o \
-  $(B)/$(MOD)/ui/ui_confirm.o \
-  $(B)/$(MOD)/ui/ui_connect.o \
-  $(B)/$(MOD)/ui/ui_controls2.o \
-  $(B)/$(MOD)/ui/ui_credits.o \
-  $(B)/$(MOD)/ui/ui_demo2.o \
-  $(B)/$(MOD)/ui/ui_display.o \
-  $(B)/$(MOD)/ui/ui_gameinfo.o \
-  $(B)/$(MOD)/ui/ui_ingame.o \
-  $(B)/$(MOD)/ui/ui_menu.o \
-  $(B)/$(MOD)/ui/ui_mfield.o \
-  $(B)/$(MOD)/ui/ui_mods.o \
-  $(B)/$(MOD)/ui/ui_network.o \
-  $(B)/$(MOD)/ui/ui_options.o \
-  $(B)/$(MOD)/ui/ui_playermodel.o \
-  $(B)/$(MOD)/ui/ui_players.o \
-  $(B)/$(MOD)/ui/ui_playersettings.o \
-  $(B)/$(MOD)/ui/ui_preferences.o \
-  $(B)/$(MOD)/ui/ui_qmenu.o \
-  $(B)/$(MOD)/ui/ui_removebots.o \
-  $(B)/$(MOD)/ui/ui_serverinfo.o \
-  $(B)/$(MOD)/ui/ui_servers2.o \
-  $(B)/$(MOD)/ui/ui_setup.o \
-  $(B)/$(MOD)/ui/ui_sound.o \
-  $(B)/$(MOD)/ui/ui_sparena.o \
-  $(B)/$(MOD)/ui/ui_specifyserver.o \
-  $(B)/$(MOD)/ui/ui_splevel.o \
-  $(B)/$(MOD)/ui/ui_sppostgame.o \
-  $(B)/$(MOD)/ui/ui_spskill.o \
-  $(B)/$(MOD)/ui/ui_startserver.o \
-  $(B)/$(MOD)/ui/ui_team.o \
-  $(B)/$(MOD)/ui/ui_teamorders.o \
-  $(B)/$(MOD)/ui/ui_video.o \
+  $(B)/ui/ui_main.o \
+  $(B)/ui/ui_addbots.o \
+  $(B)/ui/ui_atoms.o \
+  $(B)/ui/ui_cdkey.o \
+  $(B)/ui/ui_cinematics.o \
+  $(B)/ui/ui_confirm.o \
+  $(B)/ui/ui_connect.o \
+  $(B)/ui/ui_controls2.o \
+  $(B)/ui/ui_credits.o \
+  $(B)/ui/ui_demo2.o \
+  $(B)/ui/ui_display.o \
+  $(B)/ui/ui_gameinfo.o \
+  $(B)/ui/ui_ingame.o \
+  $(B)/ui/ui_menu.o \
+  $(B)/ui/ui_mfield.o \
+  $(B)/ui/ui_mods.o \
+  $(B)/ui/ui_network.o \
+  $(B)/ui/ui_options.o \
+  $(B)/ui/ui_playermodel.o \
+  $(B)/ui/ui_players.o \
+  $(B)/ui/ui_playersettings.o \
+  $(B)/ui/ui_preferences.o \
+  $(B)/ui/ui_qmenu.o \
+  $(B)/ui/ui_removebots.o \
+  $(B)/ui/ui_serverinfo.o \
+  $(B)/ui/ui_servers2.o \
+  $(B)/ui/ui_setup.o \
+  $(B)/ui/ui_sound.o \
+  $(B)/ui/ui_sparena.o \
+  $(B)/ui/ui_specifyserver.o \
+  $(B)/ui/ui_splevel.o \
+  $(B)/ui/ui_sppostgame.o \
+  $(B)/ui/ui_spskill.o \
+  $(B)/ui/ui_startserver.o \
+  $(B)/ui/ui_team.o \
+  $(B)/ui/ui_teamorders.o \
+  $(B)/ui/ui_video.o \
   \
-  $(B)/$(MOD)/game/bg_lib.o \
-  $(B)/$(MOD)/game/bg_misc.o \
-  $(B)/$(MOD)/game/q_math.o \
-  $(B)/$(MOD)/game/q_shared.o
+  $(B)/game/bg_lib.o \
+  $(B)/game/bg_misc.o \
+  $(B)/game/q_math.o \
+  $(B)/game/q_shared.o
 
-UIOBJ = $(UIOBJ_) $(B)/$(MOD)/ui/ui_syscalls.o
+UIOBJ = $(UIOBJ_) $(B)/ui/ui_syscalls.o
 
-$(B)/$(MOD)/ui$(SHLIBNAME): $(UIOBJ)
+$(B)/ui$(SHLIBNAME): $(UIOBJ)
 	$(echo_cmd) "LD $@"
 	$(Q)$(CC) $(CFLAGS) $(SHLIBLDFLAGS) -o $@ $(UIOBJ)
 
@@ -537,22 +532,22 @@ $(B)/$(MOD)/ui$(SHLIBNAME): $(UIOBJ)
 ## GAME MODULE RULES
 #############################################################################
 
-$(B)/$(MOD)/cgame/bg_%.o: $(QADIR)/bg_%.c
+$(B)/cgame/bg_%.o: $(QADIR)/bg_%.c
 	$(DO_CGAME_CC)
 
-$(B)/$(MOD)/cgame/q_%.o: $(QADIR)/q_%.c
+$(B)/cgame/q_%.o: $(QADIR)/q_%.c
 	$(DO_CGAME_CC)
 
-$(B)/$(MOD)/cgame/%.o: $(CGDIR)/%.c
+$(B)/cgame/%.o: $(CGDIR)/%.c
 	$(DO_CGAME_CC)
 
-$(B)/$(MOD)/game/%.o: $(QADIR)/%.c
+$(B)/game/%.o: $(QADIR)/%.c
 	$(DO_GAME_CC)
 
-$(B)/$(MOD)/ui/bg_%.o: $(QADIR)/bg_%.c
+$(B)/ui/bg_%.o: $(QADIR)/bg_%.c
 	$(DO_UI_CC)
 
-$(B)/$(MOD)/ui/%.o: $(UIDIR)/%.c
+$(B)/ui/%.o: $(UIDIR)/%.c
 	$(DO_UI_CC)
 
 #############################################################################
