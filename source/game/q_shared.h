@@ -85,6 +85,8 @@ typedef int intptr_t;
 
 #else
 
+typedef int intptr_t; // BFP - Linux support
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
