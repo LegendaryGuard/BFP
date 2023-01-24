@@ -10,6 +10,21 @@ A legendary Quake 3 Arena mod from the 90's era.
 
 ## **WARNING!** UNDER CONSTRUCTION!
 
+> ### Table of contents
+> > 1. [TODO list](#todo-list)
+> > 2. [History](#history)
+> > 3. [About the repository](#about-the-repository)
+> > 4. [References and clues to know how should be the game](#references-and-clues-to-know-how-should-be-the-game)
+> > 5. [How to build](#how-to-build)
+> > > 5.1. [Windows](#windows)
+> > > > 5.1.1. [Building QVM](#building-qvm)<br/>
+> > > > 5.1.2. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
+> > > > 5.1.3. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)
+> > >
+> > > 5.2. [Linux](#linux)
+> > > > 5.2.1. [Building QVM](#building-qvm-1)<br/>
+> > > > 5.2.2. [Building shared libraries (.so)](#building-shared-libraries-so)
+
 #### Currently non-used source files and not in the build tools:
 
 - cg_particles.c
@@ -72,19 +87,19 @@ Documentations, references and extracted stuff will give us clues to reach the g
 
 - Old documentations:
 
-- - [Guide](docs/Guide.md)
+    * [Guide](docs/Guide.md)
 
-- - [Creating custom plugin models](docs/Create_Custom_Models.md)
+    * [Creating custom plugin models](docs/Create_Custom_Models.md)
 
 <br/>
 
 - Cvars, cmd and bind stuff about the old game:
 
-- - [Bindlist](docs/bind_bfp_list.txt)
+    * [Bindlist](docs/bind_bfp_list.txt)
 
-- - [Cmdlist](docs/cmd_bfp_list.txt)
+    * [Cmdlist](docs/cmd_bfp_list.txt)
 
-- - [Cvarlist](docs/cvar_bfp_list.txt)
+    * [Cvarlist](docs/cvar_bfp_list.txt)
 
 We can see, for example, `g_plKillBonusPct`, which means we need to find the function that rewards the player and do something with that. Something like this:
 
@@ -153,40 +168,120 @@ if ( killedSomeone ) {
 
 A sample inside models/players/player_name/default.cfg:
 
-- - [default.cfg](cfgs/default.cfg)
+   * [default.cfg](cfgs/default.cfg)
 
 Server config:
 
-- - [bfp_server.cfg](cfgs/bfp_server.cfg)
+   * [bfp_server.cfg](cfgs/bfp_server.cfg)
 
 Attacksets:
 
-- - [bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg)
+   * [bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg)
 
 Weapon settings:
 
-- - [bfp_weapon.cfg](cfgs/bfp_weapon.cfg)
-- - [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg)
+   * [bfp_weapon.cfg](cfgs/bfp_weapon.cfg)
+   * [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg)
 
 BFP config (general binding and some client stuff):
 
-- - [bfp.cfg](cfgs/bfp.cfg)
+   * [bfp.cfg](cfgs/bfp.cfg)
 
 Other q3 config:
 
-- - [q3config.cfg](cfgs/q3config.cfg)
+   * [q3config.cfg](cfgs/q3config.cfg)
 
 
 ### How to build
 
-- Windows:
+- ### Windows:
 
-Execute `build.bat` to compile qvms, keep in mind you must be in the repository directory.
+    * #### _Building QVM_: 
 
-Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
+    Execute `build.bat` to compile qvms, keep in mind you must be in the repository directory.
 
-<br/><br/>
+    Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
 
+    * #### _MSYS2 (mingw) (Building dynamic libraries (.dll))_:
+
+    NOTE: Not tested on 32-bit system.
+
+    To build, follow these instructions:
+
+    1. Install msys2 from https://msys2.github.io/, following the instructions there.It doesn’t matter which version you download, just get one appropriate for your OS.
+
+    2. Start "MSYS2 MinGW 64-bit" from the Start Menu. If you're using 32-bit system, use "MSYS2 MinGW 32-bit".
+
+    3. Install mingw-w64-x86_64-gcc:
+    ```
+    pacman -S mingw-w64-x86_64-gcc
+    ```
+    32-bit:
+    ```
+    pacman -S mingw-w64-i686-gcc
+    ```
+    4. Install make:
+    ```
+    pacman -S make
+    ```
+
+    5. Compile with make
+    ```
+    make ARCH=x86_64
+    ```
+    32-bit:
+    ```
+    make ARCH=x86 WINDRES="windres -F pe-i386"
+    ```
+
+    7. Find the dlls in `build/release-mingw64-x86_64`, for 32-bit: `build/release-mingw32-x86`. <br/><br/>
+
+    * #### _Cygwin (mingw) (Building dynamic libraries (.dll))_: 
+
+    Detailed guide based on a [post by MAN-AT-ARMS](https://discourse.ioquake.org/t/how-to-build-ioquake3-using-cygwin/223).
+
+    1. Install Cygwin
+
+    Download the Cygwin setup package from http://cygwin.com/install.html.
+
+    Choose either the 32-bit or 64-bit environment. 32-bit will work fine on both 32 and 64 bit versions of Windows. The setup program is also your Cygwin environment updater. If you have an existing Cygwin environment, the setup program will, by default, update your existing packages.
+
+    Choose where you want to install Cygwin. The entire environment is self-contained in it's own folder, but you can also interact with files from outside the environment if you want to as well. The default install path is `C:\Cygwin`.
+    Choose a mirror to download packages from, such as the [kernel.org](https://kernel.org/) mirrors.
+    Choose a "storage area" for your package downloads.
+
+    2. Package selection
+
+    The next screen you see will be the package selections screen. In the upper left is a search box. This is where you will want to search for the necessary packages.
+
+    These are the package names you'll want to search for:
+
+    1- `mingw64-i686-gcc-core` (For building 32bit binaries)<br/>
+    2- `mingw64-i686-gcc-g++` (Also for 32bit... C++ support... not required for the game, but useful for compiling other software)<br/>
+    3- `mingw64-x86_64-gcc-core` (For building 64bit binaries)<br/>
+    4- `mingw64-x86_64-gcc-g++` (For 64bit, same as above)<br/>
+    5- `make`<br/>
+    6- `bison`<br/>
+    7- `git`
+
+- ### Linux:
+
+    * #### _Building QVM_: 
+
+    The alternative to execute `build.bat` to compile qvms requires `wine` package. Keep in mind, you must be in the repository directory.
+
+    Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
+
+    NOTE: until now, there's no fully compileable QVM tool found for Linux.
+
+    * #### _Building shared libraries (.so)_:
+
+    Simply execute: 
+    ```
+    make
+    ```
+
+<br/>
 Note: This repository was initialized from https://github.com/marconett/q3a.
 
 ## Credits
