@@ -24,15 +24,8 @@ A legendary Quake 3 Arena mod from the 90's era.
 > > > 5.2. [Linux](#linux)
 > > > > 5.2.1. [Building QVM](#building-qvm-1)<br/>
 > > > > 5.2.2. [Building shared libraries (.so)](#building-shared-libraries-so)
-
-#### Currently non-used source files and not in the build tools:
-
-- cg_particles.c
-- ui_rankings.c
-- ui_rankstatus.c
-- ui_signup.c
-- ui_specifyleague.c
-- ui_spreset.c
+> > >
+> > > 5.3. [Optional](#optional)
 
 # TODO list:
 
@@ -103,7 +96,7 @@ Documentations, references and extracted stuff will give us clues to reach the g
 
 We can see, for example, `g_plKillBonusPct`, which means we need to find the function that rewards the player and do something with that. Something like this:
 
-```
+```c
 if ( killedSomeone ) {
    pl = currentPL + (currentPL * g_plKillBonusPct);
 }
@@ -166,7 +159,7 @@ if ( killedSomeone ) {
 
 - **cfg files**:
 
-A sample inside models/players/player_name/default.cfg:
+A sample inside `models/players/player_name/default.cfg`:
 
    * [default.cfg](cfgs/default.cfg)
 
@@ -183,7 +176,7 @@ Weapon settings:
    * [bfp_weapon.cfg](cfgs/bfp_weapon.cfg)
    * [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg)
 
-BFP config (general binding and some client stuff):
+BFP config (general binding and some client stuff, unused. WARNING: when executing, game crashes):
 
    * [bfp.cfg](cfgs/bfp.cfg)
 
@@ -213,24 +206,24 @@ Other q3 config:
     2. Start "MSYS2 MinGW 64-bit" from the Start Menu. If you're using 32-bit system, use "MSYS2 MinGW 32-bit".
 
     3. Install mingw-w64-x86_64-gcc:
-    ```
+    ```sh
     pacman -S mingw-w64-x86_64-gcc
     ```
     32-bit:
-    ```
+    ```sh
     pacman -S mingw-w64-i686-gcc
     ```
     4. Install make:
-    ```
+    ```sh
     pacman -S make
     ```
 
     5. Compile with make
-    ```
+    ```sh
     make ARCH=x86_64
     ```
     32-bit:
-    ```
+    ```sh
     make ARCH=x86 WINDRES="windres -F pe-i386"
     ```
 
@@ -268,7 +261,7 @@ Other q3 config:
 
     * #### _Building QVM_: 
 
-    The alternative to execute `build.bat` to compile qvms requires `wine` package. Keep in mind, you must be in the repository directory.
+    The alternative to execute `build.bat` to compile qvms requires [`wine` package](https://www.winehq.org/). Keep in mind, you must be in the repository directory.
 
     Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
 
@@ -277,12 +270,37 @@ Other q3 config:
     * #### _Building shared libraries (.so)_:
 
     Simply execute: 
-    ```
+    ```sh
     make
     ```
 
+- ### Optional:
+
+    You can execute:
+
+    * 
+    ```sh
+    make ARCH=x86 BUILD_DEBUG=1 BUILD_SO=1 # compiles debug x86 .so builds (creates "debug-x86-linux" directory inside "build")
+    ```
+
+    * 
+    ```sh
+    make ARCH=x86 BUILD_DLL=1 # compiles release x86 .dll builds (creates "release-x86-windows" directory inside "build")
+    ```
+
+    ...
+
 <br/>
-Note: This repository was initialized from https://github.com/marconett/q3a.
+Important note: This repository was initialized from https://github.com/marconett/q3a.
+
+#### Currently non-used source code files and not in the build tools:
+
+- cg_particles.c
+- ui_rankings.c
+- ui_rankstatus.c
+- ui_signup.c
+- ui_specifyleague.c
+- ui_spreset.c
 
 ## Credits
 

@@ -105,7 +105,7 @@ bin_path=$(shell which $(1) 2> /dev/null)
 LIB=lib
 
 INSTALL=install
-MKDIR=mkdir
+MKDIR=mkdir -p
 
 ifeq ($(PLATFORM),linux)
 
