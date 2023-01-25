@@ -320,15 +320,8 @@ endef
 # MAIN TARGETS
 #############################################################################
 
-ifndef BUILD_DEBUG
-  BUILD_DEBUG    =
-endif
+default: release
 
-ifeq ($(BUILD_DEBUG), 1)
-  default: debug
-else
-  default: release
-endif
 all: debug release
 
 debug:

@@ -1,7 +1,7 @@
 Bid For Power (BFP) source code
 ===============================
 
-A legendary Quake 3 Arena mod from the 90's era.
+A legendary 90s era Quake 3 Arena mod.
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/49716252/186026745-458849b2-385b-4108-8881-e55e82fb1493.png" alt="zeqlogo" width=320 />
@@ -37,17 +37,17 @@ A legendary Quake 3 Arena mod from the 90's era.
 - [ ] Bind key to toggle speed (ki boost). HINT: HASTE POWERUP
 - [x] ~~Replace ammo to ki energy stamina~~
 - [x] ~~Third person traceable crosshair~~
-- [ ] Make ki energy regeneration, ki use, attacks, charging balance as indicated on the old docs
-- [ ] Powerlevel and Power Tiers as indicated on the old docs
+- [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
+- [ ] Powerlevel and Power Tiers indicated on old docs
 - [ ] Hit Stun (makes player can't move, attack, block or charge)
 - [ ] Power Struggles (when two beam attacks collide)
-- [ ] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on the old doc)
+- [ ] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [ ] Short-Range Teleport (when pressing 2 times left or right)
 - [ ] Transformations (related to Power Tiers)
 - [ ] Attacksets (configurable for cfgs)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. "Custom plugin models")
 - [ ] Playable third person mode and first person vis mode (add the options in the UI Setup menu)
-- [ ] Cvars as described on the old doc
+- [ ] Cvars as described on old docs
 - [ ] Last Man Standing gamemode
 - [ ] Survival gamemode
 - [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
@@ -94,7 +94,7 @@ Documentations, references and extracted stuff will give us clues to reach the g
 
     * [Cvarlist](docs/cvar_bfp_list.txt)
 
-We can see, for example, `g_plKillBonusPct`, which means we need to find the function that rewards the player and do something with that. Something like this:
+We can see, e.g. `g_plKillBonusPct` cvar, which means we need to find the function that rewards the player and do something with that. Something like this:
 
 ```c
 if ( killedSomeone ) {
@@ -102,44 +102,44 @@ if ( killedSomeone ) {
 }
 ```
 
-- How should be the main menu:
+- How should the main menu be:
 
 <img src="https://user-images.githubusercontent.com/49716252/188994358-3d03ef80-e27f-4e5e-96ac-bd0200134ced.jpg" alt="main_menu" width=560 />
 
 <br/>
 
-- How should be the gameplay menu (when press Esc to go):
+- How should the gameplay menu be (when press Esc to go):
 
 <img src="https://user-images.githubusercontent.com/49716252/188993661-ae80923d-4ec9-47bd-bb65-0b9f036aa241.png" alt="gameplay_menu" width=560 />
 
 <br/>
 
-- How should be the HUD:
+- How should the HUD be:
 
 <img src="https://user-images.githubusercontent.com/49716252/188994019-589d3046-e553-47de-afff-5fb0eb2dd7ec.png" alt="hud_display" width=560 />
 
 <br/>
 
-- How should be UI setup:
+- How should UI setup be:
 
 <img src="https://user-images.githubusercontent.com/49716252/188993194-10feb38b-2809-41d1-9e81-1ce96ff1428a.png" alt="ui_setup" width=560 />
 
 <br/>
 
-- How should be UI player settings (keep in mind all players use running animation):
+- How should UI player settings be (keep in mind all players use running animation):
 
 <img src="https://user-images.githubusercontent.com/49716252/188993401-9e7036e6-cbed-47ac-8aea-431963a343bf.png" alt="ui_player_settings" width=560 /><br/>
 <img src="https://user-images.githubusercontent.com/49716252/188994108-c5bdfa06-32d1-4ebe-beb1-d74e9e6159ac.jpg" alt="ui_player_settings2" width=560 />
 
 <br/>
 
-- How should be UI controls:
+- How should UI controls be:
 
 <img src="https://user-images.githubusercontent.com/49716252/188993792-fd9c4440-3b18-45bf-9964-598459695fd9.png" alt="ui_controls" />
 
 <br/>
 
-- How should be UI BFP options:
+- How should UI BFP options be:
 
 <img src="https://user-images.githubusercontent.com/49716252/188993293-db531ff5-5754-4ded-99ad-b5f3b2f5fd72.png" alt="bfp_options" width=560 />
 
@@ -197,7 +197,7 @@ Other q3 config:
 
     * #### _MSYS2 (mingw) (Building dynamic libraries (.dll))_:
 
-    NOTE: Not tested on 32-bit system.
+    NOTE: Not tested on Windows 32-bit.
 
     To build, follow these instructions:
 
@@ -273,25 +273,27 @@ Other q3 config:
     ```sh
     make
     ```
+    And find .so files in `build/release-linux-x86_64`, for 32-bit: `build/release-linux-x86`. <br/><br/>
+
 
 - ### Optional:
 
-    You can execute:
+    You can execute optionally the parameters using the following ways:
 
-    * 
+    * To compile debug x86 .so builds:
     ```sh
-    make ARCH=x86 BUILD_DEBUG=1 BUILD_SO=1 # compiles debug x86 .so builds (creates "debug-x86-linux" directory inside "build")
+    make debug ARCH=x86 BUILD_SO=1 # compiles debug x86 .so builds (creates "debug-x86-linux" directory inside "build")
     ```
 
-    * 
+    * To compile release x86 .dll builds:
     ```sh
     make ARCH=x86 BUILD_DLL=1 # compiles release x86 .dll builds (creates "release-x86-windows" directory inside "build")
     ```
 
-    ...
+    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles for 64-bits)... Keep in mind, `BUILD_DLL` and `BUILD_SO` can't be both used in one `make` command, only one of them can be executed correctly (no errors, but at the moment prioritizes `BUILD_DLL`).
 
 <br/>
-Important note: This repository was initialized from https://github.com/marconett/q3a.
+IMPORTANT NOTE: This repository was initialized from https://github.com/marconett/q3a.
 
 #### Currently non-used source code files and not in the build tools:
 

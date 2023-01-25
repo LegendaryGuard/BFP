@@ -83,9 +83,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef int intptr_t;
 
-#else
+#elif defined __linux__ // BFP - Linux support
 
-typedef int intptr_t; // BFP - Linux support
+typedef int intptr_t;
+
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <ctype.h>
+#include <limits.h>
+
+#else // BFP - MinGW support
 
 #include <assert.h>
 #include <math.h>
