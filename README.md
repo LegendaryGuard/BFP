@@ -282,15 +282,15 @@ Other q3 config:
 
     * To compile debug x86 .so builds:
     ```sh
-    make debug ARCH=x86 BUILD_SO=1 # compiles debug x86 .so builds (creates "debug-x86-linux" directory inside "build")
+    make debug ARCH=x86 PLATFORM=linux # compiles debug x86 .so builds (creates "debug-linux-x86" directory inside "build")
     ```
 
     * To compile release x86 .dll builds:
     ```sh
-    make ARCH=x86 BUILD_DLL=1 # compiles release x86 .dll builds (creates "release-x86-windows" directory inside "build")
+    make ARCH=x86 PLATFORM=mingw64 # compiles release x86 .dll builds (using "mingw64" as parameter) (creates "release-mingw64-x86" directory inside "build")
     ```
 
-    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles for 64-bits)... Keep in mind, `BUILD_DLL` and `BUILD_SO` can't be both used in one `make` command, only one of them can be executed correctly (no errors, but at the moment prioritizes `BUILD_DLL`).
+    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `PLATFORM=mingw64` / `PLATFORM=mingw32` (compiles dlls)...
 
 <br/>
 IMPORTANT NOTE: This repository was initialized from https://github.com/marconett/q3a.
