@@ -268,6 +268,11 @@ Other q3 config:
     NOTE: until now, there's no fully compileable QVM tool found for Linux.
 
     * #### _Building shared libraries (.so)_:
+    
+    Install the build-essential packages, which is also known as a meta-package, it contains the GCC compiler all the other essentials used to compile the software written in C and C++ language.
+    ```
+    sudo apt-get install build-essential
+    ```
 
     Simply execute: 
     ```sh
