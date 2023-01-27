@@ -193,16 +193,8 @@ ifeq ($(BUILD_DLL), 1)
   BD=$(BUILD_DIR)/debug-windows-$(ARCH)
   BR=$(BUILD_DIR)/release-windows-$(ARCH)
 
-  ifeq ($(CROSS_COMPILING),1)
-    # If CC is already set to something generic, we probably want to use
-    # something more specific
-    ifneq ($(findstring $(strip $(CC)),cc gcc),)
-      CC=
-    endif
-  else
-    ifeq ($(call bin_path, $(CC)),)
-      CC=gcc
-    endif
+  ifeq ($(call bin_path, $(CC)),)
+    CC=gcc
   endif
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
