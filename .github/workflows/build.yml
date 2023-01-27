@@ -16,7 +16,8 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
-    container: i386/ubuntu:latest
+    container: 
+      image: i386/ubuntu:latest
 
     steps:
     - uses: actions/checkout@v2
