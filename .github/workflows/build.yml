@@ -1,40 +1,53 @@
 name: Build
-
-on:
-  push:
-    branches:
-      - "*"
-  pull_request:
-    branches:
-      - "*"
+on: [push, pull_request]
 
 jobs:
-  build-windows-i386:
+  build-windows:
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build windows-i386
+    - name: Build windows QVM and .dll
       run: |
         ./build.bat
+      env:
+        ARCHIVE: 1
 
-  build-linux-i386:
+  build-linux:
     runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build linux-i386
+    - name: Build linux QVM, .dll and .so
       run: |
         sudo apt-get update # && sudo apt-get upgrade -y
         sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install wine32-development
         wine cmd /c build.bat
+        make release ARCH=x86
+        make release ARCH=x86_64
+        make release BUILD_DLL=1 ARCH=x86
+        make release BUILD_DLL=1 ARCH=x86_64
+        make debug ARCH=x86
+        make debug ARCH=x86_64
+        make debug BUILD_DLL=1 ARCH=x86
+        make debug BUILD_DLL=1 ARCH=x86_64
+      env:
+        ARCHIVE: 1
 
-    - name: Store artifacts
+    - name: Store QVM artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: qvms
+        name: QVMs
         path: |
           *.pk3
+        if-no-files-found: error
+    
+    - name: Store x86 and x86_64 .dll and x86 and x86_64 .so artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: .dll and .so files
+        path: |
+          build/*.zip
         if-no-files-found: error
 
     - name: Publish a release
@@ -44,3 +57,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         files: |
           *.pk3
+          build/*.zip
