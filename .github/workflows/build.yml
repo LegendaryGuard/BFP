@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build windows QVM
       run: |
         ./build.bat
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build linux QVM, .dll and .so
       run: |
         sudo apt-get update # && sudo apt-get upgrade -y
