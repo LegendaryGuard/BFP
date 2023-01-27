@@ -61,30 +61,6 @@ jobs:
         path: build/*
         if-no-files-found: error
         retention-days: 5
-'''
-  build-windows:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build windows QVM and .dll
-      run: |
-        ./build.bat
-        make release ARCH=x86
-        make release PLATFORM=linux ARCH=x86
-        make debug ARCH=x86
-        make debug PLATFORM=linux ARCH=x86
-      env:
-        ARCHIVE: 1
-    
-    - name: Store x86 .dll and x86 .so artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: x86 .dll and x86 .so files
-        path: |
-          build/*
-        if-no-files-found: error
-  '''
 
   build-linux:
     runs-on: ubuntu-18.04
