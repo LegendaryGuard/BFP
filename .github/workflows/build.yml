@@ -2,67 +2,17 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  windows-msys:
-    name: ${{ matrix.btype }} Windows-GCC ${{ matrix.arch }}
-    runs-on: windows-2019
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x86, x86_64]
-        cc: [gcc]
-        btype: [Release, Debug]
-        include:
-          - arch: x86
-            msystem: MINGW32
-            prefix: mingw-w64-i686
-
-          - arch: x86_64
-            msystem: MINGW64
-            prefix: mingw-w64-x86_64
-
-          - btype: Release
-            rule: install
-
-          - btype: Debug
-            rule: debug install
-
-    defaults:
-      run:
-        shell: msys2 {0}
+  
+  build-windows:
+    runs-on: windows-latest
 
     steps:
-
-    - uses: msys2/setup-msys2@v2
-      with:
-        install: ${{ matrix.prefix }}-binutils ${{ matrix.prefix }}-make ${{ matrix.prefix }}-${{ matrix.cc }}
-        msystem: ${{ matrix.msystem }}
-        path-type: minimal
-        release: false
-        update: false
-
-    - uses: actions/checkout@v3.1.0
-      with:
-        submodules: recursive
-
-    - name: Build
-      if: ${{ github.event_name != 'release' || matrix.btype != 'Debug' }} # skip Debug configuration in Release build
+    - uses: actions/checkout@v2
+    - name: Build windows QVM
       run: |
-        make clean ARCH=${{ matrix.arch }}
-        make release ${{ matrix.rule }} -j 8 ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
-        make release ${{ matrix.rule }} -j 8 PLATFORM=linux ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
-        make clean ARCH=${{ matrix.arch }}
-        make debug ${{ matrix.rule }} -j 8 ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
-        make debug ${{ matrix.rule }} -j 8 PLATFORM=linux ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
         ./build.bat
       env:
         ARCHIVE: 1
-    - uses: actions/upload-artifact@v3.1.1
-      if: matrix.cc == 'gcc' && matrix.btype == 'release'
-      with:
-        name: windows-mingw-${{ matrix.arch }}
-        path: build/*
-        if-no-files-found: error
-        retention-days: 5
 
   build-linux:
     runs-on: ubuntu-18.04
