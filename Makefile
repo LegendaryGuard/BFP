@@ -184,6 +184,43 @@ ifdef MINGW
 
 endif
 
+# BUILD_DLL option, if user wants to compile and get .dll files
+ifndef BUILD_DLL
+  BUILD_DLL    =
+endif
+
+ifeq ($(BUILD_DLL), 1)
+  BD=$(BUILD_DIR)/debug-windows-$(ARCH)
+  BR=$(BUILD_DIR)/release-windows-$(ARCH)
+
+  ifeq ($(CROSS_COMPILING),1)
+    # If CC is already set to something generic, we probably want to use
+    # something more specific
+    ifneq ($(findstring $(strip $(CC)),cc gcc),)
+      CC=
+    endif
+  else
+    ifeq ($(call bin_path, $(CC)),)
+      CC=gcc
+    endif
+  endif
+
+  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
+
+  OPTIMIZE = -O2 -fvisibility=hidden -fomit-frame-pointer -ffast-math
+
+  SHLIBEXT=dll
+  SHLIBCFLAGS=-fPIC -fvisibility=hidden
+  SHLIBLDFLAGS=-shared $(LDFLAGS)
+
+  LIBS= -lm
+
+  ifeq ($(ARCH),x86)
+    BASE_CFLAGS += -m32
+  endif
+
+endif # BUILD_DLL
+
 TARGETS =
 
 ifndef FULLBINEXT

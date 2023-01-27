@@ -269,8 +269,8 @@ Other q3 config:
 
     * #### _Building shared libraries (.so)_:
     
-    Install the build-essential packages, which is also known as a meta-package, it contains the GCC compiler all the other essentials used to compile the software written in C and C++ language.
-    ```
+    If you don't have gcc tools, install the build-essential packages, which is also known as a meta-package, it contains the GCC compiler all the other essentials used to compile the software written in C and C++ language.
+    ```sh
     sudo apt-get install build-essential
     ```
 
@@ -292,10 +292,10 @@ Other q3 config:
 
     * To compile release x86 .dll builds:
     ```sh
-    make ARCH=x86 PLATFORM=mingw64 # compiles release x86 .dll builds (using "mingw64" as parameter) (creates "release-mingw64-x86" directory inside "build")
+    make ARCH=x86 BUILD_DLL=1 # compiles release x86 .dll builds (creates "release-windows-x86" directory inside "build")
     ```
 
-    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `PLATFORM=mingw64` / `PLATFORM=mingw32` (compiles dlls)...
+    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `BUILD_DLL=1` (compiles dlls), `PLATFORM=linux` (compiles shared libraries (.so files)) ...
 
 <br/>
 IMPORTANT NOTE: This repository was initialized from https://github.com/marconett/q3a.
