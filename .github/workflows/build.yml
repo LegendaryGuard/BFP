@@ -47,11 +47,13 @@ jobs:
     - name: Build
       if: ${{ github.event_name != 'release' || matrix.btype != 'Debug' }} # skip Debug configuration in Release build
       run: |
+        make clean ARCH=${{ matrix.arch }}
+        make release ${{ matrix.rule }} -j 8 ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
+        make release ${{ matrix.rule }} -j 8 PLATFORM=linux ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
+        make clean ARCH=${{ matrix.arch }}
+        make debug ${{ matrix.rule }} -j 8 ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
+        make debug ${{ matrix.rule }} -j 8 PLATFORM=linux ARCH=${{ matrix.arch }} CC=${{ matrix.cc }}
         ./build.bat
-        make release ARCH=x86
-        make release PLATFORM=linux ARCH=x86
-        make debug ARCH=x86
-        make debug PLATFORM=linux ARCH=x86
       env:
         ARCHIVE: 1
     - uses: actions/upload-artifact@v3.1.1
