@@ -9,9 +9,23 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build windows QVM and .dll
       run: |
+        choco install zip
         ./build.bat
+        make release ARCH=x86
+        make release PLATFORM=linux ARCH=x86
+        make debug ARCH=x86
+        make debug PLATFORM=linux ARCH=x86
+        .\tools\bin\7za.exe a -tzip .\build\build_x86.zip .\build\*
       env:
         ARCHIVE: 1
+    
+    - name: Store x86 .dll and x86 .so artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: x86 .dll and x86 .so files
+        path: |
+          build/*.zip
+        if-no-files-found: error
 
   build-linux:
     runs-on: ubuntu-18.04
