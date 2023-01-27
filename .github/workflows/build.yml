@@ -16,8 +16,6 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-18.04
-    container: 
-      image: i386/ubuntu:18.04
 
     steps:
     - uses: actions/checkout@v2
