@@ -39,7 +39,7 @@ jobs:
         ARCHIVE: 1
 
     - name: Store QVM artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: QVMs
         path: |
@@ -48,7 +48,7 @@ jobs:
         retention-days: 5
     
     - name: Store .dll and .so artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: .dll and .so files
         path: |
