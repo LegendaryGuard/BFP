@@ -197,7 +197,8 @@ Other q3 config:
 
     * #### _MSYS2 (mingw) (Building dynamic libraries (.dll))_:
 
-    NOTE: Not tested on Windows 32-bit.
+    IMPORTANT NOTE: Not tested on Windows 32-bit. MSYS2 comes with multilib disabled in gcc (means you can't compile for x86 in a 64-bit system), more info [here](https://sourceforge.net/p/msys2/discussion/general/thread/3941f2c9/).
+
 
     To build, follow these instructions:
 
@@ -261,7 +262,16 @@ Other q3 config:
 
     * #### _Building QVM_: 
 
-    The alternative to execute `build.bat` to compile qvms requires [`wine` package](https://www.winehq.org/). Keep in mind, you must be in the repository directory.
+    The alternative to execute and get the compiled qvms with `build.bat` requires [`wine` package](https://www.winehq.org/). So, in that part, needs the i386 package:
+    ```sh
+    sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install wine32-development
+    ```
+    But it could be executed without using 32-bit package, if your system supports 64-bits. Go to WineHQ page anyways.
+    
+    Keep in mind, you must be in the repository directory to execute the script:
+    ```sh
+    wine cmd /c build.bat
+    ```
 
     Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
 
@@ -270,8 +280,9 @@ Other q3 config:
     * #### _Building shared libraries (.so)_:
     
     If you don't have gcc tools, install the build-essential packages, which is also known as a meta-package, it contains the GCC compiler all the other essentials used to compile the software written in C and C++ language.
+    Also, requires `libc6-dev-i386` for x86 builds and `g++-multilib` for cross-compiling.
     ```sh
-    sudo apt-get install build-essential
+    sudo apt-get install build-essential libc6-dev-i386 g++-multilib
     ```
 
     Simply execute: 
@@ -292,13 +303,13 @@ Other q3 config:
 
     * To compile release x86 .dll builds:
     ```sh
-    make ARCH=x86 BUILD_DLL=1 # compiles release x86 .dll builds (creates "release-windows-x86" directory inside "build")
+    make ARCH=x86 PLATFORM=windows # compiles release x86 .dll builds (creates "release-windows-x86" directory inside "build")
     ```
 
-    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `BUILD_DLL=1` (compiles dlls), `PLATFORM=linux` (compiles shared libraries (.so files)) ...
+    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `PLATFORM=windows` (compiles dlls), `PLATFORM=linux` (compiles shared libraries (.so files)) ...
 
 <br/>
-IMPORTANT NOTE: This repository was initialized from https://github.com/marconett/q3a.
+**IMPORTANT NOTE**: This repository was initialized from https://github.com/marconett/q3a.
 
 #### Currently non-used source code files and not in the build tools:
 

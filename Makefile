@@ -184,15 +184,8 @@ ifdef MINGW
 
 endif
 
-# BUILD_DLL option, if user wants to compile and get .dll files
-ifndef BUILD_DLL
-  BUILD_DLL    =
-endif
-
-ifeq ($(BUILD_DLL), 1)
-  BD=$(BUILD_DIR)/debug-windows-$(ARCH)
-  BR=$(BUILD_DIR)/release-windows-$(ARCH)
-
+# Windows DLL build option, if user wants to compile and get .dll files
+ifeq ($(PLATFORM),windows)
   ifeq ($(call bin_path, $(CC)),)
     CC=gcc
   endif
@@ -211,7 +204,7 @@ ifeq ($(BUILD_DLL), 1)
     BASE_CFLAGS += -m32
   endif
 
-endif # BUILD_DLL
+endif # DLL
 
 TARGETS =
 
