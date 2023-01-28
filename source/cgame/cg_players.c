@@ -251,10 +251,10 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	}
 
 	// crouch backward animation
-	memcpy(&animations[LEGS_WALKCR], &animations[LEGS_WALKCR], sizeof(animation_t));
+	memcpy(&animations[LEGS_WALKCR], &animations[LEGS_WALKCR], sizeof(animation_t)); // BFP - Crouch backwards animation tweak
 	animations[LEGS_WALKCR].reversed = qtrue;
 	// walk backward animation
-	memcpy(&animations[LEGS_WALK], &animations[LEGS_WALK], sizeof(animation_t));
+	memcpy(&animations[LEGS_WALK], &animations[LEGS_WALK], sizeof(animation_t)); // BFP - Walk backwards animation tweak
 	animations[LEGS_WALK].reversed = qtrue;
 	// flag moving fast
 	animations[FLAG_RUN].firstFrame = 0;
