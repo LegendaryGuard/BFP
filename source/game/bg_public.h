@@ -461,11 +461,11 @@ typedef enum {
 
 	// BFP - The animations must be set in this order
 
-	BOTH_DEATH1,			// BFP uses this animation
+	BOTH_DEATH1,			// BFP uses this animation (fall chest) (fall spinning)
 	BOTH_DEAD1,				// BFP uses this animation
-	BOTH_DEATH2,			// BFP uses this animation
+	BOTH_DEATH2,			// BFP uses this animation (fall back) (fall summersault)
 	BOTH_DEAD2,				// BFP uses this animation
-	BOTH_DEATH3,			// BFP uses this animation
+	BOTH_DEATH3,			// BFP uses this animation (fall back hard)
 	BOTH_DEAD3,				// BFP uses this animation
 
 	TORSO_GESTURE,			// BFP uses this animation
@@ -494,8 +494,8 @@ typedef enum {
 	LEGS_BACK,				// BFP uses this animation
 	LEGS_SWIM,				// BFP uses this animation
 
-	LEGS_JUMP,				// BFP uses this animation
-	LEGS_JUMPB,				// BFP uses this animation
+	LEGS_JUMP,				// BFP uses this animation (1 leg up) (2 rolls forward)
+	LEGS_JUMPB,				// BFP uses this animation (scissor) (2 rolls) (1 roll straight legs)
 
 	LEGS_IDLE,				// BFP uses this animation
 	LEGS_IDLECR,			// BFP uses this animation
@@ -526,30 +526,45 @@ typedef enum {
 	TORSO_ATTACK2_PREPARE,	// BFP
 	TORSO_ATTACK2_STRIKE,	// BFP
 
-	// BFP - (kamehameha or some kinda fourth attack?)
+	// BFP - (eye laser)
 	TORSO_ATTACK3_PREPARE,	// BFP
 	TORSO_ATTACK3_STRIKE,	// BFP
 
-	// BFP - (some kinda final attack)
+	// BFP - (soul ball)
 	TORSO_ATTACK4_PREPARE,	// BFP
 	TORSO_ATTACK4_STRIKE,	// BFP
 
-
-	// BFP - These attack animations are just weird, 
-	// these were found inside animation.cfg files of some 'English Bid For Power' modpack models
-
-	/*
 	// BFP - (point finger right hand)
 	TORSO_ATTACK5_PREPARE,	// BFP
 	TORSO_ATTACK5_STRIKE,	// BFP
 
-	// BFP - (big disc hold)	
+	// BFP - (angry expulsion)
+	TORSO_ATTACK6_PREPARE,	// BFP
+	TORSO_ATTACK6_STRIKE,	// BFP
+
+	// BFP - (big disc hold)
 	TORSO_ATTACK7_PREPARE,	// BFP
 	TORSO_ATTACK7_STRIKE,	// BFP
+
+	// BFP - (triangle attack)
+	TORSO_ATTACK8_PREPARE,	// BFP
+	TORSO_ATTACK8_STRIKE,	// BFP
+
+	// BFP - (ending flash attack)
+	TORSO_ATTACK9_PREPARE,	// BFP
+	TORSO_ATTACK9_STRIKE,	// BFP
 
 	// BFP - (2 hands forehead attack)
 	TORSO_ATTACK10_PREPARE,	// BFP
 	TORSO_ATTACK10_STRIKE,	// BFP
+
+	// BFP - (big gnab attack)
+	TORSO_ATTACK11_PREPARE,	// BFP
+	TORSO_ATTACK11_STRIKE,	// BFP
+
+	// BFP - (1 hand on forehead attack)
+	TORSO_ATTACK12_PREPARE,	// BFP
+	TORSO_ATTACK12_STRIKE,	// BFP
 
 	// BFP - (charge 2 hands center)
 	TORSO_ATTACK13_PREPARE,	// BFP
@@ -559,10 +574,13 @@ typedef enum {
 	TORSO_ATTACK14_PREPARE,	// BFP
 	TORSO_ATTACK14_STRIKE,	// BFP
 
+	// BFP - (hold sphere w/finger attack)
+	TORSO_ATTACK15_PREPARE,	// BFP
+	TORSO_ATTACK15_STRIKE,	// BFP
+
 	// BFP - (ken and ryu fireball)
 	TORSO_ATTACK16_PREPARE,	// BFP
 	TORSO_ATTACK16_STRIKE,	// BFP
-	*/
 
 
 	// BFP - The following animations are useless, 

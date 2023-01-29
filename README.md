@@ -3,14 +3,14 @@ Bid For Power (BFP) source code
 
 A legendary 90s era Quake 3 Arena mod.
 
-<p align="center">
+<p style="text-align: center;">
 <img src="https://user-images.githubusercontent.com/49716252/186026745-458849b2-385b-4108-8881-e55e82fb1493.png" alt="zeqlogo" width=320 />
 </p>
 
 
 ## **WARNING!** UNDER CONSTRUCTION!
 
-> ### Table of contents
+### Table of contents
 > > 1. [TODO list](#todo-list)
 > > 2. [History](#history)
 > > 3. [About the repository](#about-the-repository)
@@ -26,6 +26,7 @@ A legendary 90s era Quake 3 Arena mod.
 > > > > 5.2.2. [Building shared libraries (.so)](#building-shared-libraries-so)
 > > >
 > > > 5.3. [Optional](#optional)
+> > 6. [License](#license)
 
 # TODO list:
 
@@ -319,6 +320,10 @@ Other q3 config:
 - ui_signup.c
 - ui_specifyleague.c
 - ui_spreset.c
+
+### License
+
+The mod source code is GPLv3 licensed, the source code contents are based on Quake III Arena which is GPLv2 licensed.
 
 ## Credits
 
