@@ -534,6 +534,9 @@ typedef enum {
 	TORSO_ATTACK4_PREPARE,	// BFP
 	TORSO_ATTACK4_STRIKE,	// BFP
 
+	// BFP - The following attackset animations are just reminders, these aren't used as variables
+
+	/*
 	// BFP - (point finger right hand)
 	TORSO_ATTACK5_PREPARE,	// BFP
 	TORSO_ATTACK5_STRIKE,	// BFP
@@ -581,7 +584,7 @@ typedef enum {
 	// BFP - (ken and ryu fireball)
 	TORSO_ATTACK16_PREPARE,	// BFP
 	TORSO_ATTACK16_STRIKE,	// BFP
-
+	*/
 
 	// BFP - The following animations are useless, 
 	// possibly can be removed only if the game works as should
