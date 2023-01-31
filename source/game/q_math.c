@@ -696,52 +696,17 @@ void SetPlaneSignbits (cplane_t *out) {
 	out->signbits = bits;
 }
 
+#if !( (defined __linux__ || __FreeBSD__) && (defined __i386__) && (!defined C_ONLY)) // rb010123
+
+#if defined __LCC__ || defined C_ONLY || !id386 || defined __VECTORC
 
 /*
 ==================
 BoxOnPlaneSide
 
 Returns 1, 2, or 1 + 2
-
-// this is the slow, general version
-int BoxOnPlaneSide2 (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
-{
-	int		i;
-	float	dist1, dist2;
-	int		sides;
-	vec3_t	corners[2];
-
-	for (i=0 ; i<3 ; i++)
-	{
-		if (p->normal[i] < 0)
-		{
-			corners[0][i] = emins[i];
-			corners[1][i] = emaxs[i];
-		}
-		else
-		{
-			corners[1][i] = emins[i];
-			corners[0][i] = emaxs[i];
-		}
-	}
-	dist1 = DotProduct (p->normal, corners[0]) - p->dist;
-	dist2 = DotProduct (p->normal, corners[1]) - p->dist;
-	sides = 0;
-	if (dist1 >= 0)
-		sides = 1;
-	if (dist2 < 0)
-		sides |= 2;
-
-	return sides;
-}
-
 ==================
 */
-
-#if !( (defined __linux__ || __FreeBSD__) && (defined __i386__) && (!defined C_ONLY)) // rb010123
-
-#if defined __LCC__ || defined C_ONLY || !id386 || defined __VECTORC
-
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 {
 	float	dist1, dist2;
@@ -805,9 +770,11 @@ int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 
 	return sides;
 }
-#else
-#pragma warning( disable: 4035 )
 
+// BFP - Looks like that's MSVC exclusive, MinGW doesn't even allow it. 
+// MinGW uses gas syntax as well IIRC, that code was based on Kenny Edition
+
+#elif defined _MSC_VER
 __declspec( naked ) int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 {
 	static int bops_initialized;
@@ -1036,6 +1003,39 @@ LSetSides:
 Lerror:
 		int 3
 	}
+}
+#else
+#pragma warning( disable: 4035 )
+
+int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
+{
+	int		i;
+	float	dist1, dist2;
+	int		sides;
+	vec3_t	corners[2];
+
+	for (i=0 ; i<3 ; i++)
+	{
+		if (p->normal[i] < 0)
+		{
+			corners[0][i] = emins[i];
+			corners[1][i] = emaxs[i];
+		}
+		else
+		{
+			corners[1][i] = emins[i];
+			corners[0][i] = emaxs[i];
+		}
+	}
+	dist1 = DotProduct (p->normal, corners[0]) - p->dist;
+	dist2 = DotProduct (p->normal, corners[1]) - p->dist;
+	sides = 0;
+	if (dist1 >= 0)
+		sides = 1;
+	if (dist2 < 0)
+		sides |= 2;
+
+	return sides;
 }
 #pragma warning( default: 4035 )
 
