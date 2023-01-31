@@ -25,7 +25,7 @@ jobs:
         sudo apt-get install -y build-essential
         sudo apt-get install -y libc6-dev-i386
         sudo apt-get install -y g++-multilib
-        sudo apt-get install -y mingw64
+        sudo apt-get install -y gcc-mingw-w64
         make release ARCH=x86
         make release PLATFORM=windows ARCH=x86
         make debug ARCH=x86

@@ -281,9 +281,9 @@ Other q3 config:
     * #### _Building shared libraries (.so)_:
     
     If you don't have gcc tools, install the build-essential packages, which is also known as a meta-package, it contains the GCC compiler all the other essentials used to compile the software written in C and C++ language.
-    Also, requires `libc6-dev-i386` for x86 builds and `g++-multilib` and `mingw64` for cross-compiling. More info about `mingw64` question in Linux [here](https://stackoverflow.com/questions/44389963/how-to-install-mingw32-on-ubuntu).
+    Also, requires `libc6-dev-i386` for x86 builds and `g++-multilib` and `gcc-mingw-w64` for cross-compiling. More info about MinGW question in Linux [here](https://stackoverflow.com/questions/44389963/how-to-install-mingw32-on-ubuntu).
     ```sh
-    sudo apt-get install build-essential libc6-dev-i386 g++-multilib mingw64
+    sudo apt-get install build-essential libc6-dev-i386 g++-multilib gcc-mingw-w64
     ```
 
     Simply execute: 
