@@ -3,8 +3,8 @@ Bid For Power (BFP) source code
 
 A legendary 90s era Quake 3 Arena mod.
 
-<p style="text-align: center;">
-<img src="https://user-images.githubusercontent.com/49716252/186026745-458849b2-385b-4108-8881-e55e82fb1493.png" alt="zeqlogo" width=320 />
+<p align="center">
+<img src="https://user-images.githubusercontent.com/49716252/186026745-458849b2-385b-4108-8881-e55e82fb1493.png" alt="zeqlogo" width=350 />
 </p>
 
 
@@ -82,7 +82,6 @@ Documentations, references and extracted stuff will give us clues to reach the g
 - Old documentations:
 
     * [Guide](docs/Guide.md)
-
     * [Creating custom plugin models](docs/Create_Custom_Models.md)
 
 <br/>
@@ -90,9 +89,7 @@ Documentations, references and extracted stuff will give us clues to reach the g
 - Cvars, cmd and bind stuff about the old game:
 
     * [Bindlist](docs/bind_bfp_list.txt)
-
     * [Cmdlist](docs/cmd_bfp_list.txt)
-
     * [Cvarlist](docs/cvar_bfp_list.txt)
 
 We can see, e.g. `g_plKillBonusPct` cvar, which means we need to find the function that rewards the player and do something with that. Something like this:
@@ -103,34 +100,38 @@ if ( killedSomeone ) {
 }
 ```
 
+<br/>
+
+_**Click on some image to see it complete**._
+
 - How should the main menu be:
 
-<img src="https://user-images.githubusercontent.com/49716252/188994358-3d03ef80-e27f-4e5e-96ac-bd0200134ced.jpg" alt="main_menu" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188994358-3d03ef80-e27f-4e5e-96ac-bd0200134ced.jpg" alt="main_menu" width=340 />
 
 <br/>
 
 - How should the gameplay menu be (when press Esc to go):
 
-<img src="https://user-images.githubusercontent.com/49716252/188993661-ae80923d-4ec9-47bd-bb65-0b9f036aa241.png" alt="gameplay_menu" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188993661-ae80923d-4ec9-47bd-bb65-0b9f036aa241.png" alt="gameplay_menu" width=340 />
 
 <br/>
 
 - How should the HUD be:
 
-<img src="https://user-images.githubusercontent.com/49716252/188994019-589d3046-e553-47de-afff-5fb0eb2dd7ec.png" alt="hud_display" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188994019-589d3046-e553-47de-afff-5fb0eb2dd7ec.png" alt="hud_display" width=340 />
 
 <br/>
 
 - How should UI setup be:
 
-<img src="https://user-images.githubusercontent.com/49716252/188993194-10feb38b-2809-41d1-9e81-1ce96ff1428a.png" alt="ui_setup" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188993194-10feb38b-2809-41d1-9e81-1ce96ff1428a.png" alt="ui_setup" width=340 />
 
 <br/>
 
 - How should UI player settings be (keep in mind all players use running animation):
 
-<img src="https://user-images.githubusercontent.com/49716252/188993401-9e7036e6-cbed-47ac-8aea-431963a343bf.png" alt="ui_player_settings" width=560 /><br/>
-<img src="https://user-images.githubusercontent.com/49716252/188994108-c5bdfa06-32d1-4ebe-beb1-d74e9e6159ac.jpg" alt="ui_player_settings2" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188993401-9e7036e6-cbed-47ac-8aea-431963a343bf.png" alt="ui_player_settings" width=340 /><br/>
+<img src="https://user-images.githubusercontent.com/49716252/188994108-c5bdfa06-32d1-4ebe-beb1-d74e9e6159ac.jpg" alt="ui_player_settings2" width=340 />
 
 <br/>
 
@@ -142,19 +143,19 @@ if ( killedSomeone ) {
 
 - How should UI BFP options be:
 
-<img src="https://user-images.githubusercontent.com/49716252/188993293-db531ff5-5754-4ded-99ad-b5f3b2f5fd72.png" alt="bfp_options" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188993293-db531ff5-5754-4ded-99ad-b5f3b2f5fd72.png" alt="bfp_options" width=340 />
 
 <br/>
 
 - When player receives a hit stun (`g_hitStun 1`):
 
-<img src="https://user-images.githubusercontent.com/49716252/188993948-435cec9c-84a4-477a-b072-1740ca4f1f7d.jpg" alt="hit_stun_received" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188993948-435cec9c-84a4-477a-b072-1740ca4f1f7d.jpg" alt="hit_stun_received" width=340 />
 
 <br/>
 
 - When player is being ready to shot (holding a key):
 
-<img src="https://user-images.githubusercontent.com/49716252/188993564-d1d5d9ee-80e3-4c15-b0c4-eb966441e57d.png" alt="ready_to_attack" width=560 />
+<img src="https://user-images.githubusercontent.com/49716252/188993564-d1d5d9ee-80e3-4c15-b0c4-eb966441e57d.png" alt="ready_to_attack" width=340 />
 
 <br/>
 
@@ -229,7 +230,9 @@ Other q3 config:
     make ARCH=x86 WINDRES="windres -F pe-i386"
     ```
 
-    7. Find the dlls in `build/release-mingw64-x86_64`, for 32-bit: `build/release-mingw32-x86`. <br/><br/>
+    7. Find the dlls in `build/release-mingw64-x86_64`, for 32-bit: `build/release-mingw32-x86`. <br/>
+    
+    If you can't compile 32-bit builds with MinGW, try [Cygwin](#cygwin-mingw-building-dynamic-libraries-dll) section.<br/>
 
     * #### _Cygwin (mingw) (Building dynamic libraries (.dll))_: 
 
@@ -310,6 +313,7 @@ Other q3 config:
     ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `PLATFORM=windows` (compiles dlls), `PLATFORM=linux` (compiles shared libraries (.so files)) ...
 
 <br/>
+
 **IMPORTANT NOTE**: This repository was initialized from https://github.com/marconett/q3a.
 
 #### Currently non-used source code files and not in the build tools:
