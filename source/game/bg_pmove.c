@@ -1554,6 +1554,18 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 			PM_ContinueLegsAnim( LEGS_FLYIDLE );
 		}
 	}
+	else { // when failing backwards after flying
+		if ( pm->isFlying && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
+			if ( pm->cmd.forwardmove < 0 ) {
+				PM_ForceLegsAnim( LEGS_JUMPB );
+				PM_StartLegsAnim( LEGS_JUMPB );
+			}
+			else {
+				PM_ForceLegsAnim( LEGS_JUMP );
+				PM_StartLegsAnim( LEGS_JUMP );
+			}
+		}
+	}
 }
 
 /*
