@@ -728,7 +728,7 @@ qboolean	BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 
 
 // g_dmflags->integer flags
-#define	DF_NO_FALLING			8
+// #define	DF_NO_FALLING			8 // BFP - Disabled, there's no fall damage on BFP
 #define DF_FIXED_FOV			16
 #define	DF_NO_FOOTSTEPS			32
 

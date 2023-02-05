@@ -186,7 +186,7 @@ static void CG_StartOrbit_f( void ) {
 		trap_Cvar_Set("cg_cameraOrbit", "5");
 		trap_Cvar_Set("cg_thirdPerson", "1");
 		trap_Cvar_Set("cg_thirdPersonAngle", "0");
-		trap_Cvar_Set("cg_thirdPersonRange", "100");
+		trap_Cvar_Set("cg_thirdPersonRange", "110");
 	}
 }
 

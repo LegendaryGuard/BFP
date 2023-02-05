@@ -969,14 +969,14 @@ static void PM_CrashLand( void ) {
 	// SURF_NODAMAGE is used for bounce pads where you don't ever
 	// want to take damage or play a crunch sound
 	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE) )  {
-		if ( delta > 60 ) {
+		if ( delta > 180 ) { // BFP - Before Q3 default value (60), so the fall in BFP is further
 			PM_AddEvent( EV_FALL_FAR );
-		} else if ( delta > 40 ) {
+		} /* else if ( delta > 40 ) { // BFP - There's no medium fall on BFP
 			// this is a pain grunt, so don't play it if dead
 			if ( pm->ps->stats[STAT_HEALTH] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
 			}
-		} else if ( delta > 7 ) {
+		} */ else if ( delta > 7 ) {
 			PM_AddEvent( EV_FALL_SHORT );
 		} else {
 			PM_AddEvent( PM_FootstepForSurface() );
@@ -1165,7 +1165,7 @@ static void PM_GroundTrace( void ) {
 			Com_Printf("%i:Land\n", c_pmove);
 		}
 		
-		//PM_CrashLand(); // BFP - There's no crash land damage when they fell in the ground
+		PM_CrashLand();
 
 		// don't do landing time if we were just going down a slope
 		if ( pml.previous_velocity[2] < -200 ) {
@@ -1843,12 +1843,12 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		if ( i == PITCH && !( ps->pm_flags & PMF_FLYING ) ) {
 			// don't let the player look up or down more than 90 degrees
 			// BFP - & if not flying
-			if ( temp > 16384 ) {
-				ps->delta_angles[i] = 16384 - cmd->angles[i];
-				temp = 16384;
-			} else if ( temp < -16384 ) {
-				ps->delta_angles[i] = -16384 - cmd->angles[i];
-				temp = -16384;
+			if ( temp > 16000 ) {
+				ps->delta_angles[i] = 16000 - cmd->angles[i];
+				temp = 16000;
+			} else if ( temp < -16000 ) {
+				ps->delta_angles[i] = -16000 - cmd->angles[i];
+				temp = -16000;
 			}
 		}
 		ps->viewangles[i] = SHORT2ANGLE(temp);

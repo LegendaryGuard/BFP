@@ -232,7 +232,7 @@ Other q3 config:
 
     7. Find the dlls in `build/release-mingw64-x86_64`, for 32-bit: `build/release-mingw32-x86`. <br/>
     
-    If you can't compile 32-bit builds with MinGW, try [Cygwin](#cygwin-mingw-building-dynamic-libraries-dll) section.<br/>
+    If you can't compile 32-bit builds with MSYS2 MinGW, try [Cygwin](#cygwin-mingw-building-dynamic-libraries-dll) section.<br/>
 
     * #### _Cygwin (mingw) (Building dynamic libraries (.dll))_: 
 

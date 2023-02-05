@@ -505,6 +505,8 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		switch ( event ) {
 		case EV_FALL_MEDIUM:
 		case EV_FALL_FAR:
+			// BFP - There's no crash land damage when the players fell in the ground
+			/*
 			if ( ent->s.eType != ET_PLAYER ) {
 				break;		// not in the player model
 			}
@@ -519,6 +521,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			VectorSet (dir, 0, 0, 1);
 			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
 			G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
+			*/
 			break;
 
 		case EV_FIRE_WEAPON:
