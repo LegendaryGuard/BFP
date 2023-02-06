@@ -1554,15 +1554,16 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 			PM_ContinueLegsAnim( LEGS_FLYIDLE );
 		}
 	}
-	else { // when failing backwards after flying
-		if ( pm->isFlying && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
-			if ( pm->cmd.forwardmove < 0 ) {
-				PM_ForceLegsAnim( LEGS_JUMPB );
-				PM_StartLegsAnim( LEGS_JUMPB );
-			}
-			else {
+	else {
+		if ( pm->ps->velocity[2] > 0 && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
+			if ( pm->cmd.forwardmove >= 0 ) {
 				PM_ForceLegsAnim( LEGS_JUMP );
 				PM_StartLegsAnim( LEGS_JUMP );
+				pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+			} else { // when failing backwards after flying
+				PM_ForceLegsAnim( LEGS_JUMPB );
+				PM_StartLegsAnim( LEGS_JUMPB );
+				pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
 			}
 		}
 	}
