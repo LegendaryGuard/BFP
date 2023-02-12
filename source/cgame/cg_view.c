@@ -228,9 +228,13 @@ static void CG_OffsetThirdPersonView( void ) {
 	vec3_t		focusPoint;
 	float		focusDist;
 	float		forwardScale, sideScale;
+	// BFP - Camera vector variables
+	vec3_t		overrideAngles;
+	vec3_t		overrideOrg;
 
-	// BFP - TODO: Improve camera, when player looks at the ground, the view should 
-	// be adjusted where the player position, in the screen, is further down like BFP does
+	// BFP - Camera setup
+	VectorCopy( cg.refdefViewAngles, overrideAngles );
+	VectorCopy( cg.refdef.vieworg, overrideOrg );
 
 	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
 
@@ -251,12 +255,10 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	VectorCopy( cg.refdef.vieworg, view );
 
-	// view[2] += 8;
+	// view[2] += 8; // Q3 default view height value
 
 	// BFP - Third person camera height
-	view[2] += cg_thirdPersonHeight.value + 80;
-
-	// cg.refdefViewAngles[PITCH] *= 0.5;
+	view[2] += cg_thirdPersonHeight.value;
 
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 
@@ -268,7 +270,8 @@ static void CG_OffsetThirdPersonView( void ) {
 	// trace a ray from the origin to the viewpoint to make sure the view isn't
 	// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
 
-	if (!cg_cameraMode.integer) {
+	// BFP - cg_cameraMode cvar doesn't exist
+	// if (!cg_cameraMode.integer) {
 		CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
 
 		if ( trace.fraction != 1.0 ) {
@@ -281,8 +284,7 @@ static void CG_OffsetThirdPersonView( void ) {
 			CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
 			VectorCopy( trace.endpos, view );
 		}
-	}
-
+	// }
 
 	VectorCopy( view, cg.refdef.vieworg );
 
@@ -292,10 +294,20 @@ static void CG_OffsetThirdPersonView( void ) {
 	if ( focusDist < 1 ) {
 		focusDist = 1;	// should never happen
 	}
-	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
+	// cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
+	// cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+
+	// BFP - Camera setup
 	cg.refdefViewAngles[PITCH] = focusAngles[PITCH];
 	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
-	cg.refdefViewAngles[YAW] = focusAngles[YAW];
+	VectorCopy( overrideAngles, cg.refdefViewAngles );
+	// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
+	AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+	VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
+	VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
+	VectorMA( overrideOrg, cg_thirdPersonHeight.value + 94, up, overrideOrg ); // weird thing on BFP, the default cg_thirdPersonHeight cvar value is -60, needs to focus correctly the height view adding 94
+	VectorMA( overrideOrg, 0, right, cg.refdef.vieworg ); // set to 0 to center player's view
+	VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
 }
 
 /*
