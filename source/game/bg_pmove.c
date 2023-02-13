@@ -1102,6 +1102,11 @@ static void PM_GroundTrace( void ) {
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
 
+	// BFP - Flight, if flying, do nothing when touching the ground
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		return;
+	}
+
 	// do something corrective if the trace starts in a solid...
 	if ( trace.allsolid ) {
 		if ( !PM_CorrectAllSolid(&trace) )
@@ -1553,18 +1558,19 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 			// PM_ForceLegsAnim( LEGS_FLYIDLE );
 			PM_ContinueLegsAnim( LEGS_FLYIDLE );
 		}
+		return;
 	}
-	else {
-		if ( pm->ps->velocity[2] > 0 && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
-			if ( pm->cmd.forwardmove >= 0 ) {
-				PM_ForceLegsAnim( LEGS_JUMP );
-				PM_StartLegsAnim( LEGS_JUMP );
-				pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-			} else { // when failing backwards after flying
-				PM_ForceLegsAnim( LEGS_JUMPB );
-				PM_StartLegsAnim( LEGS_JUMPB );
-				pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
-			}
+	
+	// Handle the player movement animation if trying to change quickly the direction of forward or backward
+	if ( pm->ps->velocity[2] > 0 && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
+		if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
+			PM_ForceLegsAnim( LEGS_JUMP );
+			PM_StartLegsAnim( LEGS_JUMP );
+			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+		} else if ( pm->cmd.forwardmove < 0 ) { // when failing backwards after flying
+			PM_ForceLegsAnim( LEGS_JUMPB );
+			PM_StartLegsAnim( LEGS_JUMPB );
+			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 		}
 	}
 }
@@ -1841,9 +1847,8 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];
-		if ( i == PITCH && !( ps->pm_flags & PMF_FLYING ) ) {
+		if ( i == PITCH && !( ps->pm_flags & PMF_FLYING ) ) { // BFP - Avoid that when flying
 			// don't let the player look up or down more than 90 degrees
-			// BFP - & if not flying
 			if ( temp > 16000 ) {
 				ps->delta_angles[i] = 16000 - cmd->angles[i];
 				temp = 16000;
