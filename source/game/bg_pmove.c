@@ -1560,17 +1560,27 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 		}
 		return;
 	}
-	
+
+	// BFP - TODO: Remember to implement hit stun when the ki is zero! The player doesn't move until recovers ki
+	// When the player doesn't have more ki, make hit stun animation
+	if ( pm->ps->stats[STAT_KI] <= 0 && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
+		PM_StartTorsoAnim( TORSO_STUN );
+		PM_ForceLegsAnim( LEGS_IDLECR );
+		PM_StartLegsAnim( LEGS_IDLECR );
+	}
+
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
-	if ( pm->ps->velocity[2] > 0 && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
+	if ( !pm->isFlying && !( pml.groundTrace.contents & CONTENTS_SOLID ) 
+		&& ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 			PM_ForceLegsAnim( LEGS_JUMP );
 			PM_StartLegsAnim( LEGS_JUMP );
-			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
 		} else if ( pm->cmd.forwardmove < 0 ) { // when failing backwards after flying
 			PM_ForceLegsAnim( LEGS_JUMPB );
 			PM_StartLegsAnim( LEGS_JUMPB );
-			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+		} else {
+			PM_ForceLegsAnim( LEGS_JUMP );
+			PM_StartLegsAnim( LEGS_JUMP );
 		}
 	}
 }
