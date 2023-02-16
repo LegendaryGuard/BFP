@@ -2119,14 +2119,14 @@ void PmoveSingle (pmove_t *pmove) {
 	// torso animation
 	PM_TorsoAnimation();
 
-	// BFP - Flight animation
-	PM_FlightAnimation();
-
 	// BFP - Ki Charge animation
 	PM_KiChargeAnimation();
 
 	// footstep events / legs animations
 	PM_Footsteps();
+
+	// BFP - Flight animation
+	PM_FlightAnimation();
 
 	// entering / leaving water splashes
 	PM_WaterEvents();
