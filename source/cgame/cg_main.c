@@ -132,7 +132,8 @@ vmCvar_t	cg_zoomFov;
 vmCvar_t	cg_thirdPerson;
 vmCvar_t	cg_thirdPersonRange;
 vmCvar_t	cg_thirdPersonAngle;
-vmCvar_t	cg_thirdPersonHeight; // BFP - Camera Height
+vmCvar_t	cg_thirdPersonHeight; // BFP - Third person camera Height
+vmCvar_t	cg_drawOwnModel; // BFP - toggle first person between traditional and vis modes
 vmCvar_t	cg_yrgolroxor; // BFP - Ygorl Roxor easter egg
 vmCvar_t	cg_stereoSeparation;
 vmCvar_t	cg_lagometer;
@@ -160,7 +161,7 @@ vmCvar_t	pmove_fixed;
 //vmCvar_t	cg_pmove_fixed;
 vmCvar_t	pmove_msec;
 vmCvar_t	cg_pmove_msec;
-vmCvar_t	cg_cameraMode;
+// vmCvar_t	cg_cameraMode; // BFP - cg_cameraMode cvar doesn't exist
 vmCvar_t	cg_cameraOrbit;
 vmCvar_t	cg_cameraOrbitDelay;
 vmCvar_t	cg_timescaleFadeEnd;
@@ -238,6 +239,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "110", CVAR_ARCHIVE }, // BFP
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", CVAR_ARCHIVE }, // BFP
 	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "-60", CVAR_ARCHIVE }, // BFP - Camera height
+	{ &cg_drawOwnModel, "cg_drawOwnModel", "1", CVAR_ARCHIVE }, // BFP - toggle first person between traditional and vis modes
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", 0 }, // BFP
 	{ &cg_yrgolroxor, "cg_yrgolroxor", "0", 0 }, // BFP - Ygorl Roxor easter egg
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE  },
@@ -265,7 +267,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_timescale, "timescale", "1", 0},
 	{ &cg_scorePlum, "cg_scorePlums", "1", CVAR_USERINFO | CVAR_ARCHIVE},
 	{ &cg_smoothClients, "cg_smoothClients", "0", CVAR_USERINFO | CVAR_ARCHIVE},
-	{ &cg_cameraMode, "com_cameraMode", "0", CVAR_CHEAT},
+	// { &cg_cameraMode, "com_cameraMode", "0", CVAR_CHEAT}, // BFP - cg_cameraMode cvar doesn't exist
 
 	{ &pmove_fixed, "pmove_fixed", "0", 0},
 	{ &pmove_msec, "pmove_msec", "8", 0},

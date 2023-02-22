@@ -1323,22 +1323,6 @@ static void PM_Footsteps( void ) {
 	//
 	pm->xyspeed = sqrt( pm->ps->velocity[0] * pm->ps->velocity[0]
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
-	
-	// BFP - Flight
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		if ( ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) || ( pm->cmd.buttons & BUTTON_WALKING ) ) {
-			if ( pm->cmd.forwardmove > 0 ) {
-				PM_ContinueTorsoAnim( TORSO_FLYA );
-				PM_ContinueLegsAnim( LEGS_FLYA );
-			} else if ( pm->cmd.forwardmove < 0 ) {
-				PM_ContinueTorsoAnim( TORSO_FLYB );
-				PM_ContinueLegsAnim( LEGS_FLYB );
-			} else {
-				PM_ContinueLegsAnim( LEGS_FLYIDLE );
-			}
-		}
-		return;
-	}
 
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
 
@@ -2119,14 +2103,14 @@ void PmoveSingle (pmove_t *pmove) {
 	// torso animation
 	PM_TorsoAnimation();
 
+	// BFP - Flight animation
+	PM_FlightAnimation();
+
 	// BFP - Ki Charge animation
 	PM_KiChargeAnimation();
 
 	// footstep events / legs animations
 	PM_Footsteps();
-
-	// BFP - Flight animation
-	PM_FlightAnimation();
 
 	// entering / leaving water splashes
 	PM_WaterEvents();

@@ -257,8 +257,7 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	// view[2] += 8; // Q3 default view height value
 
-	// BFP - Third person camera height
-	view[2] += cg_thirdPersonHeight.value;
+	// cg.refdefViewAngles[PITCH] *= 0.5;
 
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 
@@ -308,6 +307,16 @@ static void CG_OffsetThirdPersonView( void ) {
 	VectorMA( overrideOrg, cg_thirdPersonHeight.value + 94, up, overrideOrg ); // weird thing on BFP, the default cg_thirdPersonHeight cvar value is -60, needs to focus correctly the height view adding 94
 	VectorMA( overrideOrg, 0, right, cg.refdef.vieworg ); // set to 0 to center player's view
 	VectorMA( cg.refdef.vieworg, -cg_thirdPersonRange.value, forward, cg.refdef.vieworg );
+
+	// trace when near to something solid
+	CG_Trace( &trace, overrideOrg, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
+	if ( trace.fraction != 1.0f ) {
+		VectorCopy( trace.endpos, cg.refdef.vieworg );
+
+		VectorMA( cg.refdef.vieworg, ( 1.0f - trace.fraction ) * 32, up, cg.refdef.vieworg );
+		
+		VectorCopy( trace.endpos, cg.refdef.vieworg );
+	}
 }
 
 /*
@@ -369,7 +378,7 @@ CG_OffsetFirstPersonView
 
 ===============
 */
-static void CG_OffsetFirstPersonView( void ) {
+static void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t parentModel ) { // BFP - First person setup, originally, Q3 doesn't use these parameters
 	float			*origin;
 	float			*angles;
 	float			bob;
@@ -379,10 +388,44 @@ static void CG_OffsetFirstPersonView( void ) {
 	float			f;
 	vec3_t			predictedVelocity;
 	int				timeDelta;
+	orientation_t	tagOrient; // BFP - First person vis mode orientation setup
 	
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		return;
 	}
+
+	// BFP - First person vis mode
+	// pivot the eye based on a neck length
+#if 1
+	if ( cg_drawOwnModel.integer >= 1 ) {
+#define	NECK_LENGTH		8
+		vec3_t			forward, up;
+
+		VectorClear( cg.refdefViewAngles );
+
+		if ( CG_GetTagOrientationFromPlayerEntityParentModel( cent, parent, parentModel, "tag_head", &tagOrient ) ) {
+			VectorCopy( tagOrient.origin, cg.refdef.vieworg );
+			cg.refdef.vieworg[2] -= NECK_LENGTH;
+			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+			VectorMA( cg.refdef.vieworg, -1, forward, cg.refdef.vieworg );
+			VectorMA( cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg );
+		}
+
+		// add fall height
+		delta = cg.time - cg.landTime;
+		if ( delta < LAND_DEFLECT_TIME ) {
+			f = delta / LAND_DEFLECT_TIME;
+			cg.refdef.vieworg[2] += cg.landChange * f;
+		} else if ( delta < LAND_DEFLECT_TIME + LAND_RETURN_TIME ) {
+			delta -= LAND_DEFLECT_TIME;
+			f = 1.0 - ( delta / LAND_RETURN_TIME );
+			cg.refdef.vieworg[2] += cg.landChange * f;
+		}
+		return;
+	}
+#endif
+
+	// BFP - Original Q3 first person view
 
 	origin = cg.refdef.vieworg;
 	angles = cg.refdefViewAngles;
@@ -486,19 +529,6 @@ static void CG_OffsetFirstPersonView( void ) {
 	// add kick offset
 
 	VectorAdd (origin, cg.kick_origin, origin);
-
-	// pivot the eye based on a neck length
-#if 0
-	{
-#define	NECK_LENGTH		8
-	vec3_t			forward, up;
- 
-	cg.refdef.vieworg[2] -= NECK_LENGTH;
-	AngleVectors( cg.refdefViewAngles, forward, NULL, up );
-	VectorMA( cg.refdef.vieworg, 3, forward, cg.refdef.vieworg );
-	VectorMA( cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg );
-	}
-#endif
 }
 
 //======================================================================
@@ -733,10 +763,10 @@ static int CG_CalcViewValues( void ) {
 	if ( cg.renderingThirdPerson ) {
 		// back away from character
 		CG_OffsetThirdPersonView();
-	} else {
+	} /*else { // BFP - Original Q3 first person view function call, not used here, moved to cg_players.c in CG_Player function
 		// offset for local bobbing and kicks
 		CG_OffsetFirstPersonView();
-	}
+	}*/
 
 	// position eye reletive to origin
 	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
@@ -857,7 +887,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	CG_PredictPlayerState();
 
 	// decide on third person view
-	cg.renderingThirdPerson = cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
+	cg.renderingThirdPerson = cg_drawOwnModel.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0); //cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
 
 	// build cg.refdef
 	inwater = CG_CalcViewValues();

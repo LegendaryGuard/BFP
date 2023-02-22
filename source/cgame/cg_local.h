@@ -136,7 +136,7 @@ typedef struct {
 
 
 typedef struct {
-	lerpFrame_t		legs, torso, flag;
+	lerpFrame_t		head, legs, torso, flag;
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;
@@ -1058,6 +1058,7 @@ extern	vmCvar_t		cg_thirdPersonRange;
 extern	vmCvar_t		cg_thirdPersonAngle;
 extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_thirdPersonHeight; // BFP - Camera height
+extern	vmCvar_t		cg_drawOwnModel; // BFP - toggle first person between traditional and vis modes
 extern	vmCvar_t		cg_yrgolroxor; // BFP - Ygorl Roxor easter egg
 extern	vmCvar_t		cg_stereoSeparation;
 extern	vmCvar_t		cg_lagometer;
@@ -1219,6 +1220,8 @@ void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team );
 void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
+qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEntity_t *parent, 
+					qhandle_t parentModel, char *tagName, orientation_t *tagOrient ); // BFP - Parent model tag orientation, used for first person vis mode
 
 //
 // cg_predict.c

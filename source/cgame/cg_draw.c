@@ -1716,7 +1716,7 @@ static void CG_DrawCrosshair(void) {
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
-	if ( cg.renderingThirdPerson ) { // BFP - Third person traceable crosshair
+	if ( cg_thirdPerson.integer >= 1 ) { // BFP - Third person traceable crosshair
 		w = h = cg_crosshairSize.value; // set the same size, if this isn't set here, the size is changed
 		AngleVectors( ps->viewangles, forward, NULL, up );
 		VectorCopy( ps->origin, muzzle );

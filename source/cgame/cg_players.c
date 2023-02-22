@@ -2096,11 +2096,11 @@ void CG_Player( centity_t *cent ) {
 	if ( cent->currentState.number == cg.snap->ps.clientNum) {
 		if (!cg.renderingThirdPerson) {
 			renderfx = RF_THIRD_PERSON;			// only draw in mirrors
-		} else {
+		} /*else { // BFP - cg_cameraMode cvar doesn't exist
 			if (cg_cameraMode.integer) {
 				return;
 			}
-		}
+		}*/
 	}
 
 
@@ -2161,9 +2161,15 @@ void CG_Player( centity_t *cent ) {
 		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.01f, 0.002f );
 		trap_R_AddLightToScene( cent->lerpOrigin, 80 + (rand()&11), 1, 0.15f, 0.001f );
 
-		// BFP - TODO: Make a charging sound if it's being used
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
-			vec3_origin, cgs.media.kiUseSound );
+		// BFP - TODO: Make a charging sound if it's being used, needs to handle the difference between boost and charge
+		if ( cg.predictedPlayerState.pm_flags & PMF_KI_BOOST ) {
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+				vec3_origin, cgs.media.kiUseSound );
+		}
+		else {
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+				vec3_origin, cgs.media.kiChargeSound );
+		}
 	}
 
 	// add the shadow
@@ -2245,8 +2251,54 @@ void CG_Player( centity_t *cent ) {
 
 	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );
+	
+	// BFP - First person camera setup
+	if ( cg_thirdPerson.integer <= 0 ) {
+		CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
+	}
 }
 
+/*
+===============
+CG_GetTagOrientationFromPlayerEntityParentModel
+===============
+*/
+qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEntity_t *parent, 
+					qhandle_t parentModel, char *tagName, orientation_t *tagOrient ) { // BFP - Parent model tag orientation, used for first person vis mode
+	int				i, clientNum;
+	orientation_t	lerped;
+	vec3_t			tempAxis[3];
+
+	if ( cent->currentState.eType != ET_PLAYER || !tagName[0] ) {
+		return qfalse;
+	}
+	// The client number is stored in clientNum.  It can't be derived
+	// from the entity number, because a single client may have
+	// multiple corpses on the level using the same clientinfo
+    clientNum = cent->currentState.clientNum;
+	if ( cent->currentState.clientNum < 0 || cent->currentState.clientNum >= MAX_CLIENTS ) {
+		CG_Error( "Bad clientNum on player entity" );
+	}
+	// It is possible to see corpses from disconnected players that may
+	// not have valid clientinfo
+	if ( !cgs.clientinfo[cent->currentState.clientNum].infoValid ) {
+		return qfalse;
+	}
+	// Prepare the destination orientation_t
+	// AxisClear( tagOrient->axis );
+
+	// Try to find the tag and return its coordinates
+	if ( trap_R_LerpTag( &lerped, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, tagName ) ) {
+        VectorCopy( parent->origin, tagOrient->origin );
+        for ( i = 0 ; i < 3 ; i++ ) {
+            VectorMA( tagOrient->origin, lerped.origin[i], parent->axis[i], tagOrient->origin );
+        }
+        MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
+        MatrixMultiply( tempAxis, parent->axis, tagOrient->axis );
+        return qtrue;
+    }
+	return qfalse;
+}
 
 //=====================================================================
 
