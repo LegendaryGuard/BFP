@@ -1134,6 +1134,7 @@ void CG_TestModelPrevSkin_f (void);
 void CG_ZoomDown_f( void );
 void CG_ZoomUp_f( void );
 void CG_AddBufferedSound( sfxHandle_t sfx);
+void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t parentModel ); // BFP - First person camera setup
 qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y ); // BFP - Crosshair functionality
 
 void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback );

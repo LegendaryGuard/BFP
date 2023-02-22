@@ -378,7 +378,7 @@ CG_OffsetFirstPersonView
 
 ===============
 */
-static void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t parentModel ) { // BFP - First person setup, originally, Q3 doesn't use these parameters
+void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t parentModel ) { // BFP - First person setup, originally, Q3 doesn't use these parameters
 	float			*origin;
 	float			*angles;
 	float			bob;
