@@ -2265,7 +2265,7 @@ CG_GetTagOrientationFromPlayerEntityParentModel
 */
 qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEntity_t *parent, 
 					qhandle_t parentModel, char *tagName, orientation_t *tagOrient ) { // BFP - Parent model tag orientation, used for first person vis mode
-	int				i, clientNum;
+	int				i;
 	orientation_t	lerped;
 	vec3_t			tempAxis[3];
 
@@ -2275,7 +2275,6 @@ qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEn
 	// The client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
 	// multiple corpses on the level using the same clientinfo
-    clientNum = cent->currentState.clientNum;
 	if ( cent->currentState.clientNum < 0 || cent->currentState.clientNum >= MAX_CLIENTS ) {
 		CG_Error( "Bad clientNum on player entity" );
 	}
@@ -2285,7 +2284,7 @@ qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEn
 		return qfalse;
 	}
 	// Prepare the destination orientation_t
-	// AxisClear( tagOrient->axis );
+	AxisClear( tagOrient->axis );
 
 	// Try to find the tag and return its coordinates
 	if ( trap_R_LerpTag( &lerped, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, tagName ) ) {
