@@ -136,7 +136,7 @@ typedef struct {
 
 
 typedef struct {
-	lerpFrame_t		head, legs, torso, flag;
+	lerpFrame_t		legs, torso, flag;
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;

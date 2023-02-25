@@ -2253,7 +2253,8 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerPowerups( cent, &torso );
 	
 	// BFP - First person camera setup
-	if ( cg_thirdPerson.integer <= 0 ) {
+	if ( cg_thirdPerson.integer <= 0 
+		&& cent->currentState.number == cg.snap->ps.clientNum  ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
 		CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
 	}
 }
