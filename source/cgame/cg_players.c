@@ -1227,8 +1227,15 @@ static void CG_PlayerAnimation( centity_t *cent, int *legsOld, int *legs, float 
 		return;
 	}
 
-	if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
-		speedScale = 1.5;
+	// if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
+	// BFP - When using ki boost use the following speed as haste powerup
+	if ( cent->currentState.number == cg.snap->ps.clientNum 
+		&& ( cent->currentState.eFlags & EF_AURA )
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+		&& ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND
+		&& ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) {
+		speedScale = 1.5; // when using ki boost
 	} else {
 		speedScale = 1;
 	}
@@ -1680,9 +1687,11 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 	}
 
 	// flight plays a looped sound
+	/*
 	if ( powerups & ( 1 << PW_FLIGHT ) ) {
 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, cgs.media.flightSound );
 	}
+	*/
 
 	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 	// redflag
@@ -2070,11 +2079,15 @@ void CG_Player( centity_t *cent ) {
 	refEntity_t		legs;
 	refEntity_t		torso;
 	refEntity_t		head;
-	refEntity_t		aura;
+	refEntity_t		aura; // BFP - Aura
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
 	float			shadowPlane;
+	// BFP - Aura vertical rotation variables
+	float			auraRotation;
+	float			sinAura, cosAura;
+	float			tmp0, tmp1;
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2107,6 +2120,7 @@ void CG_Player( centity_t *cent ) {
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
+	memset( &aura, 0, sizeof(aura) ); // BFP - Aura
 
 	// get the rotation information
 	CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
@@ -2140,8 +2154,24 @@ void CG_Player( centity_t *cent ) {
 			AnglesToAxis( cent->lerpAngles, aura.axis );
 		}
 
-		aura.renderfx = renderfx;
+		// BFP - TODO: Aura vertical rotation, aura rotates vertically, 
+		// but when player is flying, Z-axis isn't respecting player's position and angles
+		/*
+		auraRotation = cg.time * 0.15f * ( M_PI / 180.0f );
+		sinAura = sin( auraRotation );
+		cosAura = cos( auraRotation );
+		tmp0 = aura.axis[0][0];
+		tmp1 = aura.axis[0][1];
+		
+		aura.axis[0][0] = cosAura * tmp0 - sinAura * aura.axis[1][0];
+		aura.axis[0][1] = cosAura * tmp1 - sinAura * aura.axis[1][1];
+		aura.axis[1][0] = sinAura * tmp0 + cosAura * aura.axis[1][0];
+		aura.axis[1][1] = sinAura * tmp1 + cosAura * aura.axis[1][1];
+		*/
+
 		trap_R_AddRefEntityToScene( &aura );
+
+		aura.renderfx = renderfx;
 
 		// BFP - TODO: Add secondary aura and with little size 
 		// who knows why, BFP does that as well
@@ -2150,9 +2180,6 @@ void CG_Player( centity_t *cent ) {
 		//VectorScale( aura.axis[2], 0.9, aura.axis[2] );
 
 		// BFP - TODO: rotate secondary aura in the opposite direction
-		// it doesn't work as should :(
-		//cg.autoAngles[1] = -( cg.time & 2047 ) * 360 / 2048.0;
-		//VectorCopy( cg.autoAngles, cent->lerpAngles );
 		//trap_R_AddRefEntityToScene( &aura ); // add secondary aura, but it doesn't respect the angles to the player model
 		// or should do that so?
 		// CG_AddRefEntityWithPowerups( &aura, &cent->currentState, 0 );
@@ -2161,12 +2188,11 @@ void CG_Player( centity_t *cent ) {
 		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.01f, 0.002f );
 		trap_R_AddLightToScene( cent->lerpOrigin, 80 + (rand()&11), 1, 0.15f, 0.001f );
 
-		// BFP - TODO: Make a charging sound if it's being used, needs to handle the difference between boost and charge
-		if ( cg.predictedPlayerState.pm_flags & PMF_KI_BOOST ) {
+		// BFP - Ki boost and ki charge sounds
+		if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) {
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
 				vec3_origin, cgs.media.kiUseSound );
-		}
-		else {
+		} else if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_CHARGE ) {
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
 				vec3_origin, cgs.media.kiChargeSound );
 		}
@@ -2233,6 +2259,13 @@ void CG_Player( centity_t *cent ) {
 	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Ygorl Roxor easter egg
 		head.hModel = 0;
 	}
+
+	// BFP - First person vis mode doesn't have head model to be displayed
+	if ( cg_drawOwnModel.integer >= 1 && cg_thirdPerson.integer <= 0
+		&& cent->currentState.number == cg.snap->ps.clientNum
+		&& !( cent->currentState.eFlags & EF_DEAD ) ) {
+		head.hModel = 0;
+	}
 	head.customSkin = ci->headSkin;
 
 	VectorCopy( cent->lerpOrigin, head.lightingOrigin );
@@ -2252,6 +2285,10 @@ void CG_Player( centity_t *cent ) {
 	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );
 	
+	// BFP - Smoke trail when using Ki boost in the ground
+	if ( cent->currentState.eFlags & EF_AURA ) {
+		CG_HasteTrail( cent );
+	}
 	// BFP - First person camera setup
 	if ( cg_thirdPerson.integer <= 0 
 		&& cent->currentState.number == cg.snap->ps.clientNum  ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
@@ -2273,17 +2310,7 @@ qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEn
 	if ( cent->currentState.eType != ET_PLAYER || !tagName[0] ) {
 		return qfalse;
 	}
-	// The client number is stored in clientNum.  It can't be derived
-	// from the entity number, because a single client may have
-	// multiple corpses on the level using the same clientinfo
-	if ( cent->currentState.clientNum < 0 || cent->currentState.clientNum >= MAX_CLIENTS ) {
-		CG_Error( "Bad clientNum on player entity" );
-	}
-	// It is possible to see corpses from disconnected players that may
-	// not have valid clientinfo
-	if ( !cgs.clientinfo[cent->currentState.clientNum].infoValid ) {
-		return qfalse;
-	}
+	
 	// Prepare the destination orientation_t
 	AxisClear( tagOrient->axis );
 

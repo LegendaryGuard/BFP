@@ -266,6 +266,9 @@ typedef enum {
 #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
 
+// BFP - NOTE: Should use PW_* instead using pm_flags? 
+// That goes for PW_HASTE and PW_FLIGHT, instead using PMF_KI_BOOST and PMF_FLYING
+
 // NOTE: may not have more than 16
 typedef enum {
 	PW_NONE,

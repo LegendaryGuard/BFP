@@ -2012,7 +2012,13 @@ void PmoveSingle (pmove_t *pmove) {
 		// BFP - If player is dead, disable the following statuses
 		pm->ps->pm_flags &= ~PMF_FLYING;
 		pm->ps->pm_flags &= ~PMF_KI_BOOST;
+		pm->ps->eFlags &= ~EF_AURA;
+
+		// BFP - NOTE: disabled for notes, don't allow pressing these buttons
+		/*
 		pm->cmd.buttons &= ~BUTTON_KI_CHARGE;
+		pm->cmd.buttons &= ~BUTTON_KI_USE;
+		*/
 
 		pm->cmd.forwardmove = 0;
 		pm->cmd.rightmove = 0;

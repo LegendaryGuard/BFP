@@ -1613,7 +1613,7 @@ Cmd_BFP_KiUseToggle_f
 void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) { // BFP - Ki use toggle
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		ent->client->ps.eFlags ^= PMF_KI_BOOST;
+		ent->client->ps.pm_flags ^= PMF_KI_BOOST;
 	}
 }
 

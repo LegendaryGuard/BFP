@@ -133,6 +133,7 @@ vmCvar_t	cg_thirdPerson;
 vmCvar_t	cg_thirdPersonRange;
 vmCvar_t	cg_thirdPersonAngle;
 vmCvar_t	cg_thirdPersonHeight; // BFP - Third person camera Height
+vmCvar_t	cg_fixedThirdPerson; // BFP - Fixed third person camera
 vmCvar_t	cg_drawOwnModel; // BFP - toggle first person between traditional and vis modes
 vmCvar_t	cg_yrgolroxor; // BFP - Ygorl Roxor easter egg
 vmCvar_t	cg_stereoSeparation;
@@ -239,6 +240,7 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_thirdPersonRange, "cg_thirdPersonRange", "110", CVAR_ARCHIVE }, // BFP
 	{ &cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", CVAR_ARCHIVE }, // BFP
 	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "-60", CVAR_ARCHIVE }, // BFP - Camera height
+	{ &cg_fixedThirdPerson, "cg_fixedThirdPerson", "1", CVAR_ARCHIVE }, // BFP - Fixed third person camera
 	{ &cg_drawOwnModel, "cg_drawOwnModel", "1", CVAR_ARCHIVE }, // BFP - toggle first person between traditional and vis modes
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", 0 }, // BFP
 	{ &cg_yrgolroxor, "cg_yrgolroxor", "0", 0 }, // BFP - Ygorl Roxor easter egg

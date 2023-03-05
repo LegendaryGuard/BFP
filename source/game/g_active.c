@@ -733,8 +733,7 @@ void ClientThink_real( gentity_t *ent ) {
 	|| ( ent->client->ps.pm_flags & PMF_KI_BOOST ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
 		ent->client->ps.speed *= 2.5;
 		ent->client->ps.eFlags |= EF_AURA;
-	}
-	else {
+	} else {
 		ent->client->ps.eFlags &= ~EF_AURA;
 	}
 
