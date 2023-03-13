@@ -40,6 +40,8 @@ void CG_CheckAmmo( void ) {
 	int		previous;
 	int		weapons;
 
+	// BFP - TODO: Replace to ki
+
 	// see about how many seconds of ammo we have remaining
 	weapons = cg.snap->ps.stats[ STAT_WEAPONS ];
 	total = 0;
@@ -58,12 +60,17 @@ void CG_CheckAmmo( void ) {
 			total += cg.snap->ps.ammo[i] * 200;
 			break;
 		}
+		// BFP - disabled ammo
+#if 0
 		if ( total >= 5000 ) {
 			cg.lowAmmoWarning = 0;
 			return;
 		}
+#endif
 	}
 
+	// BFP - disabled ammo
+#if 0
 	previous = cg.lowAmmoWarning;
 
 	if ( total == 0 ) {
@@ -76,6 +83,7 @@ void CG_CheckAmmo( void ) {
 	if ( cg.lowAmmoWarning != previous ) {
 		trap_S_StartLocalSound( cgs.media.noAmmoSound, CHAN_LOCAL_SOUND );
 	}
+#endif
 }
 
 /*

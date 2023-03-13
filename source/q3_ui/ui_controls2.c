@@ -78,55 +78,63 @@ typedef struct
 
 // bindable actions
 #define ID_SHOWSCORES	0
-#define ID_USEITEM		1	
-#define ID_SPEED		2	
-#define ID_FORWARD		3	
+#define ID_USEITEM		1
+#define ID_SPEED		2
+#define ID_FORWARD		3
 #define ID_BACKPEDAL	4
 #define ID_MOVELEFT		5
 #define ID_MOVERIGHT	6
-#define ID_MOVEUP		7	
+#define ID_MOVEUP		7
 #define ID_MOVEDOWN		8
-#define ID_LEFT			9	
-#define ID_RIGHT		10	
-#define ID_STRAFE		11	
+#define ID_LEFT			9
+#define ID_RIGHT		10
+#define ID_STRAFE		11
 #define ID_ENABLEFLIGHT	12	// BFP
-#define ID_LOOKUP		13	
+#define ID_LOOKUP		13
 #define ID_LOOKDOWN		14
 #define ID_MOUSELOOK	15
 #define ID_CENTERVIEW	16
 #define ID_ZOOMVIEW		17
-#define ID_WEAPON1		18	
-#define ID_WEAPON2		19	
-#define ID_WEAPON3		20	
-#define ID_WEAPON4		21	
-#define ID_WEAPON5		22	
-#define ID_WEAPON6		23	
-#define ID_WEAPON7		24	
-#define ID_WEAPON8		25	
-#define ID_WEAPON9		26	
-#define ID_ATTACK		27
-#define ID_WEAPPREV		28
-#define ID_WEAPNEXT		29
-#define ID_GESTURE		30
-#define ID_CHAT			31
-#define ID_CHAT2		32
-#define ID_CHAT3		33
-#define ID_CHAT4		34
-#define ID_KICHARGE		35	// BFP
-#define ID_KIUSETOGGLE	36	// BFP
-#define ID_KIUSE		37	// BFP
+#define ID_KIATTACK1	18	// BFP
+#define ID_KIATTACK2	19	// BFP
+#define ID_KIATTACK3	20	// BFP
+#define ID_KIATTACK4	21	// BFP
+#define ID_KIATTACK5	22	// BFP
+// BFP - non used
+#if 0
+#define ID_WEAPON1		18
+#define ID_WEAPON2		19
+#define ID_WEAPON3		20
+#define ID_WEAPON4		21
+#define ID_WEAPON5		22
+#define ID_WEAPON6		23
+#define ID_WEAPON7		24
+#define ID_WEAPON8		25
+#define ID_WEAPON9		26
+#endif
+#define ID_ATTACK		23
+#define ID_WEAPPREV		24
+#define ID_WEAPNEXT		25
+#define ID_GESTURE		26
+#define ID_CHAT			27
+#define ID_CHAT2		28
+#define ID_CHAT3		29
+#define ID_CHAT4		30
+#define ID_KICHARGE		31	// BFP
+#define ID_KIUSETOGGLE	32	// BFP
+#define ID_KIUSE		33	// BFP
 
 // all others
-#define ID_FREELOOK		35
-#define ID_INVERTMOUSE	36
-#define ID_ALWAYSRUN	37
-#define ID_AUTOSWITCH	38
-#define ID_MOUSESPEED	39
-#define ID_JOYENABLE	40
-#define ID_JOYTHRESHOLD	41
-#define ID_SMOOTHMOUSE	42
+#define ID_FREELOOK		34	// BFP - before starting from 35
+#define ID_INVERTMOUSE	35
+#define ID_ALWAYSRUN	36
+#define ID_AUTOSWITCH	37
+#define ID_MOUSESPEED	38
+#define ID_JOYENABLE	39
+#define ID_JOYTHRESHOLD	40
+#define ID_SMOOTHMOUSE	41
 
-// TODO: BFP - Add animations as listed on the docs
+// BFP - TODO: Add animations as listed on the docs
 
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
@@ -140,6 +148,8 @@ typedef struct
 #define ANIM_TURNRIGHT	9
 #define ANIM_LOOKUP		10
 #define ANIM_LOOKDOWN	11
+// BFP - non used
+#if 0
 #define ANIM_WEAPON1	12
 #define ANIM_WEAPON2	13
 #define ANIM_WEAPON3	14
@@ -150,12 +160,17 @@ typedef struct
 #define ANIM_WEAPON8	19
 #define ANIM_WEAPON9	20
 #define ANIM_WEAPON10	21
-#define ANIM_ATTACK		22
-#define ANIM_GESTURE	23
-#define ANIM_DIE		24
-#define ANIM_CHAT		25
-#define ANIM_FLY		26 // BFP
-#define ANIM_KICHARGE	27 // BFP
+#endif
+#define ANIM_KIATTACK1	12 // BFP - (before ANIM_ATTACK)
+#define ANIM_KIATTACK2	13 // BFP
+#define ANIM_KIATTACK3	14 // BFP
+#define ANIM_KIATTACK4	15 // BFP
+#define ANIM_KIATTACK5	16 // BFP
+#define ANIM_GESTURE	17
+#define ANIM_DIE		18
+#define ANIM_CHAT		19
+#define ANIM_FLY		20 // BFP
+#define ANIM_KICHARGE	21 // BFP
 
 typedef struct
 {
@@ -187,10 +202,10 @@ typedef struct
 	menuaction_s		shotgun;
 	menuaction_s		grenadelauncher;
 	menuaction_s		rocketlauncher;
-	menuaction_s		lightning;
-	menuaction_s		railgun;
-	menuaction_s		plasma;
-	menuaction_s		bfg;
+	//menuaction_s		lightning; // BFP - non used
+	//menuaction_s		railgun; // BFP - non used
+	//menuaction_s		plasma; // BFP - non used
+	//menuaction_s		bfg; // BFP - non used
 	menuaction_s		attack;
 	menuaction_s		prevweapon;
 	menuaction_s		nextweapon;
@@ -237,13 +252,12 @@ static controls_t s_controls;
 
 static vec4_t controls_binding_color  = {1.00f, 0.43f, 0.00f, 1.00f}; // bk: Win32 C4305
 
-// TODO: BFP - Add animations as listed on the docs, bind key to toggle the flight, bind key to recover ki energy, bind key to toggle speed (ki boost)
-
+// BFP - TODO: Add animations as listed on the docs, bind key for melee combat, bind key for block
+// and keep the binding options in the correct order
 static bind_t g_bindings[] = 
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
 	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
-	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
 	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
 	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
 	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
@@ -254,31 +268,32 @@ static bind_t g_bindings[] =
 	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
 	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
 	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
-	{"+button12",		"fly",				ID_ENABLEFLIGHT,    ANIM_FLY,		'f',			-1,		-1, -1}, // BFP - flight control "fly" bind
+	{"+button12",		"fly",				ID_ENABLEFLIGHT,ANIM_FLY,		'f',			-1,		-1, -1}, // BFP - flight control "fly" bind
 	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
 	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
 	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
 	{"centerview", 		"center view",		ID_CENTERVIEW,	ANIM_IDLE,		K_END,			-1,		-1, -1},
 	{"+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"weapon 1",		"gauntlet",			ID_WEAPON1,		ANIM_WEAPON1,	'1',			-1,		-1, -1},
-	{"weapon 2",		"machinegun",		ID_WEAPON2,		ANIM_WEAPON2,	'2',			-1,		-1, -1},
-	{"weapon 3",		"shotgun",			ID_WEAPON3,		ANIM_WEAPON3,	'3',			-1,		-1, -1},
-	{"weapon 4",		"grenade launcher",	ID_WEAPON4,		ANIM_WEAPON4,	'4',			-1,		-1, -1},
-	{"weapon 5",		"rocket launcher",	ID_WEAPON5,		ANIM_WEAPON5,	'5',			-1,		-1, -1},
-	{"weapon 6",		"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6',			-1,		-1, -1},
-	{"weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1,		-1, -1},
-	{"weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1,		-1, -1},
-	{"weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1,		-1, -1},
-	{"+attack", 		"attack",			ID_ATTACK,		ANIM_ATTACK,	K_CTRL,			-1,		-1, -1},
+	{"weapon 1",		"ki attack 1",		ID_KIATTACK1,	ANIM_KIATTACK1,	'1',			-1,		-1, -1}, // BFP - ki attack 1 (before gauntlet)
+	{"weapon 2",		"ki attack 2",		ID_KIATTACK2,	ANIM_KIATTACK2,	'2',			-1,		-1, -1}, // BFP - ki attack 2 (before machinegun)
+	{"weapon 3",		"ki attack 3",		ID_KIATTACK3,	ANIM_KIATTACK3,	'3',			-1,		-1, -1}, // BFP - ki attack 3 (before shotgun)
+	{"weapon 4",		"ki attack 4",		ID_KIATTACK4,	ANIM_KIATTACK4,	'4',			-1,		-1, -1}, // BFP - ki attack 4 (before grenade launcher)
+	{"weapon 5",		"ki attack 5",		ID_KIATTACK5,	ANIM_KIATTACK5,	'5',			-1,		-1, -1}, // BFP - ki attack 5 (before rocket launcher)
+	//{"weapon 6",		"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6',			-1,		-1, -1}, // BFP - non used
+	//{"weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1,		-1, -1}, // BFP - non used
+	//{"weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1,		-1, -1}, // BFP - non used
+	//{"weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1,		-1, -1}, // BFP - non used
+	{"+attack", 		"attack",			ID_ATTACK,		ANIM_KIATTACK1,	K_CTRL,			-1,		-1, -1},
 	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[',			-1,		-1, -1},
 	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
+	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
 	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,		't',			-1,		-1, -1},
 	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
 	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
+	{"+button9",		"Charge Ki",		ID_KICHARGE,	ANIM_KICHARGE,	K_MOUSE2,		-1,		-1, -1}, // BFP - charge ki control
 	{"kiusetoggle",		"Use Ki (toggle)",	ID_KIUSETOGGLE,	ANIM_IDLE,		'e',			-1,		-1, -1}, // BFP - use ki toggle control
 	{"+button8",		"Use Ki",			ID_KIUSE,		ANIM_IDLE,		K_SHIFT,		-1,		-1, -1}, // BFP - use ki control
-	{"+button9",		"Charge Ki",		ID_KICHARGE,	ANIM_KICHARGE,	K_MOUSE2,		-1,		-1, -1}, // BFP - charge ki control
 	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
 };
 
@@ -313,19 +328,20 @@ static menucommon_s *g_movement_controls[] =
 };
 
 static menucommon_s *g_weapons_controls[] = {
-	(menucommon_s *)&s_controls.attack,           
+	(menucommon_s *)&s_controls.attack,
 	(menucommon_s *)&s_controls.nextweapon,
 	(menucommon_s *)&s_controls.prevweapon,
-	(menucommon_s *)&s_controls.autoswitch,    
-	(menucommon_s *)&s_controls.chainsaw,         
+	(menucommon_s *)&s_controls.autoswitch,
+	(menucommon_s *)&s_controls.chainsaw,
 	(menucommon_s *)&s_controls.machinegun,
-	(menucommon_s *)&s_controls.shotgun,          
+	(menucommon_s *)&s_controls.shotgun,
 	(menucommon_s *)&s_controls.grenadelauncher,
-	(menucommon_s *)&s_controls.rocketlauncher,   
-	(menucommon_s *)&s_controls.lightning,   
-	(menucommon_s *)&s_controls.railgun,          
-	(menucommon_s *)&s_controls.plasma,           
-	(menucommon_s *)&s_controls.bfg,              
+	(menucommon_s *)&s_controls.rocketlauncher,
+	// BFP - non used
+	//(menucommon_s *)&s_controls.lightning,
+	//(menucommon_s *)&s_controls.railgun,
+	//(menucommon_s *)&s_controls.plasma,
+	//(menucommon_s *)&s_controls.bfg,
 	NULL,
 };
 
@@ -513,7 +529,8 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_LOOKDOWN:
 		s_controls.playerViewangles[PITCH] = 45;
 		break;
-
+// BFP - non used
+#if 0
 	case ANIM_WEAPON1:
 		s_controls.playerWeapon = WP_GAUNTLET;
 		break;
@@ -533,7 +550,6 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_WEAPON5:
 		s_controls.playerWeapon = WP_ROCKET_LAUNCHER;
 		break;
-
 	case ANIM_WEAPON6:
 		s_controls.playerWeapon = WP_LIGHTNING;
 		break;
@@ -553,9 +569,25 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_WEAPON10:
 		s_controls.playerWeapon = WP_GRAPPLING_HOOK;
 		break;
+#endif
+	case ANIM_KIATTACK1:
+		s_controls.playerTorso = TORSO_ATTACK0_PREPARE;
+		break;
 
-	case ANIM_ATTACK:
-		s_controls.playerTorso = TORSO_ATTACK0_STRIKE;
+	case ANIM_KIATTACK2:
+		s_controls.playerTorso = TORSO_ATTACK1_PREPARE;
+		break;
+
+	case ANIM_KIATTACK3:
+		s_controls.playerTorso = TORSO_ATTACK2_PREPARE;
+		break;
+
+	case ANIM_KIATTACK4:
+		s_controls.playerTorso = TORSO_ATTACK3_PREPARE;
+		break;
+
+	case ANIM_KIATTACK5:
+		s_controls.playerTorso = TORSO_ATTACK4_PREPARE;
 		break;
 
 	case ANIM_GESTURE:
@@ -1386,32 +1418,33 @@ static void Controls_MenuInit( void )
 	s_controls.chainsaw.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.chainsaw.generic.callback  = Controls_ActionEvent;
 	s_controls.chainsaw.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.chainsaw.generic.id        = ID_WEAPON1;
+	s_controls.chainsaw.generic.id        = ID_KIATTACK1;
 
 	s_controls.machinegun.generic.type	    = MTYPE_ACTION;
 	s_controls.machinegun.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.machinegun.generic.callback  = Controls_ActionEvent;
 	s_controls.machinegun.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.machinegun.generic.id        = ID_WEAPON2;
+	s_controls.machinegun.generic.id        = ID_KIATTACK2;
 
 	s_controls.shotgun.generic.type	     = MTYPE_ACTION;
 	s_controls.shotgun.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.shotgun.generic.callback  = Controls_ActionEvent;
 	s_controls.shotgun.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.shotgun.generic.id        = ID_WEAPON3;
+	s_controls.shotgun.generic.id        = ID_KIATTACK3;
 
 	s_controls.grenadelauncher.generic.type	     = MTYPE_ACTION;
 	s_controls.grenadelauncher.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.grenadelauncher.generic.callback  = Controls_ActionEvent;
 	s_controls.grenadelauncher.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.grenadelauncher.generic.id        = ID_WEAPON4;
+	s_controls.grenadelauncher.generic.id        = ID_KIATTACK4;
 
 	s_controls.rocketlauncher.generic.type	    = MTYPE_ACTION;
 	s_controls.rocketlauncher.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.rocketlauncher.generic.callback  = Controls_ActionEvent;
 	s_controls.rocketlauncher.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.rocketlauncher.generic.id        = ID_WEAPON5;
-
+	s_controls.rocketlauncher.generic.id        = ID_KIATTACK5;
+// BFP - non used
+#if 0
 	s_controls.lightning.generic.type	   = MTYPE_ACTION;
 	s_controls.lightning.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.lightning.generic.callback  = Controls_ActionEvent;
@@ -1435,6 +1468,7 @@ static void Controls_MenuInit( void )
 	s_controls.bfg.generic.callback  = Controls_ActionEvent;
 	s_controls.bfg.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.bfg.generic.id        = ID_WEAPON9;
+#endif
 
 	s_controls.attack.generic.type	    = MTYPE_ACTION;
 	s_controls.attack.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1668,10 +1702,10 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.shotgun );
 	Menu_AddItem( &s_controls.menu, &s_controls.grenadelauncher );
 	Menu_AddItem( &s_controls.menu, &s_controls.rocketlauncher );
-	Menu_AddItem( &s_controls.menu, &s_controls.lightning );
-	Menu_AddItem( &s_controls.menu, &s_controls.railgun );
-	Menu_AddItem( &s_controls.menu, &s_controls.plasma );
-	Menu_AddItem( &s_controls.menu, &s_controls.bfg );
+	//Menu_AddItem( &s_controls.menu, &s_controls.lightning ); // BFP - non used
+	//Menu_AddItem( &s_controls.menu, &s_controls.railgun ); // BFP - non used
+	//Menu_AddItem( &s_controls.menu, &s_controls.plasma ); // BFP - non used
+	//Menu_AddItem( &s_controls.menu, &s_controls.bfg ); // BFP - non used
 
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );

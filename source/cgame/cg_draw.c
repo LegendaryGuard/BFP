@@ -1962,6 +1962,8 @@ static void CG_DrawAmmoWarning( void ) {
 		return;
 	}
 
+	// BFP - disabled ammo, use ki
+#if 0
 	if ( !cg.lowAmmoWarning ) {
 		return;
 	}
@@ -1970,6 +1972,14 @@ static void CG_DrawAmmoWarning( void ) {
 		s = "OUT OF AMMO";
 	} else {
 		s = "LOW AMMO WARNING";
+	}
+#endif
+
+	// BFP - Low ki warning center notification
+	if ( cg.predictedPlayerState.stats[STAT_KI] < 50 ) {
+		s = "LOW KI WARNING";
+	} else if ( cg.predictedPlayerState.stats[STAT_KI] < 0 ) {
+		s = "OUT OF KI";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 	CG_DrawBigString(320 - w / 2, 64, s, 1.0F);
