@@ -35,7 +35,7 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Remove weapon visuals (models and stuff)~~
 - [x] ~~Animations as listed on the old docs~~
 - [x] ~~Bind key to recover ki energy~~
-- [ ] Bind key to toggle speed (ki boost). HINT: HASTE POWERUP
+- [x] ~~Bind key to toggle speed (ki boost). HINT: HASTE POWERUP~~
 - [x] ~~Replace ammo to ki energy stamina~~
 - [x] ~~Third person traceable crosshair~~
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
@@ -65,9 +65,15 @@ Bid For Power is a total conversion for QuakeIII that plays nothing like the ori
 
 The source code was lost, but the assets and some docs are in any place.
 
-- Old dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
+#### Old dev journals (1999 - 2001)
 
-Click here to see the [Old dev journal (Markdown edition)](docs/ygorl_dev_journal.md)
+- Old Yrgorl dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
+
+Click here to see the [Old Yrgorl dev journal (Markdown edition)](docs/yrgol_dev_journal.md)
+
+- Old Rodney Olmos dev journal: https://web.archive.org/web/20011218204129/http://bidforpower.com/journals/rodney.php
+
+Click here to see the [Old Rodney Olmos dev journal (Markdown edition)](docs/rodney_dev_journal.md)
 
 ### About the repository
 

@@ -2256,7 +2256,7 @@ void CG_Player( centity_t *cent ) {
 	if ( !head.hModel ) {
 		return;
 	}
-	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Ygorl Roxor easter egg
+	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Yrgol Roxor easter egg
 		head.hModel = 0;
 	}
 

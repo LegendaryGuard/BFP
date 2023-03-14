@@ -1060,7 +1060,7 @@ extern	vmCvar_t		cg_thirdPerson;
 extern	vmCvar_t		cg_thirdPersonHeight; // BFP - Camera height
 extern	vmCvar_t		cg_fixedThirdPerson; // BFP - Fixed third person camera
 extern	vmCvar_t		cg_drawOwnModel; // BFP - toggle first person between traditional and vis modes
-extern	vmCvar_t		cg_yrgolroxor; // BFP - Ygorl Roxor easter egg
+extern	vmCvar_t		cg_yrgolroxor; // BFP - Yrgol Roxor easter egg
 extern	vmCvar_t		cg_stereoSeparation;
 extern	vmCvar_t		cg_lagometer;
 extern	vmCvar_t		cg_drawAttacker;
