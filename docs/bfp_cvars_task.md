@@ -1,6 +1,6 @@
-- BFP CVARS -
+# BFP CVARS
 
-# PENDING:
+## PENDING:
 
 - g_basepl [1-999]: set the starting power level from one thousand to one mil.
 - cg_kitrail [0-99]: set the length of the ki trail. 0 turns it off.
@@ -32,18 +32,29 @@
 - g_meleeDiveRange = "700"
 - g_meleeDamage = "10"
 
+#### Cvar Gametypes:
+
+- g_gametype 3 = sur (survival)
+- g_gametype 4 = ooz (oozaru, in original BFP, that hasn't been added on UI, but add it anyway)
+- g_gametype 5 = tdm (team deathmatch) // originally, in Q3, this number is 3
+- g_gametype 6 = lms (last man standing)
+- g_gametype 7 = ctf (capture the flag) // originally, in Q3, this number is 4
+
 ... and maybe more, look in [cvar_bfp_list.txt](docs/cvar_bfp_list.txt)
 
 
-# WIP:
+## WIP:
 
 - g_hitStun [0/1]: turn on or off the melee hit stun.
-- cg_stableCrosshair [0/1]: turn off the accurate crosshair
 - cg_drawKiWarning [0/1]: turn on or off the low ki warning.
 - cg_crosshairhealth [0/1]: turn on or off the feature that makes the crosshair turn red when you score a hit.
 
+#### Cvar Gametypes:
 
-# DONE BUT NOT IN UI SETTINGS:
+- g_gametype 2 = single player (in original BFP, that doesn't show in UI, so make Single Player option hidden)
+
+
+## DONE BUT NOT IN UI SETTINGS:
 
 (TODO: Add in BFP Options -> Fixed Third Person - radio button )
 - cg_fixedThirdPerson
@@ -52,6 +63,7 @@
 - cg_drawOwnModel
 
 (TODO: Add in BFP Options -> Accurate Crosshair - radio button )
+- cg_stableCrosshair [0/1]: turn off the accurate crosshair
 
 (TODO: Add in BFP Options -> Disable voices: )
 
@@ -60,7 +72,12 @@
 ... look in the BFP Options menu screenshot in [README.md](README.md)
 
 
-# COMPLETED:
+## COMPLETED:
 
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
+
+#### Cvar Gametypes:
+
+- [x] ~~g_gametype 0 = dm (aka FFA)~~ (already in Q3 code)
+- [x] ~~g_gametype 1 = 1v1 (tournament)~~ (already in Q3 code)

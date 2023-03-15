@@ -336,9 +336,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	// check for a player that almost brought in cubes
 	CheckAlmostScored( self, attacker );
 
+// BFP - no hook
+#if 0
 	if (self->client && self->client->hook) {
 		Weapon_HookFree(self->client->hook);
 	}
+#endif
 	self->client->ps.pm_type = PM_DEAD;
 
 	if ( attacker ) {
@@ -757,6 +760,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		}
 		damage *= 0.5;
 	}
+
+// BFP - TODO: Make hit stun received from melee attack with PMF_KI_BOOST
+#if 0
+	if ( g_hitStun.integer >= 1 && ( attacker->client->ps.pm_flags & PMF_KI_BOOST ) 
+		&& targ != attacker && !OnSameTeam (targ, attacker) ) {
+			attacker->client->ps.hitStunTime = -3; // just an idea, enable the hit stun with a conditional of == -3
+	}
+#endif
 
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)
 	if ( attacker->client && targ != attacker && targ->health > 0

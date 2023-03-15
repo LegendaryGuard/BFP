@@ -800,9 +800,12 @@ static void CG_AddCEntity( centity_t *cent ) {
 	case ET_SPEAKER:
 		CG_Speaker( cent );
 		break;
+// BFP - no hook
+#if 0
 	case ET_GRAPPLE:
 		CG_Grapple( cent );
 		break;
+#endif
 	case ET_TEAM:
 		CG_TeamBase( cent );
 		break;

@@ -360,9 +360,12 @@ void	Svcmd_EntityList_f (void) {
 		case ET_INVISIBLE:
 			G_Printf("ET_INVISIBLE        ");
 			break;
+// BFP - no hook
+#if 0
 		case ET_GRAPPLE:
 			G_Printf("ET_GRAPPLE          ");
 			break;
+#endif
 		default:
 			G_Printf("%3i                 ", check->s.eType);
 			break;

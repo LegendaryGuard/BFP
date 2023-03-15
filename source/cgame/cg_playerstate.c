@@ -60,7 +60,7 @@ void CG_CheckAmmo( void ) {
 			total += cg.snap->ps.ammo[i] * 200;
 			break;
 		}
-		// BFP - disabled ammo
+// BFP - disabled low ammo warning
 #if 0
 		if ( total >= 5000 ) {
 			cg.lowAmmoWarning = 0;
@@ -69,7 +69,7 @@ void CG_CheckAmmo( void ) {
 #endif
 	}
 
-	// BFP - disabled ammo
+// BFP - disabled low ammo warning
 #if 0
 	previous = cg.lowAmmoWarning;
 

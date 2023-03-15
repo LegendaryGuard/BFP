@@ -151,11 +151,12 @@ typedef enum {
 #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
-#define PMF_GRAPPLE_PULL	2048	// pull towards grapple location
+// BFP - no hook
+// #define PMF_GRAPPLE_PULL	2048	// pull towards grapple location
 #define PMF_FOLLOW			4096	// spectate following another player
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
-// BFP - TODO: Reuse the following flag (used on Team Arena) , change name if it'll be used
+// BFP - TODO: Reuse the following flag (used on Team Arena), change name if it'll be used
 #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
@@ -174,6 +175,7 @@ typedef struct {
 	qboolean	noFootsteps;		// if the game is setup for no footsteps by the server
 	qboolean	gauntletHit;		// true if a gauntlet attack would actually hit something
 	qboolean	isFlying; 			// BFP - Flight
+	//qboolean	hitStunReceived; 	// BFP - TODO: Hit stun
 
 	int			framecount;
 
@@ -209,7 +211,7 @@ void Pmove (pmove_t *pmove);
 // NOTE: may not have more than 16
 typedef enum {
 	STAT_HEALTH,
-	STAT_KI,							// BFP - KI amount
+	STAT_KI,						// BFP - KI amount
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
@@ -760,7 +762,8 @@ typedef enum {
 	ET_PUSH_TRIGGER,
 	ET_TELEPORT_TRIGGER,
 	ET_INVISIBLE,
-	ET_GRAPPLE,				// grapple hooked on wall
+	// BFP - no hook
+	// ET_GRAPPLE,				// grapple hooked on wall
 	ET_TEAM,
 
 	ET_EVENTS				// any of the EV_* events can be added freestanding

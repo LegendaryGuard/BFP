@@ -472,7 +472,8 @@ void weapon_railgun_fire (gentity_t *ent) {
 
 }
 
-
+// BFP - no hook
+#if 0
 /*
 ======================================================================
 
@@ -512,6 +513,7 @@ void Weapon_HookThink (gentity_t *ent)
 
 	VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
 }
+#endif
 
 /*
 ======================================================================
@@ -687,9 +689,12 @@ void FireWeapon( gentity_t *ent ) {
 	case WP_BFG:
 		BFG_Fire( ent );
 		break;
+// BFP - no hook
+#if 0
 	case WP_GRAPPLING_HOOK:
 		Weapon_GrapplingHook_Fire( ent );
 		break;
+#endif
 	default:
 // FIXME		G_Error( "Bad ent->s.weapon" );
 		break;

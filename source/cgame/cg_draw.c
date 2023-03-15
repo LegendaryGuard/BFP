@@ -377,18 +377,20 @@ static void CG_DrawStatusBar( void ) {
 
 	VectorClear( angles );
 
-	// BFP - disable ammobox
+// BFP - disable ammobox
+#if 0
 	// draw any 3D icons first, so the changes back to 2D are minimized
-	// if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
-	// 	origin[0] = 70;
-	// 	origin[1] = 0;
-	// 	origin[2] = 0;
-	// 	angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
-	// 	CG_Draw3DModel( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
-	// }
+	if ( cent->currentState.weapon && cg_weapons[ cent->currentState.weapon ].ammoModel ) {
+		origin[0] = 70;
+		origin[1] = 0;
+		origin[2] = 0;
+		angles[YAW] = 90 + 20 * sin( cg.time / 1000.0 );
+		CG_Draw3DModel( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
+	}
+#endif
 
 	// BFP - place head in the corner
-	CG_DrawStatusBarHead( 0 );
+	CG_DrawStatusBarHead( 0 ); // CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
 
 	if( cg.predictedPlayerState.powerups[PW_REDFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
@@ -398,53 +400,54 @@ static void CG_DrawStatusBar( void ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_FREE );
 	}
 
-	// BFP - hide armor
-	// if ( ps->stats[ STAT_ARMOR ] ) {
-	// 	origin[0] = 90;
-	// 	origin[1] = 0;
-	// 	origin[2] = -10;
-	// 	angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
-	// 	CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
-	// 				   cgs.media.armorModel, 0, origin, angles );
-	// }
+// BFP - hide armor and disable ammo text
+#if 0
+	if ( ps->stats[ STAT_ARMOR ] ) {
+		origin[0] = 90;
+		origin[1] = 0;
+		origin[2] = -10;
+		angles[YAW] = ( cg.time & 2047 ) * 360 / 2048.0;
+		CG_Draw3DModel( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE,
+					   cgs.media.armorModel, 0, origin, angles );
+	}
 
-	// BFP - disable ammo text
 	//
 	// ammo
 	//
-	// if ( cent->currentState.weapon ) {
-		// value = ps->ammo[cent->currentState.weapon];
-	// 	if ( value > -1 ) {
-	// 		if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
-	// 			&& cg.predictedPlayerState.weaponTime > 100 ) {
-	// 			// draw as dark grey when reloading
-	// 			color = 2;	// dark grey
-	// 		} else {
-	// 			if ( value >= 0 ) {
-	// 				color = 0;	// green
-	// 			} else {
-	// 				color = 1;	// red
-	// 			}
-	// 		}
-	// 		trap_R_SetColor( colors[color] );
+	if ( cent->currentState.weapon ) {
+		value = ps->ammo[cent->currentState.weapon];
+		if ( value > -1 ) {
+			if ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING
+				&& cg.predictedPlayerState.weaponTime > 100 ) {
+				// draw as dark grey when reloading
+				color = 2;	// dark grey
+			} else {
+				if ( value >= 0 ) {
+					color = 0;	// green
+				} else {
+					color = 1;	// red
+				}
+			}
+			trap_R_SetColor( colors[color] );
 			
-	//	 CG_DrawField (0, 432, 3, value);
-	//		trap_R_SetColor( NULL );
+		CG_DrawField (0, 432, 3, value);
+			trap_R_SetColor( NULL );
 
-	// 		// if we didn't draw a 3D icon, draw a 2D icon for ammo
-	// 		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-	// 			qhandle_t	icon;
+			// if we didn't draw a 3D icon, draw a 2D icon for ammo
+			if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
+				qhandle_t	icon;
 
-	// 			icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
-	// 			if ( icon ) {
-	// 				CG_DrawPic( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, icon );
-	// 			}
-	// 		}
-	// }
-	// }
-
+				icon = cg_weapons[ cg.predictedPlayerState.weapon ].ammoIcon;
+				if ( icon ) {
+					CG_DrawPic( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, icon );
+				}
+			}
+		}
+	}
+#endif
 
 	// BFP - TODO: Draw a HUD bar of 6 points to indicate ki attack preparation
+	// BFP - TODO: Draw player powerlevel info
 
 
 	//
@@ -483,21 +486,23 @@ static void CG_DrawStatusBar( void ) {
 	}
 
 
-	// BFP - disable armor
+// BFP - disable armor
+#if 0
 	//
 	// armor
 	//
-	// value = ps->stats[STAT_ARMOR];
-	// if (value > 0 ) {
-	// 	trap_R_SetColor( colors[0] );
-	// 	CG_DrawField (370, 432, 3, value);
-	// 	trap_R_SetColor( NULL );
-	// 	// if we didn't draw a 3D icon, draw a 2D icon for armor
-	// 	if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
-	// 		CG_DrawPic( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cgs.media.armorIcon );
-	// 	}
+	value = ps->stats[STAT_ARMOR];
+	if (value > 0 ) {
+		trap_R_SetColor( colors[0] );
+		CG_DrawField (370, 432, 3, value);
+		trap_R_SetColor( NULL );
+		// if we didn't draw a 3D icon, draw a 2D icon for armor
+		if ( !cg_draw3dIcons.integer && cg_drawIcons.integer ) {
+			CG_DrawPic( 370 + CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cgs.media.armorIcon );
+		}
 
-	// }
+	}
+#endif
 }
 
 /*
@@ -1682,9 +1687,12 @@ static void CG_DrawCrosshair(void) {
 		return;
 	}
 
-	// if ( cg.renderingThirdPerson ) {
-	// 	return;
-	// }
+// BFP - do not brake here when using third person view
+#if 0
+	if ( cg.renderingThirdPerson ) {
+		return;
+	}
+#endif
 
 	// set color based on health
 	if ( cg_crosshairHealth.integer ) {
@@ -1716,7 +1724,7 @@ static void CG_DrawCrosshair(void) {
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
-	if ( cg_thirdPerson.integer >= 1 ) { // BFP - Third person traceable crosshair
+	if ( cg_thirdPerson.integer >= 1 && cg_stableCrosshair.integer >= 1 ) { // BFP - Third person traceable crosshair
 		w = h = cg_crosshairSize.value; // set the same size, if this isn't set here, the size is changed
 		AngleVectors( ps->viewangles, forward, NULL, up );
 		VectorCopy( ps->origin, muzzle );
@@ -1796,9 +1804,12 @@ static void CG_DrawCrosshairNames( void ) {
 	if ( !cg_drawCrosshairNames.integer ) {
 		return;
 	}
-	// if ( cg.renderingThirdPerson ) {
-	// 	return;
-	// }
+// BFP - do not brake here when using third person view
+#if 0
+	if ( cg.renderingThirdPerson ) {
+		return;
+	}
+#endif
 
 	// scan the known entities to see if the crosshair is sighted on one
 	CG_ScanForCrosshairEntity();
@@ -1810,7 +1821,6 @@ static void CG_DrawCrosshairNames( void ) {
 		return;
 	}
 
-	// BFP - TODO: Draw player powerlevel info
 	name = cgs.clientinfo[ cg.crosshairClientNum ].name;
 	w = CG_DrawStrlen( name ) * BIGCHAR_WIDTH;
 	CG_DrawBigString( 320 - w / 2, 170, name, color[3] * 0.5f );
@@ -1948,21 +1958,21 @@ static qboolean CG_DrawFollow( void ) {
 }
 
 
-
+// BFP - before CG_DrawAmmoWarning
 /*
 =================
-CG_DrawAmmoWarning
+CG_DrawKiWarning
 =================
 */
-static void CG_DrawAmmoWarning( void ) {
+static void CG_DrawKiWarning( void ) {
 	const char	*s;
 	int			w;
 
-	if ( cg_drawAmmoWarning.integer == 0 ) {
+	if ( cg_drawKiWarning.integer <= 0 ) {  // BFP - ki warning (before cg_drawAmmoWarning)
 		return;
 	}
 
-	// BFP - disabled ammo, use ki
+// BFP - disabled ammo, use ki
 #if 0
 	if ( !cg.lowAmmoWarning ) {
 		return;
@@ -1983,6 +1993,31 @@ static void CG_DrawAmmoWarning( void ) {
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 	CG_DrawBigString(320 - w / 2, 64, s, 1.0F);
+}
+
+/*
+=================
+CG_DrawHitStun
+=================
+*/
+static void CG_DrawHitStun( void ) { // BFP - Hit stun bottom centerprint
+	const char	*s;
+	int			w;
+	playerState_t	*ps;
+	int			value;
+
+	s = "";
+	if ( cg.predictedPlayerState.stats[STAT_KI] <= 0 ) {
+		s = "Stun";
+	}
+	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
+	value = 0; // BFP - TODO: hit stun time
+	UI_DrawProportionalString( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ), 
+		s, UI_SMALLFONT, colorWhite );
+	// BFP - TODO: Draw the time (seconds)
+	if ( value > 0 ) {
+		CG_DrawField ( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 4 ), 3, value );
+	}
 }
 
 /*
@@ -2137,7 +2172,8 @@ static void CG_Draw2D( void ) {
 		// don't draw any status if dead or the scoreboard is being explicitly shown
 		if ( !cg.showScores && cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
 			CG_DrawStatusBar();
-			CG_DrawAmmoWarning();
+			CG_DrawKiWarning(); // BFP - ki warning
+			CG_DrawHitStun(); // BFP - Hit stun bottom centerprint
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();

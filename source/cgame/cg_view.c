@@ -353,9 +353,10 @@ static void CG_OffsetThirdPersonView( void ) {
 /*
 =================================
 CG_WorldCoordToScreenCoordFloat
-=================================
+
 Gives screen projection of point in worldspace.
 Returns false if out of view.
+=================================
 */
 qboolean CG_WorldCoordToScreenCoordFloat( vec3_t worldCoord, float *x, float *y ) { // BFP - Crosshair functionality
 	float xcenter, ycenter;
@@ -779,10 +780,14 @@ static int CG_CalcViewValues( void ) {
 	if ( cg.renderingThirdPerson ) {
 		// back away from character
 		CG_OffsetThirdPersonView();
-	} /*else { // BFP - Original Q3 first person view function call, not used here, moved to cg_players.c in CG_Player function
+	}
+// BFP - Original Q3 first person view function call, not used here, moved to cg_players.c in CG_Player function
+#if 0
+	else {
 		// offset for local bobbing and kicks
 		CG_OffsetFirstPersonView();
-	}*/
+	}
+#endif
 
 	// position eye reletive to origin
 	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );

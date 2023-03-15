@@ -301,9 +301,9 @@ struct gclient_s {
 	int			airOutTime;
 
 	int			lastKillTime;		// for multiple kill rewards
-
-	qboolean	fireHeld;			// used for hook
-	gentity_t	*hook;				// grapple hook if out
+	// BFP - no hook
+	//qboolean	fireHeld;			// used for hook
+	//gentity_t	*hook;				// grapple hook if out
 
 	int			switchTeamTime;		// time the player switched teams
 
@@ -700,6 +700,7 @@ extern	vmCvar_t	g_password;
 extern	vmCvar_t	g_needpass;
 extern	vmCvar_t	g_gravity;
 extern	vmCvar_t	g_speed;
+extern	vmCvar_t	g_hitStun;				// BFP - Hit stun
 extern	vmCvar_t	g_knockback;
 extern	vmCvar_t	g_quadfactor;
 extern	vmCvar_t	g_forcerespawn;

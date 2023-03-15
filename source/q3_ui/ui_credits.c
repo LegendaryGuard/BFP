@@ -101,7 +101,7 @@ cr_line credits[] = { // edit this as necessary for the credits
 	{ "Modeler / Animator", UI_CENTER|UI_SMALLFONT, &color_white },
 	{ "Skin Artist / 2D Artist", UI_CENTER|UI_SMALLFONT, &color_white },
 	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Ygorl", UI_CENTER|UI_SMALLFONT, &color_blue },
+	{ "Yrgol", UI_CENTER|UI_SMALLFONT, &color_blue },
 	{ "Game Design, Programmed By", UI_CENTER|UI_SMALLFONT, &color_white },
 	{ "Project Lead", UI_CENTER|UI_SMALLFONT, &color_white },
 	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },

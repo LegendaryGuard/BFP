@@ -135,6 +135,8 @@ vmCvar_t	cg_thirdPersonAngle;
 vmCvar_t	cg_thirdPersonHeight; // BFP - Third person camera Height
 vmCvar_t	cg_fixedThirdPerson; // BFP - Fixed third person camera
 vmCvar_t	cg_drawOwnModel; // BFP - toggle first person between traditional and vis modes
+vmCvar_t	cg_drawKiWarning; // BFP - Ki warning
+vmCvar_t	cg_stableCrosshair; // BFP - Accurate crosshair
 vmCvar_t	cg_yrgolroxor; // BFP - Yrgol Roxor easter egg
 vmCvar_t	cg_stereoSeparation;
 vmCvar_t	cg_lagometer;
@@ -242,6 +244,8 @@ static cvarTable_t cvarTable[] = { // bk001129
 	{ &cg_thirdPersonHeight, "cg_thirdPersonHeight", "-60", CVAR_ARCHIVE }, // BFP - Camera height
 	{ &cg_fixedThirdPerson, "cg_fixedThirdPerson", "1", CVAR_ARCHIVE }, // BFP - Fixed third person camera
 	{ &cg_drawOwnModel, "cg_drawOwnModel", "1", CVAR_ARCHIVE }, // BFP - toggle first person between traditional and vis modes
+	{ &cg_drawKiWarning, "cg_drawKiWarning", "1", CVAR_ARCHIVE }, // BFP - Ki warning
+	{ &cg_stableCrosshair, "cg_stableCrosshair", "0", CVAR_ARCHIVE }, // BFP - Accurate crosshair
 	{ &cg_thirdPerson, "cg_thirdPerson", "1", 0 }, // BFP
 	{ &cg_yrgolroxor, "cg_yrgolroxor", "0", 0 }, // BFP - Yrgol Roxor easter egg
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE  },

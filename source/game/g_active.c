@@ -750,11 +750,14 @@ void ClientThink_real( gentity_t *ent ) {
 	// BFP - if BUTTON_ENABLEFLIGHT enable flight
 	FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 
+// BFP - no hook
+#if 0
 	// Let go of the hook if we aren't firing
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
 		Weapon_HookFree(client->hook);
 	}
+#endif
 
 	// set up for pmove
 	oldEventSequence = client->ps.eventSequence;
@@ -808,9 +811,12 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	SendPendingPredictableEvents( &ent->client->ps );
 
+// BFP - no hook
+#if 0
 	if ( !( ent->client->ps.eFlags & EF_FIRING ) ) {
 		client->fireHeld = qfalse;		// for grapple
 	}
+#endif
 
 	// use the snapped origin for linking so it matches client predicted versions
 	VectorCopy( ent->s.pos.trBase, ent->r.currentOrigin );

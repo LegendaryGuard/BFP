@@ -48,6 +48,7 @@ SETUP MENU
 #define ID_SAVE					16
 #define ID_DEFAULTS				17
 #define ID_BACK					18
+#define ID_BFPOPTIONS			19 // BFP - BFP Options menu
 
 
 typedef struct {
@@ -109,6 +110,10 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 	switch( ((menucommon_s*)ptr)->id ) {
 	case ID_CUSTOMIZEPLAYER:
 		UI_PlayerSettingsMenu();
+		break;
+	// BFP - TODO: Make BFP Options the same menu as Game Options (possibly a new ui_*.c file needs to be created)
+	case ID_BFPOPTIONS:
+		// UI_BFPOptionsMenu();
 		break;
 
 	case ID_CUSTOMIZECONTROLS:
@@ -193,6 +198,18 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.setupplayer.string				= "PLAYER";
 	setupMenuInfo.setupplayer.color					= color_red;
 	setupMenuInfo.setupplayer.style					= UI_CENTER;
+
+	// BFP - BFP Options menu
+	y += SETUP_MENU_VERTICAL_SPACING;
+	setupMenuInfo.setupcontrols.generic.type		= MTYPE_PTEXT;
+	setupMenuInfo.setupcontrols.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	setupMenuInfo.setupcontrols.generic.x			= 320;
+	setupMenuInfo.setupcontrols.generic.y			= y;
+	setupMenuInfo.setupcontrols.generic.id			= ID_BFPOPTIONS;
+	setupMenuInfo.setupcontrols.generic.callback	= UI_SetupMenu_Event; 
+	setupMenuInfo.setupcontrols.string				= "BFP OPTIONS";
+	setupMenuInfo.setupcontrols.color				= color_red;
+	setupMenuInfo.setupcontrols.style				= UI_CENTER;
 
 	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.setupcontrols.generic.type		= MTYPE_PTEXT;

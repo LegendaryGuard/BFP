@@ -641,6 +641,8 @@ static void PM_AirMove( void ) {
 	PM_StepSlideMove ( qtrue );
 }
 
+// BFP - no hook
+#if 0
 /*
 ===================
 PM_GrappleMove
@@ -666,6 +668,7 @@ static void PM_GrappleMove( void ) {
 
 	pml.groundPlane = qfalse;
 }
+#endif
 
 /*
 ===================
@@ -1254,7 +1257,7 @@ static void PM_CheckDuck (void)
 			VectorSet( pm->maxs, 15, 15, 16 );
 		}
 		pm->ps->pm_flags |= PMF_DUCKED;
-		pm->ps->viewheight = CROUCH_VIEWHEIGHT;
+		// pm->ps->viewheight = CROUCH_VIEWHEIGHT; // BFP - don't look a bit down while pressing down
 		return;
 	}
 	pm->ps->pm_flags &= ~PMF_INVULEXPAND;
@@ -1293,7 +1296,7 @@ static void PM_CheckDuck (void)
 	if (pm->ps->pm_flags & PMF_DUCKED)
 	{
 		pm->maxs[2] = 16;
-		pm->ps->viewheight = CROUCH_VIEWHEIGHT;
+		// pm->ps->viewheight = CROUCH_VIEWHEIGHT; // BFP - don't look a bit down while pressing down
 	}
 	else
 	{
@@ -1545,14 +1548,6 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 		return;
 	}
 
-	// BFP - TODO: Remember to implement hit stun when the ki is zero! The player doesn't move until recovers ki
-	// When the player doesn't have more ki, make hit stun animation
-	if ( pm->ps->stats[STAT_KI] <= 0 && !( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
-		PM_StartTorsoAnim( TORSO_STUN );
-		PM_ForceLegsAnim( LEGS_IDLECR );
-		PM_StartLegsAnim( LEGS_IDLECR );
-	}
-
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
 	if ( !pm->isFlying && !( pml.groundTrace.contents & CONTENTS_SOLID ) 
 		&& ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
@@ -1577,8 +1572,24 @@ PM_KiChargeAnimation
 static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
 		PM_StartTorsoAnim( TORSO_CHARGE );
+		//PM_ForceLegsAnim( LEGS_CHARGE );
 		PM_StartLegsAnim( LEGS_CHARGE );
-		PM_ForceLegsAnim( LEGS_CHARGE );
+	}
+}
+
+/*
+==============
+PM_HitStunAnimation
+==============
+*/
+static void PM_HitStunAnimation( void ) { // BFP - Hit stun
+
+	// When the player doesn't have more ki, play hit stun animation
+	if ( pm->ps->stats[STAT_KI] <= 0 
+		&& pm->ps->pm_type != PM_DEAD
+		&& pm->ps->pm_type != PM_SPECTATOR ) {
+		PM_StartTorsoAnim( TORSO_STUN );
+		PM_ForceLegsAnim( LEGS_IDLECR );
 	}
 }
 
@@ -1682,18 +1693,20 @@ static void PM_Weapon( void ) {
 
 	pm->ps->weaponstate = WEAPON_FIRING;
 
-	// BFP - disable ammo stuff, take ki instead \o/
+// BFP - disable ammo stuff, take ki instead \o/
+#if 0
 	// check for out of ammo
-	// if ( ! pm->ps->ammo[ pm->ps->weapon ] ) {
-	// 	PM_AddEvent( EV_NOAMMO );
-	// 	pm->ps->weaponTime += 500;
-	// 	return;
-	// }
+	if ( ! pm->ps->ammo[ pm->ps->weapon ] ) {
+		PM_AddEvent( EV_NOAMMO );
+		pm->ps->weaponTime += 500;
+		return;
+	}
 
 	// take an ammo away if not infinite
-	// if ( pm->ps->ammo[pm->ps->weapon] != -1 ) {
-	// 	pm->ps->ammo[pm->ps->weapon]--;
-	// }
+	if ( pm->ps->ammo[pm->ps->weapon] != -1 ) {
+		pm->ps->ammo[pm->ps->weapon]--;
+	}
+#endif
 
 	// fire weapon
 	PM_AddEvent( EV_FIRE_WEAPON );
@@ -1890,7 +1903,7 @@ PM_KiCharge
 Charges ki
 ================
 */
-qboolean PM_KiCharge( pmove_t *pmove ) { // BFP - Ki Charge
+static void PM_KiCharge( pmove_t *pmove ) { // BFP - Ki Charge
 	pm = pmove;
 
 	if ( pmove->cmd.buttons & ( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
@@ -1905,6 +1918,49 @@ qboolean PM_KiCharge( pmove_t *pmove ) { // BFP - Ki Charge
 	pm->ps->velocity[1] = 0;
 	pm->ps->velocity[2] = 0;
 	pm->ps->stats[STAT_KI]++;
+}
+
+/*
+================
+PM_HitStun
+
+Receives hit stun
+================
+*/
+static void PM_HitStun( pmove_t *pmove ) { // BFP - Hit stun
+	pm = pmove;
+
+	if ( pmove->cmd.buttons & ( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
+		pmove->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
+	}
+
+	pm->ps->pm_flags &= ~PMF_FLYING;
+	pm->ps->pm_flags &= ~PMF_KI_BOOST;
+	pm->ps->eFlags &= ~EF_AURA;
+
+	pmove->cmd.forwardmove = 0;
+	pmove->cmd.rightmove = 0;
+	pmove->cmd.upmove = 0;
+
+// BFP - TODO: Hit stun time, maybe remove this and find another way?
+#if 0
+	if ( pm->ps->hitStunTime > 0 ) {
+		pm->ps->hitStunTime -= pml.msec;
+		return;
+	}
+
+	// drop misc timing counter
+	/*
+	if ( pm->ps->pm_time ) {
+		if ( pml.msec >= pm->ps->pm_time ) {
+			pm->ps->pm_flags &= ~PMF_ALL_TIMES;
+			pm->ps->pm_time = 0;
+		} else {
+			pm->ps->pm_time -= pml.msec;
+		}
+	}
+	*/
+#endif
 }
 
 /*
@@ -2014,11 +2070,11 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->ps->pm_flags &= ~PMF_KI_BOOST;
 		pm->ps->eFlags &= ~EF_AURA;
 
-		// BFP - NOTE: disabled for notes, don't allow pressing these buttons
-		/*
+// BFP - NOTE: disabled for notes, don't allow pressing these buttons
+#if 0
 		pm->cmd.buttons &= ~BUTTON_KI_CHARGE;
 		pm->cmd.buttons &= ~BUTTON_KI_USE;
-		*/
+#endif
 
 		pm->cmd.forwardmove = 0;
 		pm->cmd.rightmove = 0;
@@ -2060,7 +2116,7 @@ void PmoveSingle (pmove_t *pmove) {
 		PM_DeadMove ();
 	}
 
-	// BFP
+	// BFP - Flight
 	if ( pmove->cmd.buttons & BUTTON_ENABLEFLIGHT 
 		&& pm->ps->pm_type != PM_DEAD ) {
 
@@ -2076,15 +2132,44 @@ void PmoveSingle (pmove_t *pmove) {
 
 	PM_DropTimers();
 
+	// BFP - Hit stun
+	if ( pm->ps->stats[STAT_KI] <= 0 
+		&& pm->ps->pm_type != PM_DEAD
+		&& pm->ps->pm_type != PM_SPECTATOR ) {
+		PM_HitStun( pmove );
+// BFP - TODO: Hit stun time, maybe remove this and find another way?
+#if 0
+		if ( pm->ps->hitStunTime <= 0 ) {
+			pm->ps->hitStunTime = pml.msec + 1000; // give 1 second to be stunned
+		}
+#endif
+	}
+// BFP - TODO: Hit stun time, maybe remove this and find another way?
+#if 0
+	if ( pm->ps->hitStunTime == -3 
+		&& pm->ps->pm_type != PM_DEAD
+		&& pm->ps->pm_type != PM_SPECTATOR ) { // when receives attack from a ki boost melee
+		pm->ps->hitStunTime = pml.msec + 3000; // give 3 seconds to be stunned
+	}
+	if ( pm->ps->hitStunTime > 0 ) {
+		PM_HitStun( pmove );
+	}
+#endif
+
 	// BFP - Flight
 	if ( PM_EnableFlight() ) {
 		// flight powerup doesn't allow jump and has different friction
 		PM_FlyMove();
-	} else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {
+	}
+// BFP - no hook
+#if 0
+	else if (pm->ps->pm_flags & PMF_GRAPPLE_PULL) {
 		PM_GrappleMove();
 		// We can wiggle a bit
 		PM_AirMove();
-	} else if (pm->ps->pm_flags & PMF_TIME_WATERJUMP) {
+	}
+#endif
+	else if (pm->ps->pm_flags & PMF_TIME_WATERJUMP) {
 		PM_WaterJumpMove();
 	} else if ( pm->waterlevel > 1 ) {
 		// swimming
@@ -2114,6 +2199,9 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Ki Charge animation
 	PM_KiChargeAnimation();
+
+	// BFP - Hit stun animation
+	PM_HitStunAnimation();
 
 	// footstep events / legs animations
 	PM_Footsteps();
