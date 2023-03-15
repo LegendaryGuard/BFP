@@ -49,8 +49,9 @@ A legendary 90s era Quake 3 Arena mod.
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. "Custom plugin models")
 - [ ] Playable third person mode and first person vis mode (add the options in the UI Setup menu)
 - [ ] Cvars as described on old docs
-- [ ] Last Man Standing gamemode
-- [ ] Survival gamemode
+- [ ] Survival gametype (`g_gametype 3`)
+- [ ] Oozaru gametype (`g_gametype 4`)
+- [ ] Last Man Standing gametype (`g_gametype 6`)
 - [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
 - [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
 
@@ -65,15 +66,19 @@ Bid For Power is a total conversion for QuakeIII that plays nothing like the ori
 
 The source code was lost, but the assets and some docs are in any place.
 
-#### Old dev journals (1999 - 2001)
+#### Old dev journals (1999 - 2002)
 
-- Old Yrgorl dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
+- Old Yrgol dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
 
-Click here to see the [Old Yrgorl dev journal (Markdown edition)](docs/yrgol_dev_journal.md)
+Click here to see the [Old Yrgol dev journal (Markdown edition)](docs/yrgol_dev_journal.md)
 
 - Old Rodney Olmos dev journal: https://web.archive.org/web/20011218204129/http://bidforpower.com/journals/rodney.php
 
 Click here to see the [Old Rodney Olmos dev journal (Markdown edition)](docs/rodney_dev_journal.md)
+
+- Old PyroFragger dev journal: https://web.archive.org/web/20011218203246/http://bidforpower.com/journals/pyrofragger.php
+
+Click here to see the [Old PyroFragger dev journal (Markdown edition)](docs/pyrofragger_dev_journal.md)
 
 ### About the repository
 
@@ -150,6 +155,12 @@ _**Click on some image to see it complete**._
 - How should UI BFP options be:
 
 <img src="https://user-images.githubusercontent.com/49716252/188993293-db531ff5-5754-4ded-99ad-b5f3b2f5fd72.png" alt="bfp_options" width=340 />
+
+<br/>
+
+- How should UI BFP server multiplayer setup be:
+
+<img src="https://user-images.githubusercontent.com/49716252/225174508-067acacd-4799-4d66-82f4-c34d5368174c.png" alt="bfp_multiplayerserverset" />
 
 <br/>
 
