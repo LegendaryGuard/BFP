@@ -771,10 +771,14 @@ int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 	return sides;
 }
 
-// BFP - Looks like that's MSVC exclusive, MinGW doesn't even allow it. 
-// MinGW uses gas syntax as well IIRC, that code was based on Kenny Edition
+// BFP - Looks like that's MSVC exclusive, MinGW doesn't even allow 
+// because uses GAS syntax. That code was based on Kenny Edition
 
 #elif defined _MSC_VER
+#ifdef _WIN32
+#pragma warning( disable: 4035 )
+#endif
+
 __declspec( naked ) int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 {
 	static int bops_initialized;
@@ -1004,40 +1008,47 @@ Lerror:
 		int 3
 	}
 }
+#ifdef _WIN32
+#pragma warning( default: 4035 )
+#endif
+
 #else
-#pragma warning( disable: 4035 )
 
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
+int BoxOnPlaneSide(vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 {
-	int		i;
-	float	dist1, dist2;
-	int		sides;
-	vec3_t	corners[2];
+	float	dist[2];
+	int		sides, b, i;
 
-	for (i=0 ; i<3 ; i++)
+	// fast axial cases
+	if (p->type < 3)
 	{
-		if (p->normal[i] < 0)
+		if (p->dist <= emins[p->type])
+			return 1;
+		if (p->dist >= emaxs[p->type])
+			return 2;
+		return 3;
+	}
+
+	// general case
+	dist[0] = dist[1] = 0;
+	if (p->signbits < 8) // >= 8: default case is original code (dist[0]=dist[1]=0)
+	{
+		for (i=0 ; i<3 ; i++)
 		{
-			corners[0][i] = emins[i];
-			corners[1][i] = emaxs[i];
-		}
-		else
-		{
-			corners[1][i] = emins[i];
-			corners[0][i] = emaxs[i];
+			b = (p->signbits >> i) & 1;
+			dist[ b] += p->normal[i]*emaxs[i];
+			dist[!b] += p->normal[i]*emins[i];
 		}
 	}
-	dist1 = DotProduct (p->normal, corners[0]) - p->dist;
-	dist2 = DotProduct (p->normal, corners[1]) - p->dist;
+
 	sides = 0;
-	if (dist1 >= 0)
+	if (dist[0] >= p->dist)
 		sides = 1;
-	if (dist2 < 0)
+	if (dist[1] < p->dist)
 		sides |= 2;
 
 	return sides;
 }
-#pragma warning( default: 4035 )
 
 #endif
 #endif

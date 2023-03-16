@@ -19,13 +19,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build Linux QVM, .dll and .so
+    - name: Update and get packages
       run: |
         sudo apt-get update # && sudo apt-get upgrade -y
         sudo apt-get install -y build-essential
         sudo apt-get install -y libc6-dev-i386
         sudo apt-get install -y g++-multilib
         sudo apt-get install -y gcc-mingw-w64
+    - name: Build .dll and .so
+      run: |
         make release ARCH=x86
         make release PLATFORM=windows ARCH=x86
         make debug ARCH=x86
@@ -34,7 +36,11 @@ jobs:
         make release PLATFORM=windows ARCH=x86_64
         make debug ARCH=x86_64
         make debug PLATFORM=windows ARCH=x86_64
+    - name: Get wine32-development package
+      run: |
         sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install -y wine32-development
+    - name: Build QVM
+      run: |
         wine cmd /c build.bat
       env:
         ARCHIVE: 1
@@ -48,12 +54,43 @@ jobs:
         if-no-files-found: error
         retention-days: 5
     
-    - name: Store .dll and .so artifacts
+    - name: Store Linux x86 .so artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: .dll and .so files
+        name: linux-x86
         path: |
-          build/*
+          build/release-linux-x86
+          build/debug-linux-x86
+        if-no-files-found: error
+        retention-days: 5
+    
+    - name: Store Linux x86_64 .so artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-x86_64
+        path: |
+          build/release-linux-x86_64
+          build/debug-linux-x86_64
+        if-no-files-found: error
+        retention-days: 5
+    
+    - name: Store Windows x86 DLL artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-x86
+        path: |
+          build/release-windows-x86
+          build/debug-windows-x86
+        if-no-files-found: error
+        retention-days: 5
+    
+    - name: Store Windows x86_64 DLL artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-x86_64
+        path: |
+          build/release-windows-x86_64
+          build/debug-windows-x86_64
         if-no-files-found: error
         retention-days: 5
 

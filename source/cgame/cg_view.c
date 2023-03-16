@@ -249,9 +249,13 @@ static void CG_OffsetThirdPersonView( void ) {
 		cg.refdefViewAngles[YAW] = cg.predictedPlayerState.stats[STAT_DEAD_YAW];
 	}
 
-	// if ( focusAngles[PITCH] > 45 ) {
-	// 	focusAngles[PITCH] = 45;		// don't go too far overhead
-	// }
+// BFP - check not used
+#if 0
+	if ( focusAngles[PITCH] > 45 ) {
+		focusAngles[PITCH] = 45;		// don't go too far overhead
+	}
+#endif
+
 	AngleVectors( focusAngles, forward, NULL, NULL );
 
 	VectorMA( cg.refdef.vieworg, FOCUS_DISTANCE, forward, focusPoint );
@@ -308,8 +312,12 @@ static void CG_OffsetThirdPersonView( void ) {
 	if ( focusDist < 1 ) {
 		focusDist = 1;	// should never happen
 	}
-	// cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
-	// cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+
+// BFP - not used
+#if 0
+	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
+	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
+#endif
 
 	// BFP - trace when near to something solid
 	CG_Trace( &trace, view, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
@@ -457,8 +465,9 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 		}
 	}
 
-	// add pitch based on fall kick
+// BFP - not used
 #if 0
+	// add pitch based on fall kick
 	ratio = ( cg.time - cg.landTime) / FALL_TIME;
 	if (ratio < 0)
 		ratio = 0;

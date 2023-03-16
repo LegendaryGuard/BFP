@@ -83,7 +83,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef int intptr_t;
 
-#elif defined __linux__ // BFP - Linux support
+#elif defined __linux__ || __FreeBSD__ // BFP - Linux and FreeBSD support
 
 typedef int intptr_t;
 
