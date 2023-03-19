@@ -57,6 +57,7 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 %cc% %src%/cgame/cg_weapons.c
 @if errorlevel 1 goto quit
 
-..\..\..\tools\bin\q3asm.exe -f %src%/cgame/cgame
+rem set -vq3 flag for new q3asm, qvm's will run on original 1.32c binaries
+..\..\..\tools\bin\q3asm.exe -vq3 -r -m -o cgame -f %src%/cgame/cgame
 :quit
 cd %src%/cgame
