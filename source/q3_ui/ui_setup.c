@@ -109,7 +109,7 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 
 	switch( ((menucommon_s*)ptr)->id ) {
 	case ID_CUSTOMIZEPLAYER:
-		UI_PlayerSettingsMenu();
+		UI_PlayerModelMenu(); // BFP - Redirect to the character selection menu, before UI_PlayerSettingsMenu();
 		break;
 	// BFP - TODO: Make BFP Options the same menu as Game Options (possibly a new ui_*.c file needs to be created)
 	case ID_BFPOPTIONS:
@@ -199,7 +199,7 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.setupplayer.color					= color_red;
 	setupMenuInfo.setupplayer.style					= UI_CENTER;
 
-	// BFP - BFP Options menu
+	// BFP - TODO: BFP Options menu
 	y += SETUP_MENU_VERTICAL_SPACING;
 	setupMenuInfo.setupcontrols.generic.type		= MTYPE_PTEXT;
 	setupMenuInfo.setupcontrols.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;

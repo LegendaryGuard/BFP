@@ -550,6 +550,7 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_WEAPON5:
 		s_controls.playerWeapon = WP_ROCKET_LAUNCHER;
 		break;
+
 	case ANIM_WEAPON6:
 		s_controls.playerWeapon = WP_LIGHTNING;
 		break;
@@ -572,22 +573,27 @@ static void Controls_UpdateModel( int anim ) {
 #endif
 	case ANIM_KIATTACK1:
 		s_controls.playerTorso = TORSO_ATTACK0_PREPARE;
+		s_controls.playerWeapon = WP_GAUNTLET; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK2:
 		s_controls.playerTorso = TORSO_ATTACK1_PREPARE;
+		s_controls.playerWeapon = WP_MACHINEGUN; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK3:
 		s_controls.playerTorso = TORSO_ATTACK2_PREPARE;
+		s_controls.playerWeapon = WP_SHOTGUN; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK4:
 		s_controls.playerTorso = TORSO_ATTACK3_PREPARE;
+		s_controls.playerWeapon = WP_GRENADE_LAUNCHER; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK5:
 		s_controls.playerTorso = TORSO_ATTACK4_PREPARE;
+		s_controls.playerWeapon = WP_ROCKET_LAUNCHER; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_GESTURE:
@@ -608,7 +614,7 @@ static void Controls_UpdateModel( int anim ) {
 		break;
 	}
 
-	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerChat );
+	UI_PlayerInfo_SetInfo( &s_controls.playerinfo, s_controls.playerLegs, s_controls.playerTorso, s_controls.playerViewangles, s_controls.playerMoveangles, s_controls.playerWeapon, s_controls.playerChat );
 }
 
 

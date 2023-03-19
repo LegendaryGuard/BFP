@@ -1037,6 +1037,8 @@ static void ServerOptions_InitBotNames( void ) {
 	char		*bot;
 	char		bots[MAX_INFO_STRING];
 
+	// BFP - TODO: When selecting to the bot in the list,
+	// by default in BFP is: 1) vegeta 2) freeza 3) gohan 4) piccolo 5) goku 6) krillin
 	if( s_serveroptions.gametype >= GT_TEAM ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "grunt", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "major", 16 );

@@ -182,7 +182,7 @@ static void PlayerModel_UpdateModel( void )
 	VectorClear( moveangles );
 
 	UI_PlayerInfo_SetModel( &s_playermodel.playerinfo, s_playermodel.modelskin );
-	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_RUN, TORSO_RUN, viewangles, moveangles, qfalse );
+	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_RUN, TORSO_RUN, viewangles, moveangles, WP_NONE, qfalse ); // BFP - before "WP_MACHINEGUN"
 }
 
 /*
@@ -535,7 +535,7 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.banner.generic.type  = MTYPE_BTEXT;
 	s_playermodel.banner.generic.x     = 320;
 	s_playermodel.banner.generic.y     = 16;
-	s_playermodel.banner.string        = "PLAYER MODEL";
+	s_playermodel.banner.string        = "PLAYER SETTINGS"; // BFP - before it was called as "PLAYER MODEL"
 	s_playermodel.banner.color         = color_white;
 	s_playermodel.banner.style         = UI_CENTER;
 

@@ -276,16 +276,19 @@ static void UI_LegsSequencing( playerInfo_t *pi ) {
 	}
 
 	if ( currentAnim == LEGS_JUMP ) {
-		// UI_ForceLegsAnim( pi, LEGS_LAND ); // BFP doesn't use this animation
+		UI_ForceLegsAnim( pi, LEGS_IDLE ); // BFP - before LEGS_LAND
 		pi->legsAnimationTimer = UI_TIMER_LAND;
 		jumpHeight = 0;
 		return;
 	}
 
-	/*if ( currentAnim == LEGS_LAND ) { // BFP doesn't use this animation
+// BFP doesn't use this animation
+#if 0
+	if ( currentAnim == LEGS_LAND ) {
 		UI_SetLegsAnim( pi, LEGS_IDLE );
 		return;
-	}*/
+	}
+#endif
 }
 
 
@@ -1141,9 +1144,9 @@ void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model ) {
 UI_PlayerInfo_SetInfo
 ===============
 */
-void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, qboolean chat ) {
+void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, weapon_t weaponNumber, qboolean chat ) {
 	int			currentAnim;
-	// weapon_t	weaponNum; // BFP - unused variable
+	weapon_t	weaponNum; // BFP - that may be unused
 
 	pi->chat = chat;
 
@@ -1167,8 +1170,9 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->torso.yawAngle = viewAngles[YAW];
 		pi->torso.yawing = qfalse;
 
-		// BFP - 5th parameter for the function has been disabled/removed
-		/*
+
+// BFP - 5th parameter for the function has been disabled/removed
+#if 1
 		if ( weaponNumber != -1 ) {
 			pi->weapon = weaponNumber;
 			pi->currentWeapon = weaponNumber;
@@ -1177,14 +1181,14 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 			pi->weaponTimer = 0;
 			UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 		}
-		*/
+#endif
 
 		return;
 	}
 
-	// BFP - 5th parameter for the function has been disabled/removed
+// BFP - 5th parameter for the function has been disabled/removed
+#if 0
 	// weapon
-	/*
 	if ( weaponNumber == -1 ) {
 		pi->pendingWeapon = -1;
 		pi->weaponTimer = 0;
@@ -1193,15 +1197,15 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->pendingWeapon = weaponNumber;
 		pi->weaponTimer = dp_realtime + UI_TIMER_WEAPON_DELAY;
 	}
-	*/
+#endif
 
-	// weaponNum = pi->lastWeapon;
-	// pi->weapon = weaponNum;
+	weaponNum = pi->lastWeapon;
+	pi->weapon = weaponNum;
 
 	if ( torsoAnim == BOTH_DEATH1 || legsAnim == BOTH_DEATH1 ) {
 		torsoAnim = legsAnim = BOTH_DEATH1;
-		// pi->weapon = pi->currentWeapon = WP_NONE;
-		// UI_PlayerInfo_SetWeapon( pi, pi->weapon );
+		pi->weapon = pi->currentWeapon = WP_NONE;
+		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 
 		jumpHeight = 0;
 		pi->pendingLegsAnim = 0;
@@ -1225,41 +1229,46 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 
 	// torso animation
-	// BFP - this conditional isn't used
-	/*
-	if ( torsoAnim == TORSO_STAND || torsoAnim == TORSO_STAND2 ) {
-		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
-			torsoAnim = TORSO_STAND2;
-		}
-		else {
-			torsoAnim = TORSO_STAND;
+	// BFP - TODO: ki attack handling animations
+	if ( torsoAnim == TORSO_STAND ) { // || torsoAnim == TORSO_STAND2 ) { // BFP doesn't use this animation
+		switch ( weaponNum ) {
+			//case WP_NONE:
+			case WP_GAUNTLET:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
+			case WP_MACHINEGUN:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
+			case WP_SHOTGUN:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
+			case WP_GRENADE_LAUNCHER:	torsoAnim = TORSO_ATTACK3_PREPARE; break;
+			case WP_ROCKET_LAUNCHER:	torsoAnim = TORSO_ATTACK4_PREPARE; break;
+			default: 					torsoAnim = TORSO_STAND; break;
 		}
 	}
 
-	if ( torsoAnim == TORSO_ATTACK0_PREPARE || torsoAnim == TORSO_STAND ) {
-		if ( weaponNum == WP_NONE || weaponNum == WP_GAUNTLET ) {
-			torsoAnim = TORSO_STAND;
-		}
-		else {
-			torsoAnim = TORSO_ATTACK0_PREPARE;
+	// BFP - TODO: ki attack handling animations
+	if ( torsoAnim == TORSO_STAND ) {
+		switch ( weaponNum ) {
+			//case WP_NONE:
+			case WP_GAUNTLET:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
+			case WP_MACHINEGUN:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
+			case WP_SHOTGUN:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
+			case WP_GRENADE_LAUNCHER:	torsoAnim = TORSO_ATTACK3_PREPARE; break;
+			case WP_ROCKET_LAUNCHER:	torsoAnim = TORSO_ATTACK4_PREPARE; break;
+			default: 					torsoAnim = TORSO_STAND; break;
 		}
 		pi->muzzleFlashTime = dp_realtime + UI_TIMER_MUZZLE_FLASH;
 		//FIXME play firing sound here
 	}
-	*/
 
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
 
-	/*
+#if 1
 	if ( weaponNum != pi->currentWeapon ) { // || currentAnim == TORSO_RAISE || currentAnim == TORSO_DROP ) { // BFP doesn't use these animations
 		pi->pendingTorsoAnim = torsoAnim;
 	}
-	else if ( ( currentAnim == TORSO_GESTURE || currentAnim == TORSO_ATTACK0_PREPARE ) && ( torsoAnim != currentAnim ) ) {
+	else if ( ( currentAnim == TORSO_GESTURE /*|| currentAnim == TORSO_ATTACK0_PREPARE*/ ) && ( torsoAnim != currentAnim ) ) {
 		pi->pendingTorsoAnim = torsoAnim;
 	}
 	else if ( torsoAnim != currentAnim ) {
 		pi->pendingTorsoAnim = 0;
 		UI_ForceTorsoAnim( pi, torsoAnim );
 	}
-	*/
+#endif
 }
