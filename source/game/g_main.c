@@ -410,6 +410,77 @@ void G_UpdateCvars( void ) {
 	}
 }
 
+static void G_LocateSpawnSpots( void ) 
+{
+	gentity_t			*ent;
+	int i, n;
+
+	level.spawnSpots[ SPAWN_SPOT_INTERMISSION ] = NULL;
+
+	// locate all spawn spots
+	n = 0;
+	ent = g_entities + MAX_CLIENTS;
+	for ( i = MAX_CLIENTS; i < MAX_GENTITIES; i++, ent++ ) {
+		
+		if ( !ent->inuse || !ent->classname )
+			continue;
+
+		// intermission/ffa spots
+		if ( !Q_stricmpn( ent->classname, "info_player_", 12 ) ) {
+			if ( !Q_stricmp( ent->classname+12, "intermission" ) ) {
+				if ( level.spawnSpots[ SPAWN_SPOT_INTERMISSION ] == NULL ) {
+					level.spawnSpots[ SPAWN_SPOT_INTERMISSION ] = ent; // put in the last slot
+					ent->fteam = TEAM_FREE;
+				}
+				continue;
+			}
+			if ( !Q_stricmp( ent->classname+12, "deathmatch" ) ) {
+				level.spawnSpots[n] = ent; n++;
+				level.numSpawnSpotsFFA++;
+				ent->fteam = TEAM_FREE;
+				ent->count = 1;
+				continue;
+			}
+			continue;
+		}
+
+		// team spawn spots
+		if ( !Q_stricmpn( ent->classname, "team_CTF_", 9 ) ) {
+			if ( !Q_stricmp( ent->classname+9, "redspawn" ) ) {
+				level.spawnSpots[n] = ent; n++;
+				level.numSpawnSpotsTeam++;
+				ent->fteam = TEAM_RED;
+				ent->count = 1; // means its not initial spawn point
+				continue;
+			}
+			if ( !Q_stricmp( ent->classname+9, "bluespawn" ) ) {
+				level.spawnSpots[n] = ent; n++;
+				level.numSpawnSpotsTeam++;
+				ent->fteam = TEAM_BLUE;
+				ent->count = 1;
+				continue;
+			}
+			// base spawn spots
+			if ( !Q_stricmp( ent->classname+9, "redplayer" ) ) {
+				level.spawnSpots[n] = ent; n++;
+				level.numSpawnSpotsTeam++;
+				ent->fteam = TEAM_RED;
+				ent->count = 0;
+				continue;
+			}
+			if ( !Q_stricmp( ent->classname+9, "blueplayer" ) ) {
+				level.spawnSpots[n] = ent; n++;
+				level.numSpawnSpotsTeam++;
+				ent->fteam = TEAM_BLUE;
+				ent->count = 0;
+				continue;
+			}
+		}
+	}
+	level.numSpawnSpots = n;
+}
+
+
 /*
 ============
 G_InitGame
@@ -500,6 +571,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	}
 
 	SaveRegisteredItems();
+
+	G_LocateSpawnSpots();
 
 	G_Printf ("-----------------------------------\n");
 
@@ -952,7 +1025,7 @@ void FindIntermissionPoint( void ) {
 	// find the intermission spot
 	ent = G_Find (NULL, FOFS(classname), "info_player_intermission");
 	if ( !ent ) {	// the map creator forgot to put in an intermission point...
-		SelectSpawnPoint ( vec3_origin, level.intermission_origin, level.intermission_angle );
+		SelectSpawnPoint ( NULL, vec3_origin, level.intermission_origin, level.intermission_angle );
 	} else {
 		VectorCopy (ent->s.origin, level.intermission_origin);
 		VectorCopy (ent->s.angles, level.intermission_angle);

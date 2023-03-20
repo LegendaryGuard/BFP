@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static vec3_t	playerMins = {-15, -15, -24};
 static vec3_t	playerMaxs = {15, 15, 32};
+#define	MAX_SPAWN_POINTS	128
 
 /*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32) initial
 potential spawning position for deathmatch games.
@@ -107,7 +108,6 @@ SelectNearestDeathmatchSpawnPoint
 Find the spot that we DON'T want to use
 ================
 */
-#define	MAX_SPAWN_POINTS	128
 gentity_t *SelectNearestDeathmatchSpawnPoint( vec3_t from ) {
 	gentity_t	*spot;
 	vec3_t		delta;
@@ -139,7 +139,6 @@ SelectRandomDeathmatchSpawnPoint
 go to a random point that doesn't telefrag
 ================
 */
-#define	MAX_SPAWN_POINTS	128
 gentity_t *SelectRandomDeathmatchSpawnPoint( void ) {
 	gentity_t	*spot;
 	int			count;
@@ -172,63 +171,102 @@ SelectRandomFurthestSpawnPoint
 Chooses a player start, deathmatch start, etc
 ============
 */
-gentity_t *SelectRandomFurthestSpawnPoint ( vec3_t avoidPoint, vec3_t origin, vec3_t angles ) {
+static gentity_t *SelectRandomFurthestSpawnPoint( const gentity_t *ent, vec3_t avoidPoint, vec3_t origin, vec3_t angles ) {
 	gentity_t	*spot;
 	vec3_t		delta;
 	float		dist;
-	float		list_dist[64];
-	gentity_t	*list_spot[64];
-	int			numSpots, rnd, i, j;
+	float		list_dist[MAX_SPAWN_POINTS];
+	gentity_t	*list_spot[MAX_SPAWN_POINTS];
+	int			numSpots, i, j, n;
+	int			selection;
+	int			checkTelefrag;
+	int			checkType;
+	int			checkMask;
+	qboolean	isBot;
+
+	checkType = qtrue;
+	checkTelefrag = qtrue;
+
+	if ( ent )
+		isBot = ((ent->r.svFlags & SVF_BOT) == SVF_BOT); 
+	else
+		isBot = qfalse;
+
+	checkMask = 3;
+
+__search:
+
+	checkTelefrag = checkMask & 1;
+	checkType = checkMask & 2;
 
 	numSpots = 0;
-	spot = NULL;
+	for ( n = 0 ; n < level.numSpawnSpots ; n++ ) {
+		spot = level.spawnSpots[n];
 
-	while ((spot = G_Find (spot, FOFS(classname), "info_player_deathmatch")) != NULL) {
-		if ( SpotWouldTelefrag( spot ) ) {
+		if ( spot->fteam != TEAM_FREE && level.numSpawnSpotsFFA > 0 )
 			continue;
+
+		if ( checkTelefrag && SpotWouldTelefrag( spot ) )
+			continue;
+
+		if ( checkType ) 
+		{
+			if ( (spot->flags & FL_NO_BOTS) && isBot )
+				continue;
+			if ( (spot->flags & FL_NO_HUMANS) && !isBot )
+				continue;
 		}
+
 		VectorSubtract( spot->s.origin, avoidPoint, delta );
 		dist = VectorLength( delta );
-		for (i = 0; i < numSpots; i++) {
-			if ( dist > list_dist[i] ) {
-				if ( numSpots >= 64 )
-					numSpots = 64-1;
-				for (j = numSpots; j > i; j--) {
+
+		for ( i = 0; i < numSpots; i++ )
+		{
+			if( dist > list_dist[i] )
+			{
+				if (numSpots >= MAX_SPAWN_POINTS)
+					numSpots = MAX_SPAWN_POINTS - 1;
+
+				for( j = numSpots; j > i; j-- )
+				{
 					list_dist[j] = list_dist[j-1];
 					list_spot[j] = list_spot[j-1];
 				}
+
 				list_dist[i] = dist;
 				list_spot[i] = spot;
+
 				numSpots++;
-				if (numSpots > 64)
-					numSpots = 64;
 				break;
 			}
 		}
-		if (i >= numSpots && numSpots < 64) {
+
+		if(i >= numSpots && numSpots < MAX_SPAWN_POINTS)
+		{
 			list_dist[numSpots] = dist;
 			list_spot[numSpots] = spot;
 			numSpots++;
 		}
 	}
-	if (!numSpots) {
-		spot = G_Find( NULL, FOFS(classname), "info_player_deathmatch");
-		if (!spot)
+
+	if ( !numSpots ) {
+		if ( checkMask <= 0 ) {
 			G_Error( "Couldn't find a spawn point" );
-		VectorCopy (spot->s.origin, origin);
-		origin[2] += 9;
-		VectorCopy (spot->s.angles, angles);
-		return spot;
+			return NULL;
+		}
+		checkMask--;
+		goto __search; // next attempt with different flags
 	}
 
 	// select a random spot from the spawn points furthest away
-	rnd = random() * (numSpots / 2);
+	selection = random() * (numSpots / 2);
+	spot = list_spot[ selection ];
 
-	VectorCopy (list_spot[rnd]->s.origin, origin);
-	origin[2] += 9;
-	VectorCopy (list_spot[rnd]->s.angles, angles);
+	VectorCopy( spot->s.angles, angles );
+	VectorCopy( spot->s.origin, origin );
+	origin[2] += 9.0f;
 
-	return list_spot[rnd];
+	return spot;
 }
 
 /*
@@ -238,36 +276,8 @@ SelectSpawnPoint
 Chooses a player start, deathmatch start, etc
 ============
 */
-gentity_t *SelectSpawnPoint ( vec3_t avoidPoint, vec3_t origin, vec3_t angles ) {
-	return SelectRandomFurthestSpawnPoint( avoidPoint, origin, angles );
-
-	/*
-	gentity_t	*spot;
-	gentity_t	*nearestSpot;
-
-	nearestSpot = SelectNearestDeathmatchSpawnPoint( avoidPoint );
-
-	spot = SelectRandomDeathmatchSpawnPoint ( );
-	if ( spot == nearestSpot ) {
-		// roll again if it would be real close to point of death
-		spot = SelectRandomDeathmatchSpawnPoint ( );
-		if ( spot == nearestSpot ) {
-			// last try
-			spot = SelectRandomDeathmatchSpawnPoint ( );
-		}		
-	}
-
-	// find a single player start spot
-	if (!spot) {
-		G_Error( "Couldn't find a spawn point" );
-	}
-
-	VectorCopy (spot->s.origin, origin);
-	origin[2] += 9;
-	VectorCopy (spot->s.angles, angles);
-
-	return spot;
-	*/
+gentity_t *SelectSpawnPoint( gentity_t *ent, vec3_t avoidPoint, vec3_t origin, vec3_t angles ) {
+	return SelectRandomFurthestSpawnPoint( ent, avoidPoint, origin, angles );
 }
 
 /*
@@ -278,23 +288,29 @@ Try to find a spawn point marked 'initial', otherwise
 use normal spawn selection.
 ============
 */
-gentity_t *SelectInitialSpawnPoint( vec3_t origin, vec3_t angles ) {
+gentity_t *SelectInitialSpawnPoint( gentity_t *ent, vec3_t origin, vec3_t angles ) {
 	gentity_t	*spot;
+	int n;
 
 	spot = NULL;
-	while ((spot = G_Find (spot, FOFS(classname), "info_player_deathmatch")) != NULL) {
-		if ( spot->spawnflags & 1 ) {
+
+	for ( n = 0; n < level.numSpawnSpotsFFA; n++ ) {
+		spot = level.spawnSpots[ n ];
+		if ( spot->fteam != TEAM_FREE )
+			continue;
+		if ( spot->spawnflags & 1 )
 			break;
-		}
+		else
+			spot = NULL;
 	}
 
 	if ( !spot || SpotWouldTelefrag( spot ) ) {
-		return SelectSpawnPoint( vec3_origin, origin, angles );
+		return SelectSpawnPoint( ent, vec3_origin, origin, angles );
 	}
 
-	VectorCopy (spot->s.origin, origin);
-	origin[2] += 9;
-	VectorCopy (spot->s.angles, angles);
+	VectorCopy( spot->s.angles, angles );
+	VectorCopy( spot->s.origin, origin );
+	origin[2] += 9.0f;
 
 	return spot;
 }
@@ -311,7 +327,7 @@ gentity_t *SelectSpectatorSpawnPoint( vec3_t origin, vec3_t angles ) {
 	VectorCopy( level.intermission_origin, origin );
 	VectorCopy( level.intermission_angle, angles );
 
-	return NULL;
+	return level.spawnSpots[ SPAWN_SPOT_INTERMISSION ]; // was NULL
 }
 
 /*
@@ -1029,6 +1045,7 @@ void ClientSpawn(gentity_t *ent) {
 	} else if (g_gametype.integer >= GT_CTF ) {
 		// all base oriented team games use the CTF spawn points
 		spawnPoint = SelectCTFSpawnPoint ( 
+						ent,
 						client->sess.sessionTeam, 
 						client->pers.teamState.state, 
 						spawn_origin, spawn_angles);
@@ -1037,10 +1054,11 @@ void ClientSpawn(gentity_t *ent) {
 			// the first spawn should be at a good looking spot
 			if ( !client->pers.initialSpawn && client->pers.localClient ) {
 				client->pers.initialSpawn = qtrue;
-				spawnPoint = SelectInitialSpawnPoint( spawn_origin, spawn_angles );
+				spawnPoint = SelectInitialSpawnPoint( ent, spawn_origin, spawn_angles );
 			} else {
 				// don't spawn near existing origin if possible
 				spawnPoint = SelectSpawnPoint ( 
+					ent,
 					client->ps.origin, 
 					spawn_origin, spawn_angles);
 			}

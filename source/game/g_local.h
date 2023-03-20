@@ -170,6 +170,9 @@ struct gentity_s {
 	float		wait;
 	float		random;
 
+	// team for spawn spot
+	team_t		fteam;
+
 	gitem_t		*item;			// for bonus items
 };
 
@@ -321,6 +324,9 @@ struct gclient_s {
 #define	MAX_SPAWN_VARS			64
 #define	MAX_SPAWN_VARS_CHARS	4096
 
+#define NUM_SPAWN_SPOTS MAX_GENTITIES
+#define SPAWN_SPOT_INTERMISSION NUM_SPAWN_SPOTS-1
+
 typedef struct {
 	struct gclient_s	*clients;		// [maxclients]
 
@@ -399,6 +405,12 @@ typedef struct {
 	gentity_t	*locationHead;			// head of the location list
 	int			bodyQueIndex;			// dead bodies
 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
+
+	// spawn spots
+	gentity_t	*spawnSpots[NUM_SPAWN_SPOTS];
+	int			numSpawnSpots;
+	int			numSpawnSpotsTeam;
+	int			numSpawnSpotsFFA;
 } level_locals_t;
 
 
@@ -544,7 +556,7 @@ team_t TeamCount( int ignoreClientNum, int team );
 int TeamLeader( int team );
 team_t PickTeam( int ignoreClientNum );
 void SetClientViewAngle( gentity_t *ent, vec3_t angle );
-gentity_t *SelectSpawnPoint ( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
+gentity_t *SelectSpawnPoint( gentity_t *ent, vec3_t avoidPoint, vec3_t origin, vec3_t angles );
 void CopyToBodyQue( gentity_t *ent );
 void respawn (gentity_t *ent);
 void BeginIntermission (void);
