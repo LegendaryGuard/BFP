@@ -1724,8 +1724,7 @@ static void CG_DrawCrosshair(void) {
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
-	if ( cg_thirdPerson.integer >= 1 && cg_stableCrosshair.integer >= 1 ) { // BFP - Third person traceable crosshair
-		w = h = cg_crosshairSize.value; // set the same size, if this isn't set here, the size is changed
+	if ( cg_thirdPerson.integer >= 1 && cg_stableCrosshair.integer <= 0 ) { // BFP - Third person traceable crosshair
 		AngleVectors( ps->viewangles, forward, NULL, up );
 		VectorCopy( ps->origin, muzzle );
 		VectorMA( muzzle, ps->viewheight, up, muzzle );
@@ -1986,6 +1985,7 @@ static void CG_DrawKiWarning( void ) {
 #endif
 
 	// BFP - Low ki warning center notification
+	s = ""; // avoid printing when there are no status changes, for dll and shared objects
 	if ( cg.predictedPlayerState.stats[STAT_KI] < 50 ) {
 		s = "LOW KI WARNING";
 	} else if ( cg.predictedPlayerState.stats[STAT_KI] < 0 ) {
@@ -2006,7 +2006,7 @@ static void CG_DrawHitStun( void ) { // BFP - Hit stun bottom centerprint
 	playerState_t	*ps;
 	int			value;
 
-	s = "";
+	s = ""; // avoid printing when there are no status changes, for dll and shared objects
 	if ( cg.predictedPlayerState.stats[STAT_KI] <= 0 ) {
 		s = "Stun";
 	}
@@ -2228,14 +2228,16 @@ void CG_DrawActive( stereoFrame_t stereoView ) {
 		return;
 	}
 
+#if 0
 	// optionally draw the tournement scoreboard instead
 	// BFP - PMF_SCOREBOARD is unused
-	// if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR &&
-	//	( cg.snap->ps.pm_flags & PMF_SCOREBOARD ) ) {
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR &&
+		( cg.snap->ps.pm_flags & PMF_SCOREBOARD ) ) {
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		CG_DrawTourneyScoreboard();
 		return;
 	}
+#endif
 
 	switch ( stereoView ) {
 	case STEREO_CENTER:

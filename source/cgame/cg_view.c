@@ -786,7 +786,8 @@ static int CG_CalcViewValues( void ) {
 		}
 	}
 
-	if ( cg.renderingThirdPerson ) {
+	// BFP - if the player is spectating, do not use third person view
+	if ( cg.renderingThirdPerson && ps->pm_type != PM_SPECTATOR ) {
 		// back away from character
 		CG_OffsetThirdPersonView();
 	}

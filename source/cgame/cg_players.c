@@ -342,6 +342,9 @@ static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t
 			if ( CG_FileExists( filename ) ) {
 				return qtrue;
 			}
+
+// BFP - Avoid loading team skins (causes crash)
+#if 0
 			if ( cgs.gametype >= GT_TEAM ) {
 				if ( i == 0 && teamName && *teamName ) {
 					//								"models/players/characters/james/stroggs/lower_red.skin"
@@ -362,6 +365,9 @@ static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t
 					Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", charactersFolder, modelName, base, skinName, ext );
 				}
 			}
+#endif
+
+			Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", charactersFolder, modelName, base, skinName, ext );
 			if ( CG_FileExists( filename ) ) {
 				return qtrue;
 			}
@@ -422,6 +428,9 @@ static qboolean	CG_FindClientHeadFile( char *filename, int length, clientInfo_t 
 			if ( CG_FileExists( filename ) ) {
 				return qtrue;
 			}
+
+// BFP - Avoid loading team skins (causes crash)
+#if 0
 			if ( cgs.gametype >= GT_TEAM ) {
 				if ( i == 0 &&  teamName && *teamName ) {
 					Com_sprintf( filename, length, "models/players/%s%s/%s%s_%s.%s", headsFolder, headModelName, teamName, base, team, ext );
@@ -438,6 +447,9 @@ static qboolean	CG_FindClientHeadFile( char *filename, int length, clientInfo_t 
 					Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", headsFolder, headModelName, base, headSkinName, ext );
 				}
 			}
+#endif
+
+			Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", headsFolder, headModelName, base, headSkinName, ext );
 			if ( CG_FileExists( filename ) ) {
 				return qtrue;
 			}
@@ -660,8 +672,11 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	if ( !CG_RegisterClientModelname( ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname ) ) {
 		if ( cg_buildScript.integer ) {
 			CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s %s ) failed", ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname );
+			modelloaded = qfalse; // BFP - if the model didn't load
 		}
 
+// BFP - no team skin and model
+#if 0
 		// fall back to default team name
 		if( cgs.gametype >= GT_TEAM) {
 			// keep skin name
@@ -678,7 +693,7 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 				CG_Error( "DEFAULT_MODEL (%s) failed to register", DEFAULT_MODEL );
 			}
 		}
-		modelloaded = qfalse;
+#endif
 	}
 
 	ci->newAnims = qfalse;
