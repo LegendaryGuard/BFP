@@ -152,6 +152,12 @@ _**Click on some image to see it complete**._
 
 <br/>
 
+- How should UI Game options be:
+
+<img src="https://user-images.githubusercontent.com/49716252/226767823-28d69bb2-40e8-4dc3-9be0-02587f9b74b3.png" alt="game_options" width=340 />
+
+<br/>
+
 - How should UI BFP options be:
 
 <img src="https://user-images.githubusercontent.com/49716252/188993293-db531ff5-5754-4ded-99ad-b5f3b2f5fd72.png" alt="bfp_options" width=340 />
@@ -247,7 +253,7 @@ Other q3 config:
     make ARCH=x86 WINDRES="windres -F pe-i386"
     ```
 
-    7. Find the dlls in `build/release-mingw64-x86_64`, for 32-bit: `build/release-mingw32-x86`. <br/>
+    6. Find the dlls in `build/release-mingw64-x86_64`, for 32-bit: `build/release-mingw32-x86`. <br/>
     
     If you can't compile 32-bit builds with MSYS2 MinGW, try [Cygwin](#cygwin-mingw-building-dynamic-libraries-dll) section.<br/>
 
