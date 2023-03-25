@@ -1,0 +1,152 @@
+#############################################################################
+# QVM BUILD
+#############################################################################
+
+COMPILE_PLATFORM=$(shell uname | sed -e 's/_.*//' | tr '[:upper:]' '[:lower:]' | sed -e 's/\//_/g')
+
+MKDIR=mkdir -p
+
+ifndef EXT
+  EXT=
+endif
+
+# note: there's no backslash (/) set
+ifndef QVMTOOL_DIR
+  QVMTOOL_DIR=
+endif
+
+ifndef JTS
+  JTS=vm/*.jts
+endif
+ifndef NO_JTS
+  NO_JTS=
+endif
+
+ifeq ($(NO_JTS),1)
+  JTS=
+endif
+
+ifeq ($(COMPILE_PLATFORM),cygwin)
+  PLATFORM=mingw32
+endif
+
+ifndef PLATFORM
+PLATFORM=$(COMPILE_PLATFORM)
+endif
+export PLATFORM
+
+ifeq ($(PLATFORM),mingw32)
+  EXT=.exe
+  QVMTOOL_DIR=
+else ifeq ($(PLATFORM),mingw64)
+  EXT=.exe
+  QVMTOOL_DIR=
+else ifeq ($(PLATFORM),linux)
+  EXT=
+  QVMTOOL_DIR=linux
+else # other platform
+  EXT=
+  QVMTOOL_DIR=linux
+endif
+
+#############################################################################
+# SETUP AND BUILD
+#############################################################################
+
+PK3 = pak9.pk3
+MOUNTDIR = source
+
+QADIR = $(MOUNTDIR)/game
+CGDIR = $(MOUNTDIR)/cgame
+UIDIR = $(MOUNTDIR)/q3_ui
+
+Q3ASM = ./tools/bin/$(QVMTOOL_DIR)/q3asm$(EXT) -vq3 -r -m -v
+Q3LCC = ./../../tools/bin/$(QVMTOOL_DIR)/lcc$(EXT) -DQ3_VM -S -Wf-g -I$(QADIR)
+7Z = 7z u -tzip -mx=9 -mpass=8 -mfb=255 --
+
+QA_CFLAGS = -DQAGAME
+CG_CFLAGS = -DCGAME -I$(CGDIR)
+UI_CFLAGS = -DQ3UI -I$(UIDIR)
+
+#############################################################################
+## BASEQ3 GAME
+#############################################################################
+
+QA_SRC = \
+ g_main $(QADIR)/g_syscalls.asm \
+ bg_misc bg_lib bg_pmove bg_slidemove \
+ q_math q_shared \
+ ai_dmnet ai_dmq3 ai_team ai_main ai_chat ai_cmd ai_vcmd \
+ g_active g_arenas g_bot g_client g_cmds g_combat g_items g_mem g_misc \
+ g_missile g_mover g_session g_spawn g_svcmds g_target g_team \
+ g_trigger g_utils g_weapon \
+
+#############################################################################
+## BASEQ3 CGAME
+#############################################################################
+
+CG_SRC = \
+ cg_main $(CGDIR)/cg_syscalls.asm \
+ cg_consolecmds cg_draw cg_drawtools cg_effects cg_ents cg_event cg_info \
+ cg_localents cg_marks cg_players cg_playerstate cg_predict cg_scoreboard \
+ cg_servercmds cg_snapshot cg_view cg_weapons \
+ bg_slidemove bg_pmove bg_lib bg_misc \
+ q_math q_shared \
+
+#############################################################################
+## BASEQ3 UI
+#############################################################################
+
+UI_SRC = \
+ ui_main $(UIDIR)/ui_syscalls.asm \
+ ui_cdkey ui_ingame ui_serverinfo ui_confirm ui_setup \
+ bg_misc bg_lib \
+ q_math q_shared \
+ ui_gameinfo ui_atoms ui_connect ui_controls2 ui_demo2 ui_mfield \
+ ui_credits ui_menu ui_options ui_display ui_sound ui_network ui_playermodel \
+ ui_players ui_playersettings ui_preferences ui_qmenu ui_servers2 ui_sparena \
+ ui_specifyserver ui_splevel ui_sppostgame ui_startserver ui_team ui_video \
+ ui_cinematics ui_spskill ui_addbots ui_removebots ui_teamorders ui_mods \
+
+#############################################################################
+# MAIN TARGETS
+#############################################################################
+
+srcs = $(foreach file,$1,$(if $(patsubst %.asm,,$(file)),$2/$(file).asm,$(file)))
+QA_ASM = $(call srcs,$(QA_SRC),vm/game)
+CG_ASM = $(call srcs,$(CG_SRC),vm/cgame)
+UI_ASM = $(call srcs,$(UI_SRC),vm/ui)
+
+all: dirs $(PK3)
+
+clean:
+	@echo "CLEAN vm"
+	@rm -rf vm/
+
+dirs:
+	$(MKDIR) vm/game vm/cgame vm/ui
+
+.PHONY: all clean dirs
+
+$(PK3): vm/qagame.qvm vm/cgame.qvm vm/ui.qvm
+	$(7Z) $@ vm/*.qvm $(JTS)
+
+cc = cd vm/$1 && $(Q3LCC) $2 -o $(notdir $@).tmp ../../$< && mv $(notdir $@).tmp $(notdir $@)
+QA_CC = $(call cc,game,$(QA_CFLAGS))
+CG_CC = $(call cc,cgame,$(CG_CFLAGS))
+UI_CC = $(call cc,ui,$(UI_CFLAGS))
+
+vm/qagame.qvm: $(QA_ASM)
+	$(Q3ASM) -o $@ $(QA_ASM)
+
+vm/cgame.qvm: $(CG_ASM)
+	$(Q3ASM) -o $@ $(CG_ASM)
+
+vm/ui.qvm: $(UI_ASM)
+	$(Q3ASM) -o $@ $(UI_ASM)
+
+vm/game/%.asm: $(QADIR)/%.c; $(QA_CC)
+vm/cgame/%.asm: $(QADIR)/%.c; $(CG_CC)
+vm/cgame/%.asm: $(CGDIR)/%.c; $(CG_CC)
+vm/ui/%.asm: $(QADIR)/%.c; $(UI_CC)
+vm/ui/%.asm: $(UIDIR)/%.c; $(UI_CC)

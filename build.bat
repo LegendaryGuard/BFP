@@ -17,8 +17,10 @@ rem 2) keep old V1 format and prepare for bugs on 1.32c or slowdown on ioq3
 rem with q3e you have 3rd variant: use my q3asm and generate 1.32c-compatible qvms + external jts-file than will 
 rem help with bytecode generation
 rem ------
-rem If 0 is set, these directories, .jts and .map files won't be available if the operation compiled successfully
-set DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES=0
+rem If NO_JTS=1 is set, .jts files won't be available if the operation compiled successfully
+set NO_JTS=0
+rem If NO_MAP=1 is set, these directories and .map files won't be available if the operation compiled successfully
+set NO_MAP=1
 
 rem Remove binaries, intermediate and pak9.pk3 if these are already here to clean up
 if exist %~dp0\binaries\ (
@@ -54,12 +56,12 @@ echo.
 echo.
 cd binaries
 
-if exist vm\cgame.jts ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 ( del vm\cgame.jts ) )
-if exist vm\cgame.map ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 ( del vm\cgame.map ) )
-if exist vm\qagame.jts ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 ( del vm\qagame.jts ) )
-if exist vm\qagame.map ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 ( del vm\qagame.map ) )
-if exist vm\ui.jts ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 ( del vm\ui.jts ) )
-if exist vm\ui.map ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 ( del vm\ui.map ) )
+if exist vm\cgame.jts ( if %NO_JTS% NEQ 0 ( del vm\cgame.jts ) )
+if exist vm\cgame.map ( if %NO_MAP% NEQ 0 ( del vm\cgame.map ) )
+if exist vm\qagame.jts ( if %NO_JTS% NEQ 0 ( del vm\qagame.jts ) )
+if exist vm\qagame.map ( if %NO_MAP% NEQ 0 ( del vm\qagame.map ) )
+if exist vm\ui.jts ( if %NO_JTS% NEQ 0 ( del vm\ui.jts ) )
+if exist vm\ui.map ( if %NO_MAP% NEQ 0 ( del vm\ui.map ) )
 
 echo ***************************************
 rem -- CGAME --
@@ -67,24 +69,24 @@ if not exist vm\cgame.qvm (
   set ERRORLEVEL=1 
   set ERROR_CGAME_QVM=1 
 ) else ( echo              vm\cgame.qvm )
-if exist vm\cgame.jts ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% NEQ 0 ( echo              vm\cgame.jts ) )
-if exist vm\cgame.map ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% NEQ 0 ( echo              vm\cgame.map ) )
+if exist vm\cgame.jts ( echo              vm\cgame.jts )
+if exist vm\cgame.map ( echo              vm\cgame.map )
 
 rem -- QAGAME --
 if not exist vm\qagame.qvm ( 
   set ERRORLEVEL=1 
   set ERROR_QAGAME_QVM=1 
 ) else ( echo              vm\qagame.qvm )
-if exist vm\qagame.jts ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% NEQ 0 ( echo              vm\qagame.jts ) )
-if exist vm\qagame.map ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% NEQ 0 ( echo              vm\qagame.map ) )
+if exist vm\qagame.jts ( echo              vm\qagame.jts )
+if exist vm\qagame.map ( echo              vm\qagame.map )
 
 rem -- UI --
 if not exist vm\ui.qvm ( 
   set ERRORLEVEL=1 
   set ERROR_UI_QVM=1 
 ) else ( echo              vm\ui.qvm )
-if exist vm\ui.jts ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% NEQ 0 ( echo              vm\ui.jts ) )
-if exist vm\ui.map ( if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% NEQ 0 ( echo              vm\ui.map ) )
+if exist vm\ui.jts ( echo              vm\ui.jts )
+if exist vm\ui.map ( echo              vm\ui.map )
 echo ***************************************
 
 if %ERRORLEVEL% NEQ 0 (
@@ -101,12 +103,12 @@ if %ERRORLEVEL% NEQ 0 (
 cd ..
 
 @echo off
-if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 (
-  echo.
-  echo    Removing binaries and intermediate directories...
-  rd binaries /s /q
-  rd intermediate /q /s
-  echo.
+if %NO_MAP% NEQ 0 (
+echo.
+echo    Removing binaries and intermediate directories...
+rd binaries /s /q
+rd intermediate /q /s
+echo.
 ) else (
   echo.
   echo    You can look binaries and intermediate directories
@@ -117,4 +119,5 @@ if %DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES% EQU 0 (
 set ERROR_CGAME_QVM=
 set ERROR_QAGAME_QVM=
 set ERROR_UI_QVM=
-set DEBUG_DONT_REMOVE_ASM_JTS_MAP_FILES=
+set NO_JTS=
+set NO_MAP=
