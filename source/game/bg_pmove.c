@@ -1533,6 +1533,10 @@ PM_FlightAnimation
 */
 static void PM_FlightAnimation( void ) { // BFP - Flight
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
+
+		// make sure to handle the PM_flag
+		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
+
 		if ( pm->cmd.forwardmove > 0 ) {
 			PM_StartTorsoAnim( TORSO_FLYA );
 			PM_ForceLegsAnim( LEGS_FLYA );
@@ -1550,8 +1554,12 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
 	if ( !pm->isFlying && !( pml.groundTrace.contents & CONTENTS_SOLID ) 
-		&& ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
-		if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
+		&& ( pm->ps->pm_flags & PMF_BACKWARDS_JUMP ) ) {
+
+		// stops entering again here and don't change the animation to backwards/forward
+		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+
+		if ( pm->cmd.forwardmove > 0 ) {
 			PM_ForceLegsAnim( LEGS_JUMP );
 			PM_StartLegsAnim( LEGS_JUMP );
 		} else if ( pm->cmd.forwardmove < 0 ) { // when failing backwards after flying
@@ -2114,14 +2122,6 @@ void PmoveSingle (pmove_t *pmove) {
 
 	if ( pm->ps->pm_type == PM_DEAD ) {
 		PM_DeadMove ();
-	}
-
-	// BFP - Flight
-	if ( pmove->cmd.buttons & BUTTON_ENABLEFLIGHT 
-		&& pm->ps->pm_type != PM_DEAD ) {
-
-		// little hop here when touching the ground
-		PM_EnableFlight(); // fly!
 	}
 
 	// BFP - Ki Charge
