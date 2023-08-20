@@ -1,4 +1,5 @@
-pak9.pk3
+*.pk3
 .vscode
 .vscode/*
-build
+build*
+vm*
