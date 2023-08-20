@@ -29,14 +29,14 @@ jobs:
         sudo apt-get install -y p7zip-full
     - name: Build .dll and .so
       run: |
-        make release ARCH=x86
-        make release PLATFORM=windows ARCH=x86
-        make debug ARCH=x86
-        make debug PLATFORM=windows ARCH=x86
-        make release ARCH=x86_64
-        make release PLATFORM=windows ARCH=x86_64
-        make debug ARCH=x86_64
-        make debug PLATFORM=windows ARCH=x86_64
+        make -j8 release ARCH=x86
+        make -j8 release PLATFORM=windows ARCH=x86
+        make -j8 debug ARCH=x86
+        make -j8 debug PLATFORM=windows ARCH=x86
+        make -j8 release ARCH=x86_64
+        make -j8 release PLATFORM=windows ARCH=x86_64
+        make -j8 debug ARCH=x86_64
+        make -j8 debug PLATFORM=windows ARCH=x86_64
     # - name: Get wine32-development package
     #   run: |
     #     sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install -y wine32-development
@@ -46,7 +46,7 @@ jobs:
     - name: Build QVM
       run: |
         sudo chmod 777 tools/bin/linux/* # make all of them executable
-        make -f MakefileQVM
+        make -f MakefileQVM -j8
       env:
         ARCHIVE: 1
 
