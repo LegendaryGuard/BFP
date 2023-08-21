@@ -38,169 +38,23 @@ typedef struct {
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
-vmCvar_t	g_gametype;
-vmCvar_t	g_dmflags;
-vmCvar_t	g_fraglimit;
-vmCvar_t	g_timelimit;
-vmCvar_t	g_capturelimit;
-vmCvar_t	g_friendlyFire;
-vmCvar_t	g_password;
-vmCvar_t	g_needpass;
-vmCvar_t	g_maxclients;
-vmCvar_t	g_maxGameClients;
-vmCvar_t	g_dedicated;
-vmCvar_t	g_speed;
-vmCvar_t	g_gravity;
-vmCvar_t	g_hitStun; // BFP - Hit stun
-vmCvar_t	g_cheats;
-vmCvar_t	g_knockback;
-vmCvar_t	g_quadfactor;
-vmCvar_t	g_forcerespawn;
-vmCvar_t	g_inactivity;
-vmCvar_t	g_debugMove;
-vmCvar_t	g_debugDamage;
-vmCvar_t	g_debugAlloc;
-vmCvar_t	g_weaponRespawn;
-vmCvar_t	g_weaponTeamRespawn;
-vmCvar_t	g_motd;
-vmCvar_t	g_synchronousClients;
-vmCvar_t	g_warmup;
-vmCvar_t	g_doWarmup;
-vmCvar_t	g_restarted;
-vmCvar_t	g_log;
-vmCvar_t	g_logSync;
-vmCvar_t	g_blood;
-
-vmCvar_t	g_basePL;
-vmCvar_t	g_allowSpectatorChat;
-vmCvar_t	g_meleeDamage;
-vmCvar_t	g_meleeDiveRange;
-vmCvar_t	g_meleeRange;
-vmCvar_t	g_chargeDelay;
-vmCvar_t	g_hitStun;
-vmCvar_t	g_meleeOnly;
-vmCvar_t	g_noFlight;
-vmCvar_t	g_plKillBonusPct;
-vmCvar_t	g_maxSpawnPL;
-vmCvar_t	g_flightCost;
-vmCvar_t	g_flightCostPct;
-vmCvar_t	g_boostCost;
-vmCvar_t	g_boostCostPct;
-vmCvar_t	g_blockCost;
-vmCvar_t	g_blockCostPct;
-vmCvar_t	g_kiRegen;
-vmCvar_t	g_kiRegenPct;
-vmCvar_t	g_kiCharge;
-vmCvar_t	g_kiChargePct;
-vmCvar_t	g_blockDelay;
-vmCvar_t	g_blockLength;
-
-vmCvar_t	g_podiumDist;
-vmCvar_t	g_podiumDrop;
-vmCvar_t	g_allowVote;
-vmCvar_t	g_teamAutoJoin;
-vmCvar_t	g_teamForceBalance;
-vmCvar_t	g_banIPs;
-vmCvar_t	g_filterBan;
-vmCvar_t	g_smoothClients;
-vmCvar_t	pmove_fixed;
-vmCvar_t	pmove_msec;
-vmCvar_t	g_rankings;
-vmCvar_t	g_listEntity;
+// BFP - single-line cvar declaration, from ec-/baseq3a (by Razor)
+#define DECLARE_G_CVAR
+	#include "g_cvar.h"
+#undef DECLARE_G_CVAR
 
 // bk001129 - made static to avoid aliasing
 static cvarTable_t		gameCvarTable[] = {
-	// don't override the cheat state set by the system
-	{ &g_cheats, "sv_cheats", "", 0, 0, qfalse },
 
 	// noset vars
-	{ NULL, "gamename", GAMEVERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
-	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse  },
-	{ &g_restarted, "g_restarted", "0", CVAR_ROM, 0, qfalse  },
-	{ NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse  },
+	{ NULL, "gamename", GAMEVERSION , CVAR_SERVERINFO | CVAR_ROM, 0, qfalse },
+	{ NULL, "gamedate", __DATE__ , CVAR_ROM, 0, qfalse },
+	{ NULL, "sv_mapname", "", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse },
 
-	// latched vars
-	{ &g_gametype, "g_gametype", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qfalse  },
-
-	{ &g_maxclients, "sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qfalse  },
-	{ &g_maxGameClients, "g_maxGameClients", "0", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qfalse  },
-
-	// change anytime vars
-	{ &g_dmflags, "dmflags", "0", CVAR_SERVERINFO | CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_fraglimit, "fraglimit", "20", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
-	{ &g_timelimit, "timelimit", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
-	{ &g_capturelimit, "capturelimit", "8", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_NORESTART, 0, qtrue },
-
-	{ &g_synchronousClients, "g_synchronousClients", "0", CVAR_SYSTEMINFO, 0, qfalse  },
-
-	{ &g_friendlyFire, "g_friendlyFire", "0", CVAR_ARCHIVE, 0, qtrue  },
-
-	{ &g_teamAutoJoin, "g_teamAutoJoin", "0", CVAR_ARCHIVE  },
-	{ &g_teamForceBalance, "g_teamForceBalance", "0", CVAR_ARCHIVE  },
-
-	{ &g_warmup, "g_warmup", "20", CVAR_ARCHIVE, 0, qtrue  },
-	{ &g_doWarmup, "g_doWarmup", "0", 0, 0, qtrue  },
-	{ &g_log, "g_log", "games.log", CVAR_ARCHIVE, 0, qfalse  },
-	{ &g_logSync, "g_logSync", "0", CVAR_ARCHIVE, 0, qfalse  },
-
-	{ &g_password, "g_password", "", CVAR_USERINFO, 0, qfalse  },
-
-	{ &g_banIPs, "g_banIPs", "", CVAR_ARCHIVE, 0, qfalse  },
-	{ &g_filterBan, "g_filterBan", "1", CVAR_ARCHIVE, 0, qfalse  },
-
-	{ &g_needpass, "g_needpass", "0", CVAR_SERVERINFO | CVAR_ROM, 0, qfalse },
-
-	{ &g_dedicated, "dedicated", "0", 0, 0, qfalse  },
-
-	{ &g_speed, "g_speed", "320", 0, 0, qtrue  },
-	{ &g_gravity, "g_gravity", "800", 0, 0, qtrue  },
-	{ &g_knockback, "g_knockback", "1000", 0, 0, qtrue  },
-	{ &g_quadfactor, "g_quadfactor", "3", 0, 0, qtrue  },
-	{ &g_weaponRespawn, "g_weaponrespawn", "5", 0, 0, qtrue  },
-	{ &g_weaponTeamRespawn, "g_weaponTeamRespawn", "30", 0, 0, qtrue },
-	{ &g_forcerespawn, "g_forcerespawn", "20", 0, 0, qtrue },
-	{ &g_inactivity, "g_inactivity", "0", 0, 0, qtrue },
-	{ &g_debugMove, "g_debugMove", "0", 0, 0, qfalse },
-	{ &g_debugDamage, "g_debugDamage", "0", 0, 0, qfalse },
-	{ &g_debugAlloc, "g_debugAlloc", "0", 0, 0, qfalse },
-	{ &g_motd, "g_motd", "", 0, 0, qfalse },
-	{ &g_blood, "com_blood", "1", 0, 0, qfalse },
-
-	{ &g_basePL, "g_basePL", "150", 0, 0, qtrue },
-	{ &g_allowSpectatorChat, "g_allowSpectatorChat", "", 0, 0, qtrue },
-	{ &g_meleeDamage, "g_meleeDamage", "10", 0, 0, qtrue },
-	{ &g_meleeDiveRange, "g_meleeDiveRange", "700", 0, 0, qtrue },
-	{ &g_meleeRange, "g_meleeRange", "32", 0, 0, qtrue },
-	{ &g_chargeDelay, "g_chargeDelay", "750", 0, 0, qtrue },
-	{ &g_hitStun, "g_hitStun", "", 0, 0, qtrue },
-	{ &g_meleeOnly, "g_meleeOnly", "", 0, 0, qtrue },
-	{ &g_noFlight, "g_noFlight", "", 0, 0, qtrue },
-	{ &g_plKillBonusPct, "g_plKillBonusPct", ".1", 0, 0, qtrue },
-	{ &g_maxSpawnPL, "g_maxSpawnPL", "999", 0, 0, qtrue },
-	{ &g_flightCost, "g_flightCost", "50", 0, 0, qtrue },
-	{ &g_flightCostPct, "g_flightCostPct", "0", 0, 0, qtrue },
-	{ &g_boostCost, "g_boostCost", "350", 0, 0, qtrue },
-	{ &g_boostCostPct, "g_boostCostPct", "3", 0, 0, qtrue },
-	{ &g_blockCost, "g_blockCost", "2", 0, 0, qtrue },
-	{ &g_blockCostPct, "g_blockCostPct", "3", 0, 0, qtrue },
-	{ &g_kiRegen, "g_kiRegen", "0", 0, 0, qtrue },
-	{ &g_kiRegenPct, "g_kiRegenPct", "0.6", 0, 0, qtrue },
-	{ &g_kiCharge, "g_kiCharge", "0", 0, 0, qtrue },
-	{ &g_kiChargePct, "g_kiChargePct", "15", 0, 0, qtrue },
-	{ &g_blockDelay, "g_blockDelay", "2", 0, 0, qtrue },
-	{ &g_blockLength, "g_blockLength", "3", 0, 0, qtrue },
-
-	{ &g_podiumDist, "g_podiumDist", "80", 0, 0, qfalse },
-	{ &g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse },
-
-	{ &g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse },
-	{ &g_listEntity, "g_listEntity", "0", 0, 0, qfalse },
-
-	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse},
-	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse},
-	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse},
-
-	{ &g_rankings, "g_rankings", "0", 0, 0, qfalse}
+// BFP - single-line cvar declaration, from ec-/baseq3a (by Razor)
+#define G_CVAR_LIST
+	#include "g_cvar.h"
+#undef G_CVAR_LIST
 
 };
 
