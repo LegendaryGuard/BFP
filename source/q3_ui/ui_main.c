@@ -216,9 +216,6 @@ static cvarTable_t		cvarTable[] = {
 	{ &ui_cdkeychecked, "ui_cdkeychecked", "0", CVAR_ROM }
 };
 
-// bk001129 - made static to avoid aliasing
-static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
-
 
 /*
 =================
@@ -229,7 +226,7 @@ void UI_RegisterCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
 
-	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
+	for ( i = 0, cv = cvarTable ; i < ARRAY_LEN( cvarTable ) ; i++, cv++ ) {
 		trap_Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
 	}
 }
@@ -243,7 +240,7 @@ void UI_UpdateCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
 
-	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
+	for ( i = 0, cv = cvarTable ; i < ARRAY_LEN( cvarTable ) ; i++, cv++ ) {
 		trap_Cvar_Update( cv->vmCvar );
 	}
 }

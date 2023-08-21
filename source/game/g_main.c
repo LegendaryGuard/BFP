@@ -204,9 +204,6 @@ static cvarTable_t		gameCvarTable[] = {
 
 };
 
-// bk001129 - made static to avoid aliasing
-static int gameCvarTableSize = sizeof( gameCvarTable ) / sizeof( gameCvarTable[0] );
-
 
 void G_InitGame( int levelTime, int randomSeed, int restart );
 void G_RunFrame( int levelTime );
@@ -352,7 +349,7 @@ void G_RegisterCvars( void ) {
 	cvarTable_t	*cv;
 	qboolean remapped = qfalse;
 
-	for ( i = 0, cv = gameCvarTable ; i < gameCvarTableSize ; i++, cv++ ) {
+	for ( i = 0, cv = gameCvarTable ; i < ARRAY_LEN( gameCvarTable ) ; i++, cv++ ) {
 		trap_Cvar_Register( cv->vmCvar, cv->cvarName,
 			cv->defaultString, cv->cvarFlags );
 		if ( cv->vmCvar )
@@ -386,7 +383,7 @@ void G_UpdateCvars( void ) {
 	cvarTable_t	*cv;
 	qboolean remapped = qfalse;
 
-	for ( i = 0, cv = gameCvarTable ; i < gameCvarTableSize ; i++, cv++ ) {
+	for ( i = 0, cv = gameCvarTable ; i < ARRAY_LEN( gameCvarTable ) ; i++, cv++ ) {
 		if ( cv->vmCvar ) {
 			trap_Cvar_Update( cv->vmCvar );
 
