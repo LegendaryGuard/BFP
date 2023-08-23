@@ -31,6 +31,8 @@ DISPLAY OPTIONS MENU
 #include "ui_local.h"
 
 
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 #define ART_FRAMEL			"menu/art/frame2_l"
 #define ART_FRAMER			"menu/art/frame1_r"
 #define ART_BACK0			"menu/art/back_0"
@@ -48,9 +50,9 @@ DISPLAY OPTIONS MENU
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 
 	menutext_s		graphics;
 	menutext_s		display;
@@ -124,29 +126,31 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.menu.wrapAround = qtrue;
 	displayOptionsInfo.menu.fullscreen = qtrue;
 
-	displayOptionsInfo.banner.generic.type		= MTYPE_BTEXT;
-	displayOptionsInfo.banner.generic.flags		= QMF_CENTER_JUSTIFY;
+	// BFP - Menu background
+	displayOptionsInfo.menubg.generic.type		= MTYPE_BITMAP;
+	displayOptionsInfo.menubg.generic.name		= ART_MENUBG;
+	displayOptionsInfo.menubg.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	displayOptionsInfo.menubg.generic.x			= 0;
+	displayOptionsInfo.menubg.generic.y			= 0;
+	displayOptionsInfo.menubg.width				= 640;
+	displayOptionsInfo.menubg.height			= 480;
+
+	// BFP - barlog
+	displayOptionsInfo.barlog.generic.type		= MTYPE_BITMAP;
+	displayOptionsInfo.barlog.generic.name		= ART_BARLOG;
+	displayOptionsInfo.barlog.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	displayOptionsInfo.barlog.generic.x			= 140;
+	displayOptionsInfo.barlog.generic.y			= 5;
+	displayOptionsInfo.barlog.width				= 355;
+	displayOptionsInfo.barlog.height			= 90;
+
+	displayOptionsInfo.banner.generic.type		= MTYPE_PTEXT; // BFP - modified SYSTEM SETUP type
+	displayOptionsInfo.banner.generic.flags		= QMF_CENTER_JUSTIFY | QMF_INACTIVE; // BFP - modified SYSTEM SETUP flags
 	displayOptionsInfo.banner.generic.x			= 320;
-	displayOptionsInfo.banner.generic.y			= 16;
+	displayOptionsInfo.banner.generic.y			= 45; // BFP - modified SYSTEM SETUP y position
 	displayOptionsInfo.banner.string			= "SYSTEM SETUP";
 	displayOptionsInfo.banner.color				= color_white;
-	displayOptionsInfo.banner.style				= UI_CENTER;
-
-	displayOptionsInfo.framel.generic.type		= MTYPE_BITMAP;
-	displayOptionsInfo.framel.generic.name		= ART_FRAMEL;
-	displayOptionsInfo.framel.generic.flags		= QMF_INACTIVE;
-	displayOptionsInfo.framel.generic.x			= 0;  
-	displayOptionsInfo.framel.generic.y			= 78;
-	displayOptionsInfo.framel.width				= 256;
-	displayOptionsInfo.framel.height			= 329;
-
-	displayOptionsInfo.framer.generic.type		= MTYPE_BITMAP;
-	displayOptionsInfo.framer.generic.name		= ART_FRAMER;
-	displayOptionsInfo.framer.generic.flags		= QMF_INACTIVE;
-	displayOptionsInfo.framer.generic.x			= 376;
-	displayOptionsInfo.framer.generic.y			= 76;
-	displayOptionsInfo.framer.width				= 256;
-	displayOptionsInfo.framer.height			= 334;
+	displayOptionsInfo.banner.style				= UI_CENTER | UI_BIGFONT; // BFP - modified SYSTEM SETUP style
 
 	displayOptionsInfo.graphics.generic.type		= MTYPE_PTEXT;
 	displayOptionsInfo.graphics.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -156,7 +160,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.graphics.generic.y			= 240 - 2 * PROP_HEIGHT;
 	displayOptionsInfo.graphics.string				= "GRAPHICS";
 	displayOptionsInfo.graphics.style				= UI_RIGHT;
-	displayOptionsInfo.graphics.color				= color_red;
+	displayOptionsInfo.graphics.color				= color_white; // BFP - modified GRAPHICS color
 
 	displayOptionsInfo.display.generic.type			= MTYPE_PTEXT;
 	displayOptionsInfo.display.generic.flags		= QMF_RIGHT_JUSTIFY;
@@ -166,7 +170,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.display.generic.y			= 240 - PROP_HEIGHT;
 	displayOptionsInfo.display.string				= "DISPLAY";
 	displayOptionsInfo.display.style				= UI_RIGHT;
-	displayOptionsInfo.display.color				= color_red;
+	displayOptionsInfo.display.color				= color_white; // BFP - modified DISPLAY color
 
 	displayOptionsInfo.sound.generic.type			= MTYPE_PTEXT;
 	displayOptionsInfo.sound.generic.flags			= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -176,7 +180,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.sound.generic.y				= 240;
 	displayOptionsInfo.sound.string					= "SOUND";
 	displayOptionsInfo.sound.style					= UI_RIGHT;
-	displayOptionsInfo.sound.color					= color_red;
+	displayOptionsInfo.sound.color					= color_white; // BFP - modified SOUND color
 
 	displayOptionsInfo.network.generic.type			= MTYPE_PTEXT;
 	displayOptionsInfo.network.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -186,7 +190,7 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.network.generic.y			= 240 + PROP_HEIGHT;
 	displayOptionsInfo.network.string				= "NETWORK";
 	displayOptionsInfo.network.style				= UI_RIGHT;
-	displayOptionsInfo.network.color				= color_red;
+	displayOptionsInfo.network.color				= color_white; // BFP - modified NETWORK color
 
 	y = 240 - 1 * (BIGCHAR_HEIGHT+2);
 	displayOptionsInfo.brightness.generic.type		= MTYPE_SLIDER;
@@ -219,14 +223,14 @@ static void UI_DisplayOptionsMenu_Init( void ) {
 	displayOptionsInfo.back.generic.callback	= UI_DisplayOptionsMenu_Event;
 	displayOptionsInfo.back.generic.id			= ID_BACK;
 	displayOptionsInfo.back.generic.x			= 0;
-	displayOptionsInfo.back.generic.y			= 480-64;
-	displayOptionsInfo.back.width				= 128;
-	displayOptionsInfo.back.height				= 64;
+	displayOptionsInfo.back.generic.y			= 480-80; // BFP - modified BACK button y position
+	displayOptionsInfo.back.width				= 80; // BFP - modified BACK button width
+	displayOptionsInfo.back.height				= 80; // BFP - modified BACK button height
 	displayOptionsInfo.back.focuspic			= ART_BACK1;
 
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.banner );
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.framel );
-	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.framer );
+	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.barlog ); // BFP - barlog
+	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.banner ); // BFP - banner draws after
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.graphics );
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.display );
 	Menu_AddItem( &displayOptionsInfo.menu, ( void * ) &displayOptionsInfo.sound );
@@ -246,8 +250,8 @@ UI_DisplayOptionsMenu_Cache
 ===============
 */
 void UI_DisplayOptionsMenu_Cache( void ) {
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
 }
