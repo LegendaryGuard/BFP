@@ -964,11 +964,12 @@ void UI_Cache_f( void ) {
 	InGame_Cache();
 	ConfirmMenu_Cache();
 	PlayerModel_Cache();
-	PlayerSettings_Cache();
+//	PlayerSettings_Cache(); // BFP - Player settings isn't available
 	Controls_Cache();
 	Demos_Cache();
 	UI_CinematicsMenu_Cache();
 	Preferences_Cache();
+	BFPPreferences_Cache(); // BFP - BFP OPTIONS
 	ServerInfo_Cache();
 	SpecifyServer_Cache();
 	ArenaServers_Cache();

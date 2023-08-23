@@ -29,7 +29,9 @@ A legendary 90s era Quake 3 Arena mod.
 > > > > 5.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
 > > >
 > > > 5.4. [Optional](#optional)
-> > 6. [License](#license)
+> > 6. [Notes](#notes)
+> > 7. [License](#license)
+> > 8. [Credits](#credits)
 
 # TODO list:
 
@@ -381,9 +383,9 @@ The information in the map file can be useful for debugging and performance anal
     sudo apt-get install build-essential libc6-dev-i386 g++-multilib gcc-mingw-w64
     ```
 
-    2. Simply execute: 
+    2. Simply execute (`-j4` is the number of parallel jobs you want to run during the compilation, in that case is set to 4): 
     ```sh
-    make
+    make -j4
     ```
     3. And find .so files in `build/release-linux-x86_64`, for 32-bit: `build/release-linux-x86`. <br/><br/>
 
@@ -411,9 +413,22 @@ The information in the map file can be useful for debugging and performance anal
 
 <br/>
 
+### Notes
+
 **IMPORTANT NOTE**: This repository was initialized from https://github.com/marconett/q3a.
 
-#### Currently non-used source code files and not in the build tools:
+#### Added source code files:
+
+- cg_cvar.h
+- g_cvar.h
+- ui_cvar.h
+- ui_bfpoptions.c
+
+#### Removed source code files from the build tools:
+
+- ui_playersettings.c
+
+#### Unused source code files and unavailable in the build tools:
 
 - cg_particles.c
 - ui_rankings.c
@@ -428,7 +443,7 @@ The mod source code is GPLv3 licensed, the source code contents are based on Qua
 
 ## Credits
 
-Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their packages.
+Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their assets.
 
 #### Bid For Power Staff Members	
 

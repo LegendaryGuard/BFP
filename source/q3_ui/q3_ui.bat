@@ -32,6 +32,8 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_atoms.c
 @if errorlevel 1 goto quit
+%cc% %src%/q3_ui/ui_bfpoptions.c
+@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_connect.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_controls2.c
@@ -55,8 +57,6 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 %cc% %src%/q3_ui/ui_playermodel.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_players.c
-@if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_playersettings.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_preferences.c
 @if errorlevel 1 goto quit

@@ -461,6 +461,7 @@ UIOBJ_ = \
   $(B)/ui/ui_main.o \
   $(B)/ui/ui_addbots.o \
   $(B)/ui/ui_atoms.o \
+  $(B)/ui/ui_bfpoptions.o \
   $(B)/ui/ui_cdkey.o \
   $(B)/ui/ui_cinematics.o \
   $(B)/ui/ui_confirm.o \
@@ -478,7 +479,6 @@ UIOBJ_ = \
   $(B)/ui/ui_options.o \
   $(B)/ui/ui_playermodel.o \
   $(B)/ui/ui_players.o \
-  $(B)/ui/ui_playersettings.o \
   $(B)/ui/ui_preferences.o \
   $(B)/ui/ui_qmenu.o \
   $(B)/ui/ui_removebots.o \

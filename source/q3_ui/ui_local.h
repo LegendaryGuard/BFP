@@ -339,11 +339,20 @@ extern void UI_CDKeyMenu_f( void );
 extern void UI_PlayerModelMenu( void );
 extern void PlayerModel_Cache( void );
 
+// BFP - Player settings isn't available
+#if 0
 //
 // ui_playersettings.c
 //
 extern void UI_PlayerSettingsMenu( void );
 extern void PlayerSettings_Cache( void );
+#endif
+
+//
+// ui_bfpoptions.c
+//
+extern void UI_BFPPreferencesMenu( void ); // BFP - BFP OPTIONS
+extern void BFPPreferences_Cache( void ); // BFP - BFP OPTIONS
 
 //
 // ui_preferences.c

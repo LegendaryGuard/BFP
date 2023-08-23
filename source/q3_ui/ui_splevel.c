@@ -450,7 +450,7 @@ static void UI_SPLevelMenu_PlayerEvent( void* ptr, int notification ) {
 		return;
 	}
 
-	UI_PlayerSettingsMenu();
+	UI_PlayerModelMenu(); // BFP - Redirect to the character selection menu, before UI_PlayerSettingsMenu();
 }
 
 
