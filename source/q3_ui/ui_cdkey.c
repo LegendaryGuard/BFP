@@ -31,7 +31,8 @@ CD KEY MENU
 
 #include "ui_local.h"
 
-
+#define ART_MENUBG		"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG		"menu/art/cap_barlog"	// BFP - barlog
 #define ART_FRAME		"menu/art/cut_frame"
 #define ART_ACCEPT0		"menu/art/accept_0"
 #define ART_ACCEPT1		"menu/art/accept_1"	
@@ -46,6 +47,8 @@ CD KEY MENU
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
 	menubitmap_s	frame;
 
@@ -146,7 +149,7 @@ static void UI_CDKeyMenu_DrawKey( void *self ) {
 		color = color_yellow;
 	}
 	else {
-		color = color_orange;
+		color = color_white; // BFP - modified CD key texts color
 	}
 
 	x = 320 - 8 * BIGCHAR_WIDTH;
@@ -195,12 +198,31 @@ static void UI_CDKeyMenu_Init( void ) {
 	cdkeyMenuInfo.menu.wrapAround = qtrue;
 	cdkeyMenuInfo.menu.fullscreen = qtrue;
 
-	cdkeyMenuInfo.banner.generic.type				= MTYPE_BTEXT;
+	// BFP - Menu background
+	cdkeyMenuInfo.menubg.generic.type				= MTYPE_BITMAP;
+	cdkeyMenuInfo.menubg.generic.name				= ART_MENUBG;
+	cdkeyMenuInfo.menubg.generic.flags				= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	cdkeyMenuInfo.menubg.generic.x					= 0;
+	cdkeyMenuInfo.menubg.generic.y					= 0;
+	cdkeyMenuInfo.menubg.width						= 640;
+	cdkeyMenuInfo.menubg.height						= 480;
+
+	// BFP - barlog
+	cdkeyMenuInfo.barlog.generic.type				= MTYPE_BITMAP;
+	cdkeyMenuInfo.barlog.generic.name				= ART_BARLOG;
+	cdkeyMenuInfo.barlog.generic.flags				= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	cdkeyMenuInfo.barlog.generic.x					= 140;
+	cdkeyMenuInfo.barlog.generic.y 					= 5;
+	cdkeyMenuInfo.barlog.width						= 355;
+	cdkeyMenuInfo.barlog.height						= 90;
+
+	cdkeyMenuInfo.banner.generic.type				= MTYPE_PTEXT; // BFP - modified CD KEY title type
+	cdkeyMenuInfo.banner.generic.flags				= QMF_CENTER_JUSTIFY | QMF_INACTIVE; // BFP - modified CD KEY title flags
 	cdkeyMenuInfo.banner.generic.x					= 320;
-	cdkeyMenuInfo.banner.generic.y					= 16;
+	cdkeyMenuInfo.banner.generic.y					= 45; // BFP - modified CD KEY title y position
 	cdkeyMenuInfo.banner.string						= "CD KEY";
 	cdkeyMenuInfo.banner.color						= color_white;
-	cdkeyMenuInfo.banner.style						= UI_CENTER;
+	cdkeyMenuInfo.banner.style						= UI_CENTER | UI_BIGFONT; // BFP - modified CD KEY title style
 
 	cdkeyMenuInfo.frame.generic.type				= MTYPE_BITMAP;
 	cdkeyMenuInfo.frame.generic.name				= ART_FRAME;
@@ -225,9 +247,9 @@ static void UI_CDKeyMenu_Init( void ) {
 	cdkeyMenuInfo.accept.generic.id					= ID_ACCEPT;
 	cdkeyMenuInfo.accept.generic.callback			= UI_CDKeyMenu_Event;
 	cdkeyMenuInfo.accept.generic.x					= 640;
-	cdkeyMenuInfo.accept.generic.y					= 480-64;
-	cdkeyMenuInfo.accept.width						= 128;
-	cdkeyMenuInfo.accept.height						= 64;
+	cdkeyMenuInfo.accept.generic.y					= 480-80; // BFP - modified ACCEPT button y position
+	cdkeyMenuInfo.accept.width						= 80; // BFP - modified ACCEPT button width
+	cdkeyMenuInfo.accept.height						= 80; // BFP - modified ACCEPT button height
 	cdkeyMenuInfo.accept.focuspic					= ART_ACCEPT1;
 
 	cdkeyMenuInfo.back.generic.type					= MTYPE_BITMAP;
@@ -236,12 +258,14 @@ static void UI_CDKeyMenu_Init( void ) {
 	cdkeyMenuInfo.back.generic.id					= ID_BACK;
 	cdkeyMenuInfo.back.generic.callback				= UI_CDKeyMenu_Event;
 	cdkeyMenuInfo.back.generic.x					= 0;
-	cdkeyMenuInfo.back.generic.y					= 480-64;
-	cdkeyMenuInfo.back.width						= 128;
-	cdkeyMenuInfo.back.height						= 64;
+	cdkeyMenuInfo.back.generic.y					= 480-80; // BFP - modified BACK button y position
+	cdkeyMenuInfo.back.width						= 80; // BFP - modified BACK button width
+	cdkeyMenuInfo.back.height						= 80; // BFP - modified BACK button height
 	cdkeyMenuInfo.back.focuspic						= ART_BACK1;
 
-	Menu_AddItem( &cdkeyMenuInfo.menu, &cdkeyMenuInfo.banner );
+	Menu_AddItem( &cdkeyMenuInfo.menu, &cdkeyMenuInfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &cdkeyMenuInfo.menu, &cdkeyMenuInfo.barlog ); // BFP - barlog
+	Menu_AddItem( &cdkeyMenuInfo.menu, &cdkeyMenuInfo.banner ); // BFP - banner draws after
 	Menu_AddItem( &cdkeyMenuInfo.menu, &cdkeyMenuInfo.frame );
 	Menu_AddItem( &cdkeyMenuInfo.menu, &cdkeyMenuInfo.cdkey );
 	Menu_AddItem( &cdkeyMenuInfo.menu, &cdkeyMenuInfo.accept );
