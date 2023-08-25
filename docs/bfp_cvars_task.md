@@ -76,6 +76,7 @@
 
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
+- [x] ~~cg_crosshairColor~~
 
 #### Cvar Gametypes:
 

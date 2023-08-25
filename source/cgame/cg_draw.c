@@ -1661,6 +1661,32 @@ CROSSHAIR
 ================================================================================
 */
 
+/*
+=================
+CG_SetCrosshairColor
+=================
+*/
+static void CG_SetCrosshairColor( void ) { // BFP - Crosshair color
+	static int		colorNum;
+	static float	*colors[] = {
+		colorBlack,
+		colorBlue,
+		colorGreen,
+		colorCyan,
+		colorRed,
+		colorMagenta,
+		colorYellow,
+		colorWhite
+	};
+
+	colorNum = cg_crosshairColor.integer;
+	if ( !colorNum ) { // In BFP, if this cvar is 0, then set to the default value
+		colorNum = 7;
+	}
+	colorNum = ( colorNum - 1 ) % ARRAY_LEN( colors );
+
+	trap_R_SetColor( colors[colorNum] );
+}
 
 /*
 =================
@@ -1700,9 +1726,9 @@ static void CG_DrawCrosshair(void) {
 
 		CG_ColorForHealth( hcolor );
 		trap_R_SetColor( hcolor );
-	} else {
-		trap_R_SetColor( NULL );
 	}
+
+	CG_SetCrosshairColor(); // BFP - Crosshair color
 
 	w = h = cg_crosshairSize.value;
 
