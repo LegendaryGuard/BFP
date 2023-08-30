@@ -3,18 +3,6 @@
 ## PENDING:
 
 - g_basepl [1-999]: set the starting power level from one thousand to one mil.
-- cg_kitrail [0-99]: set the length of the ki trail. 0 turns it off.
-- cg_lightauras [0/1]: turn on or off the aura dynamic lights.
-- cg_lightexplosions [0/1]: turn on or off the explosion dynamic lights.
-- cg_chargeupAlert [0/1]: turn on or off the "ready" message when charging attacks.
-- cg_stfu [0/1]: disable character voices when firing attacks.
-- cg_lowpolysphere [0/1]: force the use of a lower polycount sphere.
-- cg_explosionShell [0/1]: turn on or off the explosion shell.
-- cg_explosionSmoke [0/1]: turn on or off the explosion smoke.
-- cg_explosionRing [0/1]: turn on or off the explosion ring.
-- cg_particles [0/1]: turn on or off particle effects.
-- cg_playHitSound [0/1]: turn on or off the q3 hit "ping".
-- cg_flytilt [0/1]: toggle the tilting during flight.
 - g_blockLength = "3"
 - g_blockDelay = "2"
 - g_kiChargePct = "15"
@@ -47,35 +35,35 @@
 
 - g_hitStun [0/1]: turn on or off the melee hit stun.
 - cg_drawKiWarning [0/1]: turn on or off the low ki warning.
-- cg_crosshairhealth [0/1]: turn on or off the feature that makes the crosshair turn red when you score a hit.
+- cg_crosshairHealth [0/1]: turn on or off the feature that makes the crosshair turn red when you score a hit.
 
 #### Cvar Gametypes:
 
 - g_gametype 2 = single player (in original BFP, that doesn't show in UI, so make Single Player option hidden)
 
+## DONE BUT NOT IN CGAME:
 
-## DONE BUT NOT IN UI SETTINGS:
-
-(TODO: Add in BFP Options -> Fixed Third Person - radio button )
-- cg_fixedThirdPerson
-
-(TODO: Add in BFP Options -> Viewpoint: (Third Person (cg_thirdPerson 1) / First Person (cg_thirdPerson 0 and cg_drawOwnModel 0) / First Person Vis Mode (cg_thirdPerson 0 and cg_drawOwnModel 1) )
-- cg_drawOwnModel
-
-(TODO: Add in BFP Options -> Accurate Crosshair - radio button )
-- cg_stableCrosshair [0/1]: turn off the accurate crosshair
-
-(TODO: Add in BFP Options -> Disable voices: )
-
-(TODO: Add in BFP Options -> Low Polycount Sphere: )
-
-... look in the BFP Options menu screenshot in [README.md](README.md)
+- cg_stfu [0/1]: disable character voices when firing attacks.
+- cg_lowpolysphere [0/1]: force the use of a lower polycount sphere.
+- cg_kitrail [0-99]: set the length of the ki trail. 0 turns it off.
+- cg_lightauras [0/1]: turn on or off the aura dynamic lights.
+- cg_lightexplosions [0/1]: turn on or off the explosion dynamic lights.
+- cg_chargeupAlert [0/1]: turn on or off the "ready" message when charging attacks.
+- cg_explosionShell [0/1]: turn on or off the explosion shell.
+- cg_explosionSmoke [0/1]: turn on or off the explosion smoke.
+- cg_explosionRing [0/1]: turn on or off the explosion ring.
+- cg_particles [0/1]: turn on or off particle effects.
+- cg_playHitSound [0/1]: turn on or off the q3 hit "ping".
+- cg_flytilt [0/1]: toggle the tilting during flight.
 
 
 ## COMPLETED:
 
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
+- [x] ~~cg_fixedThirdPerson~~
+- [x] ~~cg_drawOwnModel~~
+- [x] ~~cg_stableCrosshair~~
 
 #### Cvar Gametypes:
 
