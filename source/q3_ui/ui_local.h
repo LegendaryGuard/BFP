@@ -753,4 +753,19 @@ void UI_SignupMenu( void );
 void RankStatus_Cache( void );
 void UI_RankStatusMenu( void );
 
+// BFP - Unpack music, memory management for ui_mp3decoder
+//
+// ui_mem.c
+//
+void UI_InitMem( void );
+void *UI_AllocMem( int size );
+void UI_FreeMem( void *ptr );
+void UI_DefragmentMemory( void );
+
+// BFP - Unpack music, function to decode mp3
+//
+// ui_mp3decoder.c
+//
+qboolean	S_decodeMP3( char *mp3File, char *wavFile );
+
 #endif

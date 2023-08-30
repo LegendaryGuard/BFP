@@ -3,6 +3,7 @@ ui_main
 ..\..\..\source\q3_ui\ui_syscalls
 ui_gameinfo
 ui_atoms
+ui_bfpoptions
 ui_cinematics
 ui_connect
 ui_controls2
@@ -10,6 +11,8 @@ ui_demo2
 ui_mfield
 ui_credits
 ui_menu
+ui_mem
+ui_mp3decoder
 ui_ingame
 ui_confirm
 ui_setup
@@ -19,7 +22,6 @@ ui_sound
 ui_network
 ui_playermodel
 ui_players
-ui_playersettings
 ui_preferences
 ui_qmenu
 ui_serverinfo

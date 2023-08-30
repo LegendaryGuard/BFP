@@ -88,4 +88,5 @@ double tan( double x );
 int abs( int n );
 double fabs( double x );
 double acos( double x );
+float pow( float x, float y ); // BFP - Unpack music, memory management for ui_mp3decoder
 

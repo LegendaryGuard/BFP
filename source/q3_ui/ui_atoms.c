@@ -1066,6 +1066,9 @@ UI_Init
 =================
 */
 void UI_Init( void ) {
+	//TA: dyn memory
+	UI_InitMem(); // BFP - Unpack music, memory management for ui_mp3decoder
+
 	UI_RegisterCvars();
 
 	UI_InitGameinfo();

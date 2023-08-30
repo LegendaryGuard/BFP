@@ -28,6 +28,10 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/game/q_shared.c
 @if errorlevel 1 goto quit
+%cc% %src%/q3_ui/ui_mem.c
+@if errorlevel 1 goto quit
+%cc% %src%/q3_ui/ui_mp3decoder.c
+@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_gameinfo.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_atoms.c

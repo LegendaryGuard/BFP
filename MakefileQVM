@@ -102,6 +102,7 @@ UI_SRC = \
  ui_cdkey ui_ingame ui_serverinfo ui_confirm ui_setup \
  bg_misc bg_lib \
  q_math q_shared \
+ ui_mem ui_mp3decoder \
  ui_gameinfo ui_atoms ui_bfpoptions ui_connect ui_controls2 ui_demo2 ui_mfield \
  ui_credits ui_menu ui_options ui_display ui_sound ui_network ui_playermodel \
  ui_players ui_preferences ui_qmenu ui_servers2 ui_sparena \

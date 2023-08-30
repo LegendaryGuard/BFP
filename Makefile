@@ -472,9 +472,11 @@ UIOBJ_ = \
   $(B)/ui/ui_display.o \
   $(B)/ui/ui_gameinfo.o \
   $(B)/ui/ui_ingame.o \
+  $(B)/ui/ui_mem.o \
   $(B)/ui/ui_menu.o \
   $(B)/ui/ui_mfield.o \
   $(B)/ui/ui_mods.o \
+  $(B)/ui/ui_mp3decoder.o \
   $(B)/ui/ui_network.o \
   $(B)/ui/ui_options.o \
   $(B)/ui/ui_playermodel.o \
