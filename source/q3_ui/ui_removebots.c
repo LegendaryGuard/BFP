@@ -32,6 +32,7 @@ REMOVE BOTS MENU
 #include "ui_local.h"
 
 
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 #define ART_BACKGROUND		"menu/art/addbotframe"
 #define ART_BACK0			"menu/art/back_0"
 #define ART_BACK1			"menu/art/back_1"	
@@ -57,6 +58,7 @@ REMOVE BOTS MENU
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
 	menubitmap_s	background;
 
@@ -121,7 +123,7 @@ static void UI_RemoveBotsMenu_BotEvent( void* ptr, int event ) {
 		return;
 	}
 
-	removeBotsMenuInfo.bots[removeBotsMenuInfo.selectedBotNum].color = color_orange;
+	removeBotsMenuInfo.bots[removeBotsMenuInfo.selectedBotNum].color = color_white; // BFP - modified color
 	removeBotsMenuInfo.selectedBotNum = ((menucommon_s*)ptr)->id - ID_BOTNAME0;
 	removeBotsMenuInfo.bots[removeBotsMenuInfo.selectedBotNum].color = color_white;
 }
@@ -237,12 +239,22 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	UI_RemoveBotsMenu_SetBotNames();
 	count = removeBotsMenuInfo.numBots < 7 ? removeBotsMenuInfo.numBots : 7;
 
-	removeBotsMenuInfo.banner.generic.type		= MTYPE_BTEXT;
-	removeBotsMenuInfo.banner.generic.x			= 320;
-	removeBotsMenuInfo.banner.generic.y			= 16;
+	// BFP - barlog
+	removeBotsMenuInfo.barlog.generic.type		= MTYPE_BITMAP;
+	removeBotsMenuInfo.barlog.generic.name		= ART_BARLOG;
+	removeBotsMenuInfo.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	removeBotsMenuInfo.barlog.generic.x			= 140;
+	removeBotsMenuInfo.barlog.generic.y			= 5;
+	removeBotsMenuInfo.barlog.width				= 355;
+	removeBotsMenuInfo.barlog.height			= 90;
+
+	removeBotsMenuInfo.banner.generic.type 		= MTYPE_PTEXT; // BFP - modified REMOVE BOTS title type
+	removeBotsMenuInfo.banner.generic.flags 	= QMF_CENTER_JUSTIFY|QMF_INACTIVE; // BFP - modified REMOVE BOTS title flags
+	removeBotsMenuInfo.banner.generic.x 		= 320; // BFP - modified REMOVE BOTS title x position
+	removeBotsMenuInfo.banner.generic.y 		= 45; // BFP - modified REMOVE BOTS title y position
 	removeBotsMenuInfo.banner.string			= "REMOVE BOTS";
 	removeBotsMenuInfo.banner.color				= color_white;
-	removeBotsMenuInfo.banner.style				= UI_CENTER;
+	removeBotsMenuInfo.banner.style				= UI_CENTER|UI_BIGFONT; // BFP - modified REMOVE BOTS title style
 
 	removeBotsMenuInfo.background.generic.type	= MTYPE_BITMAP;
 	removeBotsMenuInfo.background.generic.name	= ART_BACKGROUND;
@@ -288,7 +300,7 @@ static void UI_RemoveBotsMenu_Init( void ) {
 		removeBotsMenuInfo.bots[n].generic.y		= y;
 		removeBotsMenuInfo.bots[n].generic.callback	= UI_RemoveBotsMenu_BotEvent;
 		removeBotsMenuInfo.bots[n].string			= removeBotsMenuInfo.botnames[n];
-		removeBotsMenuInfo.bots[n].color			= color_orange;
+		removeBotsMenuInfo.bots[n].color			= color_white; // BFP - modified color
 		removeBotsMenuInfo.bots[n].style			= UI_LEFT|UI_SMALLFONT;
 	}
 
@@ -297,10 +309,10 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.delete.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.delete.generic.id		= ID_DELETE;
 	removeBotsMenuInfo.delete.generic.callback	= UI_RemoveBotsMenu_DeleteEvent;
-	removeBotsMenuInfo.delete.generic.x			= 320+128-128;
-	removeBotsMenuInfo.delete.generic.y			= 256+128-64;
-	removeBotsMenuInfo.delete.width  			= 128;
-	removeBotsMenuInfo.delete.height  			= 64;
+	removeBotsMenuInfo.delete.generic.x			= 320; // BFP - modified DELETE button x position
+	removeBotsMenuInfo.delete.generic.y			= 320; // BFP - modified DELETE button y position
+	removeBotsMenuInfo.delete.width  			= 80; // BFP - modified DELETE button width
+	removeBotsMenuInfo.delete.height  			= 80; // BFP - modified DELETE button height
 	removeBotsMenuInfo.delete.focuspic			= ART_DELETE1;
 
 	removeBotsMenuInfo.back.generic.type		= MTYPE_BITMAP;
@@ -308,13 +320,14 @@ static void UI_RemoveBotsMenu_Init( void ) {
 	removeBotsMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	removeBotsMenuInfo.back.generic.id			= ID_BACK;
 	removeBotsMenuInfo.back.generic.callback	= UI_RemoveBotsMenu_BackEvent;
-	removeBotsMenuInfo.back.generic.x			= 320-128;
-	removeBotsMenuInfo.back.generic.y			= 256+128-64;
-	removeBotsMenuInfo.back.width				= 128;
-	removeBotsMenuInfo.back.height				= 64;
+	removeBotsMenuInfo.back.generic.x			= 240; // BFP - modified BACK button x position
+	removeBotsMenuInfo.back.generic.y			= 320; // BFP - modified BACK button y position
+	removeBotsMenuInfo.back.width				= 80; // BFP - modified BACK button width
+	removeBotsMenuInfo.back.height				= 80; // BFP - modified BACK button height
 	removeBotsMenuInfo.back.focuspic			= ART_BACK1;
 
 	Menu_AddItem( &removeBotsMenuInfo.menu, &removeBotsMenuInfo.background );
+	Menu_AddItem( &removeBotsMenuInfo.menu, &removeBotsMenuInfo.barlog ); // BFP - barlog
 	Menu_AddItem( &removeBotsMenuInfo.menu, &removeBotsMenuInfo.banner );
 	Menu_AddItem( &removeBotsMenuInfo.menu, &removeBotsMenuInfo.arrows );
 	Menu_AddItem( &removeBotsMenuInfo.menu, &removeBotsMenuInfo.up );
