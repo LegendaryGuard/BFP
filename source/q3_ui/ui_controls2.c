@@ -33,8 +33,8 @@ CONTROLS MENU
 
 #define ART_BACK0			"menu/art/back_0"
 #define ART_BACK1			"menu/art/back_1"
-#define ART_FRAMEL			"menu/art/frame2_l"
-#define ART_FRAMER			"menu/art/frame1_r"
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - cap bar
 
 
 typedef struct {
@@ -100,7 +100,7 @@ typedef struct
 #define ID_KIATTACK3	20	// BFP
 #define ID_KIATTACK4	21	// BFP
 #define ID_KIATTACK5	22	// BFP
-// BFP - non used
+// BFP - unused
 #if 0
 #define ID_WEAPON1		18
 #define ID_WEAPON2		19
@@ -113,28 +113,28 @@ typedef struct
 #define ID_WEAPON9		26
 #endif
 #define ID_ATTACK		23
-#define ID_WEAPPREV		24
-#define ID_WEAPNEXT		25
-#define ID_GESTURE		26
-#define ID_CHAT			27
-#define ID_CHAT2		28
-#define ID_CHAT3		29
-#define ID_CHAT4		30
-#define ID_KICHARGE		31	// BFP
-#define ID_KIUSETOGGLE	32	// BFP
-#define ID_KIUSE		33	// BFP
+#define ID_MELEE		24	// BFP
+#define ID_BLOCK		25	// BFP
+#define ID_WEAPPREV		26
+#define ID_WEAPNEXT		27
+#define ID_GESTURE		28
+#define ID_CHAT			29
+#define ID_CHAT2		30
+#define ID_CHAT3		31
+#define ID_CHAT4		32
+#define ID_KICHARGE		33	// BFP
+#define ID_KIUSETOGGLE	34	// BFP
+#define ID_KIUSE		35	// BFP
 
 // all others
-#define ID_FREELOOK		34	// BFP - before starting from 35
-#define ID_INVERTMOUSE	35
-#define ID_ALWAYSRUN	36
-#define ID_AUTOSWITCH	37
-#define ID_MOUSESPEED	38
-#define ID_JOYENABLE	39
-#define ID_JOYTHRESHOLD	40
-#define ID_SMOOTHMOUSE	41
-
-// BFP - TODO: Add animations as listed on the docs
+#define ID_FREELOOK		36	// BFP - before starting from 35
+#define ID_INVERTMOUSE	37
+#define ID_ALWAYSRUN	38
+#define ID_AUTOSWITCH	39
+#define ID_MOUSESPEED	40
+#define ID_JOYENABLE	41
+#define ID_JOYTHRESHOLD	42
+#define ID_SMOOTHMOUSE	43
 
 #define ANIM_IDLE		0
 #define ANIM_RUN		1
@@ -148,7 +148,7 @@ typedef struct
 #define ANIM_TURNRIGHT	9
 #define ANIM_LOOKUP		10
 #define ANIM_LOOKDOWN	11
-// BFP - non used
+// BFP - unused
 #if 0
 #define ANIM_WEAPON1	12
 #define ANIM_WEAPON2	13
@@ -171,14 +171,16 @@ typedef struct
 #define ANIM_CHAT		19
 #define ANIM_FLY		20 // BFP
 #define ANIM_KICHARGE	21 // BFP
+#define ANIM_MELEE		22 // BFP
+#define ANIM_BLOCK		23 // BFP
 
 typedef struct
 {
 	menuframework_s		menu;
 
+	menubitmap_s		menubg; // BFP - Menu background
+	menubitmap_s		barlog; // BFP - barlog
 	menutext_s			banner;
-	menubitmap_s		framel;
-	menubitmap_s		framer;
 	menubitmap_s		player;
 
 	menutext_s			movement;
@@ -197,16 +199,29 @@ typedef struct
 	menuaction_s		sidestep;
 	menuaction_s		enableflight; // BFP - flight menu action
 	menuaction_s		run;
+	// BFP - unused
+#if 0 	
 	menuaction_s		machinegun;
 	menuaction_s		chainsaw;
 	menuaction_s		shotgun;
 	menuaction_s		grenadelauncher;
 	menuaction_s		rocketlauncher;
-	//menuaction_s		lightning; // BFP - non used
-	//menuaction_s		railgun; // BFP - non used
-	//menuaction_s		plasma; // BFP - non used
-	//menuaction_s		bfg; // BFP - non used
+	menuaction_s		lightning;
+	menuaction_s		railgun;
+	menuaction_s		plasma;
+	menuaction_s		bfg;
+#endif
+	// BFP - Ki attack menu actions
+	menuaction_s		kiattack1;
+	menuaction_s		kiattack2;
+	menuaction_s		kiattack3;
+	menuaction_s		kiattack4;
+	menuaction_s		kiattack5;
+
+
 	menuaction_s		attack;
+	menuaction_s		melee; // BFP - Melee menu action
+	menuaction_s		block; // BFP - Block menu action
 	menuaction_s		prevweapon;
 	menuaction_s		nextweapon;
 	menuaction_s		lookup;
@@ -229,9 +244,11 @@ typedef struct
 	menuaction_s		chat2;
 	menuaction_s		chat3;
 	menuaction_s		chat4;
+
 	menuaction_s		kicharge; // BFP - ki charge menu action
 	menuaction_s		kiusetoggle; // BFP - ki use toggle menu action
 	menuaction_s		kiuse; // BFP - ki use menu action
+
 	menuradiobutton_s	joyenable;
 	menuslider_s		joythreshold;
 	int					section;
@@ -250,10 +267,8 @@ typedef struct
 
 static controls_t s_controls;
 
-static vec4_t controls_binding_color  = {1.00f, 0.43f, 0.00f, 1.00f}; // bk: Win32 C4305
+static vec4_t controls_binding_color  = {0.90f, 0.90f, 1.00f, 1.00f}; // BFP - Changed to light blue gray (before orange:  {1.00f, 0.43f, 0.00f, 1.00f})
 
-// BFP - TODO: Add animations as listed on the docs, bind key for melee combat, bind key for block
-// and keep the binding options in the correct order
 static bind_t g_bindings[] = 
 {
 	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
@@ -279,11 +294,13 @@ static bind_t g_bindings[] =
 	{"weapon 3",		"ki attack 3",		ID_KIATTACK3,	ANIM_KIATTACK3,	'3',			-1,		-1, -1}, // BFP - ki attack 3 (before shotgun)
 	{"weapon 4",		"ki attack 4",		ID_KIATTACK4,	ANIM_KIATTACK4,	'4',			-1,		-1, -1}, // BFP - ki attack 4 (before grenade launcher)
 	{"weapon 5",		"ki attack 5",		ID_KIATTACK5,	ANIM_KIATTACK5,	'5',			-1,		-1, -1}, // BFP - ki attack 5 (before rocket launcher)
-	//{"weapon 6",		"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6',			-1,		-1, -1}, // BFP - non used
-	//{"weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1,		-1, -1}, // BFP - non used
-	//{"weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1,		-1, -1}, // BFP - non used
-	//{"weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1,		-1, -1}, // BFP - non used
+	//{"weapon 6",		"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6',			-1,		-1, -1}, // BFP - unused
+	//{"weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1,		-1, -1}, // BFP - unused
+	//{"weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1,		-1, -1}, // BFP - unused
+	//{"weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1,		-1, -1}, // BFP - unused
 	{"+attack", 		"attack",			ID_ATTACK,		ANIM_KIATTACK1,	K_CTRL,			-1,		-1, -1},
+	{"+button7",		"Melee Combat",		ID_MELEE,		ANIM_MELEE,		K_ALT,			-1,		-1,	-1}, // BFP - melee
+	{"+button10",		"Block",			ID_BLOCK,		ANIM_BLOCK,		K_CTRL,			-1,		-1, -1}, // BFP - block
 	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[',			-1,		-1, -1},
 	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
 	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
@@ -329,19 +346,28 @@ static menucommon_s *g_movement_controls[] =
 
 static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.attack,
+	(menucommon_s *)&s_controls.melee, // BFP
+	(menucommon_s *)&s_controls.block, // BFP
 	(menucommon_s *)&s_controls.nextweapon,
 	(menucommon_s *)&s_controls.prevweapon,
 	(menucommon_s *)&s_controls.autoswitch,
+	// BFP - unused
+#if 0
 	(menucommon_s *)&s_controls.chainsaw,
 	(menucommon_s *)&s_controls.machinegun,
 	(menucommon_s *)&s_controls.shotgun,
 	(menucommon_s *)&s_controls.grenadelauncher,
 	(menucommon_s *)&s_controls.rocketlauncher,
-	// BFP - non used
-	//(menucommon_s *)&s_controls.lightning,
-	//(menucommon_s *)&s_controls.railgun,
-	//(menucommon_s *)&s_controls.plasma,
-	//(menucommon_s *)&s_controls.bfg,
+	(menucommon_s *)&s_controls.lightning,
+	(menucommon_s *)&s_controls.railgun,
+	(menucommon_s *)&s_controls.plasma,
+	(menucommon_s *)&s_controls.bfg,
+#endif
+	(menucommon_s *)&s_controls.kiattack1, // BFP
+	(menucommon_s *)&s_controls.kiattack2, // BFP
+	(menucommon_s *)&s_controls.kiattack3, // BFP
+	(menucommon_s *)&s_controls.kiattack4, // BFP
+	(menucommon_s *)&s_controls.kiattack5, // BFP
 	NULL,
 };
 
@@ -504,6 +530,17 @@ static void Controls_UpdateModel( int anim ) {
 		s_controls.playerTorso = TORSO_CHARGE;
 		break;
 
+	// BFP - Melee
+	case ANIM_MELEE:
+		s_controls.playerLegs = LEGS_MELEE_STRIKE; 
+		s_controls.playerTorso = TORSO_MELEE_STRIKE;
+		break;
+
+	// BFP - Block
+	case ANIM_BLOCK:
+		s_controls.playerTorso = TORSO_BLOCK;
+		break;
+
 	case ANIM_TURNLEFT:
 		s_controls.playerViewangles[YAW] += 90;
 		break;
@@ -529,7 +566,7 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_LOOKDOWN:
 		s_controls.playerViewangles[PITCH] = 45;
 		break;
-// BFP - non used
+// BFP - unused
 #if 0
 	case ANIM_WEAPON1:
 		s_controls.playerWeapon = WP_GAUNTLET;
@@ -573,27 +610,22 @@ static void Controls_UpdateModel( int anim ) {
 #endif
 	case ANIM_KIATTACK1:
 		s_controls.playerTorso = TORSO_ATTACK0_PREPARE;
-		s_controls.playerWeapon = WP_GAUNTLET; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK2:
 		s_controls.playerTorso = TORSO_ATTACK1_PREPARE;
-		s_controls.playerWeapon = WP_MACHINEGUN; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK3:
 		s_controls.playerTorso = TORSO_ATTACK2_PREPARE;
-		s_controls.playerWeapon = WP_SHOTGUN; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK4:
 		s_controls.playerTorso = TORSO_ATTACK3_PREPARE;
-		s_controls.playerWeapon = WP_GRENADE_LAUNCHER; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_KIATTACK5:
 		s_controls.playerTorso = TORSO_ATTACK4_PREPARE;
-		s_controls.playerWeapon = WP_ROCKET_LAUNCHER; // BFP - that may not be exact to handle animations in ui_players.c
 		break;
 
 	case ANIM_GESTURE:
@@ -1236,6 +1268,8 @@ static void Controls_InitModel( void )
 	Controls_UpdateModel( ANIM_IDLE );
 }
 
+// BFP - unused
+#if 0
 /*
 =================
 Controls_InitWeapons
@@ -1251,6 +1285,7 @@ static void Controls_InitWeapons( void ) {
 		trap_R_RegisterModel( item->world_model[0] );
 	}
 }
+#endif
 
 /*
 =================
@@ -1270,29 +1305,31 @@ static void Controls_MenuInit( void )
 	s_controls.menu.wrapAround = qtrue;
 	s_controls.menu.fullscreen = qtrue;
 
-	s_controls.banner.generic.type	= MTYPE_BTEXT;
-	s_controls.banner.generic.flags	= QMF_CENTER_JUSTIFY;
+	// BFP - Menu background
+	s_controls.menubg.generic.type	= MTYPE_BITMAP;
+	s_controls.menubg.generic.name	= ART_MENUBG;
+	s_controls.menubg.generic.flags	= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_controls.menubg.generic.x		= 0;
+	s_controls.menubg.generic.y		= 0;
+	s_controls.menubg.width			= 640;
+	s_controls.menubg.height		= 480;
+
+	// BFP - barlog
+	s_controls.barlog.generic.type	= MTYPE_BITMAP;
+	s_controls.barlog.generic.name	= ART_BARLOG;
+	s_controls.barlog.generic.flags	= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_controls.barlog.generic.x		= 140;
+	s_controls.barlog.generic.y		= 5;
+	s_controls.barlog.width			= 355;
+	s_controls.barlog.height		= 90;
+
+	s_controls.banner.generic.type	= MTYPE_PTEXT; // BFP - modified CONTROLS type
+	s_controls.banner.generic.flags	= QMF_CENTER_JUSTIFY | QMF_INACTIVE; // BFP - modified CONTROLS flags
 	s_controls.banner.generic.x		= 320;
-	s_controls.banner.generic.y		= 16;
+	s_controls.banner.generic.y		= 45; // BFP - modified CONTROLS y position
 	s_controls.banner.string		= "CONTROLS";
 	s_controls.banner.color			= color_white;
-	s_controls.banner.style			= UI_CENTER;
-
-	s_controls.framel.generic.type  = MTYPE_BITMAP;
-	s_controls.framel.generic.name  = ART_FRAMEL;
-	s_controls.framel.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	s_controls.framel.generic.x     = 0;
-	s_controls.framel.generic.y     = 78;
-	s_controls.framel.width  	    = 256;
-	s_controls.framel.height  	    = 329;
-
-	s_controls.framer.generic.type  = MTYPE_BITMAP;
-	s_controls.framer.generic.name  = ART_FRAMER;
-	s_controls.framer.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	s_controls.framer.generic.x     = 376;
-	s_controls.framer.generic.y     = 76;
-	s_controls.framer.width  	    = 256;
-	s_controls.framer.height  	    = 334;
+	s_controls.banner.style			= UI_CENTER | UI_BIGFONT; // BFP - modified CONTROLS style
 
 	s_controls.looking.generic.type     = MTYPE_PTEXT;
 	s_controls.looking.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1302,7 +1339,7 @@ static void Controls_MenuInit( void )
 	s_controls.looking.generic.y	    = 240 - 2 * PROP_HEIGHT;
 	s_controls.looking.string			= "LOOK";
 	s_controls.looking.style			= UI_RIGHT;
-	s_controls.looking.color			= color_red;
+	s_controls.looking.color			= color_white; // BFP - modified LOOK button color
 
 	s_controls.movement.generic.type     = MTYPE_PTEXT;
 	s_controls.movement.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1312,7 +1349,7 @@ static void Controls_MenuInit( void )
 	s_controls.movement.generic.y	     = 240 - PROP_HEIGHT;
 	s_controls.movement.string			= "MOVE";
 	s_controls.movement.style			= UI_RIGHT;
-	s_controls.movement.color			= color_red;
+	s_controls.movement.color			= color_white; // BFP - modified MOVE button color
 
 	s_controls.weapons.generic.type	    = MTYPE_PTEXT;
 	s_controls.weapons.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1322,7 +1359,7 @@ static void Controls_MenuInit( void )
 	s_controls.weapons.generic.y	    = 240;
 	s_controls.weapons.string			= "SHOOT";
 	s_controls.weapons.style			= UI_RIGHT;
-	s_controls.weapons.color			= color_red;
+	s_controls.weapons.color			= color_white; // BFP - modified SHOOT button color
 
 	s_controls.misc.generic.type	 = MTYPE_PTEXT;
 	s_controls.misc.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -1332,17 +1369,17 @@ static void Controls_MenuInit( void )
 	s_controls.misc.generic.y		 = 240 + PROP_HEIGHT;
 	s_controls.misc.string			= "MISC";
 	s_controls.misc.style			= UI_RIGHT;
-	s_controls.misc.color			= color_red;
+	s_controls.misc.color			= color_white; // BFP - modified MISC button color
 
 	s_controls.back.generic.type	 = MTYPE_BITMAP;
 	s_controls.back.generic.name     = ART_BACK0;
 	s_controls.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_controls.back.generic.x		 = 0;
-	s_controls.back.generic.y		 = 480-64;
+	s_controls.back.generic.y		 = 480-80; // BFP - modified BACK button y postion
 	s_controls.back.generic.id	     = ID_BACK;
 	s_controls.back.generic.callback = Controls_MenuEvent;
-	s_controls.back.width  		     = 128;
-	s_controls.back.height  		 = 64;
+	s_controls.back.width  		     = 80; // BFP - modified BACK button width
+	s_controls.back.height  		 = 80; // BFP - modified BACK button height
 	s_controls.back.focuspic         = ART_BACK1;
 
 	s_controls.player.generic.type      = MTYPE_BITMAP;
@@ -1419,38 +1456,38 @@ static void Controls_MenuInit( void )
 	s_controls.run.generic.callback  = Controls_ActionEvent;
 	s_controls.run.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.run.generic.id        = ID_SPEED;
-
+// BFP - unused
+#if 0
 	s_controls.chainsaw.generic.type	  = MTYPE_ACTION;
 	s_controls.chainsaw.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.chainsaw.generic.callback  = Controls_ActionEvent;
 	s_controls.chainsaw.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.chainsaw.generic.id        = ID_KIATTACK1;
+	s_controls.chainsaw.generic.id        = ID_WEAPON1;
 
 	s_controls.machinegun.generic.type	    = MTYPE_ACTION;
 	s_controls.machinegun.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.machinegun.generic.callback  = Controls_ActionEvent;
 	s_controls.machinegun.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.machinegun.generic.id        = ID_KIATTACK2;
+	s_controls.machinegun.generic.id        = ID_WEAPON2;
 
 	s_controls.shotgun.generic.type	     = MTYPE_ACTION;
 	s_controls.shotgun.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.shotgun.generic.callback  = Controls_ActionEvent;
 	s_controls.shotgun.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.shotgun.generic.id        = ID_KIATTACK3;
+	s_controls.shotgun.generic.id        = ID_WEAPON3;
 
 	s_controls.grenadelauncher.generic.type	     = MTYPE_ACTION;
 	s_controls.grenadelauncher.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.grenadelauncher.generic.callback  = Controls_ActionEvent;
 	s_controls.grenadelauncher.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.grenadelauncher.generic.id        = ID_KIATTACK4;
+	s_controls.grenadelauncher.generic.id        = ID_WEAPON4;
 
 	s_controls.rocketlauncher.generic.type	    = MTYPE_ACTION;
 	s_controls.rocketlauncher.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.rocketlauncher.generic.callback  = Controls_ActionEvent;
 	s_controls.rocketlauncher.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.rocketlauncher.generic.id        = ID_KIATTACK5;
-// BFP - non used
-#if 0
+	s_controls.rocketlauncher.generic.id        = ID_WEAPON5;
+
 	s_controls.lightning.generic.type	   = MTYPE_ACTION;
 	s_controls.lightning.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.lightning.generic.callback  = Controls_ActionEvent;
@@ -1475,12 +1512,60 @@ static void Controls_MenuInit( void )
 	s_controls.bfg.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.bfg.generic.id        = ID_WEAPON9;
 #endif
+	// BFP - Ki attack 1 option
+	s_controls.kiattack1.generic.type		= MTYPE_ACTION;
+	s_controls.kiattack1.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kiattack1.generic.callback	= Controls_ActionEvent;
+	s_controls.kiattack1.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.kiattack1.generic.id			= ID_KIATTACK1;
+
+	// BFP - Ki attack 2 option
+	s_controls.kiattack2.generic.type		= MTYPE_ACTION;
+	s_controls.kiattack2.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kiattack2.generic.callback	= Controls_ActionEvent;
+	s_controls.kiattack2.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.kiattack2.generic.id			= ID_KIATTACK2;
+
+	// BFP - Ki attack 3 option
+	s_controls.kiattack3.generic.type		= MTYPE_ACTION;
+	s_controls.kiattack3.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kiattack3.generic.callback	= Controls_ActionEvent;
+	s_controls.kiattack3.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.kiattack3.generic.id			= ID_KIATTACK3;
+
+	// BFP - Ki attack 4 option
+	s_controls.kiattack4.generic.type		= MTYPE_ACTION;
+	s_controls.kiattack4.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kiattack4.generic.callback	= Controls_ActionEvent;
+	s_controls.kiattack4.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.kiattack4.generic.id			= ID_KIATTACK4;
+
+	// BFP - Ki attack 5 option
+	s_controls.kiattack5.generic.type		= MTYPE_ACTION;
+	s_controls.kiattack5.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.kiattack5.generic.callback	= Controls_ActionEvent;
+	s_controls.kiattack5.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.kiattack5.generic.id			= ID_KIATTACK5;
 
 	s_controls.attack.generic.type	    = MTYPE_ACTION;
 	s_controls.attack.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
 	s_controls.attack.generic.callback  = Controls_ActionEvent;
 	s_controls.attack.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.attack.generic.id        = ID_ATTACK;
+
+	// BFP - Melee option
+	s_controls.melee.generic.type		= MTYPE_ACTION;
+	s_controls.melee.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.melee.generic.callback	= Controls_ActionEvent;
+	s_controls.melee.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.melee.generic.id			= ID_MELEE;
+
+	// BFP - Block option
+	s_controls.block.generic.type		= MTYPE_ACTION;
+	s_controls.block.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
+	s_controls.block.generic.callback	= Controls_ActionEvent;
+	s_controls.block.generic.ownerdraw	= Controls_DrawKeyBinding;
+	s_controls.block.generic.id			= ID_BLOCK;
 
 	s_controls.prevweapon.generic.type	    = MTYPE_ACTION;
 	s_controls.prevweapon.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1661,11 +1746,11 @@ static void Controls_MenuInit( void )
 	s_controls.name.generic.y		= 440;
 	s_controls.name.string			= playername;
 	s_controls.name.style			= UI_CENTER;
-	s_controls.name.color			= text_color_normal;
+	s_controls.name.color			= text_color_normal; // BFP - modified playername color
 
+	Menu_AddItem( &s_controls.menu, &s_controls.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_controls.menu, &s_controls.barlog ); // BFP - barlog
 	Menu_AddItem( &s_controls.menu, &s_controls.banner );
-	Menu_AddItem( &s_controls.menu, &s_controls.framel );
-	Menu_AddItem( &s_controls.menu, &s_controls.framer );
 	Menu_AddItem( &s_controls.menu, &s_controls.player );
 	Menu_AddItem( &s_controls.menu, &s_controls.name );
 
@@ -1700,18 +1785,29 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.enableflight ); // BFP
 
 	Menu_AddItem( &s_controls.menu, &s_controls.attack );
+	Menu_AddItem( &s_controls.menu, &s_controls.melee ); // BFP
+	Menu_AddItem( &s_controls.menu, &s_controls.block ); // BFP
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.prevweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.autoswitch );
+	// BFP - unused
+#if 0
 	Menu_AddItem( &s_controls.menu, &s_controls.chainsaw );
 	Menu_AddItem( &s_controls.menu, &s_controls.machinegun );
 	Menu_AddItem( &s_controls.menu, &s_controls.shotgun );
 	Menu_AddItem( &s_controls.menu, &s_controls.grenadelauncher );
 	Menu_AddItem( &s_controls.menu, &s_controls.rocketlauncher );
-	//Menu_AddItem( &s_controls.menu, &s_controls.lightning ); // BFP - non used
-	//Menu_AddItem( &s_controls.menu, &s_controls.railgun ); // BFP - non used
-	//Menu_AddItem( &s_controls.menu, &s_controls.plasma ); // BFP - non used
-	//Menu_AddItem( &s_controls.menu, &s_controls.bfg ); // BFP - non used
+	Menu_AddItem( &s_controls.menu, &s_controls.lightning );
+	Menu_AddItem( &s_controls.menu, &s_controls.railgun );
+	Menu_AddItem( &s_controls.menu, &s_controls.plasma );
+	Menu_AddItem( &s_controls.menu, &s_controls.bfg );
+#endif
+	// BFP - Ki attacks
+	Menu_AddItem( &s_controls.menu, &s_controls.kiattack1 );
+	Menu_AddItem( &s_controls.menu, &s_controls.kiattack2 );
+	Menu_AddItem( &s_controls.menu, &s_controls.kiattack3 );
+	Menu_AddItem( &s_controls.menu, &s_controls.kiattack4 );
+	Menu_AddItem( &s_controls.menu, &s_controls.kiattack5 );
 
 	Menu_AddItem( &s_controls.menu, &s_controls.showscores );
 	Menu_AddItem( &s_controls.menu, &s_controls.useitem );
@@ -1739,7 +1835,7 @@ static void Controls_MenuInit( void )
 	Controls_InitModel();
 
 	// intialize the weapons
-	Controls_InitWeapons ();
+	// Controls_InitWeapons (); // BFP - unused
 
 	// initial default section
 	s_controls.section = C_LOOKING;
@@ -1757,8 +1853,8 @@ Controls_Cache
 void Controls_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 }
 
 
