@@ -475,7 +475,6 @@ UIOBJ_ = \
   $(B)/ui/ui_mem.o \
   $(B)/ui/ui_menu.o \
   $(B)/ui/ui_mfield.o \
-  $(B)/ui/ui_mods.o \
   $(B)/ui/ui_mp3decoder.o \
   $(B)/ui/ui_network.o \
   $(B)/ui/ui_options.o \

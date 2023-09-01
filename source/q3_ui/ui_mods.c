@@ -26,8 +26,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ART_BACK1			"menu/art/back_1"	
 #define ART_FIGHT0			"menu/art/load_0"
 #define ART_FIGHT1			"menu/art/load_1"
-#define ART_FRAMEL			"menu/art/frame2_l"
-#define ART_FRAMER			"menu/art/frame1_r"
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 
 #define MAX_MODS			64
 #define NAMEBUFSIZE			( MAX_MODS * 48 )
@@ -41,9 +41,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 
 	menulist_s		list;
 
@@ -192,28 +192,31 @@ static void UI_Mods_MenuInit( void ) {
 	s_mods.menu.wrapAround = qtrue;
 	s_mods.menu.fullscreen = qtrue;
 
-	s_mods.banner.generic.type		= MTYPE_BTEXT;
+	// BFP - Menu background
+	s_mods.menubg.generic.type		= MTYPE_BITMAP;
+	s_mods.menubg.generic.name		= ART_MENUBG;
+	s_mods.menubg.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_mods.menubg.generic.x			= 0;
+	s_mods.menubg.generic.y			= 0;
+	s_mods.menubg.width				= 640;
+	s_mods.menubg.height			= 480;
+
+	// BFP - barlog
+	s_mods.barlog.generic.type		= MTYPE_BITMAP;
+	s_mods.barlog.generic.name		= ART_BARLOG;
+	s_mods.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_mods.barlog.generic.x			= 140;
+	s_mods.barlog.generic.y			= 5;
+	s_mods.barlog.width				= 355;
+	s_mods.barlog.height			= 90;
+
+	s_mods.banner.generic.type		= MTYPE_PTEXT; // BFP - modified MODS title type
+	s_mods.banner.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE; // BFP - modified MODS title flags
 	s_mods.banner.generic.x			= 320;
-	s_mods.banner.generic.y			= 16;
+	s_mods.banner.generic.y			= 45; // BFP - modified MODS title y position
 	s_mods.banner.string			= "MODS";
 	s_mods.banner.color				= color_white;
-	s_mods.banner.style				= UI_CENTER;
-
-	s_mods.framel.generic.type		= MTYPE_BITMAP;
-	s_mods.framel.generic.name		= ART_FRAMEL;
-	s_mods.framel.generic.flags		= QMF_INACTIVE;
-	s_mods.framel.generic.x			= 0;  
-	s_mods.framel.generic.y			= 78;
-	s_mods.framel.width				= 256;
-	s_mods.framel.height			= 329;
-
-	s_mods.framer.generic.type		= MTYPE_BITMAP;
-	s_mods.framer.generic.name		= ART_FRAMER;
-	s_mods.framer.generic.flags		= QMF_INACTIVE;
-	s_mods.framer.generic.x			= 376;
-	s_mods.framer.generic.y			= 76;
-	s_mods.framer.width				= 256;
-	s_mods.framer.height			= 334;
+	s_mods.banner.style				= UI_CENTER | UI_BIGFONT; // BFP - modified MODS title style
 
 	s_mods.back.generic.type		= MTYPE_BITMAP;
 	s_mods.back.generic.name		= ART_BACK0;
@@ -221,9 +224,9 @@ static void UI_Mods_MenuInit( void ) {
 	s_mods.back.generic.id			= ID_BACK;
 	s_mods.back.generic.callback	= UI_Mods_MenuEvent;
 	s_mods.back.generic.x			= 0;
-	s_mods.back.generic.y			= 480-64;
-	s_mods.back.width				= 128;
-	s_mods.back.height				= 64;
+	s_mods.back.generic.y			= 480-80; // BFP - modified BACK button y position
+	s_mods.back.width				= 80; // BFP - modified BACK button width
+	s_mods.back.height				= 80; // BFP - modified BACK button height
 	s_mods.back.focuspic			= ART_BACK1;
 
 	s_mods.go.generic.type			= MTYPE_BITMAP;
@@ -232,9 +235,9 @@ static void UI_Mods_MenuInit( void ) {
 	s_mods.go.generic.id			= ID_GO;
 	s_mods.go.generic.callback		= UI_Mods_MenuEvent;
 	s_mods.go.generic.x				= 640;
-	s_mods.go.generic.y				= 480-64;
-	s_mods.go.width					= 128;
-	s_mods.go.height				= 64;
+	s_mods.go.generic.y				= 480-80; // BFP - modified GO button y positon
+	s_mods.go.width					= 80; // BFP - modified GO button width
+	s_mods.go.height				= 80;// BFP - modified GO button height
 	s_mods.go.focuspic				= ART_FIGHT1;
 
 	// scan for mods
@@ -249,9 +252,9 @@ static void UI_Mods_MenuInit( void ) {
 
 	UI_Mods_LoadMods();
 
+	Menu_AddItem( &s_mods.menu, &s_mods.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_mods.menu, &s_mods.barlog ); // BFP - barlog
 	Menu_AddItem( &s_mods.menu, &s_mods.banner );
-	Menu_AddItem( &s_mods.menu, &s_mods.framel );
-	Menu_AddItem( &s_mods.menu, &s_mods.framer );
 	Menu_AddItem( &s_mods.menu, &s_mods.list );
 	Menu_AddItem( &s_mods.menu, &s_mods.back );
 	Menu_AddItem( &s_mods.menu, &s_mods.go );
@@ -267,8 +270,8 @@ void UI_ModsMenu_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
 	trap_R_RegisterShaderNoMip( ART_FIGHT0 );
 	trap_R_RegisterShaderNoMip( ART_FIGHT1 );
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 }
 
 

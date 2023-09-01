@@ -430,6 +430,7 @@ The information in the map file can be useful for debugging and performance anal
 #### Removed source code files from the build tools:
 
 - ui_playersettings.c
+- ui_mods.c
 
 #### Unused source code files and unavailable in the build tools:
 

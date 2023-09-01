@@ -320,11 +320,14 @@ extern void UI_CinematicsMenu( void );
 extern void UI_CinematicsMenu_f( void );
 extern void UI_CinematicsMenu_Cache( void );
 
+// BFP - Mods menu is disabled
+#if 0
 //
 // ui_mods.c
 //
 extern void UI_ModsMenu( void );
 extern void UI_ModsMenu_Cache( void );
+#endif
 
 //
 // ui_cdkey.c

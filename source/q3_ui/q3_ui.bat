@@ -92,8 +92,6 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_teamorders.c
 @if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_mods.c
-@if errorlevel 1 goto quit
 
 rem set -vq3 flag for new q3asm, qvm's will run on original 1.32c binaries
 ..\..\..\tools\bin\q3asm.exe -vq3 -r -m -o ui -f %src%/q3_ui/q3_ui
