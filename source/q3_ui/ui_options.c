@@ -30,8 +30,8 @@ SYSTEM CONFIGURATION MENU
 #include "ui_local.h"
 
 
-#define ART_FRAMEL			"menu/art/frame2_l"
-#define ART_FRAMER			"menu/art/frame1_r"
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 #define ART_BACK0			"menu/art/back_0"
 #define ART_BACK1			"menu/art/back_1"
 
@@ -46,9 +46,9 @@ SYSTEM CONFIGURATION MENU
 typedef struct {
 	menuframework_s	menu;
 
-	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
+	menubitmap_s		menubg; // BFP - Menu background
+	menubitmap_s		barlog; // BFP - barlog
+	menutext_s			banner;
 
 	menutext_s		graphics;
 	menutext_s		display;
@@ -100,8 +100,8 @@ SystemConfig_Cache
 ===============
 */
 void SystemConfig_Cache( void ) {
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
 }
@@ -128,29 +128,32 @@ void Options_MenuInit( void ) {
 		s_options.menu.fullscreen = qtrue;
 	}
 
-	s_options.banner.generic.type	= MTYPE_BTEXT;
-	s_options.banner.generic.flags	= QMF_CENTER_JUSTIFY;
+	// BFP - Menu background
+	s_options.menubg.generic.type	= MTYPE_BITMAP;
+	s_options.menubg.generic.name	= ART_MENUBG;
+	s_options.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_options.menubg.generic.x		= 0;
+	s_options.menubg.generic.y		= 0;
+	s_options.menubg.width			= 640;
+	s_options.menubg.height			= 480;
+
+	// BFP - barlog
+	s_options.barlog.generic.type	= MTYPE_BITMAP;
+	s_options.barlog.generic.name	= ART_BARLOG;
+	s_options.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_options.barlog.generic.x		= 140;
+	s_options.barlog.generic.y		= 5;
+	s_options.barlog.width			= 355;
+	s_options.barlog.height			= 90;
+
+	s_options.banner.generic.type	= MTYPE_PTEXT; // BFP - modified SYSTEM SETUP title type
+	s_options.banner.generic.flags	= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
 	s_options.banner.generic.x		= 320;
-	s_options.banner.generic.y		= 16;
+	s_options.banner.generic.y		= 45; // BFP - modified SYSTEM SETUP title y position
 	s_options.banner.string		    = "SYSTEM SETUP";
 	s_options.banner.color			= color_white;
-	s_options.banner.style			= UI_CENTER;
+	s_options.banner.style			= UI_CENTER|UI_BIGFONT; // BFP - modified SYSTEM SETUP title style
 
-	s_options.framel.generic.type  = MTYPE_BITMAP;
-	s_options.framel.generic.name  = ART_FRAMEL;
-	s_options.framel.generic.flags = QMF_INACTIVE;
-	s_options.framel.generic.x	   = 8;  
-	s_options.framel.generic.y	   = 76;
-	s_options.framel.width  	   = 256;
-	s_options.framel.height  	   = 334;
-
-	s_options.framer.generic.type  = MTYPE_BITMAP;
-	s_options.framer.generic.name  = ART_FRAMER;
-	s_options.framer.generic.flags = QMF_INACTIVE;
-	s_options.framer.generic.x	   = 376;
-	s_options.framer.generic.y	   = 76;
-	s_options.framer.width  	   = 256;
-	s_options.framer.height  	   = 334;
 
 	y = 168;
 	s_options.graphics.generic.type		= MTYPE_PTEXT;
@@ -160,7 +163,7 @@ void Options_MenuInit( void ) {
 	s_options.graphics.generic.x		= 320;
 	s_options.graphics.generic.y		= y;
 	s_options.graphics.string			= "GRAPHICS";
-	s_options.graphics.color			= color_red;
+	s_options.graphics.color			= color_white; // BFP - modified GRAPHICS button color
 	s_options.graphics.style			= UI_CENTER;
 
 	y += VERTICAL_SPACING;
@@ -171,7 +174,7 @@ void Options_MenuInit( void ) {
 	s_options.display.generic.x			= 320;
 	s_options.display.generic.y			= y;
 	s_options.display.string			= "DISPLAY";
-	s_options.display.color				= color_red;
+	s_options.display.color				= color_white; // BFP - modified DISPLAY button color
 	s_options.display.style				= UI_CENTER;
 
 	y += VERTICAL_SPACING;
@@ -182,7 +185,7 @@ void Options_MenuInit( void ) {
 	s_options.sound.generic.x			= 320;
 	s_options.sound.generic.y			= y;
 	s_options.sound.string				= "SOUND";
-	s_options.sound.color				= color_red;
+	s_options.sound.color				= color_white; // BFP - modified SOUND button color
 	s_options.sound.style				= UI_CENTER;
 
 	y += VERTICAL_SPACING;
@@ -193,7 +196,7 @@ void Options_MenuInit( void ) {
 	s_options.network.generic.x			= 320;
 	s_options.network.generic.y			= y;
 	s_options.network.string			= "NETWORK";
-	s_options.network.color				= color_red;
+	s_options.network.color				= color_white; // BFP - modified NETWORK button color
 	s_options.network.style				= UI_CENTER;
 
 	s_options.back.generic.type	    = MTYPE_BITMAP;
@@ -202,14 +205,14 @@ void Options_MenuInit( void ) {
 	s_options.back.generic.callback = Options_Event;
 	s_options.back.generic.id	    = ID_BACK;
 	s_options.back.generic.x		= 0;
-	s_options.back.generic.y		= 480-64;
-	s_options.back.width  		    = 128;
-	s_options.back.height  		    = 64;
+	s_options.back.generic.y		= 480-80; // BFP - modified BACK button y positon
+	s_options.back.width  		    = 80; // BFP - modified BACK button width
+	s_options.back.height  		    = 80; // BFP - modified BACK button height
 	s_options.back.focuspic         = ART_BACK1;
 
+	Menu_AddItem( &s_options.menu, ( void * ) &s_options.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_options.menu, ( void * ) &s_options.barlog ); // BFP - barlog
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.banner );
-	Menu_AddItem( &s_options.menu, ( void * ) &s_options.framel );
-	Menu_AddItem( &s_options.menu, ( void * ) &s_options.framer );
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.graphics );
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.display );
 	Menu_AddItem( &s_options.menu, ( void * ) &s_options.sound );
