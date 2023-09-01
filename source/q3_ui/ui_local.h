@@ -238,6 +238,7 @@ extern vec4_t		color_dim;
 extern vec4_t		name_color;
 extern vec4_t		list_color;
 extern vec4_t		listbar_color;
+extern vec4_t		cd_listbar_color; // BFP - Rect bar color for CD key textbox
 extern vec4_t		text_color_disabled; 
 extern vec4_t		text_color_normal;
 extern vec4_t		text_color_highlight;

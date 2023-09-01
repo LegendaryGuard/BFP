@@ -146,15 +146,15 @@ static void UI_CDKeyMenu_DrawKey( void *self ) {
 
 	style = UI_LEFT;
 	if( focus ) {
-		color = color_yellow;
+		color = color_white; // BFP - modified CD key texts color
 	}
 	else {
-		color = color_white; // BFP - modified CD key texts color
+		color = color_blue; // BFP - modified CD key texts color
 	}
 
 	x = 320 - 8 * BIGCHAR_WIDTH;
 	y = 240 - BIGCHAR_HEIGHT / 2;
-	UI_FillRect( x, y, 16 * BIGCHAR_WIDTH, BIGCHAR_HEIGHT, listbar_color );
+	UI_FillRect( x, y, 16 * BIGCHAR_WIDTH, BIGCHAR_HEIGHT, cd_listbar_color );
 	UI_DrawString( x, y, f->field.buffer, style, color );
 
 	// draw cursor if we have focus
