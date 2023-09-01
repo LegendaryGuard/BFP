@@ -392,10 +392,10 @@ void UI_MainMenu( void ) {
 	s_main.bfplogo.generic.type			= MTYPE_BITMAP;
 	s_main.bfplogo.generic.name			= ART_BFPLOGO;
 	s_main.bfplogo.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
-	s_main.bfplogo.generic.x			= 90;
+	s_main.bfplogo.generic.x			= 100;
 	s_main.bfplogo.generic.y			= 10;
-	s_main.bfplogo.width				= 460;
-	s_main.bfplogo.height				= 115;
+	s_main.bfplogo.width				= 465;
+	s_main.bfplogo.height				= 125;
 
 	// BFP - PLAY cap bar
 	y = 155; // BFP - Cap bar initial vertical position

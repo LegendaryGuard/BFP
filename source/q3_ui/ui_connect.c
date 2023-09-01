@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 #include "ui_local.h"
 
+#define ART_BFPLOGO			"menu/art/bfp_logol"	// BFP - Logo
+
 /*
 ===============================================================================
 
@@ -185,7 +187,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	if ( !overlay ) {
 		// draw the dialog background
 		UI_SetColor( color_white );
-		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackNoLogoShader ); // BFP - Menu background no logo
 	}
 
 	// see what information we should display
@@ -263,6 +265,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 		return;
 	}
 
+	UI_DrawNamedPic( 100, 340, 465, 125, ART_BFPLOGO ); // BFP - Logo at the connecting moment
 	UI_DrawProportionalString( 320, 128, s, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, color_white );
 
 	// password required / connection rejected information goes here
