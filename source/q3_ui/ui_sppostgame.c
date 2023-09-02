@@ -310,8 +310,8 @@ static void UI_SPPostgameMenu_MenuDraw( void ) {
 	if ( postgameMenuInfo.numClients > 2 ) {
 		UI_DrawProportionalString( 510, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[2], UI_CENTER, color_white );
 	}
-	UI_DrawProportionalString( 130, 480 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[1], UI_CENTER, color_white );
-	UI_DrawProportionalString( 320, 480 - 64 - 2 * PROP_HEIGHT, postgameMenuInfo.placeNames[0], UI_CENTER, color_white );
+	UI_DrawProportionalString( 130, 450 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[1], UI_CENTER, color_white ); // BFP - modified info string position
+	UI_DrawProportionalString( 320, 450 - 64 - PROP_HEIGHT, postgameMenuInfo.placeNames[0], UI_CENTER, color_white ); // BFP - modified info string position
 
 	if( postgameMenuInfo.phase == 1 ) {
 		timer = uis.realtime - postgameMenuInfo.starttime;
@@ -441,33 +441,33 @@ static void UI_SPPostgameMenu_Init( void ) {
 	postgameMenuInfo.item_menu.generic.name			= ART_MENU0;
 	postgameMenuInfo.item_menu.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_INACTIVE;
 	postgameMenuInfo.item_menu.generic.x			= 0;
-	postgameMenuInfo.item_menu.generic.y			= 480-64;
+	postgameMenuInfo.item_menu.generic.y			= 480-80; // BFP - modified item button y position
 	postgameMenuInfo.item_menu.generic.callback		= UI_SPPostgameMenu_MenuEvent;
 	postgameMenuInfo.item_menu.generic.id			= ID_MENU;
-	postgameMenuInfo.item_menu.width				= 128;
-	postgameMenuInfo.item_menu.height				= 64;
+	postgameMenuInfo.item_menu.width				= 80; // BFP - modified item button width
+	postgameMenuInfo.item_menu.height				= 80; // BFP - modified item button height
 	postgameMenuInfo.item_menu.focuspic				= ART_MENU1;
 
 	postgameMenuInfo.item_again.generic.type		= MTYPE_BITMAP;
 	postgameMenuInfo.item_again.generic.name		= ART_REPLAY0;
 	postgameMenuInfo.item_again.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS|QMF_INACTIVE;
 	postgameMenuInfo.item_again.generic.x			= 320;
-	postgameMenuInfo.item_again.generic.y			= 480-64;
+	postgameMenuInfo.item_again.generic.y			= 480-80; // BFP - modified AGAIN button y position
 	postgameMenuInfo.item_again.generic.callback	= UI_SPPostgameMenu_AgainEvent;
 	postgameMenuInfo.item_again.generic.id			= ID_AGAIN;
-	postgameMenuInfo.item_again.width				= 128;
-	postgameMenuInfo.item_again.height				= 64;
+	postgameMenuInfo.item_again.width				= 80; // BFP - modified AGAIN button width
+	postgameMenuInfo.item_again.height				= 80; // BFP - modified AGAIN button height
 	postgameMenuInfo.item_again.focuspic			= ART_REPLAY1;
 
 	postgameMenuInfo.item_next.generic.type			= MTYPE_BITMAP;
 	postgameMenuInfo.item_next.generic.name			= ART_NEXT0;
 	postgameMenuInfo.item_next.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_INACTIVE;
 	postgameMenuInfo.item_next.generic.x			= 640;
-	postgameMenuInfo.item_next.generic.y			= 480-64;
+	postgameMenuInfo.item_next.generic.y			= 480-80; // BFP - modified NEXT button y position
 	postgameMenuInfo.item_next.generic.callback		= UI_SPPostgameMenu_NextEvent;
 	postgameMenuInfo.item_next.generic.id			= ID_NEXT;
-	postgameMenuInfo.item_next.width				= 128;
-	postgameMenuInfo.item_next.height				= 64;
+	postgameMenuInfo.item_next.width				= 80; // BFP - modified NEXT button width
+	postgameMenuInfo.item_next.height				= 80; // BFP - modified NEXT button height
 	postgameMenuInfo.item_next.focuspic				= ART_NEXT1;
 
 	Menu_AddItem( &postgameMenuInfo.menu, ( void * )&postgameMenuInfo.item_menu );

@@ -242,9 +242,12 @@ extern vec4_t		text_color_disabled;
 extern vec4_t		text_color_normal;
 extern vec4_t		text_color_highlight;
 
+// BFP - Medal media is disabled (ui_splevel.c)
+#if 0
 extern char	*ui_medalNames[];
 extern char	*ui_medalPicNames[];
 extern char	*ui_medalSounds[];
+#endif
 
 //
 // ui_mfield.c
@@ -551,6 +554,8 @@ extern void			UI_StartDemoLoop( void );
 extern qboolean		m_entersound;
 extern uiStatic_t	uis;
 
+// BFP - Level menu is disabled
+#if 0
 //
 // ui_spLevel.c
 //
@@ -558,23 +563,30 @@ void UI_SPLevelMenu_Cache( void );
 void UI_SPLevelMenu( void );
 void UI_SPLevelMenu_f( void );
 void UI_SPLevelMenu_ReInit( void );
+#endif
 
 //
 // ui_spArena.c
 //
 void UI_SPArena_Start( const char *arenaInfo );
 
+// BFP - Post game menu is disabled
+#if 0
 //
 // ui_spPostgame.c
 //
 void UI_SPPostgameMenu_Cache( void );
 void UI_SPPostgameMenu_f( void );
+#endif
 
+// BFP - Skill menu is disabled
+#if 0
 //
 // ui_spSkill.c
 //
 void UI_SPSkillMenu( const char *arenaInfo );
 void UI_SPSkillMenu_Cache( void );
+#endif
 
 //
 // ui_syscalls.c
@@ -725,8 +737,11 @@ void UI_NewGame( void );
 void UI_LogAwardData( int award, int data );
 int UI_GetAwardLevel( int award );
 
+// BFP - Single player menu is disabled
+#if 0
 void UI_SPUnlock_f( void );
 void UI_SPUnlockMedals_f( void );
+#endif
 
 void UI_InitGameinfo( void );
 

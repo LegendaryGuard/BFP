@@ -72,17 +72,11 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_specifyserver.c
 @if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_splevel.c
-@if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_sppostgame.c
-@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_startserver.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_team.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_video.c
-@if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_spskill.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_addbots.c
 @if errorlevel 1 goto quit

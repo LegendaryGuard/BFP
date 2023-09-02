@@ -49,6 +49,8 @@ SINGLE PLAYER LEVEL SELECT MENU
 #define ART_RESET1					"menu/art/reset_1"	
 #define ART_CUSTOM0					"menu/art/skirmish_0"
 #define ART_CUSTOM1					"menu/art/skirmish_1"
+#define ART_MENUBG					"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG					"menu/art/cap_barlog"	// BFP - barlog
 
 #define ID_LEFTARROW		10
 #define ID_PICTURE0			11
@@ -74,6 +76,8 @@ SINGLE PLAYER LEVEL SELECT MENU
 
 typedef struct {
 	menuframework_s	menu;
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		item_banner;
 	menubitmap_s	item_leftarrow;
 	menubitmap_s	item_maps[4];
@@ -551,7 +555,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 	// draw player name
 	trap_Cvar_VariableStringBuffer( "name", string, 32 );
 	Q_CleanStr( string );
-	UI_DrawProportionalString( 320, PLAYER_Y, string, UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 320, PLAYER_Y, string, UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified player name color
 
 	// check for model changes
 	trap_Cvar_VariableStringBuffer( "model", buf, sizeof(buf) );
@@ -596,7 +600,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 		}
 	}
 
-	UI_DrawProportionalString( 18, 38, va( "Tier %i", selectedArenaSet + 1 ), UI_LEFT|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 18, 38, va( "Tier %i", selectedArenaSet + 1 ), UI_LEFT|UI_SMALLFONT, color_white ); // BFP - modified Tier titles color
 
 	for ( n = 0; n < levelMenuInfo.numMaps; n++ ) {
 		x = levelMenuInfo.item_maps[n].generic.x;
@@ -605,7 +609,7 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 	}
 
 	if ( selectedArenaSet > currentSet ) {
-		UI_DrawProportionalString( 320, 216, "ACCESS DENIED", UI_CENTER|UI_BIGFONT, color_red );
+		UI_DrawProportionalString( 320, 240, "ACCESS DENIED", UI_CENTER|UI_BIGFONT, color_white ); // BFP - modified ACCESS DENIED title color
 		return;
 	}
 
@@ -641,10 +645,10 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 	Q_strncpyz( buf, Info_ValueForKey( levelMenuInfo.selectedArenaInfo, "map" ), 20 );
 	Q_strupr( buf );
 	Com_sprintf( string, sizeof(string), "%s: %s", buf, Info_ValueForKey( levelMenuInfo.selectedArenaInfo, "longname" ) );
-	UI_DrawProportionalString( 320, y, string, UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawProportionalString( 320, y, string, UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified arena info color
 
 //	fraglimit = atoi( Info_ValueForKey( levelMenuInfo.selectedArenaInfo, "fraglimit" ) );
-//	UI_DrawString( 18, 212, va("Frags %i", fraglimit) , UI_LEFT|UI_SMALLFONT, color_orange );
+//	UI_DrawString( 18, 212, va("Frags %i", fraglimit) , UI_LEFT|UI_SMALLFONT, color_white ); // BFP - modified fraglimit info color
 
 	// draw bot opponents
 	y += 24;
@@ -656,9 +660,9 @@ static void UI_SPLevelMenu_MenuDraw( void ) {
 		}
 		else {
 			UI_FillRect( x, y, 64, 64, color_black );
-			UI_DrawProportionalString( x+22, y+18, "?", UI_BIGFONT, color_orange );
+			UI_DrawProportionalString( x+22, y+18, "?", UI_BIGFONT, color_white ); // BFP - modified '?' color
 		}
-		UI_DrawString( x, y + 64, levelMenuInfo.botNames[n], UI_SMALLFONT|UI_LEFT, color_orange );
+		UI_DrawString( x, y + 64, levelMenuInfo.botNames[n], UI_SMALLFONT|UI_LEFT, color_white ); // BFP - modified bot names color
 	}
 }
 
@@ -671,6 +675,8 @@ UI_SPLevelMenu_Cache
 void UI_SPLevelMenu_Cache( void ) {
 	int				n;
 
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_LEVELFRAME_FOCUS );
 	trap_R_RegisterShaderNoMip( ART_LEVELFRAME_SELECTED );
 	trap_R_RegisterShaderNoMip( ART_ARROW );
@@ -736,6 +742,24 @@ static void UI_SPLevelMenu_Init( void ) {
 	levelMenuInfo.item_banner.string				= "CHOOSE LEVEL";
 	levelMenuInfo.item_banner.color					= color_red;
 	levelMenuInfo.item_banner.style					= UI_CENTER;
+
+	// BFP - Menu background
+	levelMenuInfo.menubg.generic.type				= MTYPE_BITMAP;
+	levelMenuInfo.menubg.generic.name				= ART_MENUBG;
+	levelMenuInfo.menubg.generic.flags				= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	levelMenuInfo.menubg.generic.x					= 0;
+	levelMenuInfo.menubg.generic.y					= 0;
+	levelMenuInfo.menubg.width						= 640;
+	levelMenuInfo.menubg.height						= 480;
+
+	// BFP - barlog
+	levelMenuInfo.barlog.generic.type				= MTYPE_BITMAP;
+	levelMenuInfo.barlog.generic.name				= ART_BARLOG;
+	levelMenuInfo.barlog.generic.flags				= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	levelMenuInfo.barlog.generic.x					= 140;
+	levelMenuInfo.barlog.generic.y					= 5;
+	levelMenuInfo.barlog.width						= 355;
+	levelMenuInfo.barlog.height						= 90;
 
 	levelMenuInfo.item_leftarrow.generic.type		= MTYPE_BITMAP;
 	levelMenuInfo.item_leftarrow.generic.name		= ART_ARROW;
@@ -844,44 +868,44 @@ static void UI_SPLevelMenu_Init( void ) {
 	levelMenuInfo.item_back.generic.name			= ART_BACK0;
 	levelMenuInfo.item_back.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	levelMenuInfo.item_back.generic.x				= 0;
-	levelMenuInfo.item_back.generic.y				= 480-64;
+	levelMenuInfo.item_back.generic.y				= 480-80; // BFP - modified BACK button y position
 	levelMenuInfo.item_back.generic.callback		= UI_SPLevelMenu_BackEvent;
 	levelMenuInfo.item_back.generic.id				= ID_BACK;
-	levelMenuInfo.item_back.width					= 128;
-	levelMenuInfo.item_back.height					= 64;
+	levelMenuInfo.item_back.width					= 80; // BFP - modified BACK button width
+	levelMenuInfo.item_back.height					= 80; // BFP - modified BACK button height
 	levelMenuInfo.item_back.focuspic				= ART_BACK1;
 
 	levelMenuInfo.item_reset.generic.type			= MTYPE_BITMAP;
 	levelMenuInfo.item_reset.generic.name			= ART_RESET0;
 	levelMenuInfo.item_reset.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	levelMenuInfo.item_reset.generic.x				= 170;
-	levelMenuInfo.item_reset.generic.y				= 480-64;
+	levelMenuInfo.item_reset.generic.y				= 480-80; // BFP - modified RESET button y position
 	levelMenuInfo.item_reset.generic.callback		= UI_SPLevelMenu_ResetEvent;
 	levelMenuInfo.item_reset.generic.id				= ID_RESET;
-	levelMenuInfo.item_reset.width					= 128;
-	levelMenuInfo.item_reset.height					= 64;
+	levelMenuInfo.item_reset.width					= 80; // BFP - modified BACK button width
+	levelMenuInfo.item_reset.height					= 80; // BFP - modified BACK button height
 	levelMenuInfo.item_reset.focuspic				= ART_RESET1;
 
 	levelMenuInfo.item_custom.generic.type			= MTYPE_BITMAP;
 	levelMenuInfo.item_custom.generic.name			= ART_CUSTOM0;
 	levelMenuInfo.item_custom.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	levelMenuInfo.item_custom.generic.x				= 342;
-	levelMenuInfo.item_custom.generic.y				= 480-64;
+	levelMenuInfo.item_custom.generic.y				= 480-80; // BFP - modified CUSTOM button y position
 	levelMenuInfo.item_custom.generic.callback		= UI_SPLevelMenu_CustomEvent;
 	levelMenuInfo.item_custom.generic.id			= ID_CUSTOM;
-	levelMenuInfo.item_custom.width					= 128;
-	levelMenuInfo.item_custom.height				= 64;
+	levelMenuInfo.item_custom.width					= 80; // BFP - modified CUSTOM button width
+	levelMenuInfo.item_custom.height				= 80; // BFP - modified CUSTOM button height
 	levelMenuInfo.item_custom.focuspic				= ART_CUSTOM1;
 
 	levelMenuInfo.item_next.generic.type			= MTYPE_BITMAP;
 	levelMenuInfo.item_next.generic.name			= ART_FIGHT0;
 	levelMenuInfo.item_next.generic.flags			= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	levelMenuInfo.item_next.generic.x				= 640;
-	levelMenuInfo.item_next.generic.y				= 480-64;
+	levelMenuInfo.item_next.generic.y				= 480-80; // BFP - modified NEXT button y position
 	levelMenuInfo.item_next.generic.callback		= UI_SPLevelMenu_NextEvent;
 	levelMenuInfo.item_next.generic.id				= ID_NEXT;
-	levelMenuInfo.item_next.width					= 128;
-	levelMenuInfo.item_next.height					= 64;
+	levelMenuInfo.item_next.width					= 80; // BFP - modified NEXT button width
+	levelMenuInfo.item_next.height					= 80; // BFP - modified NEXT button height
 	levelMenuInfo.item_next.focuspic				= ART_FIGHT1;
 
 	levelMenuInfo.item_null.generic.type			= MTYPE_BITMAP;
@@ -893,6 +917,8 @@ static void UI_SPLevelMenu_Init( void ) {
 
 	Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.item_banner );
 
+	Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.barlog ); // BFP - barlog
 	Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.item_leftarrow );
 	Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.item_maps[0] );
 	Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.item_maps[1] );

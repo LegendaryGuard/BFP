@@ -432,6 +432,9 @@ The information in the map file can be useful for debugging and performance anal
 - ui_cinematics.c
 - ui_mods.c
 - ui_playersettings.c
+- ui_splevel.c
+- ui_sppostgame.c
+- ui_spskill.c
 
 #### Unused source code files and unavailable in the build tools:
 

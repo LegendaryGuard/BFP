@@ -980,9 +980,9 @@ void UI_Cache_f( void ) {
 	UI_DisplayOptionsMenu_Cache();
 	UI_SoundOptionsMenu_Cache();
 	UI_NetworkOptionsMenu_Cache();
-	UI_SPLevelMenu_Cache();
-	UI_SPSkillMenu_Cache();
-	UI_SPPostgameMenu_Cache();
+//	UI_SPLevelMenu_Cache(); // BFP - Level menu is disabled
+//	UI_SPSkillMenu_Cache(); // BFP - Skill menu is disabled
+//	UI_SPPostgameMenu_Cache(); // BFP - Post game menu is disabled
 	TeamMain_Cache();
 	UI_AddBots_Cache();
 	UI_RemoveBots_Cache();
@@ -1009,6 +1009,8 @@ qboolean UI_ConsoleCommand( int realTime ) {
 	// ensure minimum menu data is available
 	Menu_Cache();
 
+// BFP - Post game menu is disabled
+#if 0
 	if ( Q_stricmp (cmd, "levelselect") == 0 ) {
 		UI_SPLevelMenu_f();
 		return qtrue;
@@ -1018,6 +1020,7 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		UI_SPPostgameMenu_f();
 		return qtrue;
 	}
+#endif
 
 	if ( Q_stricmp (cmd, "ui_cache") == 0 ) {
 		UI_Cache_f();
@@ -1036,6 +1039,8 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		return qtrue;
 	}
 
+// BFP - Level menu is disabled
+#if 0
 	if ( Q_stricmp (cmd, "iamacheater") == 0 ) {
 		UI_SPUnlock_f();
 		return qtrue;
@@ -1045,6 +1050,7 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		UI_SPUnlockMedals_f();
 		return qtrue;
 	}
+#endif
 
 	if ( Q_stricmp (cmd, "ui_cdkey") == 0 ) {
 		UI_CDKeyMenu_f();

@@ -106,8 +106,8 @@ UI_SRC = \
  ui_gameinfo ui_atoms ui_bfpoptions ui_connect ui_controls2 ui_demo2 ui_mfield \
  ui_credits ui_menu ui_options ui_display ui_sound ui_network ui_playermodel \
  ui_players ui_preferences ui_qmenu ui_servers2 ui_sparena \
- ui_specifyserver ui_splevel ui_sppostgame ui_startserver ui_team ui_video \
- ui_spskill ui_addbots ui_removebots ui_teamorders \
+ ui_specifyserver ui_startserver ui_team ui_video \
+ ui_addbots ui_removebots ui_teamorders \
 
 #############################################################################
 # MAIN TARGETS

@@ -488,9 +488,6 @@ UIOBJ_ = \
   $(B)/ui/ui_sound.o \
   $(B)/ui/ui_sparena.o \
   $(B)/ui/ui_specifyserver.o \
-  $(B)/ui/ui_splevel.o \
-  $(B)/ui/ui_sppostgame.o \
-  $(B)/ui/ui_spskill.o \
   $(B)/ui/ui_startserver.o \
   $(B)/ui/ui_team.o \
   $(B)/ui/ui_teamorders.o \

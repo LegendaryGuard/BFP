@@ -32,8 +32,8 @@ GAME OPTIONS MENU
 #include "ui_local.h"
 
 
-#define ART_FRAMEL				"menu/art/frame2_l"
-#define ART_FRAMER				"menu/art/frame1_r"
+#define ART_MENUBG				"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG				"menu/art/cap_barlog"	// BFP - barlog
 #define ART_BACK0				"menu/art/back_0"
 #define ART_BACK1				"menu/art/back_1"
 
@@ -42,15 +42,15 @@ GAME OPTIONS MENU
 #define ID_CROSSHAIR			127
 #define ID_SIMPLEITEMS			128
 #define ID_HIGHQUALITYSKY		129
-#define ID_EJECTINGBRASS		130
+//#define ID_EJECTINGBRASS		130 // BFP - unused
+#define ID_ALLOWDOWNLOAD		130
 #define ID_WALLMARKS			131
 #define ID_DYNAMICLIGHTS		132
 #define ID_IDENTIFYTARGET		133
 #define ID_SYNCEVERYFRAME		134
 #define ID_FORCEMODEL			135
 #define ID_DRAWTEAMOVERLAY		136
-#define ID_ALLOWDOWNLOAD			137
-#define ID_BACK					138
+#define ID_BACK					137
 
 #define	NUM_CROSSHAIRS			10
 
@@ -58,13 +58,13 @@ GAME OPTIONS MENU
 typedef struct {
 	menuframework_s		menu;
 
+	menubitmap_s		menubg; // BFP - Menu background
+	menubitmap_s		barlog; // BFP - barlog
 	menutext_s			banner;
-	menubitmap_s		framel;
-	menubitmap_s		framer;
 
 	menulist_s			crosshair;
 	menuradiobutton_s	simpleitems;
-	menuradiobutton_s	brass;
+	// menuradiobutton_s	brass; // BFP - unused
 	menuradiobutton_s	wallmarks;
 	menuradiobutton_s	dynamiclights;
 	menuradiobutton_s	identifytarget;
@@ -92,7 +92,7 @@ static const char *teamoverlay_names[] =
 static void Preferences_SetMenuItems( void ) {
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
 	s_preferences.simpleitems.curvalue		= trap_Cvar_VariableValue( "cg_simpleItems" ) != 0;
-	s_preferences.brass.curvalue			= trap_Cvar_VariableValue( "cg_brassTime" ) != 0;
+	// s_preferences.brass.curvalue			= trap_Cvar_VariableValue( "cg_brassTime" ) != 0; // BFP - unused
 	s_preferences.wallmarks.curvalue		= trap_Cvar_VariableValue( "cg_marks" ) != 0;
 	s_preferences.identifytarget.curvalue	= trap_Cvar_VariableValue( "cg_drawCrosshairNames" ) != 0;
 	s_preferences.dynamiclights.curvalue	= trap_Cvar_VariableValue( "r_dynamiclight" ) != 0;
@@ -126,12 +126,15 @@ static void Preferences_Event( void* ptr, int notification ) {
 		trap_Cvar_SetValue( "r_fastsky", !s_preferences.highqualitysky.curvalue );
 		break;
 
+	// BFP - unused
+#if 0
 	case ID_EJECTINGBRASS:
 		if ( s_preferences.brass.curvalue )
 			trap_Cvar_Reset( "cg_brassTime" );
 		else
 			trap_Cvar_SetValue( "cg_brassTime", 0 );
 		break;
+#endif
 
 	case ID_WALLMARKS:
 		trap_Cvar_SetValue( "cg_marks", s_preferences.wallmarks.curvalue );
@@ -228,28 +231,31 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.menu.wrapAround = qtrue;
 	s_preferences.menu.fullscreen = qtrue;
 
-	s_preferences.banner.generic.type  = MTYPE_BTEXT;
-	s_preferences.banner.generic.x	   = 320;
-	s_preferences.banner.generic.y	   = 16;
-	s_preferences.banner.string		   = "GAME OPTIONS";
-	s_preferences.banner.color         = color_white;
-	s_preferences.banner.style         = UI_CENTER;
+	// BFP - Menu background
+	s_preferences.menubg.generic.type		= MTYPE_BITMAP;
+	s_preferences.menubg.generic.name		= ART_MENUBG;
+	s_preferences.menubg.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_preferences.menubg.generic.x			= 0;
+	s_preferences.menubg.generic.y			= 0;
+	s_preferences.menubg.width				= 640;
+	s_preferences.menubg.height				= 480;
 
-	s_preferences.framel.generic.type  = MTYPE_BITMAP;
-	s_preferences.framel.generic.name  = ART_FRAMEL;
-	s_preferences.framel.generic.flags = QMF_INACTIVE;
-	s_preferences.framel.generic.x	   = 0;
-	s_preferences.framel.generic.y	   = 78;
-	s_preferences.framel.width  	   = 256;
-	s_preferences.framel.height  	   = 329;
+	// BFP - barlog
+	s_preferences.barlog.generic.type	= MTYPE_BITMAP;
+	s_preferences.barlog.generic.name	= ART_BARLOG;
+	s_preferences.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_preferences.barlog.generic.x		= 140;
+	s_preferences.barlog.generic.y		= 5;
+	s_preferences.barlog.width			= 355;
+	s_preferences.barlog.height			= 90;
 
-	s_preferences.framer.generic.type  = MTYPE_BITMAP;
-	s_preferences.framer.generic.name  = ART_FRAMER;
-	s_preferences.framer.generic.flags = QMF_INACTIVE;
-	s_preferences.framer.generic.x	   = 376;
-	s_preferences.framer.generic.y	   = 76;
-	s_preferences.framer.width  	   = 256;
-	s_preferences.framer.height  	   = 334;
+	s_preferences.banner.generic.type	= MTYPE_PTEXT; // BFP - modified GAME OPTIONS title type
+	s_preferences.banner.generic.flags	= QMF_CENTER_JUSTIFY|QMF_INACTIVE; // BFP - modified GAME OPTIONS title flags
+	s_preferences.banner.generic.x		= 320;
+	s_preferences.banner.generic.y		= 45; // BFP - modified GAME OPTIONS title y position
+	s_preferences.banner.string			= "GAME OPTIONS";
+	s_preferences.banner.color			= color_white;
+	s_preferences.banner.style			= UI_CENTER|UI_BIGFONT; // BFP - modified GAME OPTIONS title style
 
 	y = 144;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
@@ -283,6 +289,8 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.wallmarks.generic.x	          = PREFERENCES_X_POS;
 	s_preferences.wallmarks.generic.y	          = y;
 
+	// BFP - unused
+#if 0
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.brass.generic.type              = MTYPE_RADIOBUTTON;
 	s_preferences.brass.generic.name	          = "Ejecting Brass:";
@@ -291,6 +299,17 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.brass.generic.id                = ID_EJECTINGBRASS;
 	s_preferences.brass.generic.x	              = PREFERENCES_X_POS;
 	s_preferences.brass.generic.y	              = y;
+#endif
+
+	// BFP - Automatic download radio button moved here
+	y += BIGCHAR_HEIGHT+2;
+	s_preferences.allowdownload.generic.type     = MTYPE_RADIOBUTTON;
+	s_preferences.allowdownload.generic.name	   = "Automatic Downloading:";
+	s_preferences.allowdownload.generic.flags	   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_preferences.allowdownload.generic.callback = Preferences_Event;
+	s_preferences.allowdownload.generic.id       = ID_ALLOWDOWNLOAD;
+	s_preferences.allowdownload.generic.x	       = PREFERENCES_X_POS;
+	s_preferences.allowdownload.generic.y	       = y;
 
 	y += BIGCHAR_HEIGHT+2;
 	s_preferences.dynamiclights.generic.type      = MTYPE_RADIOBUTTON;
@@ -348,41 +367,32 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.drawteamoverlay.itemnames			= teamoverlay_names;
 
 	y += BIGCHAR_HEIGHT+2;
-	s_preferences.allowdownload.generic.type     = MTYPE_RADIOBUTTON;
-	s_preferences.allowdownload.generic.name	   = "Automatic Downloading:";
-	s_preferences.allowdownload.generic.flags	   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.allowdownload.generic.callback = Preferences_Event;
-	s_preferences.allowdownload.generic.id       = ID_ALLOWDOWNLOAD;
-	s_preferences.allowdownload.generic.x	       = PREFERENCES_X_POS;
-	s_preferences.allowdownload.generic.y	       = y;
-
-	y += BIGCHAR_HEIGHT+2;
 	s_preferences.back.generic.type	    = MTYPE_BITMAP;
 	s_preferences.back.generic.name     = ART_BACK0;
 	s_preferences.back.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_preferences.back.generic.callback = Preferences_Event;
 	s_preferences.back.generic.id	    = ID_BACK;
 	s_preferences.back.generic.x		= 0;
-	s_preferences.back.generic.y		= 480-64;
-	s_preferences.back.width  		    = 128;
-	s_preferences.back.height  		    = 64;
+	s_preferences.back.generic.y		= 480-80; // BFP - modified BACK button y position
+	s_preferences.back.width  		    = 80; // BFP - modified BACK button width
+	s_preferences.back.height  		    = 80; // BFP - modified BACK button height
 	s_preferences.back.focuspic         = ART_BACK1;
 
+	Menu_AddItem( &s_preferences.menu, &s_preferences.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_preferences.menu, &s_preferences.barlog ); // BFP - barlog
 	Menu_AddItem( &s_preferences.menu, &s_preferences.banner );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.framel );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.framer );
 
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshair );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.simpleitems );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.brass );
+	// Menu_AddItem( &s_preferences.menu, &s_preferences.brass ); // BFP - unused
+	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload ); // BFP - Automatic download radio button moved here
 	Menu_AddItem( &s_preferences.menu, &s_preferences.dynamiclights );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.identifytarget );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.highqualitysky );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.synceveryframe );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.forcemodel );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.drawteamoverlay );
-	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload );
 
 	Menu_AddItem( &s_preferences.menu, &s_preferences.back );
 
@@ -398,8 +408,8 @@ Preferences_Cache
 void Preferences_Cache( void ) {
 	int		n;
 
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
 	for( n = 0; n < NUM_CROSSHAIRS; n++ ) {

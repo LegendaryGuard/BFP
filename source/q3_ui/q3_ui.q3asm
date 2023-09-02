@@ -27,9 +27,6 @@ ui_serverinfo
 ui_servers2
 ui_sparena
 ui_specifyserver
-ui_sppostgame
-ui_splevel
-ui_spskill
 ui_startserver
 ui_team
 ui_video
