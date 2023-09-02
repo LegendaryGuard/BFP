@@ -82,8 +82,6 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_video.c
 @if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_cinematics.c
-@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_spskill.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_addbots.c

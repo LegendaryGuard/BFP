@@ -113,7 +113,7 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 		break;
 
 	case ID_BFPOPTIONS: // BFP - BFP Options menu
-		UI_BFPPreferencesMenu();
+		UI_BFPOptionsMenu();
 		break;
 
 	case ID_CUSTOMIZECONTROLS:

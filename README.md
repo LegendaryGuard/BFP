@@ -429,8 +429,9 @@ The information in the map file can be useful for debugging and performance anal
 
 #### Removed source code files from the build tools:
 
-- ui_playersettings.c
+- ui_cinematics.c
 - ui_mods.c
+- ui_playersettings.c
 
 #### Unused source code files and unavailable in the build tools:
 

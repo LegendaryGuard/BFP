@@ -313,12 +313,15 @@ extern void Controls_Cache( void );
 extern void UI_DemosMenu( void );
 extern void Demos_Cache( void );
 
+// BFP - Cinematics menu is disabled
+#if 0
 //
 // ui_cinematics.c
 //
 extern void UI_CinematicsMenu( void );
 extern void UI_CinematicsMenu_f( void );
 extern void UI_CinematicsMenu_Cache( void );
+#endif
 
 // BFP - Mods menu is disabled
 #if 0
@@ -354,8 +357,8 @@ extern void PlayerSettings_Cache( void );
 //
 // ui_bfpoptions.c
 //
-extern void UI_BFPPreferencesMenu( void ); // BFP - BFP OPTIONS
-extern void BFPPreferences_Cache( void ); // BFP - BFP OPTIONS
+extern void UI_BFPOptionsMenu( void ); // BFP - BFP OPTIONS
+extern void BFPOptions_Cache( void ); // BFP - BFP OPTIONS
 
 //
 // ui_preferences.c

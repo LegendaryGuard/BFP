@@ -967,9 +967,9 @@ void UI_Cache_f( void ) {
 //	PlayerSettings_Cache(); // BFP - Player settings isn't available
 	Controls_Cache();
 	Demos_Cache();
-	UI_CinematicsMenu_Cache();
+//	UI_CinematicsMenu_Cache(); // BFP - Cinematics menu is disabled
 	Preferences_Cache();
-	BFPPreferences_Cache(); // BFP - BFP OPTIONS
+	BFPOptions_Cache(); // BFP - BFP OPTIONS
 	ServerInfo_Cache();
 	SpecifyServer_Cache();
 	ArenaServers_Cache();
@@ -1023,11 +1023,13 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		UI_Cache_f();
 		return qtrue;
 	}
-
+// BFP - Cinematics menu is disabled
+#if 0
 	if ( Q_stricmp (cmd, "ui_cinematics") == 0 ) {
 		UI_CinematicsMenu_f();
 		return qtrue;
 	}
+#endif
 
 	if ( Q_stricmp (cmd, "ui_teamOrders") == 0 ) {
 		UI_TeamOrdersMenu_f();

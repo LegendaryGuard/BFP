@@ -25,8 +25,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define ART_BACK0		"menu/art/back_0"
 #define ART_BACK1		"menu/art/back_1"	
-#define ART_FRAMEL		"menu/art/frame2_l"
-#define ART_FRAMER		"menu/art/frame1_r"
+#define ART_MENUBG		"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG		"menu/art/cap_barlog"	// BFP - cap bar
 
 #define VERTICAL_SPACING	30
 
@@ -45,9 +45,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef struct {
 	menuframework_s	menu;
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 	menutext_s		cin_idlogo;
 	menutext_s		cin_intro;
 	menutext_s		cin_tier1;
@@ -124,28 +124,31 @@ static void UI_CinematicsMenu_Init( void ) {
 	memset( &cinematicsMenuInfo, 0, sizeof(cinematicsMenuInfo) );
 	cinematicsMenuInfo.menu.fullscreen = qtrue;
 
-	cinematicsMenuInfo.banner.generic.type		= MTYPE_BTEXT;
+	// BFP - Menu background
+	cinematicsMenuInfo.menubg.generic.type		= MTYPE_BITMAP;
+	cinematicsMenuInfo.menubg.generic.name		= ART_MENUBG;
+	cinematicsMenuInfo.menubg.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	cinematicsMenuInfo.menubg.generic.x			= 0;
+	cinematicsMenuInfo.menubg.generic.y			= 0;
+	cinematicsMenuInfo.menubg.width				= 640;
+	cinematicsMenuInfo.menubg.height			= 480;
+
+	// BFP - barlog
+	cinematicsMenuInfo.barlog.generic.type		= MTYPE_BITMAP;
+	cinematicsMenuInfo.barlog.generic.name		= ART_BARLOG;
+	cinematicsMenuInfo.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	cinematicsMenuInfo.barlog.generic.x			= 140;
+	cinematicsMenuInfo.barlog.generic.y			= 5;
+	cinematicsMenuInfo.barlog.width				= 355;
+	cinematicsMenuInfo.barlog.height			= 90;
+
+	cinematicsMenuInfo.banner.generic.type		= MTYPE_PTEXT; // BFP - modified CINEMATICS title type
+	cinematicsMenuInfo.banner.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE; // BFP - modified CINEMATICS title flags
 	cinematicsMenuInfo.banner.generic.x			= 320;
-	cinematicsMenuInfo.banner.generic.y			= 16;
+	cinematicsMenuInfo.banner.generic.y			= 45; // BFP - modified CINEMATICS title y position
 	cinematicsMenuInfo.banner.string			= "CINEMATICS";
-	cinematicsMenuInfo.banner.color				= color_white;
-	cinematicsMenuInfo.banner.style				= UI_CENTER;
-
-	cinematicsMenuInfo.framel.generic.type		= MTYPE_BITMAP;
-	cinematicsMenuInfo.framel.generic.name		= ART_FRAMEL;
-	cinematicsMenuInfo.framel.generic.flags		= QMF_INACTIVE;
-	cinematicsMenuInfo.framel.generic.x			= 0;  
-	cinematicsMenuInfo.framel.generic.y			= 78;
-	cinematicsMenuInfo.framel.width  			= 256;
-	cinematicsMenuInfo.framel.height  			= 329;
-
-	cinematicsMenuInfo.framer.generic.type		= MTYPE_BITMAP;
-	cinematicsMenuInfo.framer.generic.name		= ART_FRAMER;
-	cinematicsMenuInfo.framer.generic.flags		= QMF_INACTIVE;
-	cinematicsMenuInfo.framer.generic.x			= 376;
-	cinematicsMenuInfo.framer.generic.y			= 76;
-	cinematicsMenuInfo.framer.width  			= 256;
-	cinematicsMenuInfo.framer.height  			= 334;
+	cinematicsMenuInfo.banner.color				= color_white; // BFP - modified CINEMATICS title color
+	cinematicsMenuInfo.banner.style				= UI_CENTER|UI_BIGFONT; // BFP - modified CINEMATICS title style
 
 	y = 100;
 	cinematicsMenuInfo.cin_idlogo.generic.type		= MTYPE_PTEXT;
@@ -155,7 +158,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_idlogo.generic.id		= ID_CIN_IDLOGO;
 	cinematicsMenuInfo.cin_idlogo.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_idlogo.string			= "ID LOGO";
-	cinematicsMenuInfo.cin_idlogo.color				= color_red;
+	cinematicsMenuInfo.cin_idlogo.color				= color_white; // BFP - modified ID LOGO button color
 	cinematicsMenuInfo.cin_idlogo.style				= UI_CENTER;
 
 	y += VERTICAL_SPACING;
@@ -166,7 +169,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_intro.generic.id			= ID_CIN_INTRO;
 	cinematicsMenuInfo.cin_intro.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_intro.string				= "INTRO";
-	cinematicsMenuInfo.cin_intro.color				= color_red;
+	cinematicsMenuInfo.cin_intro.color				= color_white; // BFP - modified INTRO button color
 	cinematicsMenuInfo.cin_intro.style				= UI_CENTER;
 	if( uis.demoversion ) {
 		cinematicsMenuInfo.cin_intro.generic.flags |= QMF_GRAYED;
@@ -180,7 +183,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier1.generic.id			= ID_CIN_TIER1;
 	cinematicsMenuInfo.cin_tier1.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_tier1.string				= "Tier 1";
-	cinematicsMenuInfo.cin_tier1.color				= color_red;
+	cinematicsMenuInfo.cin_tier1.color				= color_white; // BFP - modified Tier 1 button color
 	cinematicsMenuInfo.cin_tier1.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 1 ) ) {
 		cinematicsMenuInfo.cin_tier1.generic.flags |= QMF_GRAYED;
@@ -194,7 +197,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier2.generic.id			= ID_CIN_TIER2;
 	cinematicsMenuInfo.cin_tier2.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_tier2.string				= "Tier 2";
-	cinematicsMenuInfo.cin_tier2.color				= color_red;
+	cinematicsMenuInfo.cin_tier2.color				= color_white; // BFP - modified Tier 2 button color
 	cinematicsMenuInfo.cin_tier2.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 2 ) ) {
 		cinematicsMenuInfo.cin_tier2.generic.flags |= QMF_GRAYED;
@@ -208,7 +211,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier3.generic.id			= ID_CIN_TIER3;
 	cinematicsMenuInfo.cin_tier3.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_tier3.string				= "Tier 3";
-	cinematicsMenuInfo.cin_tier3.color				= color_red;
+	cinematicsMenuInfo.cin_tier3.color				= color_white; // BFP - modified Tier 3 button color
 	cinematicsMenuInfo.cin_tier3.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 3 ) ) {
 		cinematicsMenuInfo.cin_tier3.generic.flags |= QMF_GRAYED;
@@ -222,7 +225,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier4.generic.id			= ID_CIN_TIER4;
 	cinematicsMenuInfo.cin_tier4.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_tier4.string				= "Tier 4";
-	cinematicsMenuInfo.cin_tier4.color				= color_red;
+	cinematicsMenuInfo.cin_tier4.color				= color_white; // BFP - modified Tier 4 button color
 	cinematicsMenuInfo.cin_tier4.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 4 ) ) {
 		cinematicsMenuInfo.cin_tier4.generic.flags |= QMF_GRAYED;
@@ -236,7 +239,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier5.generic.id			= ID_CIN_TIER5;
 	cinematicsMenuInfo.cin_tier5.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_tier5.string				= "Tier 5";
-	cinematicsMenuInfo.cin_tier5.color				= color_red;
+	cinematicsMenuInfo.cin_tier5.color				= color_white; // BFP - modified Tier 5 button color
 	cinematicsMenuInfo.cin_tier5.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 5 ) ) {
 		cinematicsMenuInfo.cin_tier5.generic.flags |= QMF_GRAYED;
@@ -250,7 +253,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier6.generic.id			= ID_CIN_TIER6;
 	cinematicsMenuInfo.cin_tier6.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_tier6.string				= "Tier 6";
-	cinematicsMenuInfo.cin_tier6.color				= color_red;
+	cinematicsMenuInfo.cin_tier6.color				= color_white; // BFP - modified Tier 6 button color
 	cinematicsMenuInfo.cin_tier6.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 6 ) ) {
 		cinematicsMenuInfo.cin_tier6.generic.flags |= QMF_GRAYED;
@@ -264,7 +267,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_tier7.generic.id			= ID_CIN_TIER7;
 	cinematicsMenuInfo.cin_tier7.generic.callback	= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_tier7.string				= "Tier 7";
-	cinematicsMenuInfo.cin_tier7.color				= color_red;
+	cinematicsMenuInfo.cin_tier7.color				= color_white; // BFP - modified Tier 7 button color
 	cinematicsMenuInfo.cin_tier7.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 7 ) ) {
 		cinematicsMenuInfo.cin_tier7.generic.flags |= QMF_GRAYED;
@@ -278,7 +281,7 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.cin_end.generic.id			= ID_CIN_END;
 	cinematicsMenuInfo.cin_end.generic.callback		= UI_CinematicsMenu_Event; 
 	cinematicsMenuInfo.cin_end.string				= "END";
-	cinematicsMenuInfo.cin_end.color				= color_red;
+	cinematicsMenuInfo.cin_end.color				= color_white; // BFP - modified END button color
 	cinematicsMenuInfo.cin_end.style				= UI_CENTER;
 	if( !UI_CanShowTierVideo( 8 ) ) {
 		cinematicsMenuInfo.cin_end.generic.flags |= QMF_GRAYED;
@@ -290,14 +293,14 @@ static void UI_CinematicsMenu_Init( void ) {
 	cinematicsMenuInfo.back.generic.id			= ID_BACK;
 	cinematicsMenuInfo.back.generic.callback	= UI_CinematicsMenu_BackEvent;
 	cinematicsMenuInfo.back.generic.x			= 0;
-	cinematicsMenuInfo.back.generic.y			= 480-64;
-	cinematicsMenuInfo.back.width				= 128;
-	cinematicsMenuInfo.back.height				= 64;
+	cinematicsMenuInfo.back.generic.y			= 480-80; // BFP - modified BACK button y position
+	cinematicsMenuInfo.back.width				= 80; // BFP - modified BACK button width
+	cinematicsMenuInfo.back.height				= 80; // BFP - modified BACK button height
 	cinematicsMenuInfo.back.focuspic			= ART_BACK1;
 
+	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.barlog ); // BFP - barlog
 	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.banner );
-	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.framel );
-	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.framer );
 	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.cin_idlogo );
 	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.cin_intro );
 	Menu_AddItem( &cinematicsMenuInfo.menu, &cinematicsMenuInfo.cin_tier1 );
@@ -320,8 +323,8 @@ UI_CinematicsMenu_Cache
 void UI_CinematicsMenu_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 }
 
 

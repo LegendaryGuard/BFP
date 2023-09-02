@@ -463,7 +463,6 @@ UIOBJ_ = \
   $(B)/ui/ui_atoms.o \
   $(B)/ui/ui_bfpoptions.o \
   $(B)/ui/ui_cdkey.o \
-  $(B)/ui/ui_cinematics.o \
   $(B)/ui/ui_confirm.o \
   $(B)/ui/ui_connect.o \
   $(B)/ui/ui_controls2.o \
