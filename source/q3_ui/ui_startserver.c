@@ -31,13 +31,12 @@ START SERVER MENU *****
 
 #include "ui_local.h"
 
-
+#define ART_MENUBG				"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG				"menu/art/cap_barlog"	// BFP - barlog
 #define GAMESERVER_BACK0		"menu/art/back_0"
 #define GAMESERVER_BACK1		"menu/art/back_1"
 #define GAMESERVER_NEXT0		"menu/art/next_0"
 #define GAMESERVER_NEXT1		"menu/art/next_1"
-#define GAMESERVER_FRAMEL		"menu/art/frame2_l"
-#define GAMESERVER_FRAMER		"menu/art/frame1_r"
 #define GAMESERVER_SELECT		"menu/art/maps_select"
 #define GAMESERVER_SELECTED		"menu/art/maps_selected"
 #define GAMESERVER_FIGHT0		"menu/art/fight_0"
@@ -47,9 +46,9 @@ START SERVER MENU *****
 #define GAMESERVER_ARROWSL		"menu/art/gs_arrows_l"
 #define GAMESERVER_ARROWSR		"menu/art/gs_arrows_r"
 
-#define MAX_MAPROWS		2
-#define MAX_MAPCOLS		2
-#define MAX_MAPSPERPAGE	4
+#define MAX_MAPROWS		4 // BFP - modified rows, before 2
+#define MAX_MAPCOLS		4 // BFP - modified cols, before 2
+#define MAX_MAPSPERPAGE	8 // BFP - modified pages, before 4
 
 #define	MAX_SERVERSTEXT	8192
 
@@ -66,9 +65,9 @@ START SERVER MENU *****
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 
 	menulist_s		gametype;
 	menubitmap_s	mappics[MAX_MAPSPERPAGE];
@@ -103,9 +102,6 @@ static const char *gametype_items[] = {
 
 static int gametype_remap[] = {GT_FFA, GT_TEAM, GT_TOURNAMENT, GT_CTF};
 static int gametype_remap2[] = {0, 2, 0, 1, 3};
-
-// use ui_servers2.c definition
-extern const char* punkbuster_items[];
 
 static void UI_ServerOptionsMenu( qboolean multiplayer );
 
@@ -363,7 +359,7 @@ static void StartServer_LevelshotDraw( void *self ) {
 	x += b->width / 2;
 	y += 4;
 	n = s_startserver.page * MAX_MAPSPERPAGE + b->generic.id - ID_PICTURES;
-	UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawString( x, y, s_startserver.maplist[n], UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified map name color
 
 	x = b->generic.x;
 	y = b->generic.y;
@@ -394,28 +390,30 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.menu.wrapAround = qtrue;
 	s_startserver.menu.fullscreen = qtrue;
 
-	s_startserver.banner.generic.type  = MTYPE_BTEXT;
+	// BFP - Menu background
+	s_startserver.menubg.generic.type  = MTYPE_BITMAP;
+	s_startserver.menubg.generic.name  = ART_MENUBG;
+	s_startserver.menubg.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_startserver.menubg.generic.x	   = 0;
+	s_startserver.menubg.generic.y	   = 0;
+	s_startserver.menubg.width		   = 640;
+	s_startserver.menubg.height		   = 480;
+
+	// BFP - barlog
+	s_startserver.barlog.generic.type  = MTYPE_BITMAP;
+	s_startserver.barlog.generic.name  = ART_BARLOG;
+	s_startserver.barlog.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_startserver.barlog.generic.x	   = 140;
+	s_startserver.barlog.generic.y	   = 5;
+	s_startserver.barlog.width		   = 355;
+	s_startserver.barlog.height		   = 90;
+
+	s_startserver.banner.generic.type  = MTYPE_PTEXT; // BFP - modified GAME SERVER title type
 	s_startserver.banner.generic.x	   = 320;
-	s_startserver.banner.generic.y	   = 16;
+	s_startserver.banner.generic.y	   = 45; // BFP - modified GAME SERVER title y position
 	s_startserver.banner.string        = "GAME SERVER";
 	s_startserver.banner.color         = color_white;
-	s_startserver.banner.style         = UI_CENTER;
-
-	s_startserver.framel.generic.type  = MTYPE_BITMAP;
-	s_startserver.framel.generic.name  = GAMESERVER_FRAMEL;
-	s_startserver.framel.generic.flags = QMF_INACTIVE;
-	s_startserver.framel.generic.x	   = 0;  
-	s_startserver.framel.generic.y	   = 78;
-	s_startserver.framel.width  	   = 256;
-	s_startserver.framel.height  	   = 329;
-
-	s_startserver.framer.generic.type  = MTYPE_BITMAP;
-	s_startserver.framer.generic.name  = GAMESERVER_FRAMER;
-	s_startserver.framer.generic.flags = QMF_INACTIVE;
-	s_startserver.framer.generic.x	   = 376;
-	s_startserver.framer.generic.y	   = 76;
-	s_startserver.framer.width  	   = 256;
-	s_startserver.framer.height  	   = 334;
+	s_startserver.banner.style         = UI_CENTER|UI_BIGFONT; // BFP - modified GAME SERVER title style
 
 	s_startserver.gametype.generic.type		= MTYPE_SPINCONTROL;
 	s_startserver.gametype.generic.name		= "Game Type:";
@@ -428,7 +426,7 @@ static void StartServer_MenuInit( void ) {
 
 	for (i=0; i<MAX_MAPSPERPAGE; i++)
 	{
-		x =	(i % MAX_MAPCOLS) * (128+8) + 188;
+		x =	(i % MAX_MAPCOLS) * (128+8) + 52; // BFP - modified map columns, before (i % MAX_MAPCOLS) * (128+8) + 188
 		y = (i / MAX_MAPROWS) * (128+8) + 96;
 
 		s_startserver.mappics[i].generic.type   = MTYPE_BITMAP;
@@ -499,9 +497,9 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.back.generic.callback = StartServer_MenuEvent;
 	s_startserver.back.generic.id	    = ID_STARTSERVERBACK;
 	s_startserver.back.generic.x		= 0;
-	s_startserver.back.generic.y		= 480-64;
-	s_startserver.back.width  		    = 128;
-	s_startserver.back.height  		    = 64;
+	s_startserver.back.generic.y		= 480-80; // BFP - modified BACK button y position
+	s_startserver.back.width  		    = 80; // BFP - modified BACK button width
+	s_startserver.back.height  		    = 80; // BFP - modified BACK button height
 	s_startserver.back.focuspic         = GAMESERVER_BACK1;
 
 	s_startserver.next.generic.type	    = MTYPE_BITMAP;
@@ -510,9 +508,9 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.next.generic.callback = StartServer_MenuEvent;
 	s_startserver.next.generic.id	    = ID_STARTSERVERNEXT;
 	s_startserver.next.generic.x		= 640;
-	s_startserver.next.generic.y		= 480-64;
-	s_startserver.next.width  		    = 128;
-	s_startserver.next.height  		    = 64;
+	s_startserver.next.generic.y		= 480-80; // BFP - modified NEXT button y position
+	s_startserver.next.width  		    = 80; // BFP - modified NEXT button width
+	s_startserver.next.height  		    = 80; // BFP - modified NEXT button height
 	s_startserver.next.focuspic         = GAMESERVER_NEXT1;
 
 	s_startserver.item_null.generic.type	= MTYPE_BITMAP;
@@ -522,9 +520,9 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.item_null.width			= 640;
 	s_startserver.item_null.height			= 480;
 
+	Menu_AddItem( &s_startserver.menu, &s_startserver.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_startserver.menu, &s_startserver.barlog ); // BFP - barlog
 	Menu_AddItem( &s_startserver.menu, &s_startserver.banner );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.framel );
-	Menu_AddItem( &s_startserver.menu, &s_startserver.framer );
 
 	Menu_AddItem( &s_startserver.menu, &s_startserver.gametype );
 	for (i=0; i<MAX_MAPSPERPAGE; i++)
@@ -557,12 +555,12 @@ void StartServer_Cache( void )
 	qboolean		precache;
 	char			picname[64];
 
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background	
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( GAMESERVER_BACK0 );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_BACK1 );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_NEXT0 );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_NEXT1 );	
-	trap_R_RegisterShaderNoMip( GAMESERVER_FRAMEL );	
-	trap_R_RegisterShaderNoMip( GAMESERVER_FRAMER );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_SELECT );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_SELECTED );	
 	trap_R_RegisterShaderNoMip( GAMESERVER_UNKNOWNMAP );
@@ -617,6 +615,10 @@ SERVER OPTIONS MENU *****
 #define ID_DEDICATED			22
 #define ID_GO					23
 #define ID_BACK					24
+#define ID_PLBASE				25 // BFP - Powerlevel base
+#define ID_HITSTUN				26 // BFP - Hitstun or not
+#define ID_MELEEONLY			27 // BFP - Melee only
+#define ID_NOFLIGHT				28 // BFP - Flight or not
 
 #define PLAYER_SLOTS			12
 
@@ -624,6 +626,8 @@ SERVER OPTIONS MENU *****
 typedef struct {
 	menuframework_s		menu;
 
+	menubitmap_s		menubg;		// BFP - Menu background
+	menubitmap_s		barlog;		// BFP - barlog
 	menutext_s			banner;
 
 	menubitmap_s		mappic;
@@ -637,6 +641,11 @@ typedef struct {
 	menufield_s			hostname;
 	menuradiobutton_s	pure;
 	menulist_s			botSkill;
+
+	menuslider_s		plbase;		// BFP - Powerlevel base
+	menuradiobutton_s	hitstun;	// BFP - Hitstun or not
+	menuradiobutton_s	meleeonly;	// BFP - Melee only
+	menuradiobutton_s	noflight;	// BFP - Flight or not
 
 	menutext_s			player0;
 	menulist_s			playerType[PLAYER_SLOTS];
@@ -655,8 +664,6 @@ typedef struct {
 	qboolean			newBot;
 	int					newBotIndex;
 	char				newBotName[16];
-	
-	menulist_s		punkbuster;
 } serveroptions_t;
 
 static serveroptions_t s_serveroptions;
@@ -729,6 +736,9 @@ static void ServerOptions_Start( void ) {
 	int		friendlyfire;
 	int		flaglimit;
 	int		pure;
+	int		hitstun;	// BFP - Hitstun or not
+	int		meleeonly;	// BFP - Melee only
+	int		noflight;	// BFP - Flight or not
 	int		skill;
 	int		n;
 	char	buf[64];
@@ -741,6 +751,9 @@ static void ServerOptions_Start( void ) {
 	friendlyfire = s_serveroptions.friendlyfire.curvalue;
 	pure		 = s_serveroptions.pure.curvalue;
 	skill		 = s_serveroptions.botSkill.curvalue + 1;
+	hitstun		 = s_serveroptions.hitstun.curvalue;	// BFP - Hitstun or not
+	meleeonly	 = s_serveroptions.meleeonly.curvalue;	// BFP - Melee only
+	noflight	 = s_serveroptions.noflight.curvalue;	// BFP - Flight or not
 
 	//set maxclients
 	for( n = 0, maxclients = 0; n < PLAYER_SLOTS; n++ ) {
@@ -785,9 +798,10 @@ static void ServerOptions_Start( void ) {
 	trap_Cvar_SetValue ("capturelimit", Com_Clamp( 0, flaglimit, flaglimit ) );
 	trap_Cvar_SetValue( "g_friendlyfire", friendlyfire );
 	trap_Cvar_SetValue( "sv_pure", pure );
+	trap_Cvar_SetValue( "g_hitStun", hitstun );		// BFP - Hitstun or not
+	trap_Cvar_SetValue( "g_meleeOnly", meleeonly );	// BFP - Melee only
+	trap_Cvar_SetValue( "g_noFlight", noflight );	// BFP - Flight or not
 	trap_Cvar_Set("sv_hostname", s_serveroptions.hostname.field.buffer );
-	
-	trap_Cvar_SetValue( "sv_punkbuster", s_serveroptions.punkbuster.curvalue );
 
 	// the wait commands will allow the dedicated to take effect
 	trap_Cmd_ExecuteText( EXEC_APPEND, va( "wait ; wait ; map %s\n", s_startserver.maplist[s_startserver.currentmap] ) );
@@ -936,6 +950,11 @@ static void ServerOptions_Event( void* ptr, int event ) {
 	//if( event != QM_ACTIVATED && event != QM_LOSTFOCUS) {
 	//	return;
 	//}
+	// BFP - Powerlevel base
+	case ID_PLBASE:
+		trap_Cvar_SetValue( "g_basePL", s_serveroptions.plbase.curvalue );
+		break;
+
 	case ID_PLAYER_TYPE:
 		if( event != QM_ACTIVATED ) {
 			break;
@@ -1021,10 +1040,10 @@ static void ServerOptions_LevelshotDraw( void *self ) {
 
 	x += b->width / 2;
 	y += 4;
-	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawString( x, y, s_serveroptions.mapnamebuffer, UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified map name color
 
 	y += SMALLCHAR_HEIGHT;
-	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, color_orange );
+	UI_DrawString( x, y, gametype_items[gametype_remap2[s_serveroptions.gametype]], UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified gametype color
 }
 
 
@@ -1038,7 +1057,7 @@ static void ServerOptions_InitBotNames( void ) {
 	char		bots[MAX_INFO_STRING];
 
 	// BFP - TODO: When selecting to the bot in the list,
-	// by default in BFP is: 1) vegeta 2) freeza 3) gohan 4) piccolo 5) goku 6) krillin
+	// by default in BFP is: 1) Gothax 2) Pyrate 3) Shilo 4) Ryuujin 5) Tetsedah 6) Kyah
 	if( s_serveroptions.gametype >= GT_TEAM ) {
 		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "grunt", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "major", 16 );
@@ -1155,6 +1174,9 @@ static void ServerOptions_SetMenuItems( void ) {
 
 	Q_strncpyz( s_serveroptions.hostname.field.buffer, UI_Cvar_VariableString( "sv_hostname" ), sizeof( s_serveroptions.hostname.field.buffer ) );
 	s_serveroptions.pure.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "sv_pure" ) );
+	s_serveroptions.hitstun.curvalue = Com_Clamp(0, 1, trap_Cvar_VariableValue( "g_hitstun" ) ); // BFP - Hitstun or not
+	s_serveroptions.meleeonly.curvalue = Com_Clamp(0, 1, trap_Cvar_VariableValue( "g_meleeOnly" ) ); // BFP - Melee only
+	s_serveroptions.noflight.curvalue = Com_Clamp(0, 1, trap_Cvar_VariableValue( "g_noFlight" ) ); // BFP - Flight or not
 
 	// set the map pic
 	Com_sprintf( picname, 64, "levelshots/%s", s_startserver.maplist[s_startserver.currentmap] );
@@ -1234,19 +1256,36 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	memset( &s_serveroptions, 0 ,sizeof(serveroptions_t) );
 	s_serveroptions.multiplayer = multiplayer;
 	s_serveroptions.gametype = (int)Com_Clamp( 0, 5, trap_Cvar_VariableValue( "g_gameType" ) );
-	s_serveroptions.punkbuster.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "sv_punkbuster" ) );
 
 	ServerOptions_Cache();
 
 	s_serveroptions.menu.wrapAround = qtrue;
 	s_serveroptions.menu.fullscreen = qtrue;
 
-	s_serveroptions.banner.generic.type			= MTYPE_BTEXT;
+	// BFP - Menu background
+	s_serveroptions.menubg.generic.type		= MTYPE_BITMAP;
+	s_serveroptions.menubg.generic.name		= ART_MENUBG;
+	s_serveroptions.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_serveroptions.menubg.generic.x		= 0;
+	s_serveroptions.menubg.generic.y		= 0;
+	s_serveroptions.menubg.width			= 640;
+	s_serveroptions.menubg.height			= 480;
+
+	// BFP - barlog
+	s_serveroptions.barlog.generic.type		= MTYPE_BITMAP;
+	s_serveroptions.barlog.generic.name		= ART_BARLOG;
+	s_serveroptions.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_serveroptions.barlog.generic.x		= 140;
+	s_serveroptions.barlog.generic.y		= 5;
+	s_serveroptions.barlog.width			= 355;
+	s_serveroptions.barlog.height			= 90;
+
+	s_serveroptions.banner.generic.type			= MTYPE_PTEXT; // BFP - modified GAME SERVER title type
 	s_serveroptions.banner.generic.x			= 320;
-	s_serveroptions.banner.generic.y			= 16;
+	s_serveroptions.banner.generic.y			= 45; // BFP - modified GAME SERVER title y position
 	s_serveroptions.banner.string  				= "GAME SERVER";
 	s_serveroptions.banner.color  				= color_white;
-	s_serveroptions.banner.style  				= UI_CENTER;
+	s_serveroptions.banner.style  				= UI_CENTER|UI_BIGFONT; // BFP - modified GAME SERVER title style
 
 	s_serveroptions.mappic.generic.type			= MTYPE_BITMAP;
 	s_serveroptions.mappic.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
@@ -1336,14 +1375,49 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.hostname.field.maxchars     = 64;
 	}
 
-	y += BIGCHAR_HEIGHT+2;
-	s_serveroptions.punkbuster.generic.type			= MTYPE_SPINCONTROL;
-	s_serveroptions.punkbuster.generic.name			= "Punkbuster:";
-	s_serveroptions.punkbuster.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_serveroptions.punkbuster.generic.id			= 0;
-	s_serveroptions.punkbuster.generic.x				= OPTIONS_X;
-	s_serveroptions.punkbuster.generic.y				= y;
-	s_serveroptions.punkbuster.itemnames				= punkbuster_items;
+	// BFP - Powerlevel base
+	if ( s_serveroptions.multiplayer ) {
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.plbase.generic.type		= MTYPE_SLIDER;
+		s_serveroptions.plbase.generic.flags	= QMF_SMALLFONT|QMF_HIGHLIGHT;
+		s_serveroptions.plbase.generic.name		= "Starting PL:";
+		s_serveroptions.plbase.generic.id		= ID_PLBASE;
+		s_serveroptions.plbase.generic.callback	= ServerOptions_Event;
+		s_serveroptions.plbase.generic.x		= OPTIONS_X - 56;
+		s_serveroptions.plbase.generic.y		= y;
+		s_serveroptions.plbase.minvalue			= 1;
+		s_serveroptions.plbase.maxvalue			= 1000;
+	}
+
+	// BFP - Hitstun or not
+	if ( s_serveroptions.multiplayer ) {
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.hitstun.generic.type	= MTYPE_RADIOBUTTON;
+		s_serveroptions.hitstun.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.hitstun.generic.x		= OPTIONS_X;
+		s_serveroptions.hitstun.generic.y		= y;
+		s_serveroptions.hitstun.generic.name	= "Melee Hit Stun:";
+	}
+
+	// BFP - Melee only
+	if ( s_serveroptions.multiplayer ) {
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.meleeonly.generic.type	= MTYPE_RADIOBUTTON;
+		s_serveroptions.meleeonly.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.meleeonly.generic.x		= OPTIONS_X;
+		s_serveroptions.meleeonly.generic.y		= y;
+		s_serveroptions.meleeonly.generic.name	= "Melee Only:";
+	}
+
+	// BFP - Flight or not
+	if ( s_serveroptions.multiplayer ) {
+		y += BIGCHAR_HEIGHT+2;
+		s_serveroptions.noflight.generic.type	= MTYPE_RADIOBUTTON;
+		s_serveroptions.noflight.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+		s_serveroptions.noflight.generic.x		= OPTIONS_X;
+		s_serveroptions.noflight.generic.y		= y;
+		s_serveroptions.noflight.generic.name	= "Disable Flight:";
+	}
 	
 	y = 80;
 	s_serveroptions.botSkill.generic.type			= MTYPE_SPINCONTROL;
@@ -1359,7 +1433,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.player0.generic.flags			= QMF_SMALLFONT;
 	s_serveroptions.player0.generic.x				= 32 + SMALLCHAR_WIDTH;
 	s_serveroptions.player0.generic.y				= y;
-	s_serveroptions.player0.color					= color_orange;
+	s_serveroptions.player0.color					= color_white; // BFP - modified player model name color
 	s_serveroptions.player0.style					= UI_LEFT|UI_SMALLFONT;
 
 	for( n = 0; n < PLAYER_SLOTS; n++ ) {
@@ -1378,7 +1452,7 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		s_serveroptions.playerName[n].generic.callback	= ServerOptions_PlayerNameEvent;
 		s_serveroptions.playerName[n].generic.id		= n;
 		s_serveroptions.playerName[n].generic.ownerdraw	= PlayerName_Draw;
-		s_serveroptions.playerName[n].color				= color_orange;
+		s_serveroptions.playerName[n].color				= color_white; // BFP - modified player name color
 		s_serveroptions.playerName[n].style				= UI_SMALLFONT;
 		s_serveroptions.playerName[n].string			= s_serveroptions.playerNameBuffers[n];
 		s_serveroptions.playerName[n].generic.top		= s_serveroptions.playerName[n].generic.y;
@@ -1401,9 +1475,9 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.back.generic.callback = ServerOptions_Event;
 	s_serveroptions.back.generic.id	      = ID_BACK;
 	s_serveroptions.back.generic.x		  = 0;
-	s_serveroptions.back.generic.y		  = 480-64;
-	s_serveroptions.back.width  		  = 128;
-	s_serveroptions.back.height  		  = 64;
+	s_serveroptions.back.generic.y		  = 480-80; // BFP - modified BACK button y position
+	s_serveroptions.back.width  		  = 80; // BFP - modified BACK button width
+	s_serveroptions.back.height  		  = 80; // BFP - modified BACK button height
 	s_serveroptions.back.focuspic         = GAMESERVER_BACK1;
 
 	s_serveroptions.next.generic.type	  = MTYPE_BITMAP;
@@ -1412,10 +1486,10 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.next.generic.callback = ServerOptions_Event;
 	s_serveroptions.next.generic.id	      = ID_STARTSERVERNEXT;
 	s_serveroptions.next.generic.x		  = 640;
-	s_serveroptions.next.generic.y		  = 480-64-72;
+	s_serveroptions.next.generic.y		  = 480-80-72; // BFP - modified NEXT button y position 
 	s_serveroptions.next.generic.statusbar  = ServerOptions_StatusBar;
-	s_serveroptions.next.width  		  = 128;
-	s_serveroptions.next.height  		  = 64;
+	s_serveroptions.next.width  		  = 80; // BFP - modified NEXT button width
+	s_serveroptions.next.height  		  = 80; // BFP - modified NEXT button height
 	s_serveroptions.next.focuspic         = GAMESERVER_NEXT1;
 
 	s_serveroptions.go.generic.type	    = MTYPE_BITMAP;
@@ -1424,11 +1498,13 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 	s_serveroptions.go.generic.callback = ServerOptions_Event;
 	s_serveroptions.go.generic.id	    = ID_GO;
 	s_serveroptions.go.generic.x		= 640;
-	s_serveroptions.go.generic.y		= 480-64;
-	s_serveroptions.go.width  		    = 128;
-	s_serveroptions.go.height  		    = 64;
+	s_serveroptions.go.generic.y		= 480-80; // BFP - modified FIGHT button y position
+	s_serveroptions.go.width  		    = 80; // BFP - modified FIGHT button width
+	s_serveroptions.go.height  		    = 80; // BFP - modified FIGHT button height
 	s_serveroptions.go.focuspic         = GAMESERVER_FIGHT1;
 
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.barlog ); // BFP - barlog
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.banner );
 
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.mappic );
@@ -1464,11 +1540,16 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 		Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.hostname );
 	}
 
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.plbase ); // BFP - Powerlevel base
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.hitstun ); // BFP - Hitstun or not
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.meleeonly ); // BFP - Melee only
+	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.noflight ); // BFP - Flight or not
+
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.back );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.next );
 	Menu_AddItem( &s_serveroptions.menu, &s_serveroptions.go );
 
-	Menu_AddItem( &s_serveroptions.menu, (void*) &s_serveroptions.punkbuster );
+	s_serveroptions.plbase.curvalue = trap_Cvar_VariableValue( "g_basePL" ); // BFP - Powerlevel base
 	
 	ServerOptions_SetMenuItems();
 }
@@ -1479,6 +1560,8 @@ ServerOptions_Cache
 =================
 */
 void ServerOptions_Cache( void ) {
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( GAMESERVER_BACK0 );
 	trap_R_RegisterShaderNoMip( GAMESERVER_BACK1 );
 	trap_R_RegisterShaderNoMip( GAMESERVER_FIGHT0 );
@@ -1519,14 +1602,16 @@ BOT SELECT MENU *****
 #define BOTSELECT_ARROWSL		"menu/art/gs_arrows_l"
 #define BOTSELECT_ARROWSR		"menu/art/gs_arrows_r"
 
-#define PLAYERGRID_COLS			4
-#define PLAYERGRID_ROWS			4
+#define PLAYERGRID_COLS			6 // BFP - modified columns, before 4
+#define PLAYERGRID_ROWS			3  // BFP - modified rows, before 4
 #define MAX_MODELSPERPAGE		(PLAYERGRID_ROWS * PLAYERGRID_COLS)
 
 
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
 
 	menubitmap_s	pics[MAX_MODELSPERPAGE];
@@ -1644,12 +1729,18 @@ static void UI_BotSelectMenu_UpdateGrid( void ) {
 			Q_strncpyz( botSelectInfo.botnames[i], Info_ValueForKey( info, "name" ), 16 );
 			Q_CleanStr( botSelectInfo.botnames[i] );
  			botSelectInfo.pics[i].generic.name = botSelectInfo.boticons[i];
+			// BFP - modified bot pic color, this is disabled (used for Q3)
+#if 0
 			if( BotAlreadySelected( botSelectInfo.botnames[i] ) ) {
 				botSelectInfo.picnames[i].color = color_red;
 			}
 			else {
 				botSelectInfo.picnames[i].color = color_orange;
 			}
+#else
+			botSelectInfo.picnames[i].color = color_white;
+#endif
+
 			botSelectInfo.picbuttons[i].generic.flags &= ~QMF_INACTIVE;
 		}
 		else {
@@ -1823,6 +1914,8 @@ UI_BotSelectMenu_Cache
 =================
 */
 void UI_BotSelectMenu_Cache( void ) {
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( BOTSELECT_BACK0 );
 	trap_R_RegisterShaderNoMip( BOTSELECT_BACK1 );
 	trap_R_RegisterShaderNoMip( BOTSELECT_ACCEPT0 );
@@ -1845,16 +1938,34 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 
 	UI_BotSelectMenu_Cache();
 
-	botSelectInfo.banner.generic.type	= MTYPE_BTEXT;
+	// BFP - Menu background
+	botSelectInfo.menubg.generic.type	= MTYPE_BITMAP;
+	botSelectInfo.menubg.generic.name	= ART_MENUBG;
+	botSelectInfo.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	botSelectInfo.menubg.generic.x		= 0;
+	botSelectInfo.menubg.generic.y		= 0;
+	botSelectInfo.menubg.width			= 640;
+	botSelectInfo.menubg.height			= 480;
+
+	// BFP - barlog
+	botSelectInfo.barlog.generic.type	= MTYPE_BITMAP;
+	botSelectInfo.barlog.generic.name	= ART_BARLOG;
+	botSelectInfo.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	botSelectInfo.barlog.generic.x		= 140;
+	botSelectInfo.barlog.generic.y		= 5;
+	botSelectInfo.barlog.width			= 355;
+	botSelectInfo.barlog.height			= 90;
+
+	botSelectInfo.banner.generic.type	= MTYPE_PTEXT; // BFP - modified SELECT BOT title type
 	botSelectInfo.banner.generic.x		= 320;
-	botSelectInfo.banner.generic.y		= 16;
+	botSelectInfo.banner.generic.y		= 45; // BFP - modified SELECT BOT title y position
 	botSelectInfo.banner.string			= "SELECT BOT";
 	botSelectInfo.banner.color			= color_white;
-	botSelectInfo.banner.style			= UI_CENTER;
+	botSelectInfo.banner.style			= UI_CENTER|UI_BIGFONT; // BFP - modified SELECT BOT title style
 
-	y =	80;
+	y = 100; // BFP - Initial vertical position, before 80
 	for( i = 0, k = 0; i < PLAYERGRID_ROWS; i++) {
-		x =	180;
+		x =	113; // BFP - Initial horizontal position, before 180
 		for( j = 0; j < PLAYERGRID_COLS; j++, k++ ) {
 			botSelectInfo.pics[k].generic.type				= MTYPE_BITMAP;
 			botSelectInfo.pics[k].generic.flags				= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
@@ -1864,7 +1975,7 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 			botSelectInfo.pics[k].width						= 64;
 			botSelectInfo.pics[k].height					= 64;
 			botSelectInfo.pics[k].focuspic					= BOTSELECT_SELECTED;
-			botSelectInfo.pics[k].focuscolor				= colorRed;
+			botSelectInfo.pics[k].focuscolor				= colorWhite; // BFP - modified bot pic selection color
 
 			botSelectInfo.picbuttons[k].generic.type		= MTYPE_BITMAP;
 			botSelectInfo.picbuttons[k].generic.flags		= QMF_LEFT_JUSTIFY|QMF_NODEFAULTINIT|QMF_PULSEIFFOCUS;
@@ -1879,14 +1990,14 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 			botSelectInfo.picbuttons[k].width				= 128;
 			botSelectInfo.picbuttons[k].height				= 128;
 			botSelectInfo.picbuttons[k].focuspic			= BOTSELECT_SELECT;
-			botSelectInfo.picbuttons[k].focuscolor			= colorRed;
+			botSelectInfo.picbuttons[k].focuscolor			= colorWhite; // BFP - modified bot pic button color
 
 			botSelectInfo.picnames[k].generic.type			= MTYPE_TEXT;
 			botSelectInfo.picnames[k].generic.flags			= QMF_SMALLFONT;
 			botSelectInfo.picnames[k].generic.x				= x + 32;
 			botSelectInfo.picnames[k].generic.y				= y + 64;
 			botSelectInfo.picnames[k].string				= botSelectInfo.botnames[k];
-			botSelectInfo.picnames[k].color					= color_orange;
+			botSelectInfo.picnames[k].color					= color_white; // BFP - modified bot name color
 			botSelectInfo.picnames[k].style					= UI_CENTER|UI_SMALLFONT;
 
 			x += (64 + 6);
@@ -1925,9 +2036,9 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.back.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	botSelectInfo.back.generic.callback	= UI_BotSelectMenu_BackEvent;
 	botSelectInfo.back.generic.x		= 0;
-	botSelectInfo.back.generic.y		= 480-64;
-	botSelectInfo.back.width			= 128;
-	botSelectInfo.back.height			= 64;
+	botSelectInfo.back.generic.y		= 480-80; // BFP - modified BACK button y position
+	botSelectInfo.back.width			= 80; // BFP - modified BACK button width
+	botSelectInfo.back.height			= 80; // BFP - modified BACK button height
 	botSelectInfo.back.focuspic			= BOTSELECT_BACK1;
 
 	botSelectInfo.go.generic.type		= MTYPE_BITMAP;
@@ -1935,11 +2046,13 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.go.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
 	botSelectInfo.go.generic.callback	= UI_BotSelectMenu_SelectEvent;
 	botSelectInfo.go.generic.x			= 640;
-	botSelectInfo.go.generic.y			= 480-64;
-	botSelectInfo.go.width				= 128;
-	botSelectInfo.go.height				= 64;
+	botSelectInfo.go.generic.y			= 480-80; // BFP - modified FIGHT button y position
+	botSelectInfo.go.width				= 80; // BFP - modified FIGHT button width
+	botSelectInfo.go.height				= 80; // BFP - modified FIGHT button height
 	botSelectInfo.go.focuspic			= BOTSELECT_ACCEPT1;
 
+	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.barlog ); // BFP - barlog
 	Menu_AddItem( &botSelectInfo.menu, &botSelectInfo.banner );
 	for( i = 0; i < MAX_MODELSPERPAGE; i++ ) {
 		Menu_AddItem( &botSelectInfo.menu,	&botSelectInfo.pics[i] );
