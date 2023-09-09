@@ -1963,7 +1963,7 @@ static void UI_BotSelectMenu_Init( char *bot ) {
 	botSelectInfo.banner.color			= color_white;
 	botSelectInfo.banner.style			= UI_CENTER|UI_BIGFONT; // BFP - modified SELECT BOT title style
 
-	y = 100; // BFP - Initial vertical position, before 80
+	y = 80;
 	for( i = 0, k = 0; i < PLAYERGRID_ROWS; i++) {
 		x =	113; // BFP - Initial horizontal position, before 180
 		for( j = 0; j < PLAYERGRID_COLS; j++, k++ ) {
