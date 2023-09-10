@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	WEAPON_SELECT_TIME	1400
 #define	ITEM_SCALEUP_TIME	1000
 #define	ZOOM_TIME			150
-#define	ITEM_BLOB_TIME		200
+#define	HIT_BLOB_TIME		200			// BFP - For crosshair health, before ITEM_BLOB_TIME
 #define	MUZZLE_FLASH_TIME	20
 #define	SINK_TIME			1000		// time for fragments to sink into ground before going away
 #define	ATTACKER_HEAD_TIME	10000
@@ -590,7 +590,9 @@ typedef struct {
 
 	int			itemPickup;
 	int			itemPickupTime;
-	int			itemPickupBlendTime;	// the pulse around the crosshair is timed seperately
+
+	// BFP - before itemPickupBlendTime
+	int			opponentHitBlendTime;	// the pulse around the crosshair is timed seperately
 
 	int			weaponSelectTime;
 	int			weaponAnimation;
