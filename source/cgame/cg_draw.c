@@ -1702,6 +1702,7 @@ static void CG_DrawCrosshair(void) {
 	trace_t		trace;
 	playerState_t	*ps;
 	vec3_t		muzzle, forward, up, start, end;
+	static float lastPositionY = 240.0f; // BFP - Last Y position for traceable crosshair to move smoothly like BFP vanilla does
 
 	ps = &cg.predictedPlayerState;
 
@@ -1742,7 +1743,6 @@ static void CG_DrawCrosshair(void) {
 
 	x = cg_crosshairX.integer;
 	y = cg_crosshairY.integer;
-	CG_AdjustFrom640( &x, &y, &w, &h );
 
 	ca = cg_drawCrosshair.integer;
 	if (ca < 0) {
@@ -1751,7 +1751,6 @@ static void CG_DrawCrosshair(void) {
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
 	if ( cg_thirdPerson.integer >= 1 && cg_stableCrosshair.integer <= 0 ) { // BFP - Third person traceable crosshair
-		w = h = cg_crosshairSize.value; // set the same size, if this isn't set here, the size is changed
 		AngleVectors( ps->viewangles, forward, NULL, up );
 		VectorCopy( ps->origin, muzzle );
 		VectorMA( muzzle, ps->viewheight, up, muzzle );
@@ -1764,12 +1763,19 @@ static void CG_DrawCrosshair(void) {
 		}
 
 		CG_AdjustFrom640( &x, &y, &w, &h );
+
+		// BFP - Make the traceable crosshair move smoothly like BFP vanilla does
+		// LERP( <last (or initial) position>, <destination>, (float)(cg.frametime / 1000.00f) * <speed factor> );
+		y = LERP( lastPositionY, y, (float)(cg.frametime / 1000.00f) * 12.0f );
+
 		trap_R_DrawStretchPic( x - 0.5f * w, // 492.799987
 		y - 0.5f * h,
 		w, h, 0, 0, 1, 1, hShader );
+		lastPositionY = y; // last Y position where it was "lerped"
 	} else { // Q3 default crosshair position
 		// x: 492.799987
 		// y: 364.799987
+		CG_AdjustFrom640( &x, &y, &w, &h );
 		trap_R_DrawStretchPic( x + cg.refdef.x + 0.5 * (cg.refdef.width - w), 
 		y + cg.refdef.y + 0.5 * (cg.refdef.height - h), 
 		w, h, 0, 0, 1, 1, hShader );
