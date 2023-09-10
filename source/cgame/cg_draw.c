@@ -1721,6 +1721,7 @@ static void CG_DrawCrosshair(void) {
 	}
 #endif
 
+#if 0
 	// set color based on health
 	if ( cg_crosshairHealth.integer ) {
 		vec4_t		hcolor;
@@ -1728,17 +1729,22 @@ static void CG_DrawCrosshair(void) {
 		CG_ColorForHealth( hcolor );
 		trap_R_SetColor( hcolor );
 	}
+#endif
 
 	CG_SetCrosshairColor(); // BFP - Crosshair color
 
 	w = h = cg_crosshairSize.value;
 
-	// pulse the size of the crosshair when picking up items
-	f = cg.time - cg.itemPickupBlendTime;
-	if ( f > 0 && f < ITEM_BLOB_TIME ) {
-		f /= ITEM_BLOB_TIME;
-		w *= ( 1 + f );
-		h *= ( 1 + f );
+	// BFP - pulse the size of the crosshair when hitting someone (before: when picking up items)
+	f = cg.time - cg.opponentHitBlendTime;
+	if ( f > 0 && f < HIT_BLOB_TIME ) {
+		f /= HIT_BLOB_TIME;
+		// BFP - Make crosshair size starting from biggest to current
+		w = LERP( w*2, w, f ); // before: w *= ( 1 + f );
+		h = LERP( h*2, h, f ); // before: h *= ( 1 + f );
+		if ( cg_crosshairHealth.integer && f <= 0.35f ) { // BFP - BFP crosshair health feature
+			trap_R_SetColor( colorRed );
+		}
 	}
 
 	x = cg_crosshairX.integer;

@@ -47,7 +47,6 @@
 
 - g_hitStun [0/1]: turn on or off the melee hit stun.
 - cg_drawKiWarning [0/1]: turn on or off the low ki warning.
-- cg_crosshairhealth [0/1]: turn on or off the feature that makes the crosshair turn red when you score a hit.
 
 #### Cvar Gametypes:
 
@@ -77,6 +76,7 @@
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
 - [x] ~~cg_crosshairColor~~
+- [x] ~~cg_crosshairHealth~~
 
 #### Cvar Gametypes:
 
