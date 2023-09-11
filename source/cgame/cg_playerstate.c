@@ -310,6 +310,7 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 
 	// hit changes
 	if ( ps->persistant[PERS_HITS] > ops->persistant[PERS_HITS] ) {
+		cg.opponentHitBlendTime = cg.time + 0.5f; // BFP - For crosshair opponent hit effect
 		armor  = ps->persistant[PERS_ATTACKEE_ARMOR] & 0xff;
 		health = ps->persistant[PERS_ATTACKEE_ARMOR] >> 8;
 		trap_S_StartLocalSound( cgs.media.hitSound, CHAN_LOCAL_SOUND );

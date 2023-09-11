@@ -37,20 +37,31 @@ GAME OPTIONS MENU
 #define ART_BACK0				"menu/art/back_0"
 #define ART_BACK1				"menu/art/back_1"
 
+// BFP - Crosshair color bar
+#define ART_FX_BASE				"menu/art/fx_base"
+#define ART_FX_BLUE				"menu/art/fx_blue"
+#define ART_FX_CYAN				"menu/art/fx_cyan"
+#define ART_FX_GREEN			"menu/art/fx_grn"
+#define ART_FX_RED				"menu/art/fx_red"
+#define ART_FX_TEAL				"menu/art/fx_teal"
+#define ART_FX_WHITE			"menu/art/fx_white"
+#define ART_FX_YELLOW			"menu/art/fx_yel"
+
 #define PREFERENCES_X_POS		360
 
 #define ID_CROSSHAIR			127
 #define ID_SIMPLEITEMS			128
 #define ID_HIGHQUALITYSKY		129
 //#define ID_EJECTINGBRASS		130 // BFP - unused
-#define ID_ALLOWDOWNLOAD		130
-#define ID_WALLMARKS			131
-#define ID_DYNAMICLIGHTS		132
-#define ID_IDENTIFYTARGET		133
-#define ID_SYNCEVERYFRAME		134
-#define ID_FORCEMODEL			135
-#define ID_DRAWTEAMOVERLAY		136
+#define ID_WALLMARKS			130
+#define ID_DYNAMICLIGHTS		131
+#define ID_IDENTIFYTARGET		132
+#define ID_SYNCEVERYFRAME		133
+#define ID_FORCEMODEL			134
+#define ID_DRAWTEAMOVERLAY		135
+#define ID_ALLOWDOWNLOAD			136
 #define ID_BACK					137
+#define ID_CROSSHAIRCOLOR		138 // BFP - Crosshair color id
 
 #define	NUM_CROSSHAIRS			10
 
@@ -63,6 +74,7 @@ typedef struct {
 	menutext_s			banner;
 
 	menulist_s			crosshair;
+	menulist_s			crosshaircolor; // BFP - Crosshair color
 	menuradiobutton_s	simpleitems;
 	// menuradiobutton_s	brass; // BFP - unused
 	menuradiobutton_s	wallmarks;
@@ -76,9 +88,39 @@ typedef struct {
 	menubitmap_s		back;
 
 	qhandle_t			crosshairShader[NUM_CROSSHAIRS];
+
+	// BFP - Crosshair color bar
+	qhandle_t			fxBasePic;
+	qhandle_t			fxPic[7];
 } preferences_t;
 
 static preferences_t s_preferences;
+
+// BFP - Crosshair color bar table
+/*===================================================
+ INDEX  -  UI SLIDER BAR COLOR VALUE  >  CGAME VALUE
+   0    -      RED             4      >        5
+   1    -      YELLOW          2      >        7
+   2    -      GREEN           3      >        3
+   3    -      TEAL (CYAN)     0      >        4
+   4    -      BLUE            5      >        2
+   5    -      MAGENTA         1      >        6
+   6    -      WHITE           6      >        8
+=====================================================
+If any number isn't in the UI table to assign, it will always map to WHITE
+*/
+static int gamecodetoui[] = {4,2,3,0,5,1,6};
+static int uitogamecode[] = {5,7,3,4,2,6,8};
+static float *uiColors[] = {
+	colorRed,
+	colorYellow,
+	colorGreen,
+	colorCyan,
+	colorBlue,
+	colorMagenta,
+	colorWhite
+};
+static int uiColorIndex;
 
 static const char *teamoverlay_names[] =
 {
@@ -90,7 +132,22 @@ static const char *teamoverlay_names[] =
 };
 
 static void Preferences_SetMenuItems( void ) {
+	int c;
+
 	s_preferences.crosshair.curvalue		= (int)trap_Cvar_VariableValue( "cg_drawCrosshair" ) % NUM_CROSSHAIRS;
+
+	// BFP - Crosshair color value
+	c = (int)trap_Cvar_VariableValue( "cg_crosshairColor" ) - 1;
+	if ( c == -1 ) { // keep it to YELLOW
+		c = 6;
+	}
+	if ( c < -1 || c == 0 || c > 7 ) { // if there are other numbers, set to WHITE
+		c = 6;
+	} else {
+		c = ( c - 1 ) % ARRAY_LEN( uiColors );
+	}
+	uiColorIndex = s_preferences.crosshaircolor.curvalue = gamecodetoui[c];
+
 	s_preferences.simpleitems.curvalue		= trap_Cvar_VariableValue( "cg_simpleItems" ) != 0;
 	// s_preferences.brass.curvalue			= trap_Cvar_VariableValue( "cg_brassTime" ) != 0; // BFP - unused
 	s_preferences.wallmarks.curvalue		= trap_Cvar_VariableValue( "cg_marks" ) != 0;
@@ -116,6 +173,15 @@ static void Preferences_Event( void* ptr, int notification ) {
 			s_preferences.crosshair.curvalue = 0;
 		}
 		trap_Cvar_SetValue( "cg_drawCrosshair", s_preferences.crosshair.curvalue );
+		break;
+
+	// BFP - Crosshair color
+	case ID_CROSSHAIRCOLOR:
+		uiColorIndex++;
+		if( uiColorIndex > ( ARRAY_LEN( uiColors ) - 1 ) ) {
+			uiColorIndex = 0;
+		}
+		trap_Cvar_SetValue( "cg_crosshairColor", uitogamecode[s_preferences.crosshaircolor.curvalue] );
 		break;
 
 	case ID_SIMPLEITEMS:
@@ -217,7 +283,36 @@ static void Crosshair_Draw( void *self ) {
 	if( !s->curvalue ) {
 		return;
 	}
+
+	trap_R_SetColor( uiColors[uiColorIndex] ); // BFP - Draw color to the crosshair
 	UI_DrawHandlePic( x + SMALLCHAR_WIDTH, y - 4, 24, 24, s_preferences.crosshairShader[s->curvalue] );
+}
+
+
+/*
+=================
+CrosshairColor_Draw
+=================
+*/
+static void CrosshairColor_Draw( void *self ) { // BFP - For crosshair color bar
+	menulist_s	*item;
+	float		*color;
+	int			style;
+	qboolean	focus;
+
+	item = (menulist_s *)self;
+	focus = (item->generic.parent->cursor == item->generic.menuPosition);
+
+	style = UI_LEFT|UI_SMALLFONT;
+	color = text_color_normal;
+	if( focus ) {
+		style |= UI_PULSE;
+		color = text_color_highlight;
+	}
+	UI_DrawString( item->generic.x - SMALLCHAR_WIDTH, item->generic.y, item->generic.name, style|UI_RIGHT, color );
+
+	UI_DrawHandlePic( item->generic.x + BIGCHAR_HEIGHT+4 - 11, item->generic.y + 6, 128, 8, s_preferences.fxBasePic );
+	UI_DrawHandlePic( item->generic.x + BIGCHAR_HEIGHT+4 + item->curvalue * 16 + 8 - 11, item->generic.y + 4, 16, 12, s_preferences.fxPic[item->curvalue] );
 }
 
 
@@ -257,7 +352,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.banner.color			= color_white;
 	s_preferences.banner.style			= UI_CENTER|UI_BIGFONT; // BFP - modified GAME OPTIONS title style
 
-	y = 144;
+	y = 125;
 	s_preferences.crosshair.generic.type		= MTYPE_TEXT;
 	s_preferences.crosshair.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT|QMF_NODEFAULTINIT|QMF_OWNERDRAW;
 	s_preferences.crosshair.generic.x			= PREFERENCES_X_POS;
@@ -271,7 +366,23 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.crosshair.generic.left		= PREFERENCES_X_POS - ( ( (int)strlen(s_preferences.crosshair.generic.name) + 1 ) * SMALLCHAR_WIDTH );
 	s_preferences.crosshair.generic.right		= PREFERENCES_X_POS + 48;
 
+	// BFP - Crosshair color bar
 	y += BIGCHAR_HEIGHT+2+4;
+	s_preferences.crosshaircolor.generic.type	  = MTYPE_SPINCONTROL;
+	s_preferences.crosshaircolor.generic.flags	  = QMF_NODEFAULTINIT;
+	s_preferences.crosshaircolor.generic.x	      = PREFERENCES_X_POS - 32;
+	s_preferences.crosshaircolor.generic.y	      = y;
+	s_preferences.crosshaircolor.generic.name	  = "Crosshair Color:";
+	s_preferences.crosshaircolor.generic.callback = Preferences_Event;
+	s_preferences.crosshaircolor.generic.ownerdraw	= CrosshairColor_Draw;
+	s_preferences.crosshaircolor.generic.id	      = ID_CROSSHAIRCOLOR;
+	s_preferences.crosshaircolor.generic.top	  = y - 4;
+	s_preferences.crosshaircolor.generic.bottom	  = y + 20;
+	s_preferences.crosshaircolor.generic.left	  = PREFERENCES_X_POS - ( ( (int)strlen(s_preferences.crosshaircolor.generic.name) + 1 ) * SMALLCHAR_WIDTH );
+	s_preferences.crosshaircolor.generic.right	  = PREFERENCES_X_POS + 48;
+	s_preferences.crosshaircolor.numitems	      = 7;
+
+	y += BIGCHAR_HEIGHT+20+8;
 	s_preferences.simpleitems.generic.type        = MTYPE_RADIOBUTTON;
 	s_preferences.simpleitems.generic.name	      = "Simple Items:";
 	s_preferences.simpleitems.generic.flags	      = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -280,7 +391,7 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.simpleitems.generic.x	          = PREFERENCES_X_POS;
 	s_preferences.simpleitems.generic.y	          = y;
 
-	y += BIGCHAR_HEIGHT;
+	y += BIGCHAR_HEIGHT+2+4;
 	s_preferences.wallmarks.generic.type          = MTYPE_RADIOBUTTON;
 	s_preferences.wallmarks.generic.name	      = "Marks on Walls:";
 	s_preferences.wallmarks.generic.flags	      = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -302,7 +413,7 @@ static void Preferences_MenuInit( void ) {
 #endif
 
 	// BFP - Automatic download radio button moved here
-	y += BIGCHAR_HEIGHT+2;
+	y += BIGCHAR_HEIGHT+2+4;
 	s_preferences.allowdownload.generic.type     = MTYPE_RADIOBUTTON;
 	s_preferences.allowdownload.generic.name	   = "Automatic Downloading:";
 	s_preferences.allowdownload.generic.flags	   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -383,6 +494,7 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.banner );
 
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshair );
+	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshaircolor ); // BFP - Crosshair color bar
 	Menu_AddItem( &s_preferences.menu, &s_preferences.simpleitems );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );
 	// Menu_AddItem( &s_preferences.menu, &s_preferences.brass ); // BFP - unused
@@ -415,6 +527,16 @@ void Preferences_Cache( void ) {
 	for( n = 0; n < NUM_CROSSHAIRS; n++ ) {
 		s_preferences.crosshairShader[n] = trap_R_RegisterShaderNoMip( va("gfx/2d/crosshair%c", 'a' + n ) );
 	}
+
+	// BFP - Crosshair color bar
+	s_preferences.fxBasePic = trap_R_RegisterShaderNoMip( ART_FX_BASE );
+	s_preferences.fxPic[0]  = trap_R_RegisterShaderNoMip( ART_FX_RED );
+	s_preferences.fxPic[1]  = trap_R_RegisterShaderNoMip( ART_FX_YELLOW );
+	s_preferences.fxPic[2]  = trap_R_RegisterShaderNoMip( ART_FX_GREEN );
+	s_preferences.fxPic[3]  = trap_R_RegisterShaderNoMip( ART_FX_TEAL );
+	s_preferences.fxPic[4]  = trap_R_RegisterShaderNoMip( ART_FX_BLUE );
+	s_preferences.fxPic[5]  = trap_R_RegisterShaderNoMip( ART_FX_CYAN );
+	s_preferences.fxPic[6]  = trap_R_RegisterShaderNoMip( ART_FX_WHITE );
 }
 
 

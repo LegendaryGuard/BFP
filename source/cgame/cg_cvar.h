@@ -31,6 +31,7 @@ CG_CVAR( cg_drawAttacker, "cg_drawAttacker", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_drawCrosshair, "cg_drawCrosshair", "4", CVAR_ARCHIVE )
 CG_CVAR( cg_drawCrosshairNames, "cg_drawCrosshairNames", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_drawRewards, "cg_drawRewards", "1", CVAR_ARCHIVE )
+CG_CVAR( cg_crosshairColor, "cg_crosshairColor", "7", CVAR_ARCHIVE ) // BFP - Crosshair color
 CG_CVAR( cg_crosshairSize, "cg_crosshairSize", "24", CVAR_ARCHIVE )
 CG_CVAR( cg_crosshairHealth, "cg_crosshairHealth", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_crosshairX, "cg_crosshairX", "0", CVAR_ARCHIVE )

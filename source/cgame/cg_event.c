@@ -347,7 +347,7 @@ A new item was picked up this frame
 static void CG_ItemPickup( int itemNum ) {
 	cg.itemPickup = itemNum;
 	cg.itemPickupTime = cg.time;
-	cg.itemPickupBlendTime = cg.time;
+	// cg.itemPickupBlendTime = cg.time; // BFP - BFP doesn't use the item pickup effect for the crosshair, now it's reused for when some opponent is being hit
 	// see if it should be the grabbed weapon
 	if ( bg_itemlist[itemNum].giType == IT_WEAPON ) {
 		// select it immediately

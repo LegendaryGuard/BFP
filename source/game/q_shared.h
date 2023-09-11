@@ -1439,5 +1439,8 @@ typedef enum _flag_status {
 #define CDKEY_LEN 16
 #define CDCHKSUM_LEN 2
 
-
+// BFP - LERP function for crosshair or any other feature, LERP is an engine side function. So, this macro conditional will avoid showing a warning/error in the compiler if someone copies this piece of source code
+#ifndef LERP
+#define LERP( a, b, w ) ( ( a ) * ( 1.0f - ( w ) ) + ( b ) * ( w ) )
+#endif
 #endif	// __Q_SHARED_H
