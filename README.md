@@ -4,7 +4,7 @@ Bid For Power (BFP) source code
 A legendary 90s era Quake 3 Arena mod.
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/49716252/186026745-458849b2-385b-4108-8881-e55e82fb1493.png" alt="zeqlogo" width=350 />
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147041-b5a8fb8c-575b-4b48-b6fe-513000717559.png" alt="bfpq3logo" width=350 />
 </p>
 
 
@@ -45,14 +45,14 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Third person traceable crosshair~~
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
 - [ ] Powerlevel and Power Tiers indicated on old docs
-- [ ] Hit Stun (makes player can't move, attack, block or charge)
+- [ ] Hit Stun (makes player can't use ki, melee, block and charge)
 - [ ] Power Struggles (when two beam attacks collide)
 - [ ] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [ ] Short-Range Teleport (when pressing 2 times left or right)
 - [ ] Transformations (related to Power Tiers)
 - [ ] Attacksets (configurable for cfgs)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. "Custom plugin models")
-- [ ] Playable third person mode and first person vis mode (add the options in the UI Setup menu)
+- [x] ~~Playable third person mode and first person vis mode (add the options in the UI Setup menu)~~
 - [ ] Cvars as described on old docs
 - [ ] Survival gametype (`g_gametype 3`)
 - [ ] Oozaru gametype (`g_gametype 4`)
@@ -62,7 +62,7 @@ A legendary 90s era Quake 3 Arena mod.
 
 ### History
 
-![image](https://user-images.githubusercontent.com/49716252/186024989-69bc7473-d82e-4adf-b11f-dacfba4625dd.png)
+![BFP_ZEQ2_history](https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147557-7954d397-3df4-4cf7-b9c3-d62e393658ab.png)
 
 Started: 1999 <br/> 
 Ended: 2002
@@ -87,9 +87,9 @@ Click here to see the [Old PyroFragger dev journal (Markdown edition)](docs/pyro
 
 ### About the repository
 
-We're doing a recreation of the lost source code. <br/>
-The highest priority goal is to completely copy BFP game logical structure. <br/>
-Any fixes, improvements and contributions are welcome. But we still can't accept secondary things until it's completely finished and becomes stable.
+We're making a replica of the lost source code. <br/>
+The highest priority goal is copying and recreating completely BFP game logical structure. <br/>
+Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
 
 ### References and clues to know how should be the game
 
@@ -108,11 +108,11 @@ Documentations, references and extracted stuff will give us clues to reach the g
     * [Cmdlist](docs/cmd_bfp_list.txt)
     * [Cvarlist](docs/cvar_bfp_list.txt)
 
-We can see, e.g. `g_plKillBonusPct` cvar, which means we need to find the function that rewards the player and do something with that. Something like this:
+We can see a cvar, e.g. `g_plKillBonusPct`, which means we need to find the function that rewards the player and do something with that. Something like this:
 
 ```c
 if ( killedSomeone ) {
-   pl = currentPL + (currentPL * g_plKillBonusPct);
+   pl = currentPL + (currentPL * g_plKillBonusPct.value);
 }
 ```
 
@@ -120,70 +120,21 @@ if ( killedSomeone ) {
 
 _**Click on some image to see it complete**._
 
-- How should the main menu be:
-
-<img src="https://user-images.githubusercontent.com/49716252/188994358-3d03ef80-e27f-4e5e-96ac-bd0200134ced.jpg" alt="main_menu" width=340 />
-
-<br/>
-
-- How should the gameplay menu be (when press Esc to go):
-
-<img src="https://user-images.githubusercontent.com/49716252/188993661-ae80923d-4ec9-47bd-bb65-0b9f036aa241.png" alt="gameplay_menu" width=340 />
-
-<br/>
-
 - How should the HUD be:
 
-<img src="https://user-images.githubusercontent.com/49716252/188994019-589d3046-e553-47de-afff-5fb0eb2dd7ec.png" alt="hud_display" width=340 />
-
-<br/>
-
-- How should UI setup be:
-
-<img src="https://user-images.githubusercontent.com/49716252/188993194-10feb38b-2809-41d1-9e81-1ce96ff1428a.png" alt="ui_setup" width=340 />
-
-<br/>
-
-- How should UI player settings be (keep in mind all players use running animation):
-
-<img src="https://user-images.githubusercontent.com/49716252/188993401-9e7036e6-cbed-47ac-8aea-431963a343bf.png" alt="ui_player_settings" width=340 /><br/>
-<img src="https://user-images.githubusercontent.com/49716252/188994108-c5bdfa06-32d1-4ebe-beb1-d74e9e6159ac.jpg" alt="ui_player_settings2" width=340 />
-
-<br/>
-
-- How should UI controls be:
-
-<img src="https://user-images.githubusercontent.com/49716252/188993792-fd9c4440-3b18-45bf-9964-598459695fd9.png" alt="ui_controls" />
-
-<br/>
-
-- How should UI Game options be:
-
-<img src="https://user-images.githubusercontent.com/49716252/226767823-28d69bb2-40e8-4dc3-9be0-02587f9b74b3.png" alt="game_options" width=340 />
-
-<br/>
-
-- How should UI BFP options be:
-
-<img src="https://user-images.githubusercontent.com/49716252/188993293-db531ff5-5754-4ded-99ad-b5f3b2f5fd72.png" alt="bfp_options" width=340 />
-
-<br/>
-
-- How should UI BFP server multiplayer setup be:
-
-<img src="https://user-images.githubusercontent.com/49716252/225174508-067acacd-4799-4d66-82f4-c34d5368174c.png" alt="bfp_multiplayerserverset" />
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147737-248ca7d6-d7db-430e-933d-a3a41cd82ddf.png" alt="hud_display" width=340 />
 
 <br/>
 
 - When player receives a hit stun (`g_hitStun 1`):
 
-<img src="https://user-images.githubusercontent.com/49716252/188993948-435cec9c-84a4-477a-b072-1740ca4f1f7d.jpg" alt="hit_stun_received" width=340 />
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267148585-9518930d-61d3-4844-8c5b-06d079dcf2b2.png" alt="hit_stun_received" width=340 />
 
 <br/>
 
 - When player is being ready to shot (holding a key):
 
-<img src="https://user-images.githubusercontent.com/49716252/188993564-d1d5d9ee-80e3-4c15-b0c4-eb966441e57d.png" alt="ready_to_attack" width=340 />
+<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147877-ccf8373c-885c-44d2-b143-30c3b02df80f.png" alt="ready_to_attack" width=340 />
 
 <br/>
 

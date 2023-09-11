@@ -60,6 +60,7 @@
 
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
+- [x] ~~cg_fixedThirdPerson~~
 - [x] ~~cg_drawOwnModel~~
 - [x] ~~cg_stableCrosshair~~
 - [x] ~~cg_musicUnpacked~~

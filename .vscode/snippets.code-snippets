@@ -11,5 +11,20 @@
 	"Cmd Add Command": {
 		"prefix": ".cmd",
 		"body": "void Cmd_BFP_${1:functionName}_f( gentity_t* ent ) {\n\n}"
+	},
+	"Declare cg_ cvar (use only in cgame/cg_cvar.h)": {
+		"prefix": ".CG_CVAR",
+		"body": "CG_CVAR( ${1:vmCvar}, \"${1:cvarName}\", \"${2:defaultString}\", ${3:cvarFlags} )",
+		"description": "Declare cg_ cvar (use only in cgame/cg_cvar.h)"
+	},
+	"Declare g_ cvar (use only in game/g_cvar.h)": {
+		"prefix": ".G_CVAR",
+		"body": "G_CVAR( ${1:vmCvar}, \"${1:cvarName}\", \"${2:defaultString}\", ${3:cvarFlags}, ${4:modificationCount}, ${5:trackChange} )",
+		"description": "Declare g_ cvar (use only in game/g_cvar.h)"
+	},
+	"Declare ui_ cvar (use only in q3_ui/ui_cvar.h)": {
+		"prefix": ".UI_CVAR",
+		"body": "UI_CVAR( ${1:vmCvar}, \"${1:cvarName}\", \"${2:defaultString}\", ${3:cvarFlags} )",
+		"description": "Declare ui_ cvar (use only in q3_ui/ui_cvar.h)"
 	}
 }
