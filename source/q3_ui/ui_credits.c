@@ -31,27 +31,21 @@ CREDITS
 
 #include "ui_local.h"
 
-#define SCROLLSPEED	5.00 // The scrolling speed in pixels per second.
-                          // modify as appropriate for our credits
+#define ART_BFPLOGO			"menu/art/bfp_logol"	// BFP - Logo
+#define SCROLLSPEED			6.50	// The scrolling speed in pixels per second. Modify as appropriate for our credits
+// uncomment this to use a background shader:
 // #define BACKGROUND_SHADER 
-// uncomment this to use a background shader, otherwise a solid color
-// defined in the vec4_t "color_background" is filled to the screen
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
 
 typedef struct {
 	menuframework_s	menu;
+	menubitmap_s	header; // BFP - header
 } creditsmenu_t;
 
 static creditsmenu_t	s_credits;
 
 int starttime; // game time at which credits are started
-float mvolume; // records the original music volume level, as we will
-               // modify it for the credits
-
-// change this to change the background colour on credits
-vec4_t color_background	        = {0.00f, 0.35f, 0.69f, 1.00f};
-// these are just example colours that are used in credits[] 
-vec4_t color_headertext			= {0.00f, 0.00f, 1.00f, 1.00f};
-vec4_t color_maintext			= {0.00f, 0.00f, 1.00f, 1.00f};
+float mvolume; // records the original music volume level, as we will. Modify it for the credits
 
 qhandle_t	BackgroundShader; // definition of the background shader pointer
 
@@ -62,79 +56,136 @@ typedef struct
 	vec4_t *colour;
 } cr_line;
 
+// BFP - Macros for credits. This way is easier to add in the array
+#define CREDIT_BIG_SEPARATOR    { "",     UI_CENTER | UI_BIGFONT,   & color_white },
+#define CREDIT_SMALL_SEPARATOR  { "",     UI_CENTER | UI_SMALLFONT, & color_white },
+
+#define TITLE( title1, title2 ) { title1, UI_CENTER | UI_GIANTFONT, & color_orange }, \
+                                { title2, UI_CENTER | UI_GIANTFONT, & color_orange },
+#define BFP_TEAM_TITLE( title ) { title,  UI_CENTER | UI_GIANTFONT, & color_blue },
+
+#define PERSON( name )          { name,   UI_CENTER | UI_SMALLFONT, & color_blue },
+#define ROLE( role )            { role,   UI_CENTER | UI_SMALLFONT, & color_white },
+
 cr_line credits[] = { // edit this as necessary for the credits
-	// BFP - TODO: MAKE HEADER FORCED UPSIDE
-	// HEADER
-	{ "Credits", UI_CENTER|UI_BIGFONT|UI_BLINK, &color_red },
-	
-	// BODY
-	{ "", UI_CENTER|UI_BIGFONT, &color_blue },
-	{ "Bid For Power Team", UI_CENTER|UI_GIANTFONT, &color_blue },
-	{ "", UI_CENTER|UI_BIGFONT, &color_blue },
-	{ "Ansel", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Skin Artist / 2D Artist", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Attack Sprites", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Chris James", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Founder", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Dash", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Level Design", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Gangsta Poodle", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Level Design", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Kit Carson", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Level Design", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "NilreMK", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Modeler / Animator / Skin Artist", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Number 17", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Sound Engineer", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Pyrofragger", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Modeler / Animator", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Rodney", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Lead Artist", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Modeler / Animator", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Skin Artist / 2D Artist", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Yrgol", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Game Design, Programmed By", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Project Lead", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Special Thanks", UI_CENTER|UI_SMALLFONT, &color_blue },
-	{ "Disco Stu, Yngwie (menu music), Remisser, ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Anthony, Dakota, Badhead, Gigatron, ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Perfect Chaos, DethAyngel, Bardock, ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "$onik, Ebola, Mooky, Timex & Nat", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
+
+	CREDIT_BIG_SEPARATOR
+	CREDIT_BIG_SEPARATOR
+	CREDIT_BIG_SEPARATOR
+	CREDIT_BIG_SEPARATOR
+
+	// BFP - Source Code Recreation credits
+	TITLE( "Bid For Power", "Source Code Recreation" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "LegendGuard" )
+	ROLE( "Maintainer" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Mjuksel" )
+	ROLE( "Contributor" )
+
+	CREDIT_BIG_SEPARATOR
+	CREDIT_BIG_SEPARATOR
+
+	// BFP - BFP Team credits credits
+	BFP_TEAM_TITLE( "The Bid For Power Team" )
+
+	CREDIT_BIG_SEPARATOR
+
+	PERSON( "Ansel" )
+	ROLE( "Skin Artist / 2D Artist" )
+	ROLE( "Attack Sprites" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Chris James" )
+	ROLE( "Founder" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Dash" )
+	ROLE( "Level Design" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Gangsta Poodle" )
+	ROLE( "Level Design" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Kit Carson" )
+	ROLE( "Level Design" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "NilreMK" )
+	ROLE( "Modeler / Animator / Skin Artist" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Number 17" )
+	ROLE( "Sound Engineer" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Pyrofragger" )
+	ROLE( "Modeler / Animator" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Rodney" )
+	ROLE( "Lead Artist" )
+	ROLE( "Modeler / Animator" )
+	ROLE( "Skin Artist / 2D Artist" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Yrgol" )
+	ROLE( "Game Design, Programmed By" )
+	ROLE( "Project Lead" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	// Over here, we can't call them as persons nor roles, but company, name and title :P
+	PERSON( "Id Software" )
+	ROLE( "Quake 3 engine" )
+
+	CREDIT_SMALL_SEPARATOR
+
+	PERSON( "Special Thanks" )
+	ROLE( "Disco Stu, Yngwie (menu music), Remisser, " )
+	ROLE( "Anthony, Dakota, Badhead, Gigatron, " )
+	ROLE( "Perfect Chaos, DethAyngel, Bardock, " )
+	ROLE( "$onik, Ebola, Mooky, Timex & Nat" )
 	// BFP Team ends here
 
-	{ "Bid For Power", UI_CENTER|UI_GIANTFONT, &color_orange },
-	{ "Source Code Recreation", UI_CENTER|UI_GIANTFONT, &color_orange },
-	{ "", UI_CENTER|UI_BIGFONT, &color_white },
-	{ "LegendGuard, Mjuksel", UI_CENTER|UI_SMALLFONT, &color_white },
-	
-	{ "", UI_CENTER|UI_BIGFONT, &color_blue },
-	{ "", UI_CENTER|UI_BIGFONT, &color_blue },
-	{ "", UI_CENTER|UI_BIGFONT, &color_blue },
-	
-	// Quake III Arena staff
-	{ "Quake III Arena(c) 1999-2000, Id Software, Inc.", UI_CENTER|UI_SMALLFONT, &color_red },
-	{ "", UI_CENTER|UI_BIGFONT, &color_blue },
-	{ "John Carmack, Robert A. Duffy, Jim Dose', ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Adrian Carmack, Kevin Cloud, Kenneth Scott, ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Seneca Menard, Fred Nilsson, Tim Willits, ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Christian Antkow, Paul Jaquays, ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Todd Hollenshead, Marty Stratton, ", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "Donna Jackson, Eric Webb", UI_CENTER|UI_SMALLFONT, &color_white },
-	{ "", UI_CENTER|UI_SMALLFONT, &color_blue },
+	// BFP - Separators for the logo
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
+	CREDIT_SMALL_SEPARATOR
 
 	{ NULL }
 };
+#undef CREDIT_BIG_SEPARATOR
+#undef CREDIT_SMALL_SEPARATOR
+#undef TITLE
+#undef BFP_TEAM_TITLE
+#undef PERSON
+#undef ROLE
+
 
 /*
 =================
@@ -148,10 +199,48 @@ static sfxHandle_t UI_CreditMenu_Key( int key ) {
 
 	trap_Cmd_ExecuteText( 
 		EXEC_APPEND, 
-        va("s_musicvolume %f; quit\n", mvolume)
+		va( "s_musicvolume %f; quit\n", mvolume )
 	);
 	return 0;
 }
+
+/*
+=================
+Credits_DrawHeader
+
+Draws header.
+=================
+*/
+static void Credits_DrawHeader( void ) // BFP - Header
+{
+	// BFP - NOTE: It would be cool using a fading box or not. 
+	// BFP vanilla uses a black box on it and pop ups when text alpha color is near to 0.90f
+#define BLACK_BOX_FADE 0
+	float fadetime;
+	vec4_t fadeBluecolour = { 0.00f, 0.00f, 1.00f, 0.00f };
+#if BLACK_BOX_FADE
+	vec4_t fadeBlackcolour = { 0.00f, 0.00f, 0.00f, 0.00f };
+#endif
+	static float lastalpha = 0.00f;
+
+	fadetime = (float)(uis.frametime) / 1000.00f;
+
+	fadeBluecolour[3] = LERP( lastalpha, 1.00f, fadetime * 2.00f );
+#if BLACK_BOX_FADE
+	fadeBlackcolour[3] = LERP( lastalpha, 1.00f, fadetime * 2.00f );
+	UI_FillRect( 0, 0, 640, 40, fadeBlackcolour );
+#else
+	// pop ups black box
+	if ( lastalpha >= 0.90f ) {
+		UI_FillRect( 0, 0, 640, 40, colorBlack );
+	}
+#endif
+
+	UI_DrawProportionalString(320, 10, "CREDITS", // "The Bid For Power Team:" (original string)
+							UI_CENTER|UI_BIGFONT, fadeBluecolour );
+	lastalpha = fadeBluecolour[3];
+}
+#undef BLACK_BOX_FADE
 
 /*
 =================
@@ -162,32 +251,31 @@ This is the main drawing function for the credits.
 */
 static void ScrollingCredits_Draw( void )
 {
-	int x = 320, y, n, ysize = 0, fadetime = 0;
-	vec4_t fadecolour = { 0.00f, 0.00f, 0.00f, 0.00f };
+	int x = 320, y, n, ysize = 0, endcount;
 
 	// ysize is used to determine the entire length 
 	// of the credits in pixels. 
 	// We can then use this in further calculations
-	if (!ysize) // ysize not calculated, so calculate it dammit!
+	if ( !ysize ) // ysize not calculated, so calculate it dammit!
 	{
 		// loop through entire credits array
-		for(n = 0; n <= sizeof(credits) - 1; n++) 
+		for( n = 0; n <= sizeof(credits) - 1; n++ ) 
 		{
 			// it is a small character
-			if (credits[n].style & UI_SMALLFONT) 
+			if ( credits[n].style & UI_SMALLFONT ) 
 			{
 				// add small character height
 				ysize += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
 				
 				// it is a big character
-			} else if (credits[n].style & UI_BIGFONT) {
+			} else if ( credits[n].style & UI_BIGFONT ) {
 				// add big character size
 				ysize += PROP_HEIGHT;
 				
 				// it is a huge character
-			} else if (credits[n].style & UI_GIANTFONT) {
+			} else if ( credits[n].style & UI_GIANTFONT ) {
 				// add giant character size.
-				ysize += PROP_HEIGHT * (1 / PROP_SMALL_SIZE_SCALE); 
+				ysize += PROP_HEIGHT * ( 1 / PROP_SMALL_SIZE_SCALE ); 
 			}
 		}
 	}
@@ -196,53 +284,57 @@ static void ScrollingCredits_Draw( void )
 	// we are drawing a shader
 #ifdef BACKGROUND_SHADER 
 	UI_DrawHandlePic(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BackgroundShader);
-
-	// we are just filling a color
-#else 
-	UI_FillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, color_background);
 #endif
 
 	// let's draw the stuff
 	// set initial y location
-	y = 480 - SCROLLSPEED * (float)(uis.realtime - starttime) / 100;
+	y = 480 - SCROLLSPEED * (float)( uis.realtime - starttime ) / 100;
 
 	// loop through the entire credits sequence
 	for( n = 0; n <= sizeof(credits) - 1; n++ )
 	{
 		// this NULL string marks the end of the credits struct
-		if (credits[n].string == NULL) 
+		if ( credits[n].string == NULL ) 
 		{
-			if (y < -16) // credits sequence is completely off screen
+			endcount = y;
+			if ( endcount <= 200 ) {
+				endcount = 200;
+			}
+			UI_DrawNamedPic( 100, endcount, 465, 125, ART_BFPLOGO ); // BFP - Draw logo when it's the last credit and stop during 7 seconds
+			if ( y < -(16*12) ) // credits sequence is completely off screen, note: 16 are 3 seconds if you multiply by 3, you add 1 second more to last (more or less)
 			{
 				trap_Cmd_ExecuteText( 
 					EXEC_APPEND, 
-					va("s_musicvolume %f; quit\n", mvolume)
+					va( "s_musicvolume %f; quit\n", mvolume )
 				);
 				break; // end of credits
 			}
 			break;
 		}
 		
-		if ( strlen(credits[n].string) == 1) // spacer string, no need to draw
+		if ( strlen( credits[n].string ) == 1 ) // spacer string, no need to draw
 			continue;
-		if ( y > -(PROP_HEIGHT * (1 / PROP_SMALL_SIZE_SCALE))) 
+		if ( y > -( PROP_HEIGHT * (1 / PROP_SMALL_SIZE_SCALE) ) ) {
 			// the line is within the visible range of the screen
-			UI_DrawProportionalString(x, y, credits[n].string, 
+			UI_DrawProportionalString( x, y, credits[n].string, 
 									credits[n].style, *credits[n].colour );
+		}
 
 		// re-adjust y for next line
-		if (credits[n].style & UI_SMALLFONT) {
+		if ( credits[n].style & UI_SMALLFONT ) {
 			y += PROP_HEIGHT * PROP_SMALL_SIZE_SCALE;
-		} else if (credits[n].style & UI_BIGFONT) {
+		} else if ( credits[n].style & UI_BIGFONT ) {
 			y += PROP_HEIGHT;
-		} else if (credits[n].style & UI_GIANTFONT) {
+		} else if ( credits[n].style & UI_GIANTFONT ) {
 			y += PROP_HEIGHT * (1 / PROP_SMALL_SIZE_SCALE);
 		}
 
 		// if y is off the screen, break out of loop
-		if (y > 480) 
-		break;
+		if ( y > 480 ) 
+			break;
 	}
+
+	Credits_DrawHeader(); // BFP - Header
 }
 
 /*
@@ -260,13 +352,14 @@ void UI_CreditMenu( void ) {
 
 	starttime = uis.realtime; // record start time for credits to scroll properly
 	mvolume = trap_Cvar_VariableValue( "s_musicvolume" );
-	if (mvolume < 0.5)
+	if ( mvolume < 0.5 )
 		trap_Cmd_ExecuteText( EXEC_APPEND, "s_musicvolume 0.5\n" );
 	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/fla22k_02\n" );
 
 	// load the background shader
 #ifdef BACKGROUND_SHADER
 	BackgroundShader = 
-		trap_R_RegisterShaderNoMip( "menu/art/menubg" );
+		trap_R_RegisterShaderNoMip( ART_MENUBG );
+#undef BACKGROUND_SHADER
 #endif
 }
