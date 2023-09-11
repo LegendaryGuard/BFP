@@ -37,6 +37,7 @@ ADD BOTS MENU
 #define ART_FIGHT0			"menu/art/accept_0"
 #define ART_FIGHT1			"menu/art/accept_1"
 #define ART_BACKGROUND		"menu/art/addbotframe"
+#define ART_BARLOG			"menu/art/cap_barlog" // BFP - barlog
 #define ART_ARROWS			"menu/art/arrows_vert_0"
 #define ART_ARROWUP			"menu/art/arrows_vert_top"
 #define ART_ARROWDOWN		"menu/art/arrows_vert_bot"
@@ -59,6 +60,8 @@ ADD BOTS MENU
 
 typedef struct {
 	menuframework_s	menu;
+	menutext_s		banner;
+	menubitmap_s	background;
 	menubitmap_s	arrows;
 	menubitmap_s	up;
 	menubitmap_s	down;
@@ -67,6 +70,7 @@ typedef struct {
 	menulist_s		team;
 	menubitmap_s	go;
 	menubitmap_s	back;
+	menubitmap_s	barlog; // BFP - barlog
 
 	int				numBots;
 	int				delay;
@@ -112,7 +116,7 @@ static void UI_AddBotsMenu_BotEvent( void* ptr, int event ) {
 		return;
 	}
 
-	addBotsMenuInfo.bots[addBotsMenuInfo.selectedBotNum].color = color_orange;
+	addBotsMenuInfo.bots[addBotsMenuInfo.selectedBotNum].color = color_white; // BFP - bot selection color is white
 	addBotsMenuInfo.selectedBotNum = ((menucommon_s*)ptr)->id - ID_BOTNAME0;
 	addBotsMenuInfo.bots[addBotsMenuInfo.selectedBotNum].color = color_white;
 }
@@ -218,20 +222,6 @@ static void UI_AddBotsMenu_GetSortedBotNums( void ) {
 
 /*
 =================
-UI_AddBotsMenu_Draw
-=================
-*/
-static void UI_AddBotsMenu_Draw( void ) {
-	UI_DrawBannerString( 320, 16, "ADD BOTS", UI_CENTER, color_white );
-	UI_DrawNamedPic( 320-233, 240-166, 466, 332, ART_BACKGROUND );
-
-	// standard menu drawing
-	Menu_Draw( &addBotsMenuInfo.menu );
-}
-
-	
-/*
-=================
 UI_AddBotsMenu_Init
 =================
 */
@@ -266,7 +256,6 @@ static void UI_AddBotsMenu_Init( void ) {
 	gametype = atoi( Info_ValueForKey( info,"g_gametype" ) );
 
 	memset( &addBotsMenuInfo, 0 ,sizeof(addBotsMenuInfo) );
-	addBotsMenuInfo.menu.draw = UI_AddBotsMenu_Draw;
 	addBotsMenuInfo.menu.fullscreen = qfalse;
 	addBotsMenuInfo.menu.wrapAround = qtrue;
 	addBotsMenuInfo.delay = 1000;
@@ -275,6 +264,31 @@ static void UI_AddBotsMenu_Init( void ) {
 
 	addBotsMenuInfo.numBots = UI_GetNumBots();
 	count = addBotsMenuInfo.numBots < 7 ? addBotsMenuInfo.numBots : 7;
+
+	// BFP - barlog
+	addBotsMenuInfo.barlog.generic.type  = MTYPE_BITMAP;
+	addBotsMenuInfo.barlog.generic.name  = ART_BARLOG;
+	addBotsMenuInfo.barlog.generic.flags = QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	addBotsMenuInfo.barlog.generic.x	 = 140;
+	addBotsMenuInfo.barlog.generic.y	 = 5;
+	addBotsMenuInfo.barlog.width  	     = 355;
+	addBotsMenuInfo.barlog.height  	     = 90;
+
+	// BFP - banner draws after
+	addBotsMenuInfo.banner.generic.type			= MTYPE_PTEXT;
+	addBotsMenuInfo.banner.generic.x			= 320;
+	addBotsMenuInfo.banner.generic.y			= 45; // BFP - modified banner y position
+	addBotsMenuInfo.banner.string				= "ADD BOTS";
+	addBotsMenuInfo.banner.color				= color_white;
+	addBotsMenuInfo.banner.style				= UI_CENTER | UI_BIGFONT; // BFP - modified banner style
+
+	addBotsMenuInfo.background.generic.type		= MTYPE_BITMAP;
+	addBotsMenuInfo.background.generic.name		= ART_BACKGROUND;
+	addBotsMenuInfo.background.generic.flags	= QMF_INACTIVE;
+	addBotsMenuInfo.background.generic.x		= 320-233;
+	addBotsMenuInfo.background.generic.y		= 240-166;
+	addBotsMenuInfo.background.width			= 466;
+	addBotsMenuInfo.background.height			= 332;
 
 	addBotsMenuInfo.arrows.generic.type  = MTYPE_BITMAP;
 	addBotsMenuInfo.arrows.generic.name  = ART_ARROWS;
@@ -312,7 +326,7 @@ static void UI_AddBotsMenu_Init( void ) {
 		addBotsMenuInfo.bots[n].generic.y			= y;
 		addBotsMenuInfo.bots[n].generic.callback	= UI_AddBotsMenu_BotEvent;
 		addBotsMenuInfo.bots[n].string				= addBotsMenuInfo.botnames[n];
-		addBotsMenuInfo.bots[n].color				= color_orange;
+		addBotsMenuInfo.bots[n].color				= color_white; // BFP - bot selection color is white
 		addBotsMenuInfo.bots[n].style				= UI_LEFT|UI_SMALLFONT;
 	}
 
@@ -348,8 +362,8 @@ static void UI_AddBotsMenu_Init( void ) {
 	addBotsMenuInfo.go.generic.callback		= UI_AddBotsMenu_FightEvent;
 	addBotsMenuInfo.go.generic.x			= 320+128-128;
 	addBotsMenuInfo.go.generic.y			= 256+128-64;
-	addBotsMenuInfo.go.width  				= 128;
-	addBotsMenuInfo.go.height  				= 64;
+	addBotsMenuInfo.go.width  				= 80; // BFP - modified width FIGHT! button
+	addBotsMenuInfo.go.height  				= 80; // BFP - modified height FIGHT! button
 	addBotsMenuInfo.go.focuspic				= ART_FIGHT1;
 
 	addBotsMenuInfo.back.generic.type		= MTYPE_BITMAP;
@@ -357,10 +371,10 @@ static void UI_AddBotsMenu_Init( void ) {
 	addBotsMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	addBotsMenuInfo.back.generic.id			= ID_BACK;
 	addBotsMenuInfo.back.generic.callback	= UI_AddBotsMenu_BackEvent;
-	addBotsMenuInfo.back.generic.x			= 320-128;
+	addBotsMenuInfo.back.generic.x			= 240; // BFP - modified x BACK button
 	addBotsMenuInfo.back.generic.y			= 256+128-64;
-	addBotsMenuInfo.back.width				= 128;
-	addBotsMenuInfo.back.height				= 64;
+	addBotsMenuInfo.back.width				= 80; // BFP - modified width BACK button
+	addBotsMenuInfo.back.height				= 80; // BFP - modified height BACK button
 	addBotsMenuInfo.back.focuspic			= ART_BACK1;
 
 	addBotsMenuInfo.baseBotNum = 0;
@@ -370,6 +384,9 @@ static void UI_AddBotsMenu_Init( void ) {
 	UI_AddBotsMenu_GetSortedBotNums();
 	UI_AddBotsMenu_SetBotNames();
 
+	Menu_AddItem( &addBotsMenuInfo.menu, &addBotsMenuInfo.background );
+	Menu_AddItem( &addBotsMenuInfo.menu, &addBotsMenuInfo.barlog ); // BFP - barlog draws first
+	Menu_AddItem( &addBotsMenuInfo.menu, &addBotsMenuInfo.banner ); // BFP - banner draws after
 	Menu_AddItem( &addBotsMenuInfo.menu, &addBotsMenuInfo.arrows );
 
 	Menu_AddItem( &addBotsMenuInfo.menu, &addBotsMenuInfo.up );
@@ -395,6 +412,7 @@ void UI_AddBots_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_FIGHT0 );
 	trap_R_RegisterShaderNoMip( ART_FIGHT1 );
 	trap_R_RegisterShaderNoMip( ART_BACKGROUND );
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_ARROWS );
 	trap_R_RegisterShaderNoMip( ART_ARROWUP );
 	trap_R_RegisterShaderNoMip( ART_ARROWDOWN );

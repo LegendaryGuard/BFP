@@ -26,8 +26,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	SPECIFY SERVER
 *********************************************************************************/
 
-#define SPECIFYSERVER_FRAMEL	"menu/art/frame2_l"
-#define SPECIFYSERVER_FRAMER	"menu/art/frame1_r"
+#define ART_MENUBG				"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG				"menu/art/cap_barlog"	// BFP - barlog
 #define SPECIFYSERVER_BACK0		"menu/art/back_0"
 #define SPECIFYSERVER_BACK1		"menu/art/back_1"
 #define SPECIFYSERVER_FIGHT0	"menu/art/fight_0"
@@ -38,8 +38,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static char* specifyserver_artlist[] =
 {
-	SPECIFYSERVER_FRAMEL,
-	SPECIFYSERVER_FRAMER,
 	SPECIFYSERVER_BACK0,	
 	SPECIFYSERVER_BACK1,	
 	SPECIFYSERVER_FIGHT0,
@@ -50,9 +48,9 @@ static char* specifyserver_artlist[] =
 typedef struct
 {
 	menuframework_s	menu;
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 	menufield_s		domain;
 	menufield_s		port;
 	menubitmap_s	go;
@@ -110,28 +108,30 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.menu.wrapAround = qtrue;
 	s_specifyserver.menu.fullscreen = qtrue;
 
-	s_specifyserver.banner.generic.type	 = MTYPE_BTEXT;
+	// BFP - Menu background
+	s_specifyserver.menubg.generic.type		= MTYPE_BITMAP;
+	s_specifyserver.menubg.generic.name		= ART_MENUBG;
+	s_specifyserver.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_specifyserver.menubg.generic.x		= 0;
+	s_specifyserver.menubg.generic.y		= 0;
+	s_specifyserver.menubg.width			= 640;
+	s_specifyserver.menubg.height			= 480;
+
+	// BFP - barlog
+	s_specifyserver.barlog.generic.type		= MTYPE_BITMAP;
+	s_specifyserver.barlog.generic.name		= ART_BARLOG;
+	s_specifyserver.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_specifyserver.barlog.generic.x		= 140;
+	s_specifyserver.barlog.generic.y		= 5;
+	s_specifyserver.barlog.width			= 355;
+	s_specifyserver.barlog.height			= 90;
+
+	s_specifyserver.banner.generic.type	 = MTYPE_PTEXT; // BFP - modified SPECIFY SERVER title type
 	s_specifyserver.banner.generic.x     = 320;
-	s_specifyserver.banner.generic.y     = 16;
+	s_specifyserver.banner.generic.y     = 45; // BFP - modified SPECIFY SERVER title y position
 	s_specifyserver.banner.string		 = "SPECIFY SERVER";
 	s_specifyserver.banner.color  		 = color_white;
-	s_specifyserver.banner.style  		 = UI_CENTER;
-
-	s_specifyserver.framel.generic.type  = MTYPE_BITMAP;
-	s_specifyserver.framel.generic.name  = SPECIFYSERVER_FRAMEL;
-	s_specifyserver.framel.generic.flags = QMF_INACTIVE;
-	s_specifyserver.framel.generic.x	 = 0;  
-	s_specifyserver.framel.generic.y	 = 78;
-	s_specifyserver.framel.width  	     = 256;
-	s_specifyserver.framel.height  	     = 329;
-
-	s_specifyserver.framer.generic.type  = MTYPE_BITMAP;
-	s_specifyserver.framer.generic.name  = SPECIFYSERVER_FRAMER;
-	s_specifyserver.framer.generic.flags = QMF_INACTIVE;
-	s_specifyserver.framer.generic.x	 = 376;
-	s_specifyserver.framer.generic.y	 = 76;
-	s_specifyserver.framer.width  	     = 256;
-	s_specifyserver.framer.height  	     = 334;
+	s_specifyserver.banner.style  		 = UI_CENTER|UI_BIGFONT; // BFP - modified SPECIFY SERVER title style
 
 	s_specifyserver.domain.generic.type       = MTYPE_FIELD;
 	s_specifyserver.domain.generic.name       = "Address:";
@@ -155,9 +155,9 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.go.generic.callback = SpecifyServer_Event;
 	s_specifyserver.go.generic.id	    = ID_SPECIFYSERVERGO;
 	s_specifyserver.go.generic.x		= 640;
-	s_specifyserver.go.generic.y		= 480-64;
-	s_specifyserver.go.width  		    = 128;
-	s_specifyserver.go.height  		    = 64;
+	s_specifyserver.go.generic.y		= 480-80; // BFP - modified FIGHT button y position
+	s_specifyserver.go.width  		    = 80; // BFP - modified FIGHT button width
+	s_specifyserver.go.height  		    = 80; // BFP - modified FIGHT button height
 	s_specifyserver.go.focuspic         = SPECIFYSERVER_FIGHT1;
 
 	s_specifyserver.back.generic.type	  = MTYPE_BITMAP;
@@ -166,14 +166,14 @@ void SpecifyServer_MenuInit( void )
 	s_specifyserver.back.generic.callback = SpecifyServer_Event;
 	s_specifyserver.back.generic.id	      = ID_SPECIFYSERVERBACK;
 	s_specifyserver.back.generic.x		  = 0;
-	s_specifyserver.back.generic.y		  = 480-64;
-	s_specifyserver.back.width  		  = 128;
-	s_specifyserver.back.height  		  = 64;
+	s_specifyserver.back.generic.y		  = 480-80; // BFP - modified BACK button y position
+	s_specifyserver.back.width  		  = 80; // BFP - modified BACK button width
+	s_specifyserver.back.height  		  = 80; // BFP - modified BACK button height
 	s_specifyserver.back.focuspic         = SPECIFYSERVER_BACK1;
 
+	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.barlog ); // BFP - barlog
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.banner );
-	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.framel );
-	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.framer );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.domain );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.port );
 	Menu_AddItem( &s_specifyserver.menu, &s_specifyserver.go );

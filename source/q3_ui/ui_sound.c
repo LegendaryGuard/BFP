@@ -31,8 +31,8 @@ SOUND OPTIONS MENU
 #include "ui_local.h"
 
 
-#define ART_FRAMEL			"menu/art/frame2_l"
-#define ART_FRAMER			"menu/art/frame1_r"
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 #define ART_BACK0			"menu/art/back_0"
 #define ART_BACK1			"menu/art/back_1"
 
@@ -54,9 +54,9 @@ static const char *quality_items[] = {
 typedef struct {
 	menuframework_s		menu;
 
+	menubitmap_s		menubg; // BFP - Menu background
+	menubitmap_s		barlog; // BFP - barlog
 	menutext_s			banner;
-	menubitmap_s		framel;
-	menubitmap_s		framer;
 
 	menutext_s			graphics;
 	menutext_s			display;
@@ -155,29 +155,31 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.menu.wrapAround = qtrue;
 	soundOptionsInfo.menu.fullscreen = qtrue;
 
-	soundOptionsInfo.banner.generic.type		= MTYPE_BTEXT;
-	soundOptionsInfo.banner.generic.flags		= QMF_CENTER_JUSTIFY;
+	// BFP - Menu background
+	soundOptionsInfo.menubg.generic.type		= MTYPE_BITMAP;
+	soundOptionsInfo.menubg.generic.name		= ART_MENUBG;
+	soundOptionsInfo.menubg.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	soundOptionsInfo.menubg.generic.x			= 0;
+	soundOptionsInfo.menubg.generic.y			= 0;
+	soundOptionsInfo.menubg.width				= 640;
+	soundOptionsInfo.menubg.height				= 480;
+
+	// BFP - barlog
+	soundOptionsInfo.barlog.generic.type		= MTYPE_BITMAP;
+	soundOptionsInfo.barlog.generic.name		= ART_BARLOG;
+	soundOptionsInfo.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	soundOptionsInfo.barlog.generic.x			= 140;
+	soundOptionsInfo.barlog.generic.y			= 5;
+	soundOptionsInfo.barlog.width				= 355;
+	soundOptionsInfo.barlog.height				= 90;
+
+	soundOptionsInfo.banner.generic.type		= MTYPE_PTEXT; // BFP - modified SYSTEM SETUP title type
+	soundOptionsInfo.banner.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE; // BFP - modified SYSTEM SETUP title flags
 	soundOptionsInfo.banner.generic.x			= 320;
-	soundOptionsInfo.banner.generic.y			= 16;
+	soundOptionsInfo.banner.generic.y			= 45; // BFP - modified SYSTEM SETUP title y position
 	soundOptionsInfo.banner.string				= "SYSTEM SETUP";
 	soundOptionsInfo.banner.color				= color_white;
-	soundOptionsInfo.banner.style				= UI_CENTER;
-
-	soundOptionsInfo.framel.generic.type		= MTYPE_BITMAP;
-	soundOptionsInfo.framel.generic.name		= ART_FRAMEL;
-	soundOptionsInfo.framel.generic.flags		= QMF_INACTIVE;
-	soundOptionsInfo.framel.generic.x			= 0;  
-	soundOptionsInfo.framel.generic.y			= 78;
-	soundOptionsInfo.framel.width				= 256;
-	soundOptionsInfo.framel.height				= 329;
-
-	soundOptionsInfo.framer.generic.type		= MTYPE_BITMAP;
-	soundOptionsInfo.framer.generic.name		= ART_FRAMER;
-	soundOptionsInfo.framer.generic.flags		= QMF_INACTIVE;
-	soundOptionsInfo.framer.generic.x			= 376;
-	soundOptionsInfo.framer.generic.y			= 76;
-	soundOptionsInfo.framer.width				= 256;
-	soundOptionsInfo.framer.height				= 334;
+	soundOptionsInfo.banner.style				= UI_CENTER|UI_BIGFONT; // BFP - modified SYSTEM SETUP title style
 
 	soundOptionsInfo.graphics.generic.type		= MTYPE_PTEXT;
 	soundOptionsInfo.graphics.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -187,7 +189,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.graphics.generic.y			= 240 - 2 * PROP_HEIGHT;
 	soundOptionsInfo.graphics.string			= "GRAPHICS";
 	soundOptionsInfo.graphics.style				= UI_RIGHT;
-	soundOptionsInfo.graphics.color				= color_red;
+	soundOptionsInfo.graphics.color				= color_white; // BFP - modified GRAPHICS button color
 
 	soundOptionsInfo.display.generic.type		= MTYPE_PTEXT;
 	soundOptionsInfo.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -197,7 +199,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.display.generic.y			= 240 - PROP_HEIGHT;
 	soundOptionsInfo.display.string				= "DISPLAY";
 	soundOptionsInfo.display.style				= UI_RIGHT;
-	soundOptionsInfo.display.color				= color_red;
+	soundOptionsInfo.display.color				= color_white; // BFP - modified DISPLAY button color
 
 	soundOptionsInfo.sound.generic.type			= MTYPE_PTEXT;
 	soundOptionsInfo.sound.generic.flags		= QMF_RIGHT_JUSTIFY;
@@ -207,7 +209,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.sound.generic.y			= 240;
 	soundOptionsInfo.sound.string				= "SOUND";
 	soundOptionsInfo.sound.style				= UI_RIGHT;
-	soundOptionsInfo.sound.color				= color_red;
+	soundOptionsInfo.sound.color				= color_white; // BFP - modified SOUND button color
 
 	soundOptionsInfo.network.generic.type		= MTYPE_PTEXT;
 	soundOptionsInfo.network.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -217,7 +219,7 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.network.generic.y			= 240 + PROP_HEIGHT;
 	soundOptionsInfo.network.string				= "NETWORK";
 	soundOptionsInfo.network.style				= UI_RIGHT;
-	soundOptionsInfo.network.color				= color_red;
+	soundOptionsInfo.network.color				= color_white; // BFP - modified NETWORK button color
 
 	y = 240 - 1.5 * (BIGCHAR_HEIGHT + 2);
 	soundOptionsInfo.sfxvolume.generic.type		= MTYPE_SLIDER;
@@ -266,14 +268,14 @@ static void UI_SoundOptionsMenu_Init( void ) {
 	soundOptionsInfo.back.generic.callback		= UI_SoundOptionsMenu_Event;
 	soundOptionsInfo.back.generic.id			= ID_BACK;
 	soundOptionsInfo.back.generic.x				= 0;
-	soundOptionsInfo.back.generic.y				= 480-64;
-	soundOptionsInfo.back.width					= 128;
-	soundOptionsInfo.back.height				= 64;
+	soundOptionsInfo.back.generic.y				= 480-80; // BFP - modified BACK button y position
+	soundOptionsInfo.back.width					= 80; // BFP - modified BACK button width
+	soundOptionsInfo.back.height				= 80; // BFP - modified BACK button height
 	soundOptionsInfo.back.focuspic				= ART_BACK1;
 
+	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.barlog ); // BFP - barlog
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.banner );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.framel );
-	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.framer );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.graphics );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.display );
 	Menu_AddItem( &soundOptionsInfo.menu, ( void * ) &soundOptionsInfo.sound );
@@ -297,8 +299,8 @@ UI_SoundOptionsMenu_Cache
 ===============
 */
 void UI_SoundOptionsMenu_Cache( void ) {
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
 }

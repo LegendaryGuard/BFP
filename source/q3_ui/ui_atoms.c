@@ -964,11 +964,12 @@ void UI_Cache_f( void ) {
 	InGame_Cache();
 	ConfirmMenu_Cache();
 	PlayerModel_Cache();
-	PlayerSettings_Cache();
+//	PlayerSettings_Cache(); // BFP - Player settings isn't available
 	Controls_Cache();
 	Demos_Cache();
-	UI_CinematicsMenu_Cache();
+//	UI_CinematicsMenu_Cache(); // BFP - Cinematics menu is disabled
 	Preferences_Cache();
+	BFPOptions_Cache(); // BFP - BFP OPTIONS
 	ServerInfo_Cache();
 	SpecifyServer_Cache();
 	ArenaServers_Cache();
@@ -979,9 +980,9 @@ void UI_Cache_f( void ) {
 	UI_DisplayOptionsMenu_Cache();
 	UI_SoundOptionsMenu_Cache();
 	UI_NetworkOptionsMenu_Cache();
-	UI_SPLevelMenu_Cache();
-	UI_SPSkillMenu_Cache();
-	UI_SPPostgameMenu_Cache();
+//	UI_SPLevelMenu_Cache(); // BFP - Level menu is disabled
+//	UI_SPSkillMenu_Cache(); // BFP - Skill menu is disabled
+//	UI_SPPostgameMenu_Cache(); // BFP - Post game menu is disabled
 	TeamMain_Cache();
 	UI_AddBots_Cache();
 	UI_RemoveBots_Cache();
@@ -990,7 +991,7 @@ void UI_Cache_f( void ) {
 //	UI_SaveConfigMenu_Cache();
 	UI_BotSelectMenu_Cache();
 	UI_CDKeyMenu_Cache();
-	UI_ModsMenu_Cache();
+//	UI_ModsMenu_Cache(); // BFP - Mods menu is disabled
 
 }
 
@@ -1008,6 +1009,8 @@ qboolean UI_ConsoleCommand( int realTime ) {
 	// ensure minimum menu data is available
 	Menu_Cache();
 
+// BFP - Post game menu is disabled
+#if 0
 	if ( Q_stricmp (cmd, "levelselect") == 0 ) {
 		UI_SPLevelMenu_f();
 		return qtrue;
@@ -1017,22 +1020,27 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		UI_SPPostgameMenu_f();
 		return qtrue;
 	}
+#endif
 
 	if ( Q_stricmp (cmd, "ui_cache") == 0 ) {
 		UI_Cache_f();
 		return qtrue;
 	}
-
+// BFP - Cinematics menu is disabled
+#if 0
 	if ( Q_stricmp (cmd, "ui_cinematics") == 0 ) {
 		UI_CinematicsMenu_f();
 		return qtrue;
 	}
+#endif
 
 	if ( Q_stricmp (cmd, "ui_teamOrders") == 0 ) {
 		UI_TeamOrdersMenu_f();
 		return qtrue;
 	}
 
+// BFP - Level menu is disabled
+#if 0
 	if ( Q_stricmp (cmd, "iamacheater") == 0 ) {
 		UI_SPUnlock_f();
 		return qtrue;
@@ -1042,6 +1050,7 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		UI_SPUnlockMedals_f();
 		return qtrue;
 	}
+#endif
 
 	if ( Q_stricmp (cmd, "ui_cdkey") == 0 ) {
 		UI_CDKeyMenu_f();
@@ -1065,6 +1074,9 @@ UI_Init
 =================
 */
 void UI_Init( void ) {
+	//TA: dyn memory
+	UI_InitMem(); // BFP - Unpack music, memory management for ui_mp3decoder
+
 	UI_RegisterCvars();
 
 	UI_InitGameinfo();

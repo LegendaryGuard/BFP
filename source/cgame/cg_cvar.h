@@ -85,6 +85,7 @@ CG_CVAR( cg_drawFriend, "cg_drawFriend", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_teamChatsOnly, "cg_teamChatsOnly", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_noVoiceChats, "cg_noVoiceChats", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_noVoiceText, "cg_noVoiceText", "0", CVAR_ARCHIVE )
+CG_CVAR( cg_musicUnpacked, "cg_musicUnpacked", "0", CVAR_ARCHIVE ) // BFP - Unpack music
 // the following variables are created in other parts of the system,
 // but we also reference them here
 CG_CVAR( cg_buildScript, "com_buildScript", "0", 0 )	// force loading of all possible data amd error on failures

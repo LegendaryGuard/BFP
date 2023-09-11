@@ -461,8 +461,8 @@ UIOBJ_ = \
   $(B)/ui/ui_main.o \
   $(B)/ui/ui_addbots.o \
   $(B)/ui/ui_atoms.o \
+  $(B)/ui/ui_bfpoptions.o \
   $(B)/ui/ui_cdkey.o \
-  $(B)/ui/ui_cinematics.o \
   $(B)/ui/ui_confirm.o \
   $(B)/ui/ui_connect.o \
   $(B)/ui/ui_controls2.o \
@@ -471,14 +471,14 @@ UIOBJ_ = \
   $(B)/ui/ui_display.o \
   $(B)/ui/ui_gameinfo.o \
   $(B)/ui/ui_ingame.o \
+  $(B)/ui/ui_mem.o \
   $(B)/ui/ui_menu.o \
   $(B)/ui/ui_mfield.o \
-  $(B)/ui/ui_mods.o \
+  $(B)/ui/ui_mp3decoder.o \
   $(B)/ui/ui_network.o \
   $(B)/ui/ui_options.o \
   $(B)/ui/ui_playermodel.o \
   $(B)/ui/ui_players.o \
-  $(B)/ui/ui_playersettings.o \
   $(B)/ui/ui_preferences.o \
   $(B)/ui/ui_qmenu.o \
   $(B)/ui/ui_removebots.o \
@@ -488,9 +488,6 @@ UIOBJ_ = \
   $(B)/ui/ui_sound.o \
   $(B)/ui/ui_sparena.o \
   $(B)/ui/ui_specifyserver.o \
-  $(B)/ui/ui_splevel.o \
-  $(B)/ui/ui_sppostgame.o \
-  $(B)/ui/ui_spskill.o \
   $(B)/ui/ui_startserver.o \
   $(B)/ui/ui_team.o \
   $(B)/ui/ui_teamorders.o \

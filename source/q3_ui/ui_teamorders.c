@@ -31,7 +31,9 @@ TEAM ORDERS MENU
 
 #include "ui_local.h"
 
+// BFP - NOTE: Originally in  BFP vanilla, the barlog isn't available in this menu
 
+// #define ART_BARLOG		"menu/art/cap_barlog"	// BFP - barlog
 #define ART_FRAME		"menu/art/addbotframe"
 #define ART_BACK0		"menu/art/back_0"
 #define ART_BACK1		"menu/art/back_1"	
@@ -44,6 +46,7 @@ TEAM ORDERS MENU
 typedef struct {
 	menuframework_s	menu;
 
+	// menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
 	menubitmap_s	frame;
 
@@ -237,7 +240,7 @@ static void UI_TeamOrdersMenu_ListDraw( void *self ) {
 			}
 		}
 		else {
-			color = color_orange;
+			color = color_white; // BFP - modified list color
 		}
 
 		UI_DrawProportionalString( x, y, l->itemnames[i], style, color );
@@ -353,12 +356,23 @@ static void UI_TeamOrdersMenu_Init( void ) {
 
 	UI_TeamOrdersMenu_BuildBotList();
 
+	// BFP - barlog
+#if 0
+	teamOrdersMenuInfo.barlog.generic.type		= MTYPE_BITMAP;
+	teamOrdersMenuInfo.barlog.generic.name		= ART_BARLOG;
+	teamOrdersMenuInfo.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	teamOrdersMenuInfo.barlog.generic.x			= 140;
+	teamOrdersMenuInfo.barlog.generic.y			= 5;
+	teamOrdersMenuInfo.barlog.width				= 355;
+	teamOrdersMenuInfo.barlog.height			= 90;
+#endif
+
 	teamOrdersMenuInfo.banner.generic.type		= MTYPE_BTEXT;
 	teamOrdersMenuInfo.banner.generic.x			= 320;
 	teamOrdersMenuInfo.banner.generic.y			= 16;
 	teamOrdersMenuInfo.banner.string			= "TEAM ORDERS";
 	teamOrdersMenuInfo.banner.color				= color_white;
-	teamOrdersMenuInfo.banner.style				= UI_CENTER;
+	teamOrdersMenuInfo.banner.style				= UI_CENTER|UI_BIGFONT; // BFP - modified TEAM ORDERS title style
 
 	teamOrdersMenuInfo.frame.generic.type		= MTYPE_BITMAP;
 	teamOrdersMenuInfo.frame.generic.flags		= QMF_INACTIVE;
@@ -380,11 +394,12 @@ static void UI_TeamOrdersMenu_Init( void ) {
 	teamOrdersMenuInfo.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	teamOrdersMenuInfo.back.generic.callback	= UI_TeamOrdersMenu_BackEvent;
 	teamOrdersMenuInfo.back.generic.x			= 0;
-	teamOrdersMenuInfo.back.generic.y			= 480-64;
-	teamOrdersMenuInfo.back.width				= 128;
-	teamOrdersMenuInfo.back.height				= 64;
+	teamOrdersMenuInfo.back.generic.y			= 480-80; // BFP - modified BACK button y position
+	teamOrdersMenuInfo.back.width				= 80; // BFP - modified BACK button width
+	teamOrdersMenuInfo.back.height				= 80; // BFP - modified BACK button height
 	teamOrdersMenuInfo.back.focuspic			= ART_BACK1;
 
+	// Menu_AddItem( &teamOrdersMenuInfo.menu, &teamOrdersMenuInfo.barlog ); // BFP - barlog
 	Menu_AddItem( &teamOrdersMenuInfo.menu, &teamOrdersMenuInfo.banner );
 	Menu_AddItem( &teamOrdersMenuInfo.menu, &teamOrdersMenuInfo.frame );
 	Menu_AddItem( &teamOrdersMenuInfo.menu, &teamOrdersMenuInfo.list );
@@ -403,6 +418,7 @@ UI_TeamOrdersMenu_Cache
 =================
 */
 void UI_TeamOrdersMenu_Cache( void ) {
+	// trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_FRAME );
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );

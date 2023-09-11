@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ui_local.h"
 
 
+#define ART_BARLOG		"menu/art/cap_barlog"	// BFP - barlog
 #define TEAMMAIN_FRAME	"menu/art/cut_frame"
 
 #define ID_JOINRED		100
@@ -38,6 +39,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 typedef struct
 {
 	menuframework_s	menu;
+	menubitmap_s	barlog; // BFP - barlog
+	menutext_s		banner; // BFP - banner
 	menubitmap_s	frame;
 	menutext_s		joinred;
 	menutext_s		joinblue;
@@ -108,6 +111,23 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.menu.wrapAround = qtrue;
 	s_teammain.menu.fullscreen = qfalse;
 
+	// BFP - barlog
+	s_teammain.barlog.generic.type		= MTYPE_BITMAP;
+	s_teammain.barlog.generic.name		= ART_BARLOG;
+	s_teammain.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_teammain.barlog.generic.x			= 140;
+	s_teammain.barlog.generic.y			= 5;
+	s_teammain.barlog.width				= 355;
+	s_teammain.barlog.height			= 90;
+
+	// BFP - banner
+	s_teammain.banner.generic.type		= MTYPE_PTEXT;
+	s_teammain.banner.generic.x			= 320;
+	s_teammain.banner.generic.y			= 45;
+	s_teammain.banner.string			= "SELECT TEAM";
+	s_teammain.banner.color				= color_white;
+	s_teammain.banner.style				= UI_CENTER|UI_BIGFONT;
+
 	s_teammain.frame.generic.type   = MTYPE_BITMAP;
 	s_teammain.frame.generic.flags	= QMF_INACTIVE;
 	s_teammain.frame.generic.name   = TEAMMAIN_FRAME;
@@ -126,7 +146,7 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.joinred.generic.y        = y;
 	s_teammain.joinred.string           = "JOIN RED";
 	s_teammain.joinred.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.joinred.color            = colorRed;
+	s_teammain.joinred.color            = color_white; // BFP - modified JOIN RED button color
 	y += 20;
 
 	s_teammain.joinblue.generic.type     = MTYPE_PTEXT;
@@ -137,7 +157,7 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.joinblue.generic.y        = y;
 	s_teammain.joinblue.string           = "JOIN BLUE";
 	s_teammain.joinblue.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.joinblue.color            = colorRed;
+	s_teammain.joinblue.color            = color_white; // BFP - modified JOIN BLUE button color
 	y += 20;
 
 	s_teammain.joingame.generic.type     = MTYPE_PTEXT;
@@ -148,7 +168,7 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.joingame.generic.y        = y;
 	s_teammain.joingame.string           = "JOIN GAME";
 	s_teammain.joingame.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.joingame.color            = colorRed;
+	s_teammain.joingame.color            = color_white; // BFP - modified JOIN GAME button color
 	y += 20;
 
 	s_teammain.spectate.generic.type     = MTYPE_PTEXT;
@@ -159,7 +179,7 @@ void TeamMain_MenuInit( void ) {
 	s_teammain.spectate.generic.y        = y;
 	s_teammain.spectate.string           = "SPECTATE";
 	s_teammain.spectate.style            = UI_CENTER|UI_SMALLFONT;
-	s_teammain.spectate.color            = colorRed;
+	s_teammain.spectate.color            = color_white; // BFP - modified SPECTATE button color
 	y += 20;
 
 	trap_GetConfigString(CS_SERVERINFO, info, MAX_INFO_STRING);   
@@ -181,6 +201,8 @@ void TeamMain_MenuInit( void ) {
 		break;
 	}
 
+	Menu_AddItem( &s_teammain.menu, (void*) &s_teammain.barlog ); // BFP - barlog
+	Menu_AddItem( &s_teammain.menu, (void*) &s_teammain.banner ); // BFP - banner
 	Menu_AddItem( &s_teammain.menu, (void*) &s_teammain.frame );
 	Menu_AddItem( &s_teammain.menu, (void*) &s_teammain.joinred );
 	Menu_AddItem( &s_teammain.menu, (void*) &s_teammain.joinblue );
@@ -195,6 +217,7 @@ TeamMain_Cache
 ===============
 */
 void TeamMain_Cache( void ) {
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( TEAMMAIN_FRAME );
 }
 

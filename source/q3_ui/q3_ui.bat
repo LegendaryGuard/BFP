@@ -28,9 +28,15 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/game/q_shared.c
 @if errorlevel 1 goto quit
+%cc% %src%/q3_ui/ui_mem.c
+@if errorlevel 1 goto quit
+%cc% %src%/q3_ui/ui_mp3decoder.c
+@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_gameinfo.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_atoms.c
+@if errorlevel 1 goto quit
+%cc% %src%/q3_ui/ui_bfpoptions.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_connect.c
 @if errorlevel 1 goto quit
@@ -56,8 +62,6 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_players.c
 @if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_playersettings.c
-@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_preferences.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_qmenu.c
@@ -68,27 +72,17 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_specifyserver.c
 @if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_splevel.c
-@if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_sppostgame.c
-@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_startserver.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_team.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_video.c
 @if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_cinematics.c
-@if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_spskill.c
-@if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_addbots.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_removebots.c
 @if errorlevel 1 goto quit
 %cc% %src%/q3_ui/ui_teamorders.c
-@if errorlevel 1 goto quit
-%cc% %src%/q3_ui/ui_mods.c
 @if errorlevel 1 goto quit
 
 rem set -vq3 flag for new q3asm, qvm's will run on original 1.32c binaries

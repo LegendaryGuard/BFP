@@ -31,33 +31,63 @@ MAIN MENU
 
 #include "ui_local.h"
 
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BFPLOGO			"menu/art/bfp_logol"	// BFP - Logo
+#define ART_CAPBAR			"menu/art/cap_bar"		// BFP - cap bar
+#define ART_CRBANNER		"menu/art/cr"			// BFP - copyright banner
 
-#define ID_SINGLEPLAYER			10
-#define ID_MULTIPLAYER			11
-#define ID_SETUP				12
-#define ID_DEMOS				13
-#define ID_CINEMATICS			14
-#define ID_TEAMARENA		15
-#define ID_MODS					16
-#define ID_EXIT					17
+// BFP - BFP loves Roger Sullivan! This music feels nostalgic. Just wondering what kind of music is this. This data can't be found on Internet though...  (· ·;) *curiosity sweat*
+#define MENU_MUSICBG		"music/RogerSullivan-touch_of_the_sun.menu"	// BFP - Q3 menu extension for music, well, it could be .wav extension
+#define MP3_MUSICBG			"music/RogerSullivan-touch_of_the_sun.mp3"	// BFP - MP3 music version, for the converter...  (· ·;) *curiosity sweat*
 
+// #define ID_SINGLEPLAYER			10 // BFP - Disabled due to full BFP vanilla implementation
+#define ID_MULTIPLAYER			10
+#define ID_SETUP				11
+#define ID_DEMOS				12
+// BFP - NOTE: Some stuff could be done after the full BFP vanilla implementation
+#if 0
+#define ID_CINEMATICS			14 // BFP - Maybe some wonderful .ROQ videos? Not sure...
+#define ID_MODS					15 // BFP - Maybe not necessary
+#endif
+#define ID_EXIT					13
+#define ID_UNPACKMUSIC			14 // BFP - Unpack music, strange feature  (· ·;) *curiosity sweat*
+
+// BFP - That's the main banner 3d model of Quake 3 words, it would be a good idea to add a proper 3d banner model :P
+#if 0
 #define MAIN_BANNER_MODEL				"models/mapobjects/banner/banner5.md3"
 #define MAIN_MENU_VERTICAL_SPACING		34
-
+#endif
+#define MAIN_MENU_VERTICAL_SPACING		65 // BFP - Set vertical spacing to 65
 
 typedef struct {
 	menuframework_s	menu;
 
-	menutext_s		singleplayer;
+	menubitmap_s		menubg;		// BFP - Menu background
+	menubitmap_s		bfplogo;	// BFP - Logo
+	menubitmap_s		crbanner;	// BFP - copyright banner
+
+	menubitmap_s		capbar0;	// BFP - PLAY cap bar
+	menubitmap_s		capbar1;	// BFP - SETUP cap bar
+	menubitmap_s		capbar2;	// BFP - DEMOS cap bar
+	menubitmap_s		capbar3;	// BFP - EXIT cap bar
+	menubitmap_s		capbar4;	// BFP - UNPACK MUSIC cap bar
+
+	// BFP - Just wondering if anyone will come up with Single Player/Campaign/Story mode in their mind
+	// menutext_s		singleplayer;
 	menutext_s		multiplayer;
 	menutext_s		setup;
 	menutext_s		demos;
+
+// BFP - NOTE: Same note as said before
+#if 0
 	menutext_s		cinematics;
-	menutext_s		teamArena;
 	menutext_s		mods;
+#endif
+	menutext_s		unpackmusic; // BFP - Unpack music text
 	menutext_s		exit;
 
-	qhandle_t		bannerModel;
+	// BFP - As said before, idea for a proper 3d banner model
+	// qhandle_t		bannerModel;
 } mainmenu_t;
 
 
@@ -84,6 +114,48 @@ static void MainMenu_ExitAction( qboolean result ) {
 }
 
 
+/*
+=================
+MainMenu_UnpackMusicAction
+=================
+*/
+static void MainMenu_UnpackMusicAction( qboolean result ) { // BFP - Unpack music logic, that looks weird  (· ·;) *curiosity sweat*
+	/*
+	--- Yrgol dev journal ---
+	# mp3 support - 11/30/2001 by Yrgol	
+		I added Tim "Timbo" Angus' mp3 to wav converter into bfp. It can be found at http://tremulous.sourceforge.net/junk/cg_mp3decoder/
+		This will allow us to include more music in the download, since each music file will have a smaller filesize.
+		This will not allow you to play your own mp3's. It is not an mp3 player, it is an in-game utility to convert mp3's into a q3-playable format.
+	-------------------------
+	*/
+	char mp3file[ MAX_QPATH ];
+	char wavfile[ MAX_QPATH ];
+
+	if( !result ) {
+		return;
+	}
+	UI_PopMenu();
+
+	Q_strncpyz( mp3file, MP3_MUSICBG, sizeof(mp3file) );
+	mp3file[sizeof(mp3file) - 1] = '\0';
+	Q_strncpyz( wavfile, MENU_MUSICBG, sizeof(wavfile) );
+	wavfile[sizeof(wavfile) - 1] = '\0';
+
+	S_decodeMP3( MP3_MUSICBG, MENU_MUSICBG );
+	trap_Cvar_SetValue( "cg_musicUnpacked", 1 );
+}
+
+
+/*
+=================
+MainMenu_UnpackMusic_Draw
+=================
+*/
+static void MainMenu_UnpackMusic_Draw( void ) { // BFP - Draw the warning on Unpack music menu
+	UI_DrawProportionalString( SCREEN_WIDTH/2, 50, "THIS MAY TAKE SEVERAL MINUTES", UI_CENTER, color_white );
+}
+
+
 
 /*
 =================
@@ -96,9 +168,12 @@ void Main_MenuEvent (void* ptr, int event) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
+	// BFP - As said before, if anyone has an idea in their mind about Single Player stuff
+#if 0
 	case ID_SINGLEPLAYER:
 		UI_SPLevelMenu();
 		break;
+#endif
 
 	case ID_MULTIPLAYER:
 		UI_ArenaServersMenu();
@@ -112,6 +187,8 @@ void Main_MenuEvent (void* ptr, int event) {
 		UI_DemosMenu();
 		break;
 
+// BFP - NOTE: Same note as said before
+#if 0
 	case ID_CINEMATICS:
 		UI_CinematicsMenu();
 		break;
@@ -119,10 +196,11 @@ void Main_MenuEvent (void* ptr, int event) {
 	case ID_MODS:
 		UI_ModsMenu();
 		break;
+#endif
 
-	case ID_TEAMARENA:
-		trap_Cvar_Set( "fs_game", "missionpack");
-		trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
+	// BFP - Unpack music
+	case ID_UNPACKMUSIC:
+		UI_ConfirmMenu( "UNPACK MUSIC?", MainMenu_UnpackMusic_Draw, MainMenu_UnpackMusicAction );
 		break;
 
 	case ID_EXIT:
@@ -138,7 +216,11 @@ MainMenu_Cache
 ===============
 */
 void MainMenu_Cache( void ) {
-	s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
+	// BFP - Here's where sets the 3d banner model :P
+	// s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
+	trap_R_RegisterShaderNoMip( ART_MENUBG );	// BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BFPLOGO );	// BFP - Logo
+	trap_R_RegisterShaderNoMip( ART_CRBANNER );	// BFP - copyright banner
 }
 
 sfxHandle_t ErrorMessage_Key(int key)
@@ -157,12 +239,17 @@ TTimo: this function is common to the main menu and errorMessage menu
 
 static void Main_MenuDraw( void ) {
 	refdef_t		refdef;
+
+	// BFP - 3d banner model disabled :P
+#if 0
 	refEntity_t		ent;
 	vec3_t			origin;
 	vec3_t			angles;
+	vec4_t			color = {0.5, 0, 0, 1};
+#endif
+
 	float			adjust;
 	float			x, y, w, h;
-	vec4_t			color = {0.5, 0, 0, 1};
 
 	// setup the refdef
 
@@ -188,6 +275,8 @@ static void Main_MenuDraw( void ) {
 
 	refdef.time = uis.realtime;
 
+	// BFP - 3d banner model disabled :P
+#if 0
 	origin[0] = 300;
 	origin[1] = 0;
 	origin[2] = -32;
@@ -210,7 +299,8 @@ static void Main_MenuDraw( void ) {
 	trap_R_AddRefEntityToScene( &ent );
 
 	trap_R_RenderScene( &refdef );
-	
+#endif
+
 	if (strlen(s_errorMessage.errorMessage))
 	{
 		UI_DrawProportionalString_AutoWrapped( 320, 192, 600, 20, s_errorMessage.errorMessage, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
@@ -221,39 +311,15 @@ static void Main_MenuDraw( void ) {
 		Menu_Draw( &s_main.menu );		
 	}
 
+	// BFP - Demo version disabled, possibly we may remove that :P
+#if 0
 	if (uis.demoversion) {
 		UI_DrawProportionalString( 320, 372, "DEMO      FOR MATURE AUDIENCES      DEMO", UI_CENTER|UI_SMALLFONT, color );
 		UI_DrawString( 320, 400, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 	} else {
 		UI_DrawString( 320, 450, "Quake III Arena(c) 1999-2000, Id Software, Inc.  All Rights Reserved", UI_CENTER|UI_SMALLFONT, color );
 	}
-}
-
-
-/*
-===============
-UI_TeamArenaExists
-===============
-*/
-static qboolean UI_TeamArenaExists( void ) {
-	int		numdirs;
-	char	dirlist[2048];
-	char	*dirptr;
-  char  *descptr;
-	int		i;
-	int		dirlen;
-
-	numdirs = trap_FS_GetFileList( "$modlist", "", dirlist, sizeof(dirlist) );
-	dirptr  = dirlist;
-	for( i = 0; i < numdirs; i++ ) {
-		dirlen = (int)strlen( dirptr ) + 1;
-    descptr = dirptr + dirlen;
-		if (Q_stricmp(dirptr, "missionpack") == 0) {
-			return qtrue;
-		}
-    dirptr += dirlen + (int)strlen(descptr) + 1;
-	}
-	return qfalse;
+#endif
 }
 
 
@@ -268,11 +334,11 @@ and that local cinematics are killed
 */
 void UI_MainMenu( void ) {
 	int		y;
-	qboolean teamArena = qfalse;
 	int		style = UI_CENTER | UI_DROPSHADOW;
 
 	trap_Cvar_Set( "sv_killserver", "1" );
 
+	// BFP - NOTE: Remove CD key verification? BFP vanilla still waits you to verify the CD key
 	if( !uis.demoversion && !ui_cdkeychecked.integer ) {
 		char	key[17];
 
@@ -282,7 +348,10 @@ void UI_MainMenu( void ) {
 			return;
 		}
 	}
-	
+
+	// BFP - Play background music, .menu extension works on Quake 3 1.32 - 1.32c engine vanilla version
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "music %s\n", MENU_MUSICBG ) );
+
 	memset( &s_main, 0 ,sizeof(mainmenu_t) );
 	memset( &s_errorMessage, 0 ,sizeof(errorMessage_t) );
 
@@ -296,7 +365,7 @@ void UI_MainMenu( void ) {
 		s_errorMessage.menu.key = ErrorMessage_Key;
 		s_errorMessage.menu.fullscreen = qtrue;
 		s_errorMessage.menu.wrapAround = qtrue;
-		s_errorMessage.menu.showlogo = qtrue;		
+		s_errorMessage.menu.showlogo = qfalse;	// BFP - Don't show logo
 
 		trap_Key_SetCatcher( KEYCATCH_UI );
 		uis.menusp = 0;
@@ -308,109 +377,208 @@ void UI_MainMenu( void ) {
 	s_main.menu.draw = Main_MenuDraw;
 	s_main.menu.fullscreen = qtrue;
 	s_main.menu.wrapAround = qtrue;
-	s_main.menu.showlogo = qtrue;
+	s_main.menu.showlogo = qfalse;	// BFP - Don't show logo
 
-	y = 134;
+	// BFP - Menu background
+	s_main.menubg.generic.type			= MTYPE_BITMAP;
+	s_main.menubg.generic.name			= ART_MENUBG;
+	s_main.menubg.generic.flags			= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.menubg.generic.x				= 0;
+	s_main.menubg.generic.y				= 0;
+	s_main.menubg.width					= 640;
+	s_main.menubg.height				= 480;
+
+	// BFP - Logo
+	s_main.bfplogo.generic.type			= MTYPE_BITMAP;
+	s_main.bfplogo.generic.name			= ART_BFPLOGO;
+	s_main.bfplogo.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.bfplogo.generic.x			= 100;
+	s_main.bfplogo.generic.y			= 10;
+	s_main.bfplogo.width				= 465;
+	s_main.bfplogo.height				= 125;
+
+	// BFP - PLAY cap bar
+	y = 155; // BFP - Cap bar initial vertical position
+	s_main.capbar0.generic.type			= MTYPE_BITMAP;
+	s_main.capbar0.generic.name			= ART_CAPBAR;
+	s_main.capbar0.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.capbar0.generic.x			= 160;
+	s_main.capbar0.generic.y			= y;
+	s_main.capbar0.width				= 340;
+	s_main.capbar0.height				= 78;
+
+	// BFP - SETUP cap bar
+	y += MAIN_MENU_VERTICAL_SPACING;
+	s_main.capbar1.generic.type			= MTYPE_BITMAP;
+	s_main.capbar1.generic.name			= ART_CAPBAR;
+	s_main.capbar1.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.capbar1.generic.x			= 160;
+	s_main.capbar1.generic.y			= y;
+	s_main.capbar1.width				= 340;
+	s_main.capbar1.height				= 78;
+
+	// BFP - DEMOS cap bar
+	y += MAIN_MENU_VERTICAL_SPACING;
+	s_main.capbar2.generic.type			= MTYPE_BITMAP;
+	s_main.capbar2.generic.name			= ART_CAPBAR;
+	s_main.capbar2.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.capbar2.generic.x			= 160;
+	s_main.capbar2.generic.y			= y;
+	s_main.capbar2.width				= 340;
+	s_main.capbar2.height				= 78;
+
+	// BFP - EXIT cap bar
+	y += MAIN_MENU_VERTICAL_SPACING;
+	s_main.capbar3.generic.type			= MTYPE_BITMAP;
+	s_main.capbar3.generic.name			= ART_CAPBAR;
+	s_main.capbar3.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.capbar3.generic.x			= 160;
+	s_main.capbar3.generic.y			= y;
+	s_main.capbar3.width				= 340;
+	s_main.capbar3.height				= 78;
+
+	// BFP - UNPACK MUSIC cap bar
+	y += MAIN_MENU_VERTICAL_SPACING;
+	s_main.capbar4.generic.type			= MTYPE_BITMAP;
+	s_main.capbar4.generic.name			= ART_CAPBAR;
+	s_main.capbar4.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.capbar4.generic.x			= 160;
+	s_main.capbar4.generic.y			= y;
+	s_main.capbar4.width				= 340;
+	s_main.capbar4.height				= 78;
+
+	// BFP - copyright banner
+	s_main.crbanner.generic.type			= MTYPE_BITMAP;
+	s_main.crbanner.generic.name			= ART_CRBANNER;
+	s_main.crbanner.generic.flags			= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_main.crbanner.generic.x				= 0;
+	s_main.crbanner.generic.y				= 460;
+	s_main.crbanner.width					= 640;
+	s_main.crbanner.height					= 20;
+
+	// BFP - As said before, if anyone has an idea in their mind about Single Player stuff
+#if 0
+	// y = 134; // BFP - That's the initial vertical position of Q3 buttons
 	s_main.singleplayer.generic.type		= MTYPE_PTEXT;
 	s_main.singleplayer.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.singleplayer.generic.x			= 320;
+	s_main.singleplayer.generic.x			= 350;
 	s_main.singleplayer.generic.y			= y;
 	s_main.singleplayer.generic.id			= ID_SINGLEPLAYER;
 	s_main.singleplayer.generic.callback	= Main_MenuEvent; 
-	s_main.singleplayer.string				= "SINGLE PLAYER";
-	s_main.singleplayer.color				= color_red;
+	s_main.singleplayer.string				= "SINGLE PLAYER"; // BFP - Or CAMPAIGN :P
+	s_main.singleplayer.color				= color_white; // BFP - modified SINGLE PLAYER color 
 	s_main.singleplayer.style				= style;
+#endif
 
-	y += MAIN_MENU_VERTICAL_SPACING;
+	y = 170; // BFP - Text initial vertical position
 	s_main.multiplayer.generic.type			= MTYPE_PTEXT;
 	s_main.multiplayer.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.multiplayer.generic.x			= 320;
+	s_main.multiplayer.generic.x			= 350;
 	s_main.multiplayer.generic.y			= y;
 	s_main.multiplayer.generic.id			= ID_MULTIPLAYER;
 	s_main.multiplayer.generic.callback		= Main_MenuEvent; 
-	s_main.multiplayer.string				= "MULTIPLAYER";
-	s_main.multiplayer.color				= color_red;
+	s_main.multiplayer.string				= "PLAY"; // BFP - before MULTIPLAYER
+	s_main.multiplayer.color				= color_white; // BFP - modified PLAY(MULTIPLAYER) color
 	s_main.multiplayer.style				= style;
 
 	y += MAIN_MENU_VERTICAL_SPACING;
 	s_main.setup.generic.type				= MTYPE_PTEXT;
 	s_main.setup.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.setup.generic.x					= 320;
+	s_main.setup.generic.x					= 350;
 	s_main.setup.generic.y					= y;
 	s_main.setup.generic.id					= ID_SETUP;
 	s_main.setup.generic.callback			= Main_MenuEvent; 
 	s_main.setup.string						= "SETUP";
-	s_main.setup.color						= color_red;
+	s_main.setup.color						= color_white;
 	s_main.setup.style						= style;
 
 	y += MAIN_MENU_VERTICAL_SPACING;
 	s_main.demos.generic.type				= MTYPE_PTEXT;
 	s_main.demos.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.demos.generic.x					= 320;
+	s_main.demos.generic.x					= 350;
 	s_main.demos.generic.y					= y;
 	s_main.demos.generic.id					= ID_DEMOS;
 	s_main.demos.generic.callback			= Main_MenuEvent; 
 	s_main.demos.string						= "DEMOS";
-	s_main.demos.color						= color_red;
+	s_main.demos.color						= color_white; // BFP - modified DEMOS color
 	s_main.demos.style						= style;
 
+// BFP - NOTE: Same note as said before
+#if 0
 	y += MAIN_MENU_VERTICAL_SPACING;
 	s_main.cinematics.generic.type			= MTYPE_PTEXT;
 	s_main.cinematics.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.cinematics.generic.x				= 320;
+	s_main.cinematics.generic.x				= 350;
 	s_main.cinematics.generic.y				= y;
 	s_main.cinematics.generic.id			= ID_CINEMATICS;
 	s_main.cinematics.generic.callback		= Main_MenuEvent; 
 	s_main.cinematics.string				= "CINEMATICS";
-	s_main.cinematics.color					= color_red;
+	s_main.cinematics.color					= color_white; // BFP - modified CINEMATICS color
 	s_main.cinematics.style					= style;
-
-	if (UI_TeamArenaExists()) {
-		teamArena = qtrue;
-		y += MAIN_MENU_VERTICAL_SPACING;
-		s_main.teamArena.generic.type			= MTYPE_PTEXT;
-		s_main.teamArena.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-		s_main.teamArena.generic.x				= 320;
-		s_main.teamArena.generic.y				= y;
-		s_main.teamArena.generic.id				= ID_TEAMARENA;
-		s_main.teamArena.generic.callback		= Main_MenuEvent; 
-		s_main.teamArena.string					= "TEAM ARENA";
-		s_main.teamArena.color					= color_red;
-		s_main.teamArena.style					= style;
-	}
 
 	y += MAIN_MENU_VERTICAL_SPACING;
 	s_main.mods.generic.type			= MTYPE_PTEXT;
 	s_main.mods.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.mods.generic.x				= 320;
+	s_main.mods.generic.x				= 350;
 	s_main.mods.generic.y				= y;
 	s_main.mods.generic.id				= ID_MODS;
 	s_main.mods.generic.callback		= Main_MenuEvent; 
 	s_main.mods.string					= "MODS";
-	s_main.mods.color					= color_red;
+	s_main.mods.color					= color_white; // BFP - modified MODS color
 	s_main.mods.style					= style;
+#endif
 
 	y += MAIN_MENU_VERTICAL_SPACING;
 	s_main.exit.generic.type				= MTYPE_PTEXT;
 	s_main.exit.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.exit.generic.x					= 320;
+	s_main.exit.generic.x					= 350;
 	s_main.exit.generic.y					= y;
 	s_main.exit.generic.id					= ID_EXIT;
 	s_main.exit.generic.callback			= Main_MenuEvent; 
 	s_main.exit.string						= "EXIT";
-	s_main.exit.color						= color_red;
+	s_main.exit.color						= color_white;
 	s_main.exit.style						= style;
 
-	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
+	// BFP - Unpack music button
+	y += MAIN_MENU_VERTICAL_SPACING;
+	s_main.unpackmusic.generic.type			= MTYPE_PTEXT;
+	s_main.unpackmusic.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_main.unpackmusic.generic.x			= 350;
+	s_main.unpackmusic.generic.y			= y;
+	s_main.unpackmusic.generic.id			= ID_UNPACKMUSIC;
+	s_main.unpackmusic.generic.callback		= Main_MenuEvent; 
+	s_main.unpackmusic.string				= "UNPACK MUSIC";
+	s_main.unpackmusic.color				= color_white;
+	s_main.unpackmusic.style				= style;
+
+	Menu_AddItem( &s_main.menu, &s_main.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_main.menu, &s_main.bfplogo ); // BFP - Logo
+
+	Menu_AddItem( &s_main.menu, &s_main.crbanner ); // BFP - copyright banner
+
+	// Menu_AddItem( &s_main.menu,	&s_main.singleplayer ); // BFP - As said before, if anyone has an idea in their mind about Single Player stuff
+	Menu_AddItem( &s_main.menu, &s_main.capbar0 ); // BFP - cap bar for PLAY(MULTIPLAYER) button
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
+	// BFP - The order of cap bars is made of this way
+	Menu_AddItem( &s_main.menu, &s_main.capbar3 ); // BFP - cap bar for EXIT button
+	Menu_AddItem( &s_main.menu, &s_main.capbar2 ); // BFP - cap bar for DEMOS button
+	Menu_AddItem( &s_main.menu, &s_main.capbar1 ); // BFP - cap bar for SETUP button
+
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
 	Menu_AddItem( &s_main.menu,	&s_main.demos );
+	Menu_AddItem( &s_main.menu,	&s_main.exit );    
+
+	// BFP - NOTE: Same note as said before
+#if 0	
 	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
-	if (teamArena) {
-		Menu_AddItem( &s_main.menu,	&s_main.teamArena );
-	}
 	Menu_AddItem( &s_main.menu,	&s_main.mods );
-	Menu_AddItem( &s_main.menu,	&s_main.exit );             
+#endif
+
+	// BFP - Unpack music button, checks if the music is unpacked  (· ·;) *curiosity sweat*
+	if ( !trap_Cvar_VariableValue( "cg_musicUnpacked" ) ) {
+		Menu_AddItem( &s_main.menu, &s_main.capbar4 ); // BFP - cap bar for UNPACK MUSIC button
+		Menu_AddItem( &s_main.menu, &s_main.unpackmusic ); // BFP - UNPACK MUSIC button
+	}
 
 	trap_Key_SetCatcher( KEYCATCH_UI );
 	uis.menusp = 0;

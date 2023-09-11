@@ -43,6 +43,8 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define MAX_LEAGUELENGTH		28
 #define MAX_LISTBOXWIDTH		68
 
+#define ART_MENUBG				"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG				"menu/art/cap_barlog"	// BFP - barlog
 #define ART_BACK0				"menu/art/back_0"
 #define ART_BACK1				"menu/art/back_1"
 #define ART_CREATE0				"menu/art/create_0"
@@ -59,7 +61,6 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define ART_UNKNOWNMAP			"menu/art/unknownmap"
 #define ART_REMOVE0				"menu/art/delete_0"
 #define ART_REMOVE1				"menu/art/delete_1"
-#define ART_PUNKBUSTER		"menu/art/pblogo"
 
 #define ID_MASTER			10
 #define ID_GAMETYPE			11
@@ -75,7 +76,6 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define ID_CREATE			21
 #define ID_CONNECT			22
 #define ID_REMOVE			23
-#define ID_PUNKBUSTER 24
 
 #define GR_LOGO				30
 #define GR_LETTERS			31
@@ -97,8 +97,16 @@ MULTIPLAYER MENU (SERVER BROWSER)
 #define GAMES_TOURNEY		3
 #define GAMES_CTF			4
 
+// BFP - IMPORTANT NOTE: There are many stuff to be handled in the server list, please, be very careful
+
+#define ENABLE_MPLAYER		1 // BFP - A macro to enable/disable MPlayer section
+#define BFP_SERVERS_ONLY	1 // BFP - A macro to show or not only BFP servers
+
 static const char *master_items[] = {
 	"Local",
+#if ENABLE_MPLAYER
+	"MPlayer", // BFP - Multiplayer section? (·_·') *curiosity sweat*
+#endif
 	"Internet",
 	"Favorites",
 	0
@@ -107,8 +115,11 @@ static const char *master_items[] = {
 static const char *servertype_items[] = {
 	"All",
 	"Free For All",
+	"Tournament", // BFP - TODO: Tournament gametype, remove TODO and this comment if it has been added successfully
+	"Survival", // BFP - TODO: Survival gametype, remove TODO and this comment if it has been added successfully
+	"Oozaru", // BFP - TODO: Oozaru gametype, remove TODO and this comment if it has been added successfully
 	"Team Deathmatch",
-	"Tournament",
+	"Last Man Standing", // BFP - TODO: LMS gametype, remove TODO and this comment if it has been added successfully
 	"Capture the Flag",
 	0
 };
@@ -123,6 +134,7 @@ static const char *sortkey_items[] = {
 };
 
 static char* gamenames[] = {
+	"BFP",	// BFP
 	"DM ",	// deathmatch
 	"1v1",	// tournament
 	"SP ",	// single player
@@ -146,21 +158,8 @@ static char* netnames[] = {
 	NULL
 };
 
-static char quake3worldMessage[] = "Visit www.quake3world.com - News, Community, Events, Files";
-
-const char* punkbuster_items[] = {
-	"Disabled",
-	"Enabled",
-	NULL
-};
-
-const char* punkbuster_msg[] = {
-	"PunkBuster will be",
-	"disabled the next time",
-	"Quake III Arena",
-	"is started.",
-	NULL
-};
+static char bfpMessage[] = "Visit www.bidforpower.com"; // BFP
+static char otherMessage[] = "Visit www.globalrankings.com - you kick ass, we'll take names"; // BFP - unused message :P
 
 typedef struct {
 	char	adrstr[MAX_ADDRESSLENGTH];
@@ -191,6 +190,8 @@ typedef struct {
 typedef struct {
 	menuframework_s		menu;
 
+	menubitmap_s		menubg; // BFP - Menu background
+	menubitmap_s		barlog; // BFP - barlog
 	menutext_s			banner;
 
 	menulist_s			master;
@@ -227,9 +228,6 @@ typedef struct {
 	int					refreshtime;
 	char				favoriteaddresses[MAX_FAVORITESERVERS][MAX_ADDRESSLENGTH];
 	int					numfavoriteaddresses;
-
-	menulist_s		punkbuster;
-	menubitmap_s	pblogo;
 } arenaservers_t;
 
 static arenaservers_t	g_arenaservers;
@@ -400,11 +398,10 @@ static void ArenaServers_UpdateMenu( void ) {
 			g_arenaservers.list.generic.flags		&= ~QMF_GRAYED;
 			g_arenaservers.refresh.generic.flags	&= ~QMF_GRAYED;
 			g_arenaservers.go.generic.flags			&= ~QMF_GRAYED;
-			g_arenaservers.punkbuster.generic.flags &= ~QMF_GRAYED;
 
 			// update status bar
 			if( g_servertype == AS_GLOBAL || g_servertype == AS_MPLAYER ) {
-				g_arenaservers.statusbar.string = quake3worldMessage;
+				g_arenaservers.statusbar.string = bfpMessage; // BFP
 			}
 			else {
 				g_arenaservers.statusbar.string = "";
@@ -427,7 +424,6 @@ static void ArenaServers_UpdateMenu( void ) {
 			g_arenaservers.list.generic.flags		|= QMF_GRAYED;
 			g_arenaservers.refresh.generic.flags	|= QMF_GRAYED;
 			g_arenaservers.go.generic.flags			|= QMF_GRAYED;
-			g_arenaservers.punkbuster.generic.flags |= QMF_GRAYED;
 		}
 		else {
 			if( g_arenaservers.numqueriedservers < 0 ) {
@@ -439,7 +435,7 @@ static void ArenaServers_UpdateMenu( void ) {
 
 			// update status bar
 			if( g_servertype == AS_GLOBAL || g_servertype == AS_MPLAYER ) {
-				g_arenaservers.statusbar.string = quake3worldMessage;
+				g_arenaservers.statusbar.string = bfpMessage; // BFP
 			}
 			else {
 				g_arenaservers.statusbar.string = "";
@@ -454,7 +450,6 @@ static void ArenaServers_UpdateMenu( void ) {
 			g_arenaservers.list.generic.flags		|= QMF_GRAYED;
 			g_arenaservers.refresh.generic.flags	&= ~QMF_GRAYED;
 			g_arenaservers.go.generic.flags			|= QMF_GRAYED;
-			g_arenaservers.punkbuster.generic.flags &= ~QMF_GRAYED;
 		}
 
 		// zero out list box
@@ -614,6 +609,16 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
 	char*			s;
 	int				i;
 
+	// BFP - Show only BFP servers that contain "BFP", "bfp" or "bfp-old" in master servers
+#if BFP_SERVERS_ONLY
+	static qboolean bfpservers;
+
+	s = Info_ValueForKey( info, "game" );
+	bfpservers = ( Q_stricmp(s, "BFP") && Q_stricmp(s, "bfp") && Q_stricmp(s, "bfp-old") );
+	if ( bfpservers ) {
+		return; // Filter BFP servers by game name
+	}
+#endif
 
 	if ((pingtime >= ArenaServers_MaxPing()) && (g_servertype != AS_FAVORITES))
 	{
@@ -645,7 +650,6 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
 	servernodeptr->pingtime   = pingtime;
 	servernodeptr->minPing    = atoi( Info_ValueForKey( info, "minPing") );
 	servernodeptr->maxPing    = atoi( Info_ValueForKey( info, "maxPing") );
-	servernodeptr->bPB = atoi( Info_ValueForKey( info, "punkbuster") );
 
 	/*
 	s = Info_ValueForKey( info, "nettype" );
@@ -1098,12 +1102,17 @@ void ArenaServers_Sort( int type ) {
 ArenaServers_SetType
 =================
 */
-void ArenaServers_SetType( int type )
+int ArenaServers_SetType( int type ) // BFP - Hacky way to get the correct server type :P
 {
+	int value; // BFP - Return the correct value in order to select server type
+#if ENABLE_MPLAYER
+	g_servertype = value = type; // BFP - Let's go! value, you too!
+#else // Q3 default
 	if (g_servertype == type)
-		return;
+		return type;
 
-	g_servertype = type;
+	g_servertype = value = type; // BFP - Let's go! value, you too!
+#endif
 
 	switch( type ) {
 	default:
@@ -1112,6 +1121,7 @@ void ArenaServers_SetType( int type )
 		g_arenaservers.serverlist = g_localserverlist;
 		g_arenaservers.numservers = &g_numlocalservers;
 		g_arenaservers.maxservers = MAX_LOCALSERVERS;
+		value = AS_LOCAL; // BFP - Show Local servers
 		break;
 
 	case AS_GLOBAL:
@@ -1119,6 +1129,7 @@ void ArenaServers_SetType( int type )
 		g_arenaservers.serverlist = g_globalserverlist;
 		g_arenaservers.numservers = &g_numglobalservers;
 		g_arenaservers.maxservers = MAX_GLOBALSERVERS;
+		value = AS_GLOBAL; // BFP - Show Internet servers
 		break;
 
 	case AS_FAVORITES:
@@ -1126,6 +1137,7 @@ void ArenaServers_SetType( int type )
 		g_arenaservers.serverlist = g_favoriteserverlist;
 		g_arenaservers.numservers = &g_numfavoriteservers;
 		g_arenaservers.maxservers = MAX_FAVORITESERVERS;
+		value = AS_FAVORITES; // BFP - Show Favourite servers
 		break;
 
 	case AS_MPLAYER:
@@ -1133,6 +1145,7 @@ void ArenaServers_SetType( int type )
 		g_arenaservers.serverlist = g_mplayerserverlist;
 		g_arenaservers.numservers = &g_nummplayerservers;
 		g_arenaservers.maxservers = MAX_GLOBALSERVERS;
+		value = AS_MPLAYER; // BFP - Show Multiplayer servers
 		break;
 		
 	}
@@ -1147,29 +1160,10 @@ void ArenaServers_SetType( int type )
 		ArenaServers_UpdateMenu();
 	}
 	strcpy(g_arenaservers.status.string,"hit refresh to update");
+
+	return value; // BFP - Return the selected server type!
 }
 
-/*
-=================
-PunkBuster_Confirm
-=================
-*/
-static void Punkbuster_ConfirmEnable( qboolean result ) {
-	if (result)
-	{		
-		trap_SetPbClStatus(1);
-	}
-	g_arenaservers.punkbuster.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cl_punkbuster" ) );
-}
-
-static void Punkbuster_ConfirmDisable( qboolean result ) {
-	if (result)
-	{
-		trap_SetPbClStatus(0);
-		UI_Message( punkbuster_msg );
-	}
-	g_arenaservers.punkbuster.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cl_punkbuster" ) );
-}
 
 /*
 =================
@@ -1188,6 +1182,11 @@ static void ArenaServers_Event( void* ptr, int event ) {
 
 	switch( id ) {
 	case ID_MASTER:
+		// BFP - For the list of MPlayer
+#if ENABLE_MPLAYER
+		g_arenaservers.master.curvalue = ArenaServers_SetType( g_arenaservers.master.curvalue );
+		trap_Cvar_SetValue( "ui_browserMaster", g_arenaservers.master.curvalue );
+#else // Q3 default
 		value = g_arenaservers.master.curvalue;
 		if (value >= 1)
 		{
@@ -1195,6 +1194,7 @@ static void ArenaServers_Event( void* ptr, int event ) {
 		}
 		trap_Cvar_SetValue( "ui_browserMaster", value );
 		ArenaServers_SetType( value );
+#endif
 		break;
 
 	case ID_GAMETYPE:
@@ -1260,17 +1260,6 @@ static void ArenaServers_Event( void* ptr, int event ) {
 	case ID_REMOVE:
 		ArenaServers_Remove();
 		ArenaServers_UpdateMenu();
-		break;
-	
-	case ID_PUNKBUSTER:
-		if (g_arenaservers.punkbuster.curvalue)			
-		{
-			UI_ConfirmMenu_Style( "Enable Punkbuster?",  UI_CENTER|UI_INVERSE|UI_SMALLFONT, (voidfunc_f)NULL, Punkbuster_ConfirmEnable );
-		}
-		else
-		{
-			UI_ConfirmMenu_Style( "Disable Punkbuster?", UI_CENTER|UI_INVERSE|UI_SMALLFONT, (voidfunc_f)NULL, Punkbuster_ConfirmDisable );
-		}
 		break;
 	}
 }
@@ -1340,15 +1329,33 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.menu.draw       = ArenaServers_MenuDraw;
 	g_arenaservers.menu.key        = ArenaServers_MenuKey;
 
-	g_arenaservers.banner.generic.type  = MTYPE_BTEXT;
-	g_arenaservers.banner.generic.flags = QMF_CENTER_JUSTIFY;
+	// BFP - Menu background
+	g_arenaservers.menubg.generic.type	= MTYPE_BITMAP;
+	g_arenaservers.menubg.generic.name	= ART_MENUBG;
+	g_arenaservers.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	g_arenaservers.menubg.generic.x		= 0;
+	g_arenaservers.menubg.generic.y		= 0;
+	g_arenaservers.menubg.width			= 640;
+	g_arenaservers.menubg.height		= 480;
+
+	// BFP - barlog
+	g_arenaservers.barlog.generic.type	= MTYPE_BITMAP;
+	g_arenaservers.barlog.generic.name	= ART_BARLOG;
+	g_arenaservers.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	g_arenaservers.barlog.generic.x		= 140;
+	g_arenaservers.barlog.generic.y		= 5;
+	g_arenaservers.barlog.width			= 355;
+	g_arenaservers.barlog.height		= 90;
+
+	g_arenaservers.banner.generic.type  = MTYPE_PTEXT; // BFP - modified ARENA SERVERS title type
+	g_arenaservers.banner.generic.flags = QMF_CENTER_JUSTIFY|QMF_INACTIVE; // BFP - modified ARENA SERVERS title flags
 	g_arenaservers.banner.generic.x	    = 320;
-	g_arenaservers.banner.generic.y	    = 16;
+	g_arenaservers.banner.generic.y	    = 45; // BFP - modified ARENA SERVERS title y position
 	g_arenaservers.banner.string  		= "ARENA SERVERS";
-	g_arenaservers.banner.style  	    = UI_CENTER;
+	g_arenaservers.banner.style  	    = UI_CENTER|UI_BIGFONT; // BFP - modified ARENA SERVERS title style
 	g_arenaservers.banner.color  	    = color_white;
 
-	y = 80;
+	y = 90; // BFP - Initial vertical position, before 80
 	g_arenaservers.master.generic.type			= MTYPE_SPINCONTROL;
 	g_arenaservers.master.generic.name			= "Servers:";
 	g_arenaservers.master.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1404,7 +1411,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.list.generic.x				= 72;
 	g_arenaservers.list.generic.y				= y;
 	g_arenaservers.list.width					= MAX_LISTBOXWIDTH;
-	g_arenaservers.list.height					= 11;
+	g_arenaservers.list.height					= 10; // BFP - modified list height
 	g_arenaservers.list.itemnames				= (const char **)g_arenaservers.items;
 	for( i = 0; i < MAX_LISTBOXITEMS; i++ ) {
 		g_arenaservers.items[i] = g_arenaservers.table[i].buff;
@@ -1413,7 +1420,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.mappic.generic.type			= MTYPE_BITMAP;
 	g_arenaservers.mappic.generic.flags			= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
 	g_arenaservers.mappic.generic.x				= 72;
-	g_arenaservers.mappic.generic.y				= 80;
+	g_arenaservers.mappic.generic.y				= 90; // BFP - modified mappic y position
 	g_arenaservers.mappic.width					= 128;
 	g_arenaservers.mappic.height				= 96;
 	g_arenaservers.mappic.errorpic				= ART_UNKNOWNMAP;
@@ -1422,8 +1429,8 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.arrows.generic.name			= ART_ARROWS0;
 	g_arenaservers.arrows.generic.flags			= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
 	g_arenaservers.arrows.generic.callback		= ArenaServers_Event;
-	g_arenaservers.arrows.generic.x				= 512+48;
-	g_arenaservers.arrows.generic.y				= 240-64+16;
+	g_arenaservers.arrows.generic.x				= 512+48+12; // BFP - modified arrows x position (before 512+48)
+	g_arenaservers.arrows.generic.y				= 220-64+48; // BFP - modified arrows y position (before 240-64+16)
 	g_arenaservers.arrows.width					= 64;
 	g_arenaservers.arrows.height				= 128;
 
@@ -1431,8 +1438,8 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.up.generic.flags				= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_MOUSEONLY;
 	g_arenaservers.up.generic.callback			= ArenaServers_Event;
 	g_arenaservers.up.generic.id				= ID_SCROLL_UP;
-	g_arenaservers.up.generic.x					= 512+48;
-	g_arenaservers.up.generic.y					= 240-64+16;
+	g_arenaservers.up.generic.x					= 512+48+12; // BFP - modified up x position (before 512+48) 
+	g_arenaservers.up.generic.y					= 220-64+48; // BFP - modified up y position (before 240-64+16)
 	g_arenaservers.up.width						= 64;
 	g_arenaservers.up.height					= 64;
 	g_arenaservers.up.focuspic					= ART_ARROWS_UP;
@@ -1441,8 +1448,8 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.down.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_MOUSEONLY;
 	g_arenaservers.down.generic.callback		= ArenaServers_Event;
 	g_arenaservers.down.generic.id				= ID_SCROLL_DOWN;
-	g_arenaservers.down.generic.x				= 512+48;
-	g_arenaservers.down.generic.y				= 240+16;
+	g_arenaservers.down.generic.x				= 512+48+12; // BFP - modified down x position (before 512+48)
+	g_arenaservers.down.generic.y				= 220+48; // BFP - modified down y position (before 240+16)
 	g_arenaservers.down.width					= 64;
 	g_arenaservers.down.height					= 64;
 	g_arenaservers.down.focuspic				= ART_ARROWS_DOWN;
@@ -1470,8 +1477,8 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.remove.generic.id		= ID_REMOVE;
 	g_arenaservers.remove.generic.x			= 450;
 	g_arenaservers.remove.generic.y			= 86;
-	g_arenaservers.remove.width				= 96;
-	g_arenaservers.remove.height			= 48;
+	g_arenaservers.remove.width				= 96; // BFP - NOTE: Originally, DELETE button uses this value. It should be 80
+	g_arenaservers.remove.height			= 48; // BFP - NOTE: Originally, DELETE button uses this value. It should be 80
 	g_arenaservers.remove.focuspic			= ART_REMOVE1;
 
 	g_arenaservers.back.generic.type		= MTYPE_BITMAP;
@@ -1480,9 +1487,9 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.back.generic.callback	= ArenaServers_Event;
 	g_arenaservers.back.generic.id			= ID_BACK;
 	g_arenaservers.back.generic.x			= 0;
-	g_arenaservers.back.generic.y			= 480-64;
-	g_arenaservers.back.width				= 128;
-	g_arenaservers.back.height				= 64;
+	g_arenaservers.back.generic.y			= 480-80; // BFP - modified BACK button y position
+	g_arenaservers.back.width				= 80; // BFP - modified BACK button width
+	g_arenaservers.back.height				= 80; // BFP - modified BACK button height
 	g_arenaservers.back.focuspic			= ART_BACK1;
 
 	g_arenaservers.specify.generic.type	    = MTYPE_BITMAP;
@@ -1490,10 +1497,10 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.specify.generic.flags    = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	g_arenaservers.specify.generic.callback = ArenaServers_Event;
 	g_arenaservers.specify.generic.id	    = ID_SPECIFY;
-	g_arenaservers.specify.generic.x		= 128;
-	g_arenaservers.specify.generic.y		= 480-64;
-	g_arenaservers.specify.width  		    = 128;
-	g_arenaservers.specify.height  		    = 64;
+	g_arenaservers.specify.generic.x		= 130; // BFP - modified SPECIFY button x position
+	g_arenaservers.specify.generic.y		= 480-80; // BFP - modified SPECIFY button y position
+	g_arenaservers.specify.width  		    = 80; // BFP - modified SPECIFY button width
+	g_arenaservers.specify.height  		    = 80; // BFP - modified SPECIFY button height
 	g_arenaservers.specify.focuspic         = ART_SPECIFY1;
 
 	g_arenaservers.refresh.generic.type		= MTYPE_BITMAP;
@@ -1501,10 +1508,10 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.refresh.generic.flags	= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	g_arenaservers.refresh.generic.callback	= ArenaServers_Event;
 	g_arenaservers.refresh.generic.id		= ID_REFRESH;
-	g_arenaservers.refresh.generic.x		= 256;
-	g_arenaservers.refresh.generic.y		= 480-64;
-	g_arenaservers.refresh.width			= 128;
-	g_arenaservers.refresh.height			= 64;
+	g_arenaservers.refresh.generic.x		= 280; // BFP - modified REFRESH button x position
+	g_arenaservers.refresh.generic.y		= 480-80; // BFP - modified REFRESH button y position
+	g_arenaservers.refresh.width			= 80; // BFP - modified REFRESH button width
+	g_arenaservers.refresh.height			= 80; // BFP - modified REFRESH button height
 	g_arenaservers.refresh.focuspic			= ART_REFRESH1;
 
 	g_arenaservers.create.generic.type		= MTYPE_BITMAP;
@@ -1512,10 +1519,10 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.create.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	g_arenaservers.create.generic.callback	= ArenaServers_Event;
 	g_arenaservers.create.generic.id		= ID_CREATE;
-	g_arenaservers.create.generic.x			= 384;
-	g_arenaservers.create.generic.y			= 480-64;
-	g_arenaservers.create.width				= 128;
-	g_arenaservers.create.height			= 64;
+	g_arenaservers.create.generic.x			= 430; // BFP - modified CREATE button x position
+	g_arenaservers.create.generic.y			= 480-80; // BFP - modified CREATE button y position
+	g_arenaservers.create.width				= 80; // BFP - modified CREATE button width
+	g_arenaservers.create.height			= 80; // BFP - modified CREATE button height
 	g_arenaservers.create.focuspic			= ART_CREATE1;
 
 	g_arenaservers.go.generic.type			= MTYPE_BITMAP;
@@ -1524,29 +1531,13 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.go.generic.callback		= ArenaServers_Event;
 	g_arenaservers.go.generic.id			= ID_CONNECT;
 	g_arenaservers.go.generic.x				= 640;
-	g_arenaservers.go.generic.y				= 480-64;
-	g_arenaservers.go.width					= 128;
-	g_arenaservers.go.height				= 64;
+	g_arenaservers.go.generic.y				= 480-80; // BFP - modified FIGHT button y position 
+	g_arenaservers.go.width					= 80; // BFP - modified FIGHT button width
+	g_arenaservers.go.height				= 80; // BFP - modified FIGHT button height 
 	g_arenaservers.go.focuspic				= ART_CONNECT1;
-
-	g_arenaservers.punkbuster.generic.type			= MTYPE_SPINCONTROL;
-	g_arenaservers.punkbuster.generic.name			= "Punkbuster:";
-	g_arenaservers.punkbuster.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	g_arenaservers.punkbuster.generic.callback		= ArenaServers_Event;
-	g_arenaservers.punkbuster.generic.id			= ID_PUNKBUSTER;
-	g_arenaservers.punkbuster.generic.x				= 480+32;
-	g_arenaservers.punkbuster.generic.y				= 144;
-	g_arenaservers.punkbuster.itemnames				= punkbuster_items;
 	
-	g_arenaservers.pblogo.generic.type			= MTYPE_BITMAP;
-	g_arenaservers.pblogo.generic.name			= ART_PUNKBUSTER;
-	g_arenaservers.pblogo.generic.flags			= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	g_arenaservers.pblogo.generic.x				= 526;
-	g_arenaservers.pblogo.generic.y				= 176;
-	g_arenaservers.pblogo.width					= 32;
-	g_arenaservers.pblogo.height				= 16;
-	g_arenaservers.pblogo.errorpic				= ART_UNKNOWNMAP;
-	
+	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.menubg ); // BFP - Menu background
+	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.barlog ); // BFP - barlog
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.banner );
 
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.master );
@@ -1569,13 +1560,11 @@ static void ArenaServers_MenuInit( void ) {
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.refresh );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.create );
 	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.go );
-
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.punkbuster );
-	Menu_AddItem( &g_arenaservers.menu, (void*) &g_arenaservers.pblogo );
 	
 	ArenaServers_LoadFavorites();
 
 	g_servertype = Com_Clamp( 0, 3, ui_browserMaster.integer );
+
 	// hack to get rid of MPlayer stuff
 	value = g_servertype;
 	if (value >= 1)
@@ -1593,13 +1582,16 @@ static void ArenaServers_MenuInit( void ) {
 
 	g_emptyservers = Com_Clamp( 0, 1, ui_browserShowEmpty.integer );
 	g_arenaservers.showempty.curvalue = g_emptyservers;
-	
-	g_arenaservers.punkbuster.curvalue = Com_Clamp( 0, 1, trap_Cvar_VariableValue( "cl_punkbuster" ) );
 
 	// force to initial state and refresh
+#if ENABLE_MPLAYER
+	// BFP - Hacky way to get the correct server list :P
+	g_arenaservers.master.curvalue = g_servertype = ArenaServers_SetType( g_servertype );
+#else // Q3 default
 	type = g_servertype;
 	g_servertype = -1;
 	ArenaServers_SetType( type );
+#endif
 
 	trap_Cvar_Register(NULL, "debug_protocol", "", 0 );
 }
@@ -1611,6 +1603,8 @@ ArenaServers_Cache
 =================
 */
 void ArenaServers_Cache( void ) {
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_BACK0 );
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
 	trap_R_RegisterShaderNoMip( ART_CREATE0 );
@@ -1625,7 +1619,6 @@ void ArenaServers_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_ARROWS_UP );
 	trap_R_RegisterShaderNoMip( ART_ARROWS_DOWN );
 	trap_R_RegisterShaderNoMip( ART_UNKNOWNMAP );
-	trap_R_RegisterShaderNoMip( ART_PUNKBUSTER );
 }
 
 

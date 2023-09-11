@@ -32,10 +32,12 @@ INGAME MENU
 #include "ui_local.h"
 
 
+#define ART_BARLOG						"menu/art/cap_barlog"	// BFP - barlog
 #define INGAME_FRAME					"menu/art/addbotframe"
 //#define INGAME_FRAME					"menu/art/cut_frame"
 #define INGAME_MENU_VERTICAL_SPACING	28
 
+#define ID_SELECTCHARACTER		9 // BFP - Select character
 #define ID_TEAM					10
 #define ID_ADDBOTS				11
 #define ID_REMOVEBOTS			12
@@ -52,6 +54,10 @@ typedef struct {
 	menuframework_s	menu;
 
 	menubitmap_s	frame;
+	menubitmap_s	barlog; // BFP - barlog
+	menutext_s		banner; // BFP - banner
+
+	menutext_s		selectcharacter; // BFP - Select character
 	menutext_s		team;
 	menutext_s		setup;
 	menutext_s		server;
@@ -107,6 +113,10 @@ void InGame_Event( void *ptr, int notification ) {
 	}
 
 	switch( ((menucommon_s*)ptr)->id ) {
+	case ID_SELECTCHARACTER: // BFP - Select character
+		UI_PlayerModelMenu();
+		break;
+
 	case ID_TEAM:
 		UI_TeamMainMenu();
 		break;
@@ -176,16 +186,45 @@ void InGame_MenuInit( void ) {
 	s_ingame.frame.width				= 466;//359;
 	s_ingame.frame.height				= 332;//256;
 
-	//y = 96;
-	y = 88;
+	// BFP - barlog
+	s_ingame.barlog.generic.type		= MTYPE_BITMAP;
+	s_ingame.barlog.generic.name		= ART_BARLOG;
+	s_ingame.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_ingame.barlog.generic.x			= 140;
+	s_ingame.barlog.generic.y			= 5;
+	s_ingame.barlog.width				= 355;
+	s_ingame.barlog.height				= 90;
+
+	// BFP - banner
+	s_ingame.banner.generic.type		= MTYPE_PTEXT;
+	s_ingame.banner.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE;
+	s_ingame.banner.generic.x			= 320;
+	s_ingame.banner.generic.y			= 45;
+	s_ingame.banner.string				= "MENU";
+	s_ingame.banner.color				= color_white;
+	s_ingame.banner.style				= UI_CENTER|UI_BIGFONT;
+
+	// BFP - Select character
+	y = 96; // BFP - Initial position
+	s_ingame.selectcharacter.generic.type		= MTYPE_PTEXT;
+	s_ingame.selectcharacter.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_ingame.selectcharacter.generic.x			= 320;
+	s_ingame.selectcharacter.generic.y			= y;
+	s_ingame.selectcharacter.generic.id			= ID_SELECTCHARACTER;
+	s_ingame.selectcharacter.generic.callback	= InGame_Event; 
+	s_ingame.selectcharacter.string				= "SELECT CHARACTER";
+	s_ingame.selectcharacter.color				= color_white;
+	s_ingame.selectcharacter.style				= UI_CENTER|UI_SMALLFONT;
+
+	y += INGAME_MENU_VERTICAL_SPACING;
 	s_ingame.team.generic.type			= MTYPE_PTEXT;
 	s_ingame.team.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_ingame.team.generic.x				= 320;
 	s_ingame.team.generic.y				= y;
 	s_ingame.team.generic.id			= ID_TEAM;
 	s_ingame.team.generic.callback		= InGame_Event; 
-	s_ingame.team.string				= "START";
-	s_ingame.team.color					= color_red;
+	s_ingame.team.string				= "TEAM"; // BFP - Changed START to TEAM
+	s_ingame.team.color					= color_white; // BFP - modified TEAM button color
 	s_ingame.team.style					= UI_CENTER|UI_SMALLFONT;
 
 	y += INGAME_MENU_VERTICAL_SPACING;
@@ -196,7 +235,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.addbots.generic.id			= ID_ADDBOTS;
 	s_ingame.addbots.generic.callback	= InGame_Event; 
 	s_ingame.addbots.string				= "ADD BOTS";
-	s_ingame.addbots.color				= color_red;
+	s_ingame.addbots.color				= color_white; // BFP - modified ADD BOTS button color
 	s_ingame.addbots.style				= UI_CENTER|UI_SMALLFONT;
 	if( !trap_Cvar_VariableValue( "sv_running" ) || !trap_Cvar_VariableValue( "bot_enable" ) || (trap_Cvar_VariableValue( "g_gametype" ) == GT_SINGLE_PLAYER)) {
 		s_ingame.addbots.generic.flags |= QMF_GRAYED;
@@ -210,7 +249,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.removebots.generic.id			= ID_REMOVEBOTS;
 	s_ingame.removebots.generic.callback	= InGame_Event; 
 	s_ingame.removebots.string				= "REMOVE BOTS";
-	s_ingame.removebots.color				= color_red;
+	s_ingame.removebots.color				= color_white; // BFP - modified REMOVE BOTS button color
 	s_ingame.removebots.style				= UI_CENTER|UI_SMALLFONT;
 	if( !trap_Cvar_VariableValue( "sv_running" ) || !trap_Cvar_VariableValue( "bot_enable" ) || (trap_Cvar_VariableValue( "g_gametype" ) == GT_SINGLE_PLAYER)) {
 		s_ingame.removebots.generic.flags |= QMF_GRAYED;
@@ -224,7 +263,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.teamorders.generic.id			= ID_TEAMORDERS;
 	s_ingame.teamorders.generic.callback	= InGame_Event; 
 	s_ingame.teamorders.string				= "TEAM ORDERS";
-	s_ingame.teamorders.color				= color_red;
+	s_ingame.teamorders.color				= color_white; // BFP - modified TEAM ORDERS button color
 	s_ingame.teamorders.style				= UI_CENTER|UI_SMALLFONT;
 	if( !(trap_Cvar_VariableValue( "g_gametype" ) >= GT_TEAM) ) {
 		s_ingame.teamorders.generic.flags |= QMF_GRAYED;
@@ -246,7 +285,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.setup.generic.id			= ID_SETUP;
 	s_ingame.setup.generic.callback		= InGame_Event; 
 	s_ingame.setup.string				= "SETUP";
-	s_ingame.setup.color				= color_red;
+	s_ingame.setup.color				= color_white; // BFP - modified SETUP button color
 	s_ingame.setup.style				= UI_CENTER|UI_SMALLFONT;
 
 	y += INGAME_MENU_VERTICAL_SPACING;
@@ -257,7 +296,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.server.generic.id			= ID_SERVERINFO;
 	s_ingame.server.generic.callback	= InGame_Event; 
 	s_ingame.server.string				= "SERVER INFO";
-	s_ingame.server.color				= color_red;
+	s_ingame.server.color				= color_white; // BFP - modified SERVER INFO button color
 	s_ingame.server.style				= UI_CENTER|UI_SMALLFONT;
 
 	y += INGAME_MENU_VERTICAL_SPACING;
@@ -268,7 +307,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.restart.generic.id			= ID_RESTART;
 	s_ingame.restart.generic.callback	= InGame_Event; 
 	s_ingame.restart.string				= "RESTART ARENA";
-	s_ingame.restart.color				= color_red;
+	s_ingame.restart.color				= color_white; // BFP - modified RESTART ARENA button color
 	s_ingame.restart.style				= UI_CENTER|UI_SMALLFONT;
 	if( !trap_Cvar_VariableValue( "sv_running" ) ) {
 		s_ingame.restart.generic.flags |= QMF_GRAYED;
@@ -282,7 +321,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.resume.generic.id				= ID_RESUME;
 	s_ingame.resume.generic.callback		= InGame_Event; 
 	s_ingame.resume.string					= "RESUME GAME";
-	s_ingame.resume.color					= color_red;
+	s_ingame.resume.color					= color_white; // BFP - modified RESUME GAME button color
 	s_ingame.resume.style					= UI_CENTER|UI_SMALLFONT;
 
 	y += INGAME_MENU_VERTICAL_SPACING;
@@ -293,7 +332,7 @@ void InGame_MenuInit( void ) {
 	s_ingame.leave.generic.id			= ID_LEAVEARENA;
 	s_ingame.leave.generic.callback		= InGame_Event; 
 	s_ingame.leave.string				= "LEAVE ARENA";
-	s_ingame.leave.color				= color_red;
+	s_ingame.leave.color				= color_white; // BFP - modified LEAVE ARENA button color
 	s_ingame.leave.style				= UI_CENTER|UI_SMALLFONT;
 
 	y += INGAME_MENU_VERTICAL_SPACING;
@@ -304,10 +343,13 @@ void InGame_MenuInit( void ) {
 	s_ingame.quit.generic.id			= ID_QUIT;
 	s_ingame.quit.generic.callback		= InGame_Event; 
 	s_ingame.quit.string				= "EXIT GAME";
-	s_ingame.quit.color					= color_red;
+	s_ingame.quit.color					= color_white; // BFP - modified EXIT GAME button color
 	s_ingame.quit.style					= UI_CENTER|UI_SMALLFONT;
 
+	Menu_AddItem( &s_ingame.menu, &s_ingame.barlog ); // BFP - barlog
+	Menu_AddItem( &s_ingame.menu, &s_ingame.banner); // BFP - banner
 	Menu_AddItem( &s_ingame.menu, &s_ingame.frame );
+	Menu_AddItem( &s_ingame.menu, &s_ingame.selectcharacter ); // BFP - Select character
 	Menu_AddItem( &s_ingame.menu, &s_ingame.team );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.addbots );
 	Menu_AddItem( &s_ingame.menu, &s_ingame.removebots );
@@ -328,6 +370,7 @@ InGame_Cache
 */
 void InGame_Cache( void ) {
 	trap_R_RegisterShaderNoMip( INGAME_FRAME );
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 }
 
 

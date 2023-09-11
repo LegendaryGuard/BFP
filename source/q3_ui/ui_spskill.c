@@ -31,6 +31,8 @@ SINGLE PLAYER SKILL MENU
 #include "ui_local.h"
 
 
+#define ART_MENUBG					"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG					"menu/art/cap_barlog"	// BFP - barlog
 #define ART_FRAME					"menu/art/cut_frame"
 #define ART_BACK					"menu/art/back_0.tga"
 #define ART_BACK_FOCUS				"menu/art/back_1.tga"
@@ -49,11 +51,13 @@ SINGLE PLAYER SKILL MENU
 #define ID_NIGHTMARE				14
 #define ID_BACK						15
 #define ID_FIGHT					16
-
+#define ID_PLBASE					17
 
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menubitmap_s	art_frame;
 	menutext_s		art_banner;
 
@@ -111,7 +115,7 @@ static void UI_SPSkillMenu_SkillEvent( void *ptr, int notification ) {
 	if (notification != QM_ACTIVATED)
 		return;
 
-	SetSkillColor( (int)trap_Cvar_VariableValue( "g_spSkill" ), color_red );
+	SetSkillColor( (int)trap_Cvar_VariableValue( "g_spSkill" ), color_white ); // BFP - modified Skill color
 
 	id = ((menucommon_s*)ptr)->id;
 	skill = id - ID_BABY + 1;
@@ -176,6 +180,8 @@ UI_SPSkillMenu_Cache
 =================
 */
 void UI_SPSkillMenu_Cache( void ) {
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_FRAME );
 	trap_R_RegisterShaderNoMip( ART_BACK );
 	trap_R_RegisterShaderNoMip( ART_BACK_FOCUS );
@@ -206,21 +212,39 @@ static void UI_SPSkillMenu_Init( void ) {
 
 	UI_SPSkillMenu_Cache();
 
+	// BFP - Menu background
+	skillMenuInfo.menubg.generic.type		= MTYPE_BITMAP;
+	skillMenuInfo.menubg.generic.name		= ART_MENUBG;
+	skillMenuInfo.menubg.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	skillMenuInfo.menubg.generic.x			= 0;
+	skillMenuInfo.menubg.generic.y			= 0;
+	skillMenuInfo.menubg.width				= 640;
+	skillMenuInfo.menubg.height				= 480;
+
+	// BFP - barlog
+	skillMenuInfo.barlog.generic.type		= MTYPE_BITMAP;
+	skillMenuInfo.barlog.generic.name		= ART_BARLOG;
+	skillMenuInfo.barlog.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	skillMenuInfo.barlog.generic.x			= 140;
+	skillMenuInfo.barlog.generic.y			= 5;
+	skillMenuInfo.barlog.width				= 355;
+	skillMenuInfo.barlog.height				= 90;
+
+	skillMenuInfo.art_banner.generic.type		= MTYPE_PTEXT; // BFP - modified DIFFICULTY title type
+	skillMenuInfo.art_banner.generic.flags		= QMF_CENTER_JUSTIFY|QMF_INACTIVE; // BFP - modified DIFFICULTY title flags
+	skillMenuInfo.art_banner.generic.x			= 320;
+	skillMenuInfo.art_banner.generic.y			= 45; // BFP - modified DIFFICULTY title y position
+	skillMenuInfo.art_banner.string				= "DIFFICULTY";
+	skillMenuInfo.art_banner.color				= color_white;
+	skillMenuInfo.art_banner.style				= UI_CENTER|UI_BIGFONT; // BFP - modified DIFFICULTY title style
+
 	skillMenuInfo.art_frame.generic.type		= MTYPE_BITMAP;
 	skillMenuInfo.art_frame.generic.name		= ART_FRAME;
 	skillMenuInfo.art_frame.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
 	skillMenuInfo.art_frame.generic.x			= 142;
-	skillMenuInfo.art_frame.generic.y			= 118;
+	skillMenuInfo.art_frame.generic.y			= 110; // BFP - modified art frame y position
 	skillMenuInfo.art_frame.width				= 359;
 	skillMenuInfo.art_frame.height				= 256;
-
-	skillMenuInfo.art_banner.generic.type		= MTYPE_BTEXT;
-	skillMenuInfo.art_banner.generic.flags		= QMF_CENTER_JUSTIFY;
-	skillMenuInfo.art_banner.generic.x			= 320;
-	skillMenuInfo.art_banner.generic.y			= 16;
-	skillMenuInfo.art_banner.string				= "DIFFICULTY";
-	skillMenuInfo.art_banner.color				= color_white;
-	skillMenuInfo.art_banner.style				= UI_CENTER;
 
 	skillMenuInfo.item_baby.generic.type		= MTYPE_PTEXT;
 	skillMenuInfo.item_baby.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -229,7 +253,7 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_baby.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_baby.generic.id			= ID_BABY;
 	skillMenuInfo.item_baby.string				= "I Can Win";
-	skillMenuInfo.item_baby.color				= color_red;
+	skillMenuInfo.item_baby.color				= color_white; // BFP - modified I Can Win title color
 	skillMenuInfo.item_baby.style				= UI_CENTER;
 
 	skillMenuInfo.item_easy.generic.type		= MTYPE_PTEXT;
@@ -239,7 +263,7 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_easy.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_easy.generic.id			= ID_EASY;
 	skillMenuInfo.item_easy.string				= "Bring It On";
-	skillMenuInfo.item_easy.color				= color_red;
+	skillMenuInfo.item_easy.color				= color_white; // BFP - modified Bring It On title color
 	skillMenuInfo.item_easy.style				= UI_CENTER;
 
 	skillMenuInfo.item_medium.generic.type		= MTYPE_PTEXT;
@@ -249,7 +273,7 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_medium.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_medium.generic.id		= ID_MEDIUM;
 	skillMenuInfo.item_medium.string			= "Hurt Me Plenty";
-	skillMenuInfo.item_medium.color				= color_red;
+	skillMenuInfo.item_medium.color				= color_white; // BFP - modified Hurt Me Plenty title color
 	skillMenuInfo.item_medium.style				= UI_CENTER;
 
 	skillMenuInfo.item_hard.generic.type		= MTYPE_PTEXT;
@@ -259,7 +283,7 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_hard.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_hard.generic.id			= ID_HARD;
 	skillMenuInfo.item_hard.string				= "Hardcore";
-	skillMenuInfo.item_hard.color				= color_red;
+	skillMenuInfo.item_hard.color				= color_white; // BFP - modified Hardcore title color
 	skillMenuInfo.item_hard.style				= UI_CENTER;
 
 	skillMenuInfo.item_nightmare.generic.type		= MTYPE_PTEXT;
@@ -269,18 +293,18 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_nightmare.generic.callback	= UI_SPSkillMenu_SkillEvent;
 	skillMenuInfo.item_nightmare.generic.id			= ID_NIGHTMARE;
 	skillMenuInfo.item_nightmare.string				= "NIGHTMARE!";
-	skillMenuInfo.item_nightmare.color				= color_red;
+	skillMenuInfo.item_nightmare.color				= color_white; // BFP - modified NIGHTMARE! title color
 	skillMenuInfo.item_nightmare.style				= UI_CENTER;
 
 	skillMenuInfo.item_back.generic.type		= MTYPE_BITMAP;
 	skillMenuInfo.item_back.generic.name		= ART_BACK;
 	skillMenuInfo.item_back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	skillMenuInfo.item_back.generic.x			= 0;
-	skillMenuInfo.item_back.generic.y			= 480-64;
+	skillMenuInfo.item_back.generic.y			= 480-80; // BFP - modified BACK button y position
 	skillMenuInfo.item_back.generic.callback	= UI_SPSkillMenu_BackEvent;
 	skillMenuInfo.item_back.generic.id			= ID_BACK;
-	skillMenuInfo.item_back.width				= 128;
-	skillMenuInfo.item_back.height				= 64;
+	skillMenuInfo.item_back.width				= 80; // BFP - modified BACK button width
+	skillMenuInfo.item_back.height				= 80; // BFP - modified BACK button height
 	skillMenuInfo.item_back.focuspic			= ART_BACK_FOCUS;
 
 	skillMenuInfo.art_skillPic.generic.type		= MTYPE_BITMAP;
@@ -296,11 +320,13 @@ static void UI_SPSkillMenu_Init( void ) {
 	skillMenuInfo.item_fight.generic.callback	= UI_SPSkillMenu_FightEvent;
 	skillMenuInfo.item_fight.generic.id			= ID_FIGHT;
 	skillMenuInfo.item_fight.generic.x			= 640;
-	skillMenuInfo.item_fight.generic.y			= 480-64;
-	skillMenuInfo.item_fight.width				= 128;
-	skillMenuInfo.item_fight.height				= 64;
+	skillMenuInfo.item_fight.generic.y			= 480-80; // BFP - modified FIGHT button y position
+	skillMenuInfo.item_fight.width				= 80; // BFP - modified FIGHT button width
+	skillMenuInfo.item_fight.height				= 80; // BFP - modified FIGHT button height
 	skillMenuInfo.item_fight.focuspic			= ART_FIGHT_FOCUS;
 
+	Menu_AddItem( &skillMenuInfo.menu, ( void * )&skillMenuInfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &skillMenuInfo.menu, ( void * )&skillMenuInfo.barlog ); // BFP - barlog
 	Menu_AddItem( &skillMenuInfo.menu, ( void * )&skillMenuInfo.art_frame );
 	Menu_AddItem( &skillMenuInfo.menu, ( void * )&skillMenuInfo.art_banner );
 	Menu_AddItem( &skillMenuInfo.menu, ( void * )&skillMenuInfo.item_baby );

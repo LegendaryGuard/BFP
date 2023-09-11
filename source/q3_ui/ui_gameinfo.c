@@ -745,6 +745,8 @@ int UI_GetNumBots( void ) {
 }
 
 
+// BFP - Single player menu is disabled
+#if 0
 /*
 ===============
 UI_SPUnlock_f
@@ -798,6 +800,7 @@ void UI_SPUnlockMedals_f( void ) {
 
 	trap_Print( "All levels unlocked at 100\n" );
 }
+#endif
 
 
 /*

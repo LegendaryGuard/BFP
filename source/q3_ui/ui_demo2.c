@@ -32,6 +32,8 @@ DEMOS MENU
 #include "ui_local.h"
 
 
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 #define ART_BACK0			"menu/art/back_0"
 #define ART_BACK1			"menu/art/back_1"	
 #define ART_GO0				"menu/art/play_0"
@@ -52,15 +54,15 @@ DEMOS MENU
 #define ID_LEFT				14
 
 #define ARROWS_WIDTH		128
-#define ARROWS_HEIGHT		48
+#define ARROWS_HEIGHT		64 // BFP - modified arrow height
 
 
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 
 	menulist_s		list;
 
@@ -142,28 +144,31 @@ static void Demos_MenuInit( void ) {
 	s_demos.menu.fullscreen = qtrue;
 	s_demos.menu.wrapAround = qtrue;
 
-	s_demos.banner.generic.type		= MTYPE_BTEXT;
+	// BFP - Menu background
+	s_demos.menubg.generic.type		= MTYPE_BITMAP;
+	s_demos.menubg.generic.name		= ART_MENUBG;
+	s_demos.menubg.generic.flags	= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_demos.menubg.generic.x		= 0;
+	s_demos.menubg.generic.y		= 0;
+	s_demos.menubg.width			= 640;
+	s_demos.menubg.height			= 480;
+
+	// BFP - barlog
+	s_demos.barlog.generic.type		= MTYPE_BITMAP;
+	s_demos.barlog.generic.name		= ART_BARLOG;
+	s_demos.barlog.generic.flags	= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+	s_demos.barlog.generic.x		= 140;
+	s_demos.barlog.generic.y		= 5;
+	s_demos.barlog.width			= 355;
+	s_demos.barlog.height			= 90;
+
+	s_demos.banner.generic.type		= MTYPE_PTEXT; // BFP - modified DEMOS type
+	s_demos.banner.generic.flags	= QMF_CENTER_JUSTIFY | QMF_INACTIVE; // BFP - modified DEMOS flags
 	s_demos.banner.generic.x		= 320;
-	s_demos.banner.generic.y		= 16;
+	s_demos.banner.generic.y		= 45; // BFP - modified DEMOS y position
 	s_demos.banner.string			= "DEMOS";
 	s_demos.banner.color			= color_white;
-	s_demos.banner.style			= UI_CENTER;
-
-	s_demos.framel.generic.type		= MTYPE_BITMAP;
-	s_demos.framel.generic.name		= ART_FRAMEL;
-	s_demos.framel.generic.flags	= QMF_INACTIVE;
-	s_demos.framel.generic.x		= 0;  
-	s_demos.framel.generic.y		= 78;
-	s_demos.framel.width			= 256;
-	s_demos.framel.height			= 329;
-
-	s_demos.framer.generic.type		= MTYPE_BITMAP;
-	s_demos.framer.generic.name		= ART_FRAMER;
-	s_demos.framer.generic.flags	= QMF_INACTIVE;
-	s_demos.framer.generic.x		= 376;
-	s_demos.framer.generic.y		= 76;
-	s_demos.framer.width			= 256;
-	s_demos.framer.height			= 334;
+	s_demos.banner.style			= UI_CENTER | UI_BIGFONT; // BFP - modified DEMOS style
 
 	s_demos.arrows.generic.type		= MTYPE_BITMAP;
 	s_demos.arrows.generic.name		= ART_ARROWS;
@@ -199,9 +204,9 @@ static void Demos_MenuInit( void ) {
 	s_demos.back.generic.id			= ID_BACK;
 	s_demos.back.generic.callback	= Demos_MenuEvent;
 	s_demos.back.generic.x			= 0;
-	s_demos.back.generic.y			= 480-64;
-	s_demos.back.width				= 128;
-	s_demos.back.height				= 64;
+	s_demos.back.generic.y			= 480-80; // BFP - modified BACK button y position
+	s_demos.back.width				= 80; // BFP - modified BACK button width
+	s_demos.back.height				= 80; // BFP - modified BACK button height
 	s_demos.back.focuspic			= ART_BACK1;
 
 	s_demos.go.generic.type			= MTYPE_BITMAP;
@@ -210,9 +215,9 @@ static void Demos_MenuInit( void ) {
 	s_demos.go.generic.id			= ID_GO;
 	s_demos.go.generic.callback		= Demos_MenuEvent;
 	s_demos.go.generic.x			= 640;
-	s_demos.go.generic.y			= 480-64;
-	s_demos.go.width				= 128;
-	s_demos.go.height				= 64;
+	s_demos.go.generic.y			= 480-80; // BFP - modified GO button y position
+	s_demos.go.width				= 80; // BFP - modified GO button width
+	s_demos.go.height				= 80; // BFP - modified GO button height
 	s_demos.go.focuspic				= ART_GO1;
 
 	s_demos.list.generic.type		= MTYPE_SCROLLLIST;
@@ -252,9 +257,9 @@ static void Demos_MenuInit( void ) {
 		demoname += len + 1;
 	}
 
-	Menu_AddItem( &s_demos.menu, &s_demos.banner );
-	Menu_AddItem( &s_demos.menu, &s_demos.framel );
-	Menu_AddItem( &s_demos.menu, &s_demos.framer );
+	Menu_AddItem( &s_demos.menu, &s_demos.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_demos.menu, &s_demos.barlog ); // BFP - barlog
+	Menu_AddItem( &s_demos.menu, &s_demos.banner ); // BFP - banner draws after
 	Menu_AddItem( &s_demos.menu, &s_demos.list );
 	Menu_AddItem( &s_demos.menu, &s_demos.arrows );
 	Menu_AddItem( &s_demos.menu, &s_demos.left );
@@ -273,8 +278,8 @@ void Demos_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_BACK1 );
 	trap_R_RegisterShaderNoMip( ART_GO0 );
 	trap_R_RegisterShaderNoMip( ART_GO1 );
-	trap_R_RegisterShaderNoMip( ART_FRAMEL );
-	trap_R_RegisterShaderNoMip( ART_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( ART_ARROWS );
 	trap_R_RegisterShaderNoMip( ART_ARROWLEFT );
 	trap_R_RegisterShaderNoMip( ART_ARROWRIGHT );

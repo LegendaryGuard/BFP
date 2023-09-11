@@ -26,9 +26,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MODEL_BACK1			"menu/art/back_1"
 #define MODEL_SELECT		"menu/art/opponents_select"
 #define MODEL_SELECTED		"menu/art/opponents_selected"
-#define MODEL_FRAMEL		"menu/art/frame1_l"
-#define MODEL_FRAMER		"menu/art/frame1_r"
-#define MODEL_PORTS			"menu/art/player_models_ports"
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 #define MODEL_ARROWS		"menu/art/gs_arrows_0"
 #define MODEL_ARROWSL		"menu/art/gs_arrows_l"
 #define MODEL_ARROWSR		"menu/art/gs_arrows_r"
@@ -41,16 +40,15 @@ static char* playermodel_artlist[] =
 	MODEL_BACK1,	
 	MODEL_SELECT,
 	MODEL_SELECTED,
-	MODEL_FRAMEL,
-	MODEL_FRAMER,
-	MODEL_PORTS,	
+	ART_MENUBG,	// BFP - Menu background
+	ART_BARLOG,	// BFP - barlog
 	MODEL_ARROWS,
 	MODEL_ARROWSL,
 	MODEL_ARROWSR,
 	NULL
 };
 
-#define PLAYERGRID_COLS		4
+#define PLAYERGRID_COLS		5 // BFP - modified PLAYERGRID_COLS, before 5
 #define PLAYERGRID_ROWS		4
 #define MAX_MODELSPERPAGE	(PLAYERGRID_ROWS*PLAYERGRID_COLS)
 
@@ -76,15 +74,20 @@ static char* playermodel_artlist[] =
 #define ID_NEXTPAGE			101
 #define ID_BACK				102
 
+#define MAX_KIATTACKS		5	// BFP - Maximum of ki attacks
+
+#define MAX_NAMELENGTH		20	// BFP - Name textinput length
+
 typedef struct
 {
 	menuframework_s	menu;
 	menubitmap_s	pics[MAX_MODELSPERPAGE];
 	menubitmap_s	picbuttons[MAX_MODELSPERPAGE];
-	menubitmap_s	framel;
-	menubitmap_s	framer;
-	menubitmap_s	ports;
+	menubitmap_s	kipics[MAX_KIATTACKS]; // BFP - Ki attack sets
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
+	menufield_s		name; // BFP - Name textinput
 	menubitmap_s	back;
 	menubitmap_s	player;
 	menubitmap_s	arrows;
@@ -103,6 +106,70 @@ typedef struct
 } playermodel_t;
 
 static playermodel_t s_playermodel;
+
+/*
+=================
+PlayerModel_DrawName
+=================
+*/
+static void PlayerModel_DrawName( void* self ) { // BFP - Player name draw
+	menufield_s*	f;
+	qboolean		focus;
+	int				style;
+	char*			txt;
+	char			c;
+	float*			color;
+	int				n;
+	int				basex, x, y;
+
+	f = (menufield_s*)self;
+	basex = f->generic.x;
+	y = f->generic.y;
+	focus = (f->generic.parent->cursor == f->generic.menuPosition);
+
+	style = UI_LEFT | UI_SMALLFONT;
+	color = text_color_normal;
+	if ( focus ) {
+		style |= UI_PULSE;
+		color = text_color_highlight;
+	}
+
+	UI_DrawProportionalString( basex, y, "Name:", style, color );
+
+	// draw the actual name
+	basex += 75;
+	y += 4;
+	txt = f->field.buffer;
+	color = g_color_table[ColorIndex( COLOR_WHITE )];
+	x = basex;
+	while ( ( c = *txt ) != 0 ) {
+		if ( !focus && Q_IsColorString( txt ) ) {
+			n = ColorIndex( *(txt + 1) );
+			if ( n == 0 ) {
+				n = 7;
+			}
+			color = g_color_table[n];
+			txt += 2;
+			continue;
+		}
+		UI_DrawChar( x, y, c, style, color );
+		txt++;
+		x += SMALLCHAR_WIDTH;
+	}
+
+	// draw cursor if we have focus
+	if ( focus ) {
+		if ( trap_Key_GetOverstrikeMode() ) {
+			c = 11;
+		} else {
+			c = 10;
+		}
+		style &= ~UI_PULSE;
+		style |= UI_BLINK;
+
+		UI_DrawChar( basex + f->field.cursor * SMALLCHAR_WIDTH, y, c, style, color_white );
+	}
+}
 
 /*
 =================
@@ -176,7 +243,7 @@ static void PlayerModel_UpdateModel( void )
 
 	memset( &s_playermodel.playerinfo, 0, sizeof(playerInfo_t) );
 	
-	viewangles[YAW]   = 180;
+	viewangles[YAW]   = 180; // BFP - before 180 - 30
 	viewangles[PITCH] = 0;
 	viewangles[ROLL]  = 0;
 	VectorClear( moveangles );
@@ -192,6 +259,7 @@ PlayerModel_SaveChanges
 */
 static void PlayerModel_SaveChanges( void )
 {
+	trap_Cvar_Set( "name", s_playermodel.name.field.buffer ); // BFP - Name textinput
 	trap_Cvar_Set( "model", s_playermodel.modelskin );
 	trap_Cvar_Set( "headmodel", s_playermodel.modelskin );
 	trap_Cvar_Set( "team_model", s_playermodel.modelskin );
@@ -245,8 +313,8 @@ static sfxHandle_t PlayerModel_MenuKey( int key )
 
 	switch (key)
 	{
-		case K_KP_LEFTARROW:
-		case K_LEFTARROW:
+		case K_KP_UPARROW: // BFP - before K_KP_LEFTARROW
+		case K_UPARROW: // BFP - before K_LEFTARROW
 			m = Menu_ItemAtCursor(&s_playermodel.menu);
 			picnum = m->id - ID_PLAYERPIC0;
 			if (picnum >= 0 && picnum <= 15)
@@ -269,8 +337,8 @@ static sfxHandle_t PlayerModel_MenuKey( int key )
 			}
 			break;
 
-		case K_KP_RIGHTARROW:
-		case K_RIGHTARROW:
+		case K_KP_DOWNARROW: // BFP - before K_KP_RIGHTARROW
+		case K_DOWNARROW: // BFP - before K_RIGHTARROW
 			m = Menu_ItemAtCursor(&s_playermodel.menu);
 			picnum = m->id - ID_PLAYERPIC0;
 			if (picnum >= 0 && picnum <= 15)
@@ -300,6 +368,132 @@ static sfxHandle_t PlayerModel_MenuKey( int key )
 
 	return ( Menu_DefaultKey( &s_playermodel.menu, key ) );
 }
+
+
+/*
+=================
+extractDirectoryName
+=================
+*/
+static void extractDirectoryName( const char *input, char *output, int maxOutputSize ) // BFP - Extract the name of a directory
+{
+	int i;
+
+	output[0] = '\0';
+
+	// find the first '/'
+	for (i = 0; i < strlen(input); i++) {
+		if (input[i] == '/') {
+			break;
+		}
+	}
+
+	// copy the characters before the first '/'
+	if (i < maxOutputSize) {
+		strncpy(output, input, i);
+		output[i] = '\0'; // null-terminate the output
+	}
+}
+
+
+/*
+=================
+PlayerModel_SetKiAttacks
+=================
+*/
+static void PlayerModel_SetKiAttacks( void ) // BFP - Set ki attack pics
+{
+	int		numdirs;
+	char	dirlist[2048], modelselected[2048];
+	char*	dirptr;
+	int		i, j, dirlen, bfpnumber;
+
+	// BFP - NOTE: BFP vanilla uses the static icons for every character from bfp1 to bfp6.
+	// It would be cool to parse bfp_attacksets.cfg file and set every character their own ki attacks. 
+	// These are the strings used in the code to parse that cfg file:
+	/*
+		// 1st parameter strings used in their conditionals when parsing the cfg file and setting their values in the 2nd parameter:
+		"defaultModel"
+		"modelPrefix"
+		"attack"
+		"attackset"
+		"end"
+		// printing messages when reading the cfg file:
+		"BFP weapon config file too long\n"
+		"unable to open weapon config file.\n"
+		"reading bfp_attacksets.cfg\n"
+	*/
+
+	// iterate directory of all player models
+	numdirs = trap_FS_GetFileList("models/players", "/", dirlist, 2048 );
+	dirptr  = dirlist;
+	for (i=0; i<numdirs && s_playermodel.nummodels < MAX_PLAYERMODELS; i++,dirptr+=dirlen+1)
+	{
+		dirlen = (int)strlen(dirptr);
+
+		if (dirlen && dirptr[dirlen-1]=='/') dirptr[dirlen-1]='\0';
+
+		if (!strcmp(dirptr,".") || !strcmp(dirptr,".."))
+			continue;
+
+		extractDirectoryName(
+			s_playermodel.modelnames[s_playermodel.selectedmodel] + (int)strlen("models/players/"), 
+			modelselected, 
+			sizeof(modelselected)
+		);
+
+		bfpnumber = atoi(dirptr + 3);
+
+		// set to these shaders if the directory name doesn't contain "-"
+		if (strchr(dirptr, '-') == NULL) bfpnumber = 6;
+
+		// setting ki attack pics
+		switch( bfpnumber ) {
+			case 2:
+				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/homingball" );
+				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/lstorm_icon" );
+				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/mantisblast" );
+				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/aga" );
+				break;
+			case 3:
+				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/tornadoblast" );
+				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/redattack_icon" );
+				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/earthseeker_icon" );
+				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/powerwaveblast" );
+				break;
+			case 4:
+				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/blindingflash" );
+				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/chaosorb_icon" );
+				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/homingspecial" );
+				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/razordisk" );
+				break;
+			case 5:
+				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/eyebeam" );
+				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/kistorm" );
+				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/superhoming" );
+				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/ssb" );
+				break;
+			default:
+				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/largekiblast" );
+				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/kistorm" );
+				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/impactbeam" );
+				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/ultimateblast" );
+				break;
+		}
+		if ( bfpnumber <= 1 ) {
+			s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/fingerblast" );
+			s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/piercingblast" );
+			s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/homingdisk" );
+			s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/deathball" );
+		}
+		// the 1st ki attack is always the same
+		s_playermodel.kipics[0].shader = trap_R_RegisterShaderNoMip( "icons/kiblast" );
+
+		// stop iterating if it's this player already
+		if (!Q_stricmp(dirptr, modelselected)) return;
+	}
+}
+
 
 /*
 =================
@@ -357,6 +551,7 @@ static void PlayerModel_PicEvent( void* ptr, int event )
 
 		if( trap_MemoryRemaining() > LOW_MEMORY ) {
 			PlayerModel_UpdateModel();
+			PlayerModel_SetKiAttacks(); // BFP - Set ki attack pics
 		}
 	}
 }
@@ -373,7 +568,7 @@ static void PlayerModel_DrawPlayer( void *self )
 	b = (menubitmap_s*) self;
 
 	if( trap_MemoryRemaining() <= LOW_MEMORY ) {
-		UI_DrawProportionalString( b->generic.x, b->generic.y + b->height / 2, "LOW MEMORY", UI_LEFT, color_red );
+		UI_DrawProportionalString( b->generic.x, b->generic.y + b->height / 2, "LOW MEMORY", UI_LEFT, color_white ); // BFP - modified LOW MEMORY warning color
 		return;
 	}
 
@@ -463,8 +658,7 @@ static void PlayerModel_SetMenuItems( void )
 	char*			pdest;
 
 	// name
-	trap_Cvar_VariableStringBuffer( "name", s_playermodel.playername.string, 16 );
-	Q_CleanStr( s_playermodel.playername.string );
+	Q_strncpyz( s_playermodel.name.field.buffer, UI_Cvar_VariableString( "name" ), sizeof(s_playermodel.name.field.buffer) ); // BFP - Player name string
 
 	// model
 	trap_Cvar_VariableStringBuffer( "model", s_playermodel.modelskin, 64 );
@@ -519,7 +713,6 @@ static void PlayerModel_MenuInit( void )
 	int			k;
 	int			x;
 	int			y;
-	static char	playername[32];
 	static char	modelname[32];
 	static char	skinname[32];
 
@@ -532,41 +725,49 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.menu.wrapAround = qtrue;
 	s_playermodel.menu.fullscreen = qtrue;
 
-	s_playermodel.banner.generic.type  = MTYPE_BTEXT;
+	// BFP - Menu background
+	s_playermodel.menubg.generic.type	= MTYPE_BITMAP;
+	s_playermodel.menubg.generic.name	= ART_MENUBG;
+	s_playermodel.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_playermodel.menubg.generic.x		= 0;
+	s_playermodel.menubg.generic.y		= 0;
+	s_playermodel.menubg.width			= 640;
+	s_playermodel.menubg.height			= 480;
+
+	// BFP - barlog
+	s_playermodel.barlog.generic.type	= MTYPE_BITMAP;
+	s_playermodel.barlog.generic.name	= ART_BARLOG;
+	s_playermodel.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_playermodel.barlog.generic.x		= 140;
+	s_playermodel.barlog.generic.y		= 5;
+	s_playermodel.barlog.width			= 355;
+	s_playermodel.barlog.height			= 90;
+
+	s_playermodel.banner.generic.type  = MTYPE_PTEXT; // BFP - modified banner type
+	s_playermodel.banner.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE; // BFP - modified banner flags
 	s_playermodel.banner.generic.x     = 320;
-	s_playermodel.banner.generic.y     = 16;
+	s_playermodel.banner.generic.y     = 45; // BFP - modified banner y position
 	s_playermodel.banner.string        = "PLAYER SETTINGS"; // BFP - before it was called as "PLAYER MODEL"
 	s_playermodel.banner.color         = color_white;
-	s_playermodel.banner.style         = UI_CENTER;
+	s_playermodel.banner.style         = UI_CENTER|UI_BIGFONT; // BFP - modified banner style
 
-	s_playermodel.framel.generic.type  = MTYPE_BITMAP;
-	s_playermodel.framel.generic.name  = MODEL_FRAMEL;
-	s_playermodel.framel.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	s_playermodel.framel.generic.x     = 0;
-	s_playermodel.framel.generic.y     = 78;
-	s_playermodel.framel.width         = 256;
-	s_playermodel.framel.height        = 329;
+	// BFP - Name textinput
+	s_playermodel.name.generic.type			= MTYPE_FIELD;
+	s_playermodel.name.generic.flags		= QMF_NODEFAULTINIT;
+	s_playermodel.name.generic.ownerdraw	= PlayerModel_DrawName;
+	s_playermodel.name.field.widthInChars	= MAX_NAMELENGTH;
+	s_playermodel.name.field.maxchars		= MAX_NAMELENGTH;
+	s_playermodel.name.generic.x			= 40;
+	s_playermodel.name.generic.y			= 80;
+	s_playermodel.name.generic.left			= 150 - 8;
+	s_playermodel.name.generic.top			= 85 - 8;
+	s_playermodel.name.generic.right		= 150 + 200;
+	s_playermodel.name.generic.bottom		= 85 + 2 * PROP_HEIGHT;
 
-	s_playermodel.framer.generic.type  = MTYPE_BITMAP;
-	s_playermodel.framer.generic.name  = MODEL_FRAMER;
-	s_playermodel.framer.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	s_playermodel.framer.generic.x     = 376;
-	s_playermodel.framer.generic.y     = 76;
-	s_playermodel.framer.width         = 256;
-	s_playermodel.framer.height        = 334;
-
-	s_playermodel.ports.generic.type  = MTYPE_BITMAP;
-	s_playermodel.ports.generic.name  = MODEL_PORTS;
-	s_playermodel.ports.generic.flags = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
-	s_playermodel.ports.generic.x     = 50;
-	s_playermodel.ports.generic.y     = 59;
-	s_playermodel.ports.width         = 274;
-	s_playermodel.ports.height        = 274;
-
-	y =	59;
+	y =	110;
 	for (i=0,k=0; i<PLAYERGRID_ROWS; i++)
 	{
-		x =	50;
+		x =	15; // BFP - modified rows horizontal position, before 50
 		for (j=0; j<PLAYERGRID_COLS; j++,k++)
 		{
 			s_playermodel.pics[k].generic.type	   = MTYPE_BITMAP;
@@ -598,13 +799,18 @@ static void PlayerModel_MenuInit( void )
 		y += 64+6;
 	}
 
-	s_playermodel.playername.generic.type  = MTYPE_PTEXT;
-	s_playermodel.playername.generic.flags = QMF_CENTER_JUSTIFY|QMF_INACTIVE;
-	s_playermodel.playername.generic.x	   = 320;
-	s_playermodel.playername.generic.y	   = 440;
-	s_playermodel.playername.string	       = playername;
-	s_playermodel.playername.style		   = UI_CENTER;
-	s_playermodel.playername.color         = text_color_normal;
+	// BFP - Draw ki attacks of the selected player
+	y =	150;
+	for (i=0; i<MAX_KIATTACKS; i++)
+	{
+		s_playermodel.kipics[i].generic.type	 = MTYPE_BITMAP;
+		s_playermodel.kipics[i].generic.flags	 = QMF_LEFT_JUSTIFY;
+		s_playermodel.kipics[i].generic.x		 = 400;
+		s_playermodel.kipics[i].generic.y		 = y;
+		s_playermodel.kipics[i].width			 = 79;
+		s_playermodel.kipics[i].height			 = 34;
+		y += 64-24;
+	}
 
 	s_playermodel.modelname.generic.type  = MTYPE_PTEXT;
 	s_playermodel.modelname.generic.flags = QMF_CENTER_JUSTIFY|QMF_INACTIVE;
@@ -633,8 +839,8 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.arrows.generic.type		= MTYPE_BITMAP;
 	s_playermodel.arrows.generic.name		= MODEL_ARROWS;
 	s_playermodel.arrows.generic.flags		= QMF_INACTIVE;
-	s_playermodel.arrows.generic.x			= 125;
-	s_playermodel.arrows.generic.y			= 340;
+	s_playermodel.arrows.generic.x			= 260; // BFP - modified arrows x position
+	s_playermodel.arrows.generic.y			= 390; // BFP - modified arrows y position
 	s_playermodel.arrows.width				= 128;
 	s_playermodel.arrows.height				= 32;
 
@@ -642,8 +848,8 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.left.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_playermodel.left.generic.callback		= PlayerModel_MenuEvent;
 	s_playermodel.left.generic.id			= ID_PREVPAGE;
-	s_playermodel.left.generic.x			= 125;
-	s_playermodel.left.generic.y			= 340;
+	s_playermodel.left.generic.x			= 260; // BFP - modified PREVPAGE x position
+	s_playermodel.left.generic.y			= 390; // BFP - modified PREVPAGE y position
 	s_playermodel.left.width  				= 64;
 	s_playermodel.left.height  				= 32;
 	s_playermodel.left.focuspic				= MODEL_ARROWSL;
@@ -652,8 +858,8 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.right.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
 	s_playermodel.right.generic.callback	= PlayerModel_MenuEvent;
 	s_playermodel.right.generic.id			= ID_NEXTPAGE;
-	s_playermodel.right.generic.x			= 125+61;
-	s_playermodel.right.generic.y			= 340;
+	s_playermodel.right.generic.x			= 260+61; // BFP - modified NEXTPAGE x position
+	s_playermodel.right.generic.y			= 390; // BFP - modified NEXTPAGE y position
 	s_playermodel.right.width  				= 64;
 	s_playermodel.right.height  		    = 32;
 	s_playermodel.right.focuspic			= MODEL_ARROWSR;
@@ -664,18 +870,20 @@ static void PlayerModel_MenuInit( void )
 	s_playermodel.back.generic.callback = PlayerModel_MenuEvent;
 	s_playermodel.back.generic.id	    = ID_BACK;
 	s_playermodel.back.generic.x		= 0;
-	s_playermodel.back.generic.y		= 480-64;
-	s_playermodel.back.width  		    = 128;
-	s_playermodel.back.height  		    = 64;
+	s_playermodel.back.generic.y		= 480-64; // BFP - modified BACK button y position
+	s_playermodel.back.width  		    = 64; // BFP - modified BACK button width
+	s_playermodel.back.height  		    = 64; // BFP - modified BACK button height
 	s_playermodel.back.focuspic         = MODEL_BACK1;
 
+	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.barlog ); // BFP - barlog
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.banner );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.framel );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.framer );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.ports );
-	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.playername );
+	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.name ); // BFP - Name textinput
+	// BFP - Model and skin names disabled
+#if 0
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.modelname );
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.skinname );
+#endif
 
 	for (i=0; i<MAX_MODELSPERPAGE; i++)
 	{
@@ -689,6 +897,12 @@ static void PlayerModel_MenuInit( void )
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.right );
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.back );
 
+#if 1
+	for (i=0; i<MAX_KIATTACKS; i++)
+	{
+		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.kipics[i] );
+	}
+#endif
 	// find all available models
 //	PlayerModel_BuildList();
 
@@ -698,6 +912,7 @@ static void PlayerModel_MenuInit( void )
 	// update user interface
 	PlayerModel_UpdateGrid();
 	PlayerModel_UpdateModel();
+	PlayerModel_SetKiAttacks(); // BFP - Set ki attack pics
 }
 
 /*

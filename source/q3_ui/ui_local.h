@@ -242,9 +242,12 @@ extern vec4_t		text_color_disabled;
 extern vec4_t		text_color_normal;
 extern vec4_t		text_color_highlight;
 
+// BFP - Medal media is disabled (ui_splevel.c)
+#if 0
 extern char	*ui_medalNames[];
 extern char	*ui_medalPicNames[];
 extern char	*ui_medalSounds[];
+#endif
 
 //
 // ui_mfield.c
@@ -313,18 +316,24 @@ extern void Controls_Cache( void );
 extern void UI_DemosMenu( void );
 extern void Demos_Cache( void );
 
+// BFP - Cinematics menu is disabled
+#if 0
 //
 // ui_cinematics.c
 //
 extern void UI_CinematicsMenu( void );
 extern void UI_CinematicsMenu_f( void );
 extern void UI_CinematicsMenu_Cache( void );
+#endif
 
+// BFP - Mods menu is disabled
+#if 0
 //
 // ui_mods.c
 //
 extern void UI_ModsMenu( void );
 extern void UI_ModsMenu_Cache( void );
+#endif
 
 //
 // ui_cdkey.c
@@ -339,11 +348,20 @@ extern void UI_CDKeyMenu_f( void );
 extern void UI_PlayerModelMenu( void );
 extern void PlayerModel_Cache( void );
 
+// BFP - Player settings isn't available
+#if 0
 //
 // ui_playersettings.c
 //
 extern void UI_PlayerSettingsMenu( void );
 extern void PlayerSettings_Cache( void );
+#endif
+
+//
+// ui_bfpoptions.c
+//
+extern void UI_BFPOptionsMenu( void ); // BFP - BFP OPTIONS
+extern void BFPOptions_Cache( void ); // BFP - BFP OPTIONS
 
 //
 // ui_preferences.c
@@ -536,6 +554,8 @@ extern void			UI_StartDemoLoop( void );
 extern qboolean		m_entersound;
 extern uiStatic_t	uis;
 
+// BFP - Level menu is disabled
+#if 0
 //
 // ui_spLevel.c
 //
@@ -543,23 +563,30 @@ void UI_SPLevelMenu_Cache( void );
 void UI_SPLevelMenu( void );
 void UI_SPLevelMenu_f( void );
 void UI_SPLevelMenu_ReInit( void );
+#endif
 
 //
 // ui_spArena.c
 //
 void UI_SPArena_Start( const char *arenaInfo );
 
+// BFP - Post game menu is disabled
+#if 0
 //
 // ui_spPostgame.c
 //
 void UI_SPPostgameMenu_Cache( void );
 void UI_SPPostgameMenu_f( void );
+#endif
 
+// BFP - Skill menu is disabled
+#if 0
 //
 // ui_spSkill.c
 //
 void UI_SPSkillMenu( const char *arenaInfo );
 void UI_SPSkillMenu_Cache( void );
+#endif
 
 //
 // ui_syscalls.c
@@ -710,8 +737,11 @@ void UI_NewGame( void );
 void UI_LogAwardData( int award, int data );
 int UI_GetAwardLevel( int award );
 
+// BFP - Single player menu is disabled
+#if 0
 void UI_SPUnlock_f( void );
 void UI_SPUnlockMedals_f( void );
+#endif
 
 void UI_InitGameinfo( void );
 
@@ -743,5 +773,20 @@ void UI_SignupMenu( void );
 //
 void RankStatus_Cache( void );
 void UI_RankStatusMenu( void );
+
+// BFP - Unpack music, memory management for ui_mp3decoder
+//
+// ui_mem.c
+//
+void UI_InitMem( void );
+void *UI_AllocMem( int size );
+void UI_FreeMem( void *ptr );
+void UI_DefragmentMemory( void );
+
+// BFP - Unpack music, function to decode mp3
+//
+// ui_mp3decoder.c
+//
+qboolean	S_decodeMP3( char *mp3File, char *wavFile );
 
 #endif

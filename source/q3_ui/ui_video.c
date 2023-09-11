@@ -33,15 +33,13 @@ DRIVER INFORMATION MENU
 */
 
 
-#define DRIVERINFO_FRAMEL	"menu/art/frame2_l"
-#define DRIVERINFO_FRAMER	"menu/art/frame1_r"
+#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_BARLOG			"menu/art/cap_barlog"	// BFP - barlog
 #define DRIVERINFO_BACK0	"menu/art/back_0"
 #define DRIVERINFO_BACK1	"menu/art/back_1"
 
 static char* driverinfo_artlist[] = 
 {
-	DRIVERINFO_FRAMEL,
-	DRIVERINFO_FRAMER,
 	DRIVERINFO_BACK0,
 	DRIVERINFO_BACK1,
 	NULL,
@@ -53,9 +51,9 @@ typedef struct
 {
 	menuframework_s	menu;
 	menutext_s		banner;
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menubitmap_s	back;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 	char			stringbuff[1024];
 	char*			strings[64];
 	int				numstrings;
@@ -93,9 +91,9 @@ static void DriverInfo_MenuDraw( void )
 
 	Menu_Draw( &s_driverinfo.menu );
 
-	UI_DrawString( 320, 80, "VENDOR", UI_CENTER|UI_SMALLFONT, color_red );
-	UI_DrawString( 320, 152, "PIXELFORMAT", UI_CENTER|UI_SMALLFONT, color_red );
-	UI_DrawString( 320, 192, "EXTENSIONS", UI_CENTER|UI_SMALLFONT, color_red );
+	UI_DrawString( 320, 80, "VENDOR", UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified VENDOR title color
+	UI_DrawString( 320, 152, "PIXELFORMAT", UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified PIXELFORMAT title color
+	UI_DrawString( 320, 192, "EXTENSIONS", UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified EXTENSIONS title color
 
 	UI_DrawString( 320, 80+16, uis.glconfig.vendor_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
 	UI_DrawString( 320, 96+16, uis.glconfig.version_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
@@ -151,28 +149,30 @@ static void UI_DriverInfo_Menu( void )
 	s_driverinfo.menu.fullscreen = qtrue;
 	s_driverinfo.menu.draw       = DriverInfo_MenuDraw;
 
-	s_driverinfo.banner.generic.type  = MTYPE_BTEXT;
+	// BFP - Menu background
+	s_driverinfo.menubg.generic.type	= MTYPE_BITMAP;
+	s_driverinfo.menubg.generic.name	= ART_MENUBG;
+	s_driverinfo.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_driverinfo.menubg.generic.x		= 0;
+	s_driverinfo.menubg.generic.y		= 0;
+	s_driverinfo.menubg.width			= 640;
+	s_driverinfo.menubg.height			= 480;
+
+	// BFP - barlog
+	s_driverinfo.barlog.generic.type	= MTYPE_BITMAP;
+	s_driverinfo.barlog.generic.name	= ART_BARLOG;
+	s_driverinfo.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_driverinfo.barlog.generic.x		= 140;
+	s_driverinfo.barlog.generic.y		= 5;
+	s_driverinfo.barlog.width			= 355;
+	s_driverinfo.barlog.height			= 90;
+
+	s_driverinfo.banner.generic.type  = MTYPE_PTEXT; // BFP - modified DRIVER INFO button type
 	s_driverinfo.banner.generic.x	  = 320;
-	s_driverinfo.banner.generic.y	  = 16;
+	s_driverinfo.banner.generic.y	  = 45; // BFP - modified DRIVER INFO button y position
 	s_driverinfo.banner.string		  = "DRIVER INFO";
 	s_driverinfo.banner.color	      = color_white;
-	s_driverinfo.banner.style	      = UI_CENTER;
-
-	s_driverinfo.framel.generic.type  = MTYPE_BITMAP;
-	s_driverinfo.framel.generic.name  = DRIVERINFO_FRAMEL;
-	s_driverinfo.framel.generic.flags = QMF_INACTIVE;
-	s_driverinfo.framel.generic.x	  = 0;
-	s_driverinfo.framel.generic.y	  = 78;
-	s_driverinfo.framel.width  	      = 256;
-	s_driverinfo.framel.height  	  = 329;
-
-	s_driverinfo.framer.generic.type  = MTYPE_BITMAP;
-	s_driverinfo.framer.generic.name  = DRIVERINFO_FRAMER;
-	s_driverinfo.framer.generic.flags = QMF_INACTIVE;
-	s_driverinfo.framer.generic.x	  = 376;
-	s_driverinfo.framer.generic.y	  = 76;
-	s_driverinfo.framer.width  	      = 256;
-	s_driverinfo.framer.height  	  = 334;
+	s_driverinfo.banner.style	      = UI_CENTER|UI_BIGFONT; // BFP - modified DRIVER INFO button style
 
 	s_driverinfo.back.generic.type	   = MTYPE_BITMAP;
 	s_driverinfo.back.generic.name     = DRIVERINFO_BACK0;
@@ -180,9 +180,9 @@ static void UI_DriverInfo_Menu( void )
 	s_driverinfo.back.generic.callback = DriverInfo_Event;
 	s_driverinfo.back.generic.id	   = ID_DRIVERINFOBACK;
 	s_driverinfo.back.generic.x		   = 0;
-	s_driverinfo.back.generic.y		   = 480-64;
-	s_driverinfo.back.width  		   = 128;
-	s_driverinfo.back.height  		   = 64;
+	s_driverinfo.back.generic.y		   = 480-80; // BFP - modified BACK button y position
+	s_driverinfo.back.width  		   = 80; // BFP - modified BACK button width
+	s_driverinfo.back.height  		   = 80; // BFP - modified BACK button height
 	s_driverinfo.back.focuspic         = DRIVERINFO_BACK1;
 
   // TTimo: overflow with particularly long GL extensions (such as the gf3)
@@ -215,9 +215,9 @@ static void UI_DriverInfo_Menu( void )
 		}
 	}
 
+	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.barlog ); // BFP - barlog
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.banner );
-	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.framel );
-	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.framer );
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.back );
 
 	UI_PushMenu( &s_driverinfo.menu );
@@ -231,8 +231,6 @@ GRAPHICS OPTIONS MENU
 =======================================================================
 */
 
-#define GRAPHICSOPTIONS_FRAMEL	"menu/art/frame2_l"
-#define GRAPHICSOPTIONS_FRAMER	"menu/art/frame1_r"
 #define GRAPHICSOPTIONS_BACK0	"menu/art/back_0"
 #define GRAPHICSOPTIONS_BACK1	"menu/art/back_1"
 #define GRAPHICSOPTIONS_ACCEPT0	"menu/art/accept_0"
@@ -257,9 +255,9 @@ static const char *s_drivers[] =
 typedef struct {
 	menuframework_s	menu;
 
+	menubitmap_s	menubg; // BFP - Menu background
+	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
-	menubitmap_s	framel;
-	menubitmap_s	framer;
 
 	menutext_s		graphics;
 	menutext_s		display;
@@ -805,28 +803,30 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.menu.fullscreen = qtrue;
 	s_graphicsoptions.menu.draw       = GraphicsOptions_MenuDraw;
 
-	s_graphicsoptions.banner.generic.type  = MTYPE_BTEXT;
+	// BFP - Menu background
+	s_graphicsoptions.menubg.generic.type	= MTYPE_BITMAP;
+	s_graphicsoptions.menubg.generic.name	= ART_MENUBG;
+	s_graphicsoptions.menubg.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_graphicsoptions.menubg.generic.x		= 0;
+	s_graphicsoptions.menubg.generic.y		= 0;
+	s_graphicsoptions.menubg.width			= 640;
+	s_graphicsoptions.menubg.height			= 480;
+
+	// BFP - barlog
+	s_graphicsoptions.barlog.generic.type	= MTYPE_BITMAP;
+	s_graphicsoptions.barlog.generic.name	= ART_BARLOG;
+	s_graphicsoptions.barlog.generic.flags	= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
+	s_graphicsoptions.barlog.generic.x		= 140;
+	s_graphicsoptions.barlog.generic.y		= 5;
+	s_graphicsoptions.barlog.width			= 355;
+	s_graphicsoptions.barlog.height			= 90;
+
+	s_graphicsoptions.banner.generic.type  = MTYPE_PTEXT; // BFP - modified SYSTEM SETUP button type
 	s_graphicsoptions.banner.generic.x	   = 320;
-	s_graphicsoptions.banner.generic.y	   = 16;
+	s_graphicsoptions.banner.generic.y	   = 45; // BFP - modified SYSTEM SETUP button y position
 	s_graphicsoptions.banner.string  	   = "SYSTEM SETUP";
 	s_graphicsoptions.banner.color         = color_white;
-	s_graphicsoptions.banner.style         = UI_CENTER;
-
-	s_graphicsoptions.framel.generic.type  = MTYPE_BITMAP;
-	s_graphicsoptions.framel.generic.name  = GRAPHICSOPTIONS_FRAMEL;
-	s_graphicsoptions.framel.generic.flags = QMF_INACTIVE;
-	s_graphicsoptions.framel.generic.x	   = 0;
-	s_graphicsoptions.framel.generic.y	   = 78;
-	s_graphicsoptions.framel.width  	   = 256;
-	s_graphicsoptions.framel.height  	   = 329;
-
-	s_graphicsoptions.framer.generic.type  = MTYPE_BITMAP;
-	s_graphicsoptions.framer.generic.name  = GRAPHICSOPTIONS_FRAMER;
-	s_graphicsoptions.framer.generic.flags = QMF_INACTIVE;
-	s_graphicsoptions.framer.generic.x	   = 376;
-	s_graphicsoptions.framer.generic.y	   = 76;
-	s_graphicsoptions.framer.width  	   = 256;
-	s_graphicsoptions.framer.height  	   = 334;
+	s_graphicsoptions.banner.style         = UI_CENTER|UI_BIGFONT; // BFP - modified SYSTEM SETUP button style
 
 	s_graphicsoptions.graphics.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.graphics.generic.flags	= QMF_RIGHT_JUSTIFY;
@@ -836,7 +836,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.graphics.generic.y		= 240 - 2 * PROP_HEIGHT;
 	s_graphicsoptions.graphics.string			= "GRAPHICS";
 	s_graphicsoptions.graphics.style			= UI_RIGHT;
-	s_graphicsoptions.graphics.color			= color_red;
+	s_graphicsoptions.graphics.color			= color_white; // BFP - modified GRAPHICS button color
 
 	s_graphicsoptions.display.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.display.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -846,7 +846,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.display.generic.y			= 240 - PROP_HEIGHT;
 	s_graphicsoptions.display.string			= "DISPLAY";
 	s_graphicsoptions.display.style				= UI_RIGHT;
-	s_graphicsoptions.display.color				= color_red;
+	s_graphicsoptions.display.color				= color_white; // BFP - modified DISPLAY button color
 
 	s_graphicsoptions.sound.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.sound.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -856,7 +856,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.sound.generic.y			= 240;
 	s_graphicsoptions.sound.string				= "SOUND";
 	s_graphicsoptions.sound.style				= UI_RIGHT;
-	s_graphicsoptions.sound.color				= color_red;
+	s_graphicsoptions.sound.color				= color_white; // BFP - modified SOUND button color
 
 	s_graphicsoptions.network.generic.type		= MTYPE_PTEXT;
 	s_graphicsoptions.network.generic.flags		= QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -866,7 +866,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.network.generic.y			= 240 + PROP_HEIGHT;
 	s_graphicsoptions.network.string			= "NETWORK";
 	s_graphicsoptions.network.style				= UI_RIGHT;
-	s_graphicsoptions.network.color				= color_red;
+	s_graphicsoptions.network.color				= color_white; // BFP - modified NETWORK button color
 
 	y = 240 - 6 * (BIGCHAR_HEIGHT + 2);
 	s_graphicsoptions.list.generic.type     = MTYPE_SPINCONTROL;
@@ -981,7 +981,7 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.driverinfo.generic.y        = y;
 	s_graphicsoptions.driverinfo.string           = "Driver Info";
 	s_graphicsoptions.driverinfo.style            = UI_CENTER|UI_SMALLFONT;
-	s_graphicsoptions.driverinfo.color            = color_red;
+	s_graphicsoptions.driverinfo.color            = color_white; // BFP - modified Driver Info button color
 	y += BIGCHAR_HEIGHT+2;
 
 	s_graphicsoptions.back.generic.type	    = MTYPE_BITMAP;
@@ -990,9 +990,9 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.back.generic.callback = GraphicsOptions_Event;
 	s_graphicsoptions.back.generic.id	    = ID_BACK2;
 	s_graphicsoptions.back.generic.x		= 0;
-	s_graphicsoptions.back.generic.y		= 480-64;
-	s_graphicsoptions.back.width  		    = 128;
-	s_graphicsoptions.back.height  		    = 64;
+	s_graphicsoptions.back.generic.y		= 480-80; // BFP - modified BACK button y position
+	s_graphicsoptions.back.width  		    = 80; // BFP - modified BACK button width
+	s_graphicsoptions.back.height  		    = 80; // BFP - modified BACK button height
 	s_graphicsoptions.back.focuspic         = GRAPHICSOPTIONS_BACK1;
 
 	s_graphicsoptions.apply.generic.type     = MTYPE_BITMAP;
@@ -1000,14 +1000,14 @@ void GraphicsOptions_MenuInit( void )
 	s_graphicsoptions.apply.generic.flags    = QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_HIDDEN|QMF_INACTIVE;
 	s_graphicsoptions.apply.generic.callback = GraphicsOptions_ApplyChanges;
 	s_graphicsoptions.apply.generic.x        = 640;
-	s_graphicsoptions.apply.generic.y        = 480-64;
-	s_graphicsoptions.apply.width  		     = 128;
-	s_graphicsoptions.apply.height  		 = 64;
+	s_graphicsoptions.apply.generic.y        = 480-80; // BFP - modified APPLY button y position
+	s_graphicsoptions.apply.width  		     = 80; // BFP - modified APPLY button width
+	s_graphicsoptions.apply.height  		 = 80; // BFP - modified APPLY button height
 	s_graphicsoptions.apply.focuspic         = GRAPHICSOPTIONS_ACCEPT1;
 
+	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.barlog ); // BFP - barlog
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.banner );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.framel );
-	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.framer );
 
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.graphics );
 	Menu_AddItem( &s_graphicsoptions.menu, ( void * ) &s_graphicsoptions.display );
@@ -1041,8 +1041,8 @@ GraphicsOptions_Cache
 =================
 */
 void GraphicsOptions_Cache( void ) {
-	trap_R_RegisterShaderNoMip( GRAPHICSOPTIONS_FRAMEL );
-	trap_R_RegisterShaderNoMip( GRAPHICSOPTIONS_FRAMER );
+	trap_R_RegisterShaderNoMip( ART_MENUBG ); // BFP - Menu background
+	trap_R_RegisterShaderNoMip( ART_BARLOG ); // BFP - barlog
 	trap_R_RegisterShaderNoMip( GRAPHICSOPTIONS_BACK0 );
 	trap_R_RegisterShaderNoMip( GRAPHICSOPTIONS_BACK1 );
 	trap_R_RegisterShaderNoMip( GRAPHICSOPTIONS_ACCEPT0 );
