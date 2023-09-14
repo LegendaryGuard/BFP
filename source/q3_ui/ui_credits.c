@@ -57,134 +57,127 @@ typedef struct
 } cr_line;
 
 // BFP - Macros for credits. This way is easier to add in the array
-#define CREDIT_BIG_SEPARATOR    { "",     UI_CENTER | UI_BIGFONT,   & color_white },
-#define CREDIT_SMALL_SEPARATOR  { "",     UI_CENTER | UI_SMALLFONT, & color_white },
+#define CR_BIG_SEPARATOR    { "",     UI_CENTER | UI_BIGFONT,   & color_white },
+#define CR_SMALL_SEPARATOR  { "",     UI_CENTER | UI_SMALLFONT, & color_white },
 
-#define TITLE( title1, title2 ) { title1, UI_CENTER | UI_GIANTFONT, & color_orange }, \
-                                { title2, UI_CENTER | UI_GIANTFONT, & color_orange },
-#define BFP_TEAM_TITLE( title ) { title,  UI_CENTER | UI_GIANTFONT, & color_blue },
+#define CR_CUT              CR_BIG_SEPARATOR CR_BIG_SEPARATOR
+#define CR_START            CR_CUT CR_CUT
+#define CR_LOGOEND          CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR \
+                            CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR \
+                            CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR CR_SMALL_SEPARATOR
 
-#define PERSON( name )          { name,   UI_CENTER | UI_SMALLFONT, & color_blue },
-#define ROLE( role )            { role,   UI_CENTER | UI_SMALLFONT, & color_white },
+#define CR_TITLE( title1, title2 ) { title1, UI_CENTER | UI_GIANTFONT, & color_orange }, \
+                                   { title2, UI_CENTER | UI_GIANTFONT, & color_orange },
+#define CR_BFP_TEAM_TITLE( title ) { title,  UI_CENTER | UI_GIANTFONT, & color_blue },
+
+#define CR_PERSON( name )          { name,   UI_CENTER | UI_SMALLFONT, & color_blue },
+#define CR_ROLE( role )            { role,   UI_CENTER | UI_SMALLFONT, & color_white },
 
 cr_line credits[] = { // edit this as necessary for the credits
 
-	CREDIT_BIG_SEPARATOR
-	CREDIT_BIG_SEPARATOR
-	CREDIT_BIG_SEPARATOR
-	CREDIT_BIG_SEPARATOR
+	CR_START
 
 	// BFP - Source Code Recreation credits
-	TITLE( "Bid For Power", "Source Code Recreation" )
+	CR_TITLE( "Bid For Power", "Source Code Recreation" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "LegendGuard" )
-	ROLE( "Maintainer" )
+	CR_PERSON( "LegendGuard" )
+	CR_ROLE( "Maintainer" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Mjuksel" )
-	ROLE( "Contributor" )
+	CR_PERSON( "Mjuksel" )
+	CR_ROLE( "Contributor" )
 
-	CREDIT_BIG_SEPARATOR
-	CREDIT_BIG_SEPARATOR
+	CR_CUT
 
 	// BFP - BFP Team credits credits
-	BFP_TEAM_TITLE( "The Bid For Power Team" )
+	CR_BFP_TEAM_TITLE( "The Bid For Power Team" )
 
-	CREDIT_BIG_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Ansel" )
-	ROLE( "Skin Artist / 2D Artist" )
-	ROLE( "Attack Sprites" )
+	CR_PERSON( "Ansel" )
+	CR_ROLE( "Skin Artist / 2D Artist" )
+	CR_ROLE( "Attack Sprites" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Chris James" )
-	ROLE( "Founder" )
+	CR_PERSON( "Chris James" )
+	CR_ROLE( "Founder" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Dash" )
-	ROLE( "Level Design" )
+	CR_PERSON( "Dash" )
+	CR_ROLE( "Level Design" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Gangsta Poodle" )
-	ROLE( "Level Design" )
+	CR_PERSON( "Gangsta Poodle" )
+	CR_ROLE( "Level Design" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Kit Carson" )
-	ROLE( "Level Design" )
+	CR_PERSON( "Kit Carson" )
+	CR_ROLE( "Level Design" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "NilreMK" )
-	ROLE( "Modeler / Animator / Skin Artist" )
+	CR_PERSON( "NilreMK" )
+	CR_ROLE( "Modeler / Animator / Skin Artist" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Number 17" )
-	ROLE( "Sound Engineer" )
+	CR_PERSON( "Number 17" )
+	CR_ROLE( "Sound Engineer" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Pyrofragger" )
-	ROLE( "Modeler / Animator" )
+	CR_PERSON( "Pyrofragger" )
+	CR_ROLE( "Modeler / Animator" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Rodney" )
-	ROLE( "Lead Artist" )
-	ROLE( "Modeler / Animator" )
-	ROLE( "Skin Artist / 2D Artist" )
+	CR_PERSON( "Rodney" )
+	CR_ROLE( "Lead Artist" )
+	CR_ROLE( "Modeler / Animator" )
+	CR_ROLE( "Skin Artist / 2D Artist" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Yrgol" )
-	ROLE( "Game Design, Programmed By" )
-	ROLE( "Project Lead" )
+	CR_PERSON( "Yrgol" )
+	CR_ROLE( "Game Design, Programmed By" )
+	CR_ROLE( "Project Lead" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
 	// Over here, we can't call them as persons nor roles, but company, name and title :P
-	PERSON( "Id Software" )
-	ROLE( "Quake 3 engine" )
+	CR_PERSON( "Id Software" )
+	CR_ROLE( "Quake 3 engine" )
 
-	CREDIT_SMALL_SEPARATOR
+	CR_SMALL_SEPARATOR
 
-	PERSON( "Special Thanks" )
-	ROLE( "Disco Stu, Yngwie (menu music), Remisser, " )
-	ROLE( "Anthony, Dakota, Badhead, Gigatron, " )
-	ROLE( "Perfect Chaos, DethAyngel, Bardock, " )
-	ROLE( "$onik, Ebola, Mooky, Timex & Nat" )
+	CR_PERSON( "Special Thanks" )
+	CR_ROLE( "Disco Stu, Yngwie (menu music), Remisser, " )
+	CR_ROLE( "Anthony, Dakota, Badhead, Gigatron, " )
+	CR_ROLE( "Perfect Chaos, DethAyngel, Bardock, " )
+	CR_ROLE( "$onik, Ebola, Mooky, Timex & Nat" )
 	// BFP Team ends here
 
-	// BFP - Separators for the logo
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
-	CREDIT_SMALL_SEPARATOR
+	// BFP - Separator for the logo
+	CR_LOGOEND
 
 	{ NULL }
 };
-#undef CREDIT_BIG_SEPARATOR
-#undef CREDIT_SMALL_SEPARATOR
-#undef TITLE
-#undef BFP_TEAM_TITLE
-#undef PERSON
-#undef ROLE
+#undef CR_BIG_SEPARATOR
+#undef CR_SMALL_SEPARATOR
+#undef CR_CUT
+#undef CR_START
+#undef CR_LOGOEND
+#undef CR_TITLE
+#undef CR_BFP_TEAM_TITLE
+#undef CR_PERSON
+#undef CR_ROLE
 
 
 /*
@@ -351,10 +344,13 @@ void UI_CreditMenu( void ) {
 	UI_PushMenu ( &s_credits.menu );
 
 	starttime = uis.realtime; // record start time for credits to scroll properly
+// BFP - There's no music in the credits
+#if 0
 	mvolume = trap_Cvar_VariableValue( "s_musicvolume" );
 	if ( mvolume < 0.5 )
 		trap_Cmd_ExecuteText( EXEC_APPEND, "s_musicvolume 0.5\n" );
 	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/fla22k_02\n" );
+#endif
 
 	// load the background shader
 #ifdef BACKGROUND_SHADER

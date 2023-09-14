@@ -99,8 +99,8 @@ MULTIPLAYER MENU (SERVER BROWSER)
 
 // BFP - IMPORTANT NOTE: There are many stuff to be handled in the server list, please, be very careful
 
-#define ENABLE_MPLAYER		1 // BFP - A macro to enable/disable MPlayer section
-#define BFP_SERVERS_ONLY	1 // BFP - A macro to show or not only BFP servers
+#define ENABLE_MPLAYER		1	// BFP - A macro to enable/disable MPlayer section
+#define BFP_SERVERS_ONLY	1	// BFP - A macro to show or not only BFP servers
 
 static const char *master_items[] = {
 	"Local",
@@ -134,7 +134,18 @@ static const char *sortkey_items[] = {
 };
 
 static char* gamenames[] = {
-	"BFP",	// BFP
+// BFP - BFP only displays these 8 gametypes
+#if BFP_SERVERS_ONLY
+	"dm ",	// deathmatch
+	"1v1",	// tournament
+	"sp",	// single player
+	"survival",	// survival
+	"oozaru",	// giant monkey
+	"tdm",	// team deathmatch
+	"lms",	// last man standing
+	"ctf",	// capture the flag
+#else
+// BFP - 12 gametypes from Q3 and mods
 	"DM ",	// deathmatch
 	"1v1",	// tournament
 	"SP ",	// single player
@@ -147,6 +158,7 @@ static char* gamenames[] = {
 	"Q3F",						// Q3F
 	"Urban Terror",		// Urban Terror
 	"OSP",						// Orange Smoothie Productions
+#endif
 	"???",			// unknown
 	0
 };
@@ -178,7 +190,6 @@ typedef struct servernode_s {
 	int		nettype;
 	int		minPing;
 	int		maxPing;
-	qboolean bPB;
 
 } servernode_t; 
 
@@ -524,10 +535,10 @@ static void ArenaServers_UpdateMenu( void ) {
 			pingColor = S_COLOR_RED;
 		}
 
-		Com_sprintf( buff, MAX_LISTBOXWIDTH, "%-20.20s %-12.12s %2d/%2d %-8.8s %3s %s%3d " S_COLOR_YELLOW "%s", 
+		Com_sprintf( buff, MAX_LISTBOXWIDTH, "%-20.20s %-12.12s %2d/%2d %-10.10s %3s %s%3d", 
 			servernodeptr->hostname, servernodeptr->mapname, servernodeptr->numclients,
- 			servernodeptr->maxclients, servernodeptr->gamename,
-			netnames[servernodeptr->nettype], pingColor, servernodeptr->pingtime, servernodeptr->bPB ? "Yes" : "No" );
+			servernodeptr->maxclients, servernodeptr->gamename,
+			netnames[servernodeptr->nettype], pingColor, servernodeptr->pingtime );
 		j++;
 	}
 
@@ -609,14 +620,11 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
 	char*			s;
 	int				i;
 
-	// BFP - Show only BFP servers that contain "BFP", "bfp" or "bfp-old" in master servers
+	// BFP - Show only BFP servers that contain "BFP" or "bfp" in master servers
 #if BFP_SERVERS_ONLY
-	static qboolean bfpservers;
-
 	s = Info_ValueForKey( info, "game" );
-	bfpservers = ( Q_stricmp(s, "BFP") && Q_stricmp(s, "bfp") && Q_stricmp(s, "bfp-old") );
-	if ( bfpservers ) {
-		return; // Filter BFP servers by game name
+	if ( !strstr(s, "bfp") && !strstr(s, "BFP") ) {
+		return;
 	}
 #endif
 
@@ -674,16 +682,27 @@ static void ArenaServers_Insert( char* adrstr, char* info, int pingtime )
 	if( i < 0 ) {
 		i = 0;
 	}
+#if BFP_SERVERS_ONLY
+	else if( i > 7 ) {
+		i = 8;
+#else
 	else if( i > 11 ) {
 		i = 12;
+#endif
 	}
 	if( *s ) {
 		servernodeptr->gametype = i;//-1;
-		Q_strncpyz( servernodeptr->gamename, s, sizeof(servernodeptr->gamename) );
+		strcat(s, ":");
+		Q_strncpyz( servernodeptr->gamename, strcat(s, gamenames[i]), sizeof(servernodeptr->gamename) );
 	}
 	else {
 		servernodeptr->gametype = i;
+		// BFP - instead gamenames[i] in the 2nd parameter, only show "bfp-old" as name
+#if BFP_SERVERS_ONLY
+		Q_strncpyz( servernodeptr->gamename, "bfp-old", sizeof(servernodeptr->gamename) );
+#else
 		Q_strncpyz( servernodeptr->gamename, gamenames[i], sizeof(servernodeptr->gamename) );
+#endif
 	}
 }
 
@@ -1355,7 +1374,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.banner.style  	    = UI_CENTER|UI_BIGFONT; // BFP - modified ARENA SERVERS title style
 	g_arenaservers.banner.color  	    = color_white;
 
-	y = 90; // BFP - Initial vertical position, before 80
+	y = 80;
 	g_arenaservers.master.generic.type			= MTYPE_SPINCONTROL;
 	g_arenaservers.master.generic.name			= "Servers:";
 	g_arenaservers.master.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
@@ -1410,7 +1429,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.list.generic.callback		= ArenaServers_Event;
 	g_arenaservers.list.generic.x				= 72;
 	g_arenaservers.list.generic.y				= y;
-	g_arenaservers.list.width					= MAX_LISTBOXWIDTH;
+	g_arenaservers.list.width					= MAX_LISTBOXWIDTH-7; // BFP - modified list width
 	g_arenaservers.list.height					= 10; // BFP - modified list height
 	g_arenaservers.list.itemnames				= (const char **)g_arenaservers.items;
 	for( i = 0; i < MAX_LISTBOXITEMS; i++ ) {
@@ -1420,7 +1439,7 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.mappic.generic.type			= MTYPE_BITMAP;
 	g_arenaservers.mappic.generic.flags			= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
 	g_arenaservers.mappic.generic.x				= 72;
-	g_arenaservers.mappic.generic.y				= 90; // BFP - modified mappic y position
+	g_arenaservers.mappic.generic.y				= 80;
 	g_arenaservers.mappic.width					= 128;
 	g_arenaservers.mappic.height				= 96;
 	g_arenaservers.mappic.errorpic				= ART_UNKNOWNMAP;

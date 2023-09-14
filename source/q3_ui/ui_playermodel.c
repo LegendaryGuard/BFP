@@ -804,7 +804,7 @@ static void PlayerModel_MenuInit( void )
 	for (i=0; i<MAX_KIATTACKS; i++)
 	{
 		s_playermodel.kipics[i].generic.type	 = MTYPE_BITMAP;
-		s_playermodel.kipics[i].generic.flags	 = QMF_LEFT_JUSTIFY;
+		s_playermodel.kipics[i].generic.flags	 = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
 		s_playermodel.kipics[i].generic.x		 = 400;
 		s_playermodel.kipics[i].generic.y		 = y;
 		s_playermodel.kipics[i].width			 = 79;
