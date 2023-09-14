@@ -1693,6 +1693,7 @@ static void CG_SetCrosshairColor( void ) { // BFP - Crosshair color
 CG_DrawCrosshair
 =================
 */
+#define ESF_STYLE	0	// BFP - That isn't BFP, it's Earth Special Forces (ESF) style :P  (Currently disabled for the future)
 static void CG_DrawCrosshair(void) {
 	float		w, h;
 	qhandle_t	hShader;
@@ -1702,6 +1703,9 @@ static void CG_DrawCrosshair(void) {
 	trace_t		trace;
 	playerState_t	*ps;
 	vec3_t		muzzle, forward, up, start, end;
+#if ESF_STYLE
+	static float lastPositionX = 640.0f; // BFP - Last X position for traceable crosshair to move smoothly like ESF does
+#endif
 	static float lastPositionY = 480.0f; // BFP - Last Y position for traceable crosshair to move smoothly like BFP vanilla does
 
 	// BFP - TODO: BFP doesn't use the crosshair as player view, 
@@ -1761,9 +1765,15 @@ static void CG_DrawCrosshair(void) {
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
 
 	if ( cg_thirdPerson.integer >= 1 && cg_stableCrosshair.integer <= 0 ) { // BFP - Third person traceable crosshair
+#if ESF_STYLE
+		AngleVectors( cg.snap->ps.viewangles, forward, NULL, up );
+		VectorCopy( cg.snap->ps.origin, muzzle );
+		VectorMA( muzzle, cg.snap->ps.viewheight, up, muzzle );
+#else
 		AngleVectors( ps->viewangles, forward, NULL, up );
 		VectorCopy( ps->origin, muzzle );
 		VectorMA( muzzle, ps->viewheight, up, muzzle );
+#endif
 		VectorMA( muzzle, 14, forward, muzzle );
 		VectorCopy( muzzle, start );
 		VectorMA( start, 131072, forward, end );
@@ -1772,20 +1782,28 @@ static void CG_DrawCrosshair(void) {
 			return;
 		}
 
+#if !(ESF_STYLE)
 		// BFP - Keep x position in the center
 		if ( cg_fixedThirdPerson.value <= 0 ) {
 			x = 320.0f;
 		}
+#endif
 
 		CG_AdjustFrom640( &x, &y, &w, &h );
 
 		// BFP - Make the traceable crosshair move smoothly like BFP vanilla does
 		// LERP( <last (or initial) position>, <destination>, (float)(cg.frametime / 1000.00f) * <speed factor> );
+#if ESF_STYLE
+		x = LERP( lastPositionX, x, (float)(cg.frametime / 1000.00f) * 12.0f );
+#endif
 		y = LERP( lastPositionY, y, (float)(cg.frametime / 1000.00f) * 12.0f );
 
 		trap_R_DrawStretchPic( x - 0.5f * w, // 492.799987
 		y - 0.5f * h,
 		w, h, 0, 0, 1, 1, hShader );
+#if ESF_STYLE
+		lastPositionX = x; // last X position where it was "lerped"
+#endif
 		lastPositionY = y; // last Y position where it was "lerped"
 	} else { // Q3 default crosshair position
 		// x: 492.799987
