@@ -1702,7 +1702,11 @@ static void CG_DrawCrosshair(void) {
 	trace_t		trace;
 	playerState_t	*ps;
 	vec3_t		muzzle, forward, up, start, end;
-	static float lastPositionY = 240.0f; // BFP - Last Y position for traceable crosshair to move smoothly like BFP vanilla does
+	static float lastPositionY = 480.0f; // BFP - Last Y position for traceable crosshair to move smoothly like BFP vanilla does
+
+	// BFP - TODO: BFP doesn't use the crosshair as player view, 
+	// e.g. if the camera angle is 90º, the crosshair should look what's in this view,
+	// not what the player sees
 
 	ps = &cg.predictedPlayerState;
 
@@ -1766,6 +1770,11 @@ static void CG_DrawCrosshair(void) {
 		CG_Trace( &trace, start, NULL, NULL, end, cg.snap->ps.clientNum, CONTENTS_SOLID | CONTENTS_BODY );
 		if ( !CG_WorldCoordToScreenCoordFloat( trace.endpos, &x, &y ) ) {
 			return;
+		}
+
+		// BFP - Keep x position in the center
+		if ( cg_fixedThirdPerson.value <= 0 ) {
+			x = 320.0f;
 		}
 
 		CG_AdjustFrom640( &x, &y, &w, &h );
