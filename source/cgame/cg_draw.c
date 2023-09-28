@@ -1782,21 +1782,16 @@ static void CG_DrawCrosshair(void) {
 			return;
 		}
 
-#if !(ESF_STYLE)
-		// BFP - Keep x position in the center
-		if ( cg_fixedThirdPerson.value <= 0 ) {
-			x = 320.0f;
-		}
-#endif
-
 		CG_AdjustFrom640( &x, &y, &w, &h );
 
 		// BFP - Make the traceable crosshair move smoothly like BFP vanilla does
 		// LERP( <last (or initial) position>, <destination>, (float)(cg.frametime / 1000.00f) * <speed factor> );
 #if ESF_STYLE
-		x = LERP( lastPositionX, x, (float)(cg.frametime / 1000.00f) * 12.0f );
-#endif
+		x = LERP( lastPositionX, x, (float)(cg.frametime / 1000.00f) * 18.0f );
+		y = LERP( lastPositionY, y, (float)(cg.frametime / 1000.00f) * 18.0f );
+#else
 		y = LERP( lastPositionY, y, (float)(cg.frametime / 1000.00f) * 12.0f );
+#endif
 
 		trap_R_DrawStretchPic( x - 0.5f * w, // 492.799987
 		y - 0.5f * h,

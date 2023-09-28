@@ -229,26 +229,21 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		focusDist;
 	float		forwardScale, sideScale;
 	// BFP - Camera setup variables
-	vec3_t		overrideAngles;
 	vec3_t		overrideOrg;
 	float		cgAngle, cgHeight, cgRange;
 
 	// BFP - Camera setup
-	cgAngle = cg_thirdPersonAngle.value;
-	cgHeight = cg_thirdPersonHeight.value;
-	cgRange = cg_thirdPersonRange.value;
-	if ( cg_fixedThirdPerson.value >= 1 ) { // BFP - Fixed third person camera
-		cgAngle = 0.0f;
+	cgAngle  =  cg_thirdPersonAngle.value;
+	cgHeight =  cg_thirdPersonHeight.value;
+	cgRange  =  cg_thirdPersonRange.value;
+	if ( cg_fixedThirdPerson.integer >= 1 ) { // BFP - Fixed third person camera
+		cgAngle  =   0.0f;
 		cgHeight = -60.0f;
-		cgRange = 110.0f;
+		cgRange  = 110.0f;
 	}
-	VectorCopy( cg.refdefViewAngles, overrideAngles );
 	VectorCopy( cg.refdef.vieworg, overrideOrg );
 
-	// BFP - TODO: Low priority, make the non-fixed position camera the same as fixed third person ones (cg_fixedThirdPerson 0), 
-	// but using custom angles (cg_thirdPersonAngle). Remember, view variable is used for the trace on fixed third person
-
-	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
+	// cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight; // BFP - BFP camera position doesn't use that to move to player's height
 
 	VectorCopy( cg.refdefViewAngles, focusAngles );
 
@@ -271,45 +266,45 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	VectorCopy( cg.refdef.vieworg, view );
 
-	view[2] += cgHeight + 94;
 	// view[2] += 8; // Q3 default view height value
 
 	// cg.refdefViewAngles[PITCH] *= 0.5;
 
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 
+	// BFP - Weirdly, on BFP, the default cg_thirdPersonHeight cvar value is -60, needs to focus correctly the height view decreasing to -86 (as the result of this logic)
+	VectorMA( overrideOrg, -cgHeight - 26, up, overrideOrg );
+
+// BFP - not used
+#if 0
 	forwardScale = cos( cgAngle / 180 * M_PI );
 	sideScale = sin( cgAngle / 180 * M_PI );
 
-	// BFP - Up view setup for the trace on fixed third person camera
-	if ( cg_fixedThirdPerson.value <= 0 ) {
-		VectorMA( view, -cgRange * forwardScale, forward, view );
-		VectorMA( view, -cgRange * sideScale, right, view );
-		// BFP - the trace on non-fixed third person camera isn't doing as should, disabled for some reason 
-		// VectorMA( view, cg_thirdPersonHeight.value + 94, up, overrideOrg ); // weird thing on BFP, the default cg_thirdPersonHeight cvar value is -60, needs to focus correctly the height view adding 94
-	} else {
-		VectorMA( view, cgRange * forwardScale, forward, view );
-		VectorMA( view, -(cgHeight + 94), up, view ); // weird thing on BFP, the default cg_thirdPersonHeight cvar value is -60, needs to focus correctly the height view adding 94
-	}
+	VectorMA( view, -cgRange * forwardScale, forward, view );
+	VectorMA( view, -cgRange * sideScale, right, view );
+#endif
+
 	// trace a ray from the origin to the viewpoint to make sure the view isn't
 	// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
 
-	// BFP - cg_cameraMode cvar doesn't exist
-	// if (!cg_cameraMode.integer) {
+	// BFP - cg_cameraMode cvar to detect if it's disabled doesn't exist
+	// That traces the camera pivot
+	CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
+	if ( trace.fraction != 1.0 ) {
+		// BFP - Use the vector scale to trace something solid and add endpos
+		VectorScale( trace.plane.normal, cgRange, view );
+		VectorAdd( trace.endpos, view, cg.refdef.vieworg );
+
+		view[2] += (1.0 - trace.fraction) * 32;
+		// try another trace to this position, because a tunnel may have the ceiling
+		// close enogh that this is poking out
+
 		CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
+		VectorCopy( trace.endpos, view );
+	}
 
-		if ( trace.fraction != 1.0 ) {
-			VectorCopy( trace.endpos, view );
-
-			view[2] += (1.0 - trace.fraction) * 32;
-			// try another trace to this position, because a tunnel may have the ceiling
-			// close enogh that this is poking out
-
-			CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
-			VectorCopy( trace.endpos, view );
-		}
-	// }
-
+// BFP - not used
+#if 0
 	VectorCopy( view, cg.refdef.vieworg );
 
 	// select pitch to look at focus point from vieword
@@ -319,42 +314,23 @@ static void CG_OffsetThirdPersonView( void ) {
 		focusDist = 1;	// should never happen
 	}
 
-// BFP - not used
-#if 0
 	cg.refdefViewAngles[PITCH] = -180 / M_PI * atan2( focusPoint[2], focusDist );
 	cg.refdefViewAngles[YAW] -= cg_thirdPersonAngle.value;
 #endif
 
-	// BFP - trace when near to something solid
-	CG_Trace( &trace, view, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
-	if ( trace.fraction != 1.0f ) {
-		VectorCopy( trace.endpos, cg.refdef.vieworg );
-
-		cg.refdef.vieworg[2] += ( 1.0f - trace.fraction ) * 32;
-
-		CG_Trace( &trace, view, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
-		VectorCopy( trace.endpos, cg.refdef.vieworg );
-	}
-
 	// BFP - Camera setup
-	// cg.refdefViewAngles[PITCH] = focusAngles[PITCH];
-	cg.refdefViewAngles[YAW] -= cgAngle;
+	focusAngles[YAW] -= cgAngle;
 
-	// BFP - Fixed third person camera
-	if ( cg_fixedThirdPerson.value >= 1 ) {	
-		VectorCopy( overrideAngles, cg.refdefViewAngles );
-		// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
-		AngleVectors( cg.refdefViewAngles, forward, NULL, up );
-	} else {
-		AngleVectors( cg.refdefViewAngles, forward, NULL, NULL );
-	}
+	VectorCopy( focusAngles, cg.refdefViewAngles );
+	// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
+	AngleVectors( cg.refdefViewAngles, forward, NULL, NULL );
+
 	VectorMA( overrideOrg, cg.predictedPlayerState.viewheight, up, overrideOrg );
 	VectorMA( overrideOrg, FOCUS_DISTANCE, forward, focusPoint );
-	VectorMA( overrideOrg, cgHeight + 94, up, overrideOrg ); // weird thing on BFP, the default cg_thirdPersonHeight cvar value is -60, needs to focus correctly the height view adding 94
-	VectorMA( overrideOrg, 0, right, cg.refdef.vieworg ); // set to 0 to center player's view
+	VectorMA( overrideOrg, 0, right, cg.refdef.vieworg ); // set the slide to 0 to center player's view
 	VectorMA( cg.refdef.vieworg, -cgRange, forward, cg.refdef.vieworg );
 
-	// BFP - trace when being near to something solid
+	// BFP - trace the camera position when being near to something solid
 	CG_Trace( &trace, view, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
 	if ( trace.fraction != 1.0f ) {
 		VectorCopy( trace.endpos, cg.refdef.vieworg );
