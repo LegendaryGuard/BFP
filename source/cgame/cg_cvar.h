@@ -64,6 +64,7 @@ CG_CVAR( cg_footsteps, "cg_footsteps", "1", CVAR_CHEAT )
 CG_CVAR( cg_tracerChance, "cg_tracerchance", "0.4", CVAR_CHEAT )
 CG_CVAR( cg_tracerWidth, "cg_tracerwidth", "1", CVAR_CHEAT )
 CG_CVAR( cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT )
+CG_CVAR( cg_flytilt, "cg_flytilt", "1", CVAR_ARCHIVE ) // BFP - Fly tilt
 CG_CVAR( cg_thirdPersonRange, "cg_thirdPersonRange", "110", CVAR_ARCHIVE ) // BFP
 CG_CVAR( cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", CVAR_ARCHIVE ) // BFP
 CG_CVAR( cg_thirdPersonHeight, "cg_thirdPersonHeight", "-60", CVAR_ARCHIVE ) // BFP - Camera height

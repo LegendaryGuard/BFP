@@ -53,7 +53,6 @@
 - cg_explosionRing [0/1]: turn on or off the explosion ring.
 - cg_particles [0/1]: turn on or off particle effects.
 - cg_playHitSound [0/1]: turn on or off the q3 hit "ping".
-- cg_flytilt [0/1]: toggle the tilting during flight.
 
 
 ## COMPLETED:
@@ -66,6 +65,7 @@
 - [x] ~~cg_musicUnpacked~~
 - [x] ~~cg_crosshairColor~~
 - [x] ~~cg_crosshairHealth~~
+- [x] ~~cg_flytilt~~
 
 #### Cvar Gametypes:
 

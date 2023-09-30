@@ -230,16 +230,22 @@ static void CG_OffsetThirdPersonView( void ) {
 	float		forwardScale, sideScale;
 	// BFP - Camera setup variables
 	vec3_t		overrideOrg;
-	float		cgAngle, cgHeight, cgRange;
+	float		camAngle, camHeight, camRange;
+	// BFP - Fly tilt
+	int			cmdNum;
+	usercmd_t	cmd;
+	// BFP - Last angled for fly tilt angle to move smoothly similar to BFP vanilla
+	static float	lastAngled = 0.0f, lastRightAngled = 0.0f, lastUpAngled = 0.0f;
+	float		rightAngled, upAngled;
 
 	// BFP - Camera setup
-	cgAngle  =  cg_thirdPersonAngle.value;
-	cgHeight =  cg_thirdPersonHeight.value;
-	cgRange  =  cg_thirdPersonRange.value;
+	camAngle  =  cg_thirdPersonAngle.value;
+	camHeight =  cg_thirdPersonHeight.value;
+	camRange  =  cg_thirdPersonRange.value;
 	if ( cg_fixedThirdPerson.integer >= 1 ) { // BFP - Fixed third person camera
-		cgAngle  =   0.0f;
-		cgHeight = -60.0f;
-		cgRange  = 110.0f;
+		camAngle  =   0.0f;
+		camHeight = -60.0f;
+		camRange  = 110.0f;
 	}
 	VectorCopy( cg.refdef.vieworg, overrideOrg );
 
@@ -272,16 +278,16 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	AngleVectors( cg.refdefViewAngles, forward, right, up );
 
-	// BFP - cg_thirdPersonHeight setup
-	VectorMA( overrideOrg, -cgHeight, up, overrideOrg );
+	// BFP - Camera height setup
+	VectorMA( overrideOrg, -camHeight, up, overrideOrg );
 
-	forwardScale = cos( cgAngle / 180 * M_PI );
-	sideScale = sin( cgAngle / 180 * M_PI );
+	forwardScale = cos( camAngle / 180 * M_PI );
+	sideScale = sin( camAngle / 180 * M_PI );
 
 // BFP - unused
 #if 0
-	VectorMA( view, -cgRange * forwardScale, forward, view );
-	VectorMA( view, -cgRange * sideScale, right, view );
+	VectorMA( view, -camRange * forwardScale, forward, view );
+	VectorMA( view, -camRange * sideScale, right, view );
 #endif
 
 	// trace a ray from the origin to the viewpoint to make sure the view isn't
@@ -292,7 +298,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
 	if ( trace.fraction != 1.0 ) {
 		// BFP - Use the vector scale to trace something solid and add endpos
-		VectorScale( trace.plane.normal, cgRange, view );
+		VectorScale( trace.plane.normal, camRange, view );
 		VectorAdd( trace.endpos, view, cg.refdef.vieworg );
 
 		view[2] += (1.0 - trace.fraction) * 32;
@@ -319,17 +325,44 @@ static void CG_OffsetThirdPersonView( void ) {
 #endif
 
 	// BFP - Camera setup
-	focusAngles[YAW] -= cgAngle;
+	focusAngles[YAW] -= camAngle;
+
+	// BFP - Fly tilt
+	// Get the pressed keys to move left or right
+	cmdNum = trap_GetCurrentCmdNumber();
+	trap_GetUserCmd( cmdNum, &cmd );
+
+	focusAngles[ROLL] = LERP( lastAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
+	rightAngled = LERP( lastRightAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
+	upAngled = LERP( lastUpAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
+
+	if ( cg_flytilt.integer >= 1 
+	&& ( cg.predictedPlayerState.pm_flags & PMF_FLYING )
+	&& ( cg.predictedPlayerState.eFlags & EF_AURA ) && &cmd ) {
+		if ( cmd.rightmove < 0 ) { // Left
+			focusAngles[ROLL] = LERP( lastAngled, -20.0f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			rightAngled = LERP( lastRightAngled, focusAngles[ROLL] - 0.55f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			upAngled = LERP( lastUpAngled, -acos( focusAngles[ROLL] / 180 * M_PI ) - 1.7f, (float)(cg.frametime / 1000.00f) * 15.0f );
+		} else if ( cmd.rightmove > 0 ) { // Right
+			focusAngles[ROLL] = LERP( lastAngled, 20.0f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			rightAngled = LERP( lastRightAngled, focusAngles[ROLL] - 0.55f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			upAngled = LERP( lastUpAngled, -acos( focusAngles[ROLL] / 180 * M_PI ) - 1.7f, (float)(cg.frametime / 1000.00f) * 15.0f );
+		}
+	}
+	// Last roll where it was "lerped"
+	lastAngled = focusAngles[ROLL];
+	lastRightAngled = rightAngled;
+	lastUpAngled = upAngled;
 
 	VectorCopy( focusAngles, cg.refdefViewAngles );
+	// VectorCopy( focusAngles, cg.predictedPlayerState.viewangles ); // For player model, doesn't make sense though :P
 
-	VectorMA( overrideOrg, -cgRange * sideScale, right, cg.refdef.vieworg );
-	VectorMA( cg.refdef.vieworg, -cgRange * forwardScale, forward, cg.refdef.vieworg );
+	// BFP - NOTE: Applying angles to height and slide (up and right vectors), while rolling with fly tilt, is an odd case, BFP has something that handles up and right vectors  (· ·') *curiosity sweat*
+	VectorMA( overrideOrg, -camRange * sideScale + rightAngled, right, cg.refdef.vieworg );
+	VectorMA( cg.refdef.vieworg, -camRange * forwardScale, forward, cg.refdef.vieworg );
+	VectorMA( cg.refdef.vieworg, upAngled, up, cg.refdef.vieworg );
 
-	// Apply offset for thirdperson angle, if it's present in LOCAL(!) coordinate system
-	AngleVectors( cg.refdefViewAngles, forward, right, up );
-
-	// BFP - trace the camera position when being near to something solid
+	// BFP - Trace the camera position when being near to something solid
 	CG_Trace( &trace, view, mins, maxs, cg.refdef.vieworg, cg.predictedPlayerState.clientNum, MASK_SOLID );
 	if ( trace.fraction != 1.0f ) {
 		VectorCopy( trace.endpos, cg.refdef.vieworg );
