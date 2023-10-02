@@ -117,6 +117,9 @@ void CG_Draw3DModel( float x, float y, float w, float h, qhandle_t model, qhandl
 	AnglesToAxis( angles, ent.axis );
 	VectorCopy( origin, ent.origin );
 	ent.hModel = model;
+	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Yrgol Roxor easter egg
+		ent.hModel = 0; // 0: no head model display, display pivot only
+	}
 	ent.customSkin = skin;
 	ent.renderfx = RF_NOSHADOW;		// no stencil shadows
 

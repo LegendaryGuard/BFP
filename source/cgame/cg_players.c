@@ -2272,14 +2272,14 @@ void CG_Player( centity_t *cent ) {
 		return;
 	}
 	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Yrgol Roxor easter egg
-		head.hModel = 0;
+		head.hModel = 0; // 0: no head model display, display pivot only
 	}
 
 	// BFP - First person vis mode doesn't have head model to be displayed
 	if ( cg_drawOwnModel.integer >= 1 && cg_thirdPerson.integer <= 0
 		&& cent->currentState.number == cg.snap->ps.clientNum
 		&& !( cent->currentState.eFlags & EF_DEAD ) ) {
-		head.hModel = 0;
+		head.hModel = 2; // 2: no head model display and no pivot display
 	}
 	head.customSkin = ci->headSkin;
 
