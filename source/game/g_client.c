@@ -1200,7 +1200,7 @@ void ClientSpawn(gentity_t *ent) {
 	}
 
 	// don't allow full run speed for a bit
-	client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
+	// client->ps.pm_flags |= PMF_TIME_KNOCKBACK; // BFP - No handling PMF_TIME_KNOCKBACK
 	client->ps.pm_time = 100;
 
 	client->respawnTime = level.time;

@@ -143,25 +143,32 @@ typedef enum {
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
 #define PMF_FLYING 			4 		// BFP - Flight
-#define	PMF_BACKWARDS_JUMP	8		// go into backwards land
+// BFP - PMF_BACKWARDS_JUMP is unused
+// #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
+#define	PMF_FLIGHT_LANDING	8		// BFP - Landing after disabling flight
 #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
-#define	PMF_TIME_LAND		32		// pm_time is time before rejump
-#define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
+// BFP - PMF_TIME_LAND is unused
+// #define	PMF_TIME_LAND		32		// pm_time is time before rejump
+#define PMF_FALLING			32		// BFP - Falling status
+// BFP - PMF_TIME_KNOCKBACK is unused
+// #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
 #define PMF_KI_BOOST		128		// BFP - Using Ki
 #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
 // BFP - no hook
 // #define PMF_GRAPPLE_PULL	2048	// pull towards grapple location
+#define PMF_HITSTUN			2048	// BFP - Hit stun
 #define PMF_FOLLOW			4096	// spectate following another player
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
+#define PMF_KI_CHARGE		8192	// BFP - Ki charge
 // BFP - TODO: Reuse the following flag (used on Team Arena), change name if it'll be used
 #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
-#define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
+#define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP) // BFP: before: (PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
 
 #define	MAXTOUCH	32
 typedef struct {
@@ -174,8 +181,6 @@ typedef struct {
 	int			debugLevel;			// if set, diagnostic output will be printed
 	qboolean	noFootsteps;		// if the game is setup for no footsteps by the server
 	qboolean	gauntletHit;		// true if a gauntlet attack would actually hit something
-	qboolean	isFlying; 			// BFP - Flight
-	//qboolean	hitStunReceived; 	// BFP - TODO: Hit stun
 
 	int			framecount;
 

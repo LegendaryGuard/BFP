@@ -2066,21 +2066,19 @@ CG_DrawHitStun
 */
 static void CG_DrawHitStun( void ) { // BFP - Hit stun bottom centerprint
 	const char	*s;
-	int			w;
-	playerState_t	*ps;
-	int			value;
+	int			w, t;
 
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
-	if ( cg.predictedPlayerState.stats[STAT_KI] <= 0 ) {
+	// 900 is added to adjust the timer calculated in milliseconds
+	t = ( 900 + cg.predictedPlayerState.pm_time ) / 1000;
+	if ( t > 0 && ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) ) {
 		s = "Stun";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-	value = 0; // BFP - TODO: hit stun time
-	UI_DrawProportionalString( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ), 
+	UI_DrawProportionalString( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ) + 23, 
 		s, UI_SMALLFONT, colorWhite );
-	// BFP - TODO: Draw the time (seconds)
-	if ( value > 0 ) {
-		CG_DrawField ( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 4 ), 3, value );
+	if ( t > 0 && ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) ) {
+		CG_DrawField ( 320 - w - 16, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 4 ) + 13, 3, t );
 	}
 }
 

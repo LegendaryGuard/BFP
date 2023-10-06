@@ -506,7 +506,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_FALL_MEDIUM:
 		case EV_FALL_FAR:
 			// BFP - There's no crash land damage when the players fell in the ground
-			/*
+#if 0
 			if ( ent->s.eType != ET_PLAYER ) {
 				break;		// not in the player model
 			}
@@ -521,7 +521,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			VectorSet (dir, 0, 0, 1);
 			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
 			G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
-			*/
+#endif
 			break;
 
 		case EV_FIRE_WEAPON:
@@ -728,9 +728,10 @@ void ClientThink_real( gentity_t *ent ) {
 	client->ps.speed = g_speed.value;
 
 	// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
-	// BFP - if BUTTON_KI_USE > speed	
-	if ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
-	|| ( ent->client->ps.pm_flags & PMF_KI_BOOST ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
+	// BFP - If BUTTON_KI_USE > speed
+	if ( !( ent->client->ps.pm_flags & PMF_HITSTUN )
+	&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
+	|| ( ent->client->ps.pm_flags & PMF_KI_BOOST ) ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
 		ent->client->ps.speed *= 2.5;
 		ent->client->ps.eFlags |= EF_AURA;
 	} else {
@@ -738,7 +739,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 
 	// BFP - Ki Charge
-	if ( ucmd->buttons & BUTTON_KI_CHARGE ) {
+	if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && ent->client->ps.pm_time <= 0 ) {
 		client->ps.eFlags |= EF_AURA;
 	}
 

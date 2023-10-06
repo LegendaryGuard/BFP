@@ -43,7 +43,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MFL_SWIMMING					4		//bot is swimming
 #define MFL_AGAINSTLADDER				8		//bot is against a ladder
 #define MFL_WATERJUMP					16		//bot is waterjumping
-#define MFL_TELEPORTED					32		//bot is being teleported
+// BFP - MFL_TELEPORTED is unused
+// #define MFL_TELEPORTED					32		//bot is being teleported
 #define MFL_GRAPPLEPULL					64		//bot is being pulled by the grapple
 #define MFL_ACTIVEGRAPPLE				128		//bot is using the grapple hook
 #define MFL_GRAPPLERESET				256		//bot has reset the grapple

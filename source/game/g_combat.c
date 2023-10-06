@@ -730,7 +730,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 				t = 200;
 			}
 			targ->client->ps.pm_time = t;
-			targ->client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
+			// targ->client->ps.pm_flags |= PMF_TIME_KNOCKBACK; // BFP - No handling PMF_TIME_KNOCKBACK
 		}
 	}
 
