@@ -1598,7 +1598,8 @@ Cmd_BFP_Fly_f
 void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		if ( !( ent->client->ps.pm_flags & PMF_FLYING ) ) {
+		// do not play the sound in the charging status
+		if ( !( ent->client->ps.pm_flags & PMF_FLYING ) && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
 			G_AddEvent( ent, EV_JUMP, 0 ); // play jump sound
 		}
 		ent->client->ps.pm_flags ^= PMF_FLYING;

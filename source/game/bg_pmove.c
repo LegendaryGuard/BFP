@@ -48,6 +48,9 @@ float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
 
+// BFP - Macro for jump handling, since the code looked repetitive, so this macro makes the code a bit shorter
+#define FORCEJUMP_ANIM_HANDLING() ( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB )
+
 /*
 ===============
 PM_AddEvent
@@ -379,18 +382,16 @@ static qboolean PM_CheckJump( void ) {
 	pml.groundPlane = qfalse;		// jumping away
 	pml.walking = qfalse;
 	pm->ps->pm_flags |= PMF_JUMP_HELD;
+	pm->ps->pm_flags |= PMF_NEARGROUND; // BFP - Handle PMF_NEARGROUND, avoid checking if there's ground at that point
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
 	PM_AddEvent( EV_JUMP );
 
-	if ( pm->cmd.forwardmove >= 0 ) {
-		PM_ForceLegsAnim( LEGS_JUMP );
-		// pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP; // BFP - No PMF_BACKWARDS_JUMP handling
-	} else {
-		PM_ForceLegsAnim( LEGS_JUMPB );
-		// pm->ps->pm_flags |= PMF_BACKWARDS_JUMP; // BFP - No PMF_BACKWARDS_JUMP handling
-	}
+	// BFP - No PMF_BACKWARDS_JUMP handling (code removed)
+	FORCEJUMP_ANIM_HANDLING();
+
+	PM_ContinueTorsoAnim( TORSO_STAND );
 
 	return qtrue;
 }
@@ -532,6 +533,18 @@ static void PM_WaterMove( void ) {
 
 		VectorNormalize(pm->ps->velocity);
 		VectorScale(pm->ps->velocity, vel, pm->ps->velocity);
+	}
+
+	// BFP - Water animation handling, uses flying animation in that case
+	if ( pm->cmd.forwardmove > 0 ) {
+		PM_ContinueTorsoAnim( TORSO_FLYA );
+		PM_ContinueLegsAnim( LEGS_FLYA );
+	} else if ( pm->cmd.forwardmove < 0 ) {
+		PM_ContinueTorsoAnim( TORSO_FLYB );
+		PM_ContinueLegsAnim( LEGS_FLYB );
+	} else {
+		PM_ContinueTorsoAnim( TORSO_STAND );
+		PM_ContinueLegsAnim( LEGS_FLYIDLE );
 	}
 
 	PM_SlideMove( qfalse );
@@ -975,18 +988,27 @@ static void PM_CrashLand( void ) {
 	// SURF_NODAMAGE is used for bounce pads where you don't ever
 	// want to take damage or play a crunch sound
 	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE) )  {
-		if ( delta > 180 ) { // BFP - Before Q3 default value (60), so the fall in BFP is further
+		if ( delta > 180 ) { // BFP - Before Q3 default value (60), the far fall in BFP is deeper
 			PM_AddEvent( EV_FALL_FAR );
-		} /* else if ( delta > 40 ) { // BFP - There's no medium fall on BFP
+		} 
+		// BFP - There's no medium fall on BFP
+#if 0
+		else if ( delta > 40 ) {
 			// this is a pain grunt, so don't play it if dead
 			if ( pm->ps->stats[STAT_HEALTH] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
 			}
-		} */ else if ( delta > 7 ) {
+		}
+#endif
+		else if ( delta > 7 ) {
 			PM_AddEvent( EV_FALL_SHORT );
-		} else {
+		}
+		// BFP - No footstep sounds
+#if 0 
+		else {
 			PM_AddEvent( PM_FootstepForSurface() );
 		}
+#endif
 	}
 
 	// start footstep cycle over
@@ -1076,20 +1098,12 @@ static void PM_GroundTraceMissed( void ) {
 
 		pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 		if ( trace.fraction == 1.0 ) {
-			if ( pm->cmd.forwardmove >= 0 ) {
-				PM_ForceLegsAnim( LEGS_JUMP );
-				// pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP; // BFP - No PMF_BACKWARDS_JUMP handling
-			} else {
-				PM_ForceLegsAnim( LEGS_JUMPB );
-				// pm->ps->pm_flags |= PMF_BACKWARDS_JUMP; // BFP - No PMF_BACKWARDS_JUMP handling
-			}
+			// BFP - No PMF_BACKWARDS_JUMP handling (code removed)
+			FORCEJUMP_ANIM_HANDLING();
 		}
 	}
 
-	pm->ps->pm_flags |= PMF_FALLING; // BFP - Enable PMF_FALLING flag
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
-	pml.groundPlane = qfalse;
-	pml.walking = qfalse;
 }
 
 
@@ -1114,6 +1128,11 @@ static void PM_GroundTrace( void ) {
 		return;
 	}
 
+	// BFP - No ground trace handling in the water
+	if ( pm->waterlevel > 1 ) {
+		return;
+	}
+
 	// do something corrective if the trace starts in a solid...
 	if ( trace.allsolid ) {
 		if ( !PM_CorrectAllSolid(&trace) )
@@ -1132,18 +1151,6 @@ static void PM_GroundTrace( void ) {
 	if ( pm->ps->velocity[2] > 0 && DotProduct( pm->ps->velocity, trace.plane.normal ) > 10 ) {
 		if ( pm->debugLevel ) {
 			Com_Printf("%i:kickoff\n", c_pmove);
-		}
-		// BFP - Check if the player is using PMF_FALLING flag in this status
-		if ( pm->ps->pm_flags & PMF_FALLING ) {
-			// go into jump animation
-			if ( pm->cmd.forwardmove >= 0 ) {
-				PM_ForceLegsAnim( LEGS_JUMP );
-				// pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP; // BFP - No PMF_BACKWARDS_JUMP handling
-			} else {
-				PM_ForceLegsAnim( LEGS_JUMPB );
-				// pm->ps->pm_flags |= PMF_BACKWARDS_JUMP; // BFP - No PMF_BACKWARDS_JUMP handling
-			}
-			pm->ps->pm_flags &= ~PMF_FALLING;
 		}
 
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
@@ -1175,7 +1182,8 @@ static void PM_GroundTrace( void ) {
 		pm->ps->pm_time = 0;
 	}
 
-	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
+	// BFP - Handle when the player isn't flying
+	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE && !( pm->ps->pm_flags & PMF_FLYING ) ) {
 		// just hit the ground
 		if ( pm->debugLevel ) {
 			Com_Printf("%i:Land\n", c_pmove);
@@ -1183,20 +1191,24 @@ static void PM_GroundTrace( void ) {
 		
 		PM_CrashLand();
 
+		// BFP - Handling the PM flag when stepping the ground
+		pm->ps->pm_flags &= ~PMF_NEARGROUND;
+
+		// BFP - PMF_TIME_LAND doesn't exist and it doesn't have any handle checks
+#if 0
 		// don't do landing time if we were just going down a slope
-		if ( pml.previous_velocity[2] < -200 && !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+		if ( pml.previous_velocity[2] < -200 ) {
 			// don't allow another jump for a little while
-			// BFP - PMF_TIME_LAND doesn't exist and it doesn't have any handle checks
-			// pm->ps->pm_flags |= PMF_TIME_LAND;
-			pm->ps->pm_flags |= PMF_FALLING; // BFP - Enable PMF_FALLING flag
+			pm->ps->pm_flags |= PMF_TIME_LAND;
 			pm->ps->pm_time = 250;
 		}
+#endif
 	}
 
 	pm->ps->groundEntityNum = trace.entityNum;
 
 	// don't reset the z velocity for slopes
-//	pm->ps->velocity[2] = 0;
+	pm->ps->velocity[2] = 0; // BFP - Avoid jumping unintentionally when that happens
 
 	PM_AddTouchEnt( trace.entityNum );
 }
@@ -1343,13 +1355,20 @@ static void PM_Footsteps( void ) {
 
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
 
-		// if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
-		// 	PM_ContinueLegsAnim( LEGS_IDLECR );
-		// }
+		// BFP - Unused
+#if 0
+		if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
+			PM_ContinueLegsAnim( LEGS_IDLECR );
+		}
+#endif
+
+		// BFP - Unused
+#if 0
 		// airborne leaves position in cycle intact, but doesn't advance
 		if ( pm->waterlevel > 1 ) {
 			PM_ContinueLegsAnim( LEGS_SWIM );
 		}
+#endif
 		return;
 	}
 
@@ -1363,6 +1382,8 @@ static void PM_Footsteps( void ) {
 			} else if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
 				PM_ContinueLegsAnim( LEGS_IDLE );
 			}
+		} else if ( !( pm->ps->pm_flags & PMF_DUCKED ) ) { // BFP - Handle the legs while it isn't doing nothing
+			PM_ContinueLegsAnim( LEGS_IDLE );
 		}
 		return;
 	}
@@ -1372,10 +1393,14 @@ static void PM_Footsteps( void ) {
 
 	if ( pm->ps->pm_flags & PMF_DUCKED ) {
 		bobmove = 0.5;	// ducked characters bob much faster
-		if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
-			PM_ContinueLegsAnim( LEGS_WALKCR ); // BFP - before LEGS_BACKCR
-		} else {
-			PM_ContinueLegsAnim( LEGS_WALKCR );
+		// BFP - Replaced PMF_BACKWARDS_RUN handling
+		if ( pml.groundTrace.contents & CONTENTS_SOLID ) {
+			if ( pm->cmd.forwardmove < 0 ) {
+				PM_ContinueLegsAnim( LEGS_WALKCR ); // BFP - before LEGS_BACKCR
+			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
+				PM_ContinueLegsAnim( LEGS_WALKCR );
+			}
+			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
 		}
 		// ducked characters never play footsteps
 	/*
@@ -1389,22 +1414,26 @@ static void PM_Footsteps( void ) {
 		PM_ContinueLegsAnim( LEGS_BACK );
 	*/
 	} else {
-		if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
+		if ( !( pm->cmd.buttons & BUTTON_WALKING ) && ( pml.groundTrace.contents & CONTENTS_SOLID ) ) {
 			bobmove = 0.4f;	// faster speeds bob faster
-			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
+			// BFP - Replaced PMF_BACKWARDS_RUN handling
+			if ( pm->cmd.forwardmove < 0 ) {
 				PM_ContinueLegsAnim( LEGS_BACK );
-			} else {
+				PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
+			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_RUN );
-				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Torso run animation
+				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Keep the torso
 			}
 			footstep = qtrue;
-		} else {
+		} else if ( pml.groundTrace.contents & CONTENTS_SOLID ) {
 			bobmove = 0.3f;	// walking bobs slow
-			if ( pm->ps->pm_flags & PMF_BACKWARDS_RUN ) {
+			// BFP - Replaced PMF_BACKWARDS_RUN handling
+			if ( pm->cmd.forwardmove < 0 ) {
 				PM_ContinueLegsAnim( LEGS_BACK );
-			} else {
+			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_WALK );
 			}
+			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
 		}
 	}
 
@@ -1491,7 +1520,8 @@ static void PM_BeginWeaponChange( int weapon ) {
 	PM_AddEvent( EV_CHANGE_WEAPON );
 	pm->ps->weaponstate = WEAPON_DROPPING;
 	pm->ps->weaponTime += 200;
-	PM_StartTorsoAnim( TORSO_ATTACK0_PREPARE ); // BFP - before TORSO_DROP
+	// BFP - Non-existant animation
+	// PM_StartTorsoAnim( TORSO_DROP );
 }
 
 
@@ -1515,7 +1545,8 @@ static void PM_FinishWeaponChange( void ) {
 	pm->ps->weapon = weapon;
 	pm->ps->weaponstate = WEAPON_RAISING;
 	pm->ps->weaponTime += 250;
-	PM_StartTorsoAnim( TORSO_ATTACK0_PREPARE ); // BFP - before TORSO_RAISE
+	// BFP - Non-existant animation
+	// PM_StartTorsoAnim( TORSO_RAISE );
 }
 
 
@@ -1526,11 +1557,37 @@ PM_TorsoAnimation
 ==============
 */
 static void PM_TorsoAnimation( void ) {
+	// BFP - NOTE: That function could be called as "PM_NearGround", 
+	// here is tracing something similar to PM_GroundTraceMissed
+	trace_t		trace;
+	vec3_t		point;
 
-	// BFP - TODO: torso animations may not be needed here,
-	// possibly weaponstates could be replaced/removed
-	// or this function could be replaced/removed
+	// BFP - TODO: Melee, block and ki attack animation handling (these are for torso animations)
 
+	// BFP - No ground trace handling in the water
+	if ( pm->waterlevel > 1 ) {
+		return;
+	}
+
+	VectorCopy( pm->ps->origin, point );
+	point[2] -= 64;
+
+	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
+	pml.groundTrace = trace;
+
+	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+		pm->ps->pm_flags |= PMF_NEARGROUND;
+		pm->ps->pm_flags &= ~PMF_FALLING;
+		FORCEJUMP_ANIM_HANDLING();
+		PM_ContinueTorsoAnim( TORSO_STAND );
+	}
+
+	// If idling, keep the torso
+	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
+		PM_ContinueTorsoAnim( TORSO_STAND );
+	}
+
+#if 0
 	if ( pm->ps->weaponstate == WEAPON_READY ) {
 		if ( pm->ps->weapon == WP_GAUNTLET ) {
 			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - before TORSO_STAND2
@@ -1539,6 +1596,7 @@ static void PM_TorsoAnimation( void ) {
 		}
 		return;
 	}
+#endif
 }
 
 /*
@@ -1551,37 +1609,33 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 	if ( ( pm->ps->pm_flags & PMF_FLYING ) && ( pm->ps->pm_time <= 0 ) ) {
 
 		// make sure to handle the PMF flag
-		pm->ps->pm_flags |= PMF_FLIGHT_LANDING;
+		pm->ps->pm_flags &= ~PMF_FALLING;
 
 		if ( pm->cmd.forwardmove > 0 ) {
-			PM_StartTorsoAnim( TORSO_FLYA );
-			PM_ForceLegsAnim( LEGS_FLYA );
-			PM_StartLegsAnim( LEGS_FLYA );
+			PM_ContinueTorsoAnim( TORSO_FLYA );
+			PM_ContinueLegsAnim( LEGS_FLYA );
 		} else if ( pm->cmd.forwardmove < 0 ) {
-			PM_StartTorsoAnim( TORSO_FLYB );
-			PM_ForceLegsAnim( LEGS_FLYB );
-			PM_StartLegsAnim( LEGS_FLYB );
+			PM_ContinueTorsoAnim( TORSO_FLYB );
+			PM_ContinueLegsAnim( LEGS_FLYB );
 		} else {
-			// PM_ForceLegsAnim( LEGS_FLYIDLE );
+			PM_ContinueTorsoAnim( TORSO_STAND );
 			PM_ContinueLegsAnim( LEGS_FLYIDLE );
 		}
 		return;
 	}
 
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
-	if ( !( pml.groundTrace.contents & CONTENTS_SOLID ) && ( pm->ps->pm_flags & PMF_FLIGHT_LANDING ) ) {
+	if ( !( pml.groundTrace.contents & CONTENTS_SOLID ) && !( pm->ps->pm_flags & PMF_FALLING ) ) {
 
 		// stops entering again here and don't change the animation to backwards/forward
-		pm->ps->pm_flags &= ~PMF_FLIGHT_LANDING;
+		pm->ps->pm_flags |= PMF_FALLING;
 
-		if ( pm->cmd.forwardmove < 0 ) { // when failing backwards after flying
+		if ( pm->cmd.forwardmove < 0 && !( pm->ps->pm_flags & PMF_FLYING ) ) { // when failing backwards after flying
 			PM_StartLegsAnim( LEGS_JUMPB );
 		} else {
 			PM_StartLegsAnim( LEGS_JUMP );
 		}
-
-		// enable PMF_FALLING flag
-		pm->ps->pm_flags |= PMF_FALLING;
+		PM_ContinueTorsoAnim( TORSO_STAND );
 	}
 }
 
@@ -1592,22 +1646,43 @@ PM_KiChargeAnimation
 */
 static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 
+	// stop charging if it's using ki boost
+	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+		// handle the button to avoid toggling the animations forward and backwards while using ki boost
+		pm->cmd.buttons &= ~BUTTON_KI_CHARGE;
+	}
+
+	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
+		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
+		pm->ps->pm_time = 0;
+		// do jump animation if it's falling
+		if ( !( pml.groundTrace.contents & CONTENTS_SOLID )
+			&& !( pm->ps->pm_flags & PMF_FLYING )
+			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
+			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
+			FORCEJUMP_ANIM_HANDLING();
+			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
+		}
+		return;
+	}
+
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
-		// If falling, then do jump animation
+		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & CONTENTS_SOLID )
 			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
-			PM_ForceLegsAnim( LEGS_JUMP );
+			FORCEJUMP_ANIM_HANDLING();
+			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 	}
 
-	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
+	if ( ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 		// do a smooth ki charge animation and appearing the aura like BFP does
 		if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
 			pm->ps->pm_time = 300;
 		}
 		pm->ps->pm_flags |= PMF_KI_CHARGE;
-		PM_StartTorsoAnim( TORSO_CHARGE );
+		PM_ContinueTorsoAnim( TORSO_CHARGE );
 		PM_ContinueLegsAnim( LEGS_CHARGE );
 	}
 }
@@ -1620,13 +1695,13 @@ PM_HitStunAnimation
 static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 
 	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
-		PM_StartTorsoAnim( TORSO_STUN );
+		PM_ContinueTorsoAnim( TORSO_STUN );
 		PM_StartLegsAnim( LEGS_IDLECR );
 	}
 
 	// When the player doesn't have more ki, play hit stun animation
 	if ( pm->ps->stats[STAT_KI] <= 0 && !( pm->ps->pm_flags & PMF_HITSTUN )
-		|| ( ( pm->ps->pm_flags & PMF_FLYING ) && pm->ps->stats[STAT_KI] <= 24 ) // If flying and has less ki, then hit stun (also BFP does that)
+		|| ( ( pm->ps->pm_flags & PMF_FLYING ) && pm->ps->stats[STAT_KI] <= 24 ) // BFP - TODO: Apply some timer if used any ki, if flying and has less ki, then hit stun (also BFP does that)
 		|| ( ( pm->cmd.buttons & BUTTON_ATTACK ) && ( pm->ps->pm_flags & PMF_HITSTUN ) ) ) {
 		pm->ps->pm_time = 1000;
 		pm->ps->pm_flags |= PMF_HITSTUN;
@@ -1634,10 +1709,11 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 
 	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) && pm->ps->pm_time <= 0 ) {
 		pm->ps->pm_flags &= ~PMF_HITSTUN;
-		// If falling, then do jump animation
+		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & CONTENTS_SOLID )
 			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
-			PM_ForceLegsAnim( LEGS_JUMP );
+			FORCEJUMP_ANIM_HANDLING();
+			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 	}
 }
@@ -1715,15 +1791,18 @@ static void PM_Weapon( void ) {
 		return;
 	}
 
+	// BFP - No weapon raising handling
+#if 0
 	if ( pm->ps->weaponstate == WEAPON_RAISING ) {
 		pm->ps->weaponstate = WEAPON_READY;
 		if ( pm->ps->weapon == WP_GAUNTLET ) {
-			PM_StartTorsoAnim( TORSO_STAND ); // BFP - before TORSO_STAND2
+			PM_StartTorsoAnim( TORSO_STAND2 );
 		} else {
 			PM_StartTorsoAnim( TORSO_STAND );
 		}
 		return;
 	}
+#endif
 
 	// check for fire
 	if ( ! (pm->cmd.buttons & BUTTON_ATTACK) ) {
@@ -1732,6 +1811,8 @@ static void PM_Weapon( void ) {
 		return;
 	}
 
+	// BFP - No weapon gauntlet handling
+#if 0
 	// start the animation even if out of ammo
 	if ( pm->ps->weapon == WP_GAUNTLET ) {
 		// the guantlet only "fires" when it actually hits something
@@ -1744,6 +1825,7 @@ static void PM_Weapon( void ) {
 	} else {
 		PM_StartTorsoAnim( TORSO_STAND );
 	}
+#endif
 
 	pm->ps->weaponstate = WEAPON_FIRING;
 
@@ -1935,6 +2017,12 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		return qfalse;
 	}
 
+	// do not proceed to the jump event while enables the flight in the charging status
+	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->pm_flags & PMF_FLYING ) ) {
+		pm->ps->groundEntityNum = ENTITYNUM_NONE;
+		return qfalse;
+	}
+
 	if ( ( pm->ps->pm_flags & PMF_FLYING ) && !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
 		if ( ( pml.groundTrace.contents & CONTENTS_SOLID ) && pm->ps->groundEntityNum != ENTITYNUM_NONE ) {
 			// do a smooth jump animation like BFP does
@@ -1943,7 +2031,6 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 			}
 			pm->ps->velocity[2] = JUMP_VELOCITY;
 			PM_ForceLegsAnim( LEGS_JUMP );
-			PM_StartLegsAnim( LEGS_JUMP );
 		}
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	}
@@ -1958,27 +2045,34 @@ PM_KiCharge
 Charges ki
 ================
 */
-static void PM_KiCharge( pmove_t *pmove ) { // BFP - Ki Charge
-	pm = pmove;
+static void PM_KiCharge( void ) { // BFP - Ki Charge
 
 	// BFP - Hit stun, avoid charging if the player is in this status
 	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
 		return;
 	}
 
-	if ( pmove->cmd.buttons & ( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
-		pmove->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
+	// BFP - TODO: Handle the fall while charging
+
+	pm->cmd.forwardmove = 0;
+	pm->cmd.rightmove = 0;
+	pm->cmd.upmove = 0;
+
+	VectorClear( pm->ps->velocity );
+
+	// stop charging if it's using ki boost
+	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
+		pm->cmd.buttons &= ~BUTTON_KI_CHARGE;
+		pm->ps->pm_time = 0;
+		return;
 	}
 
-	pm->ps->pm_flags |= PMF_FALLING;
+	if ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
+		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
+	}
 
-	pmove->cmd.forwardmove = 0;
-	pmove->cmd.rightmove = 0;
-	pmove->cmd.upmove = 0;
-
-	pm->ps->velocity[0] = 0;
-	pm->ps->velocity[1] = 0;
-	pm->ps->velocity[2] = 0;
+	pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && pm->ps->pm_time <= 0 ) {
 		pm->ps->stats[STAT_KI]++;
 	}
@@ -1991,11 +2085,10 @@ PM_HitStun
 Receives hit stun
 ================
 */
-static void PM_HitStun( pmove_t *pmove ) { // BFP - Hit stun
-	pm = pmove;
+static void PM_HitStun( void ) { // BFP - Hit stun
 
-	if ( pmove->cmd.buttons & ( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
-		pmove->cmd.buttons &= ~( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
+	if ( pm->cmd.buttons & ( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
+		pm->cmd.buttons &= ~( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
 	pm->ps->pm_flags &= ~PMF_FLYING;
@@ -2003,7 +2096,7 @@ static void PM_HitStun( pmove_t *pmove ) { // BFP - Hit stun
 	pm->ps->eFlags &= ~EF_AURA;
 
 	// BFP - NOTE: BFP doesn't handle nothing the button directions when there's hit stun
-	pmove->cmd.upmove = 0;
+	pm->cmd.upmove = 0;
 }
 
 /*
@@ -2041,6 +2134,11 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->ps->eFlags |= EF_TALK;
 	} else {
 		pm->ps->eFlags &= ~EF_TALK;
+	}
+
+	// BFP - Handling the PM flag when stepping the ground
+	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
+		pm->ps->pm_flags |= PMF_FALLING;
 	}
 
 	// set the firing flag for continuous beam weapons
@@ -2099,12 +2197,15 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->ps->pm_flags &= ~PMF_JUMP_HELD;
 	}
 
+	// BFP - No handling PMF_BACKWARDS_RUN
+#if 0
 	// decide if backpedaling animations should be used
 	if ( pm->cmd.forwardmove < 0 ) {
 		pm->ps->pm_flags |= PMF_BACKWARDS_RUN;
 	} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 		pm->ps->pm_flags &= ~PMF_BACKWARDS_RUN;
 	}
+#endif
 
 	if ( pm->ps->pm_type >= PM_DEAD ) {
 
@@ -2126,16 +2227,17 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Ki Charge
 	if ( ( pmove->cmd.buttons & BUTTON_KI_CHARGE ) 
+		&& !( pmove->cmd.buttons & BUTTON_KI_USE )
 		&& pm->ps->pm_type != PM_DEAD
 		&& pm->ps->pm_type != PM_SPECTATOR ) {
-		PM_KiCharge( pmove );
+		PM_KiCharge();
 	}
 
 	// BFP - Hit stun
 	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) 
 		&& pm->ps->pm_type != PM_DEAD
 		&& pm->ps->pm_type != PM_SPECTATOR ) {
-		PM_HitStun( pmove );
+		PM_HitStun();
 	}
 
 	if ( pm->ps->pm_type == PM_SPECTATOR ) {
@@ -2203,9 +2305,10 @@ void PmoveSingle (pmove_t *pmove) {
 
 	PM_Animate();
 
+	// BFP - No ground trace again
 	// set groundentity, watertype, and waterlevel
-	PM_GroundTrace();
-	PM_SetWaterLevel();
+	// PM_GroundTrace();
+	// PM_SetWaterLevel();
 
 	// weapons
 	PM_Weapon();
@@ -2283,4 +2386,7 @@ void Pmove (pmove_t *pmove) {
 	//PM_CheckStuck();
 
 }
+
+// BFP - Undefine the macro of jump handling
+#undef FORCEJUMP_ANIM_HANDLING
 

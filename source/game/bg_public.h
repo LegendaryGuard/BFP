@@ -145,8 +145,9 @@ typedef enum {
 #define PMF_FLYING 			4 		// BFP - Flight
 // BFP - PMF_BACKWARDS_JUMP is unused
 // #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
-#define	PMF_FLIGHT_LANDING	8		// BFP - Landing after disabling flight
-#define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
+#define	PMF_NEARGROUND		8		// BFP - Near ground check
+// BFP - PMF_BACKWARDS_RUN is unused
+// #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
 // BFP - PMF_TIME_LAND is unused
 // #define	PMF_TIME_LAND		32		// pm_time is time before rejump
 #define PMF_FALLING			32		// BFP - Falling status
@@ -545,8 +546,7 @@ typedef enum {
 	TORSO_ATTACK4_STRIKE,	// BFP
 
 	// BFP - The following attackset animations are just reminders, these aren't used as variables
-
-	/*
+/*
 	// BFP - (point finger right hand)
 	TORSO_ATTACK5_PREPARE,	// BFP
 	TORSO_ATTACK5_STRIKE,	// BFP
@@ -594,7 +594,7 @@ typedef enum {
 	// BFP - (ken and ryu fireball)
 	TORSO_ATTACK16_PREPARE,	// BFP
 	TORSO_ATTACK16_STRIKE,	// BFP
-	*/
+*/
 
 	// BFP - The following animations are useless, 
 	// possibly can be removed only if the game works as should
