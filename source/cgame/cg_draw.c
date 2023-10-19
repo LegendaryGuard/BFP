@@ -1711,6 +1711,15 @@ static void CG_DrawCrosshair(void) {
 #endif
 	static float lastPositionY = 480.0f; // BFP - Last Y position for traceable crosshair to move smoothly like BFP vanilla does
 
+	// BFP - Frametime handling
+	static	int	previous;
+	int		t, frameTime;
+
+	// BFP - Handle frametime to avoid being timescaled
+	t = trap_Milliseconds();
+	frameTime = t - previous;
+	previous = t;
+
 	// BFP - TODO: BFP doesn't use the crosshair as player view, 
 	// e.g. if the camera angle is 90º, the crosshair should look what's in this view,
 	// not what the player sees
@@ -1788,12 +1797,12 @@ static void CG_DrawCrosshair(void) {
 		CG_AdjustFrom640( &x, &y, &w, &h );
 
 		// BFP - Make the traceable crosshair move smoothly like BFP vanilla does
-		// LERP( <last (or initial) position>, <destination>, (float)(cg.frametime / 1000.00f) * <speed factor> );
+		// LERP( <last (or initial) position>, <destination>, (float)(frameTime / 1000.00f) * <speed factor> );
 #if ESF_STYLE
-		x = LERP( lastPositionX, x, (float)(cg.frametime / 1000.00f) * 18.0f );
-		y = LERP( lastPositionY, y, (float)(cg.frametime / 1000.00f) * 18.0f );
+		x = LERP( lastPositionX, x, (float)(frameTime / 1000.00f) * 18.0f );
+		y = LERP( lastPositionY, y, (float)(frameTime / 1000.00f) * 18.0f );
 #else
-		y = LERP( lastPositionY, y, (float)(cg.frametime / 1000.00f) * 12.0f );
+		y = LERP( lastPositionY, y, (float)(frameTime / 1000.00f) * 12.0f );
 #endif
 
 		trap_R_DrawStretchPic( x - 0.5f * w, // 492.799987
