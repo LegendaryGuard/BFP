@@ -269,63 +269,69 @@ static controls_t s_controls;
 
 static vec4_t controls_binding_color  = {0.90f, 0.90f, 1.00f, 1.00f}; // BFP - Changed to light blue gray (before orange:  {1.00f, 0.43f, 0.00f, 1.00f})
 
+// BFP - A macro to shorten the number of parameters of key bindings
+#define G_BINDING_KEY(command, label, id, anim, keybind) {command, label, id, anim, keybind, -1, -1, -1},
 static bind_t g_bindings[] = 
 {
-	{"+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB,			-1,		-1, -1},
-	{"+button2",		"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER,		-1,		-1, -1},
-	{"+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT,		-1,		-1,	-1},
-	{"+forward", 		"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW,		-1,		-1, -1},
-	{"+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW,	-1,		-1, -1},
-	{"+moveleft", 		"step left",		ID_MOVELEFT,	ANIM_STEPLEFT,	',',			-1,		-1, -1},
-	{"+moveright", 		"step right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.',			-1,		-1, -1},
-	{"+moveup",			"up / jump",		ID_MOVEUP,		ANIM_JUMP,		K_SPACE,		-1,		-1, -1},
-	{"+movedown",		"down / crouch",	ID_MOVEDOWN,	ANIM_CROUCH,	'c',			-1,		-1, -1},
-	{"+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW,	-1,		-1, -1},
-	{"+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW,	-1,		-1, -1},
-	{"+strafe", 		"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT,			-1,		-1, -1},
-	{"+button12",		"fly",				ID_ENABLEFLIGHT,ANIM_FLY,		'f',			-1,		-1, -1}, // BFP - flight control "fly" bind
-	{"+lookup", 		"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN,			-1,		-1, -1},
-	{"+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL,			-1,		-1, -1},
-	{"+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/',			-1,		-1, -1},
-	{"centerview", 		"center view",		ID_CENTERVIEW,	ANIM_IDLE,		K_END,			-1,		-1, -1},
-	{"+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,		-1,				-1,		-1, -1},
-	{"weapon 1",		"ki attack 1",		ID_KIATTACK1,	ANIM_KIATTACK1,	'1',			-1,		-1, -1}, // BFP - ki attack 1 (before gauntlet)
-	{"weapon 2",		"ki attack 2",		ID_KIATTACK2,	ANIM_KIATTACK2,	'2',			-1,		-1, -1}, // BFP - ki attack 2 (before machinegun)
-	{"weapon 3",		"ki attack 3",		ID_KIATTACK3,	ANIM_KIATTACK3,	'3',			-1,		-1, -1}, // BFP - ki attack 3 (before shotgun)
-	{"weapon 4",		"ki attack 4",		ID_KIATTACK4,	ANIM_KIATTACK4,	'4',			-1,		-1, -1}, // BFP - ki attack 4 (before grenade launcher)
-	{"weapon 5",		"ki attack 5",		ID_KIATTACK5,	ANIM_KIATTACK5,	'5',			-1,		-1, -1}, // BFP - ki attack 5 (before rocket launcher)
-	//{"weapon 6",		"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6',			-1,		-1, -1}, // BFP - unused
-	//{"weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1,		-1, -1}, // BFP - unused
-	//{"weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1,		-1, -1}, // BFP - unused
-	//{"weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1,		-1, -1}, // BFP - unused
-	{"+attack", 		"attack",			ID_ATTACK,		ANIM_KIATTACK1,	K_CTRL,			-1,		-1, -1},
-	{"+button7",		"Melee Combat",		ID_MELEE,		ANIM_MELEE,		K_ALT,			-1,		-1,	-1}, // BFP - melee
-	{"+button10",		"Block",			ID_BLOCK,		ANIM_BLOCK,		K_CTRL,			-1,		-1, -1}, // BFP - block
-	{"weapprev",		"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[',			-1,		-1, -1},
-	{"weapnext", 		"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']',			-1,		-1, -1},
-	{"+button3", 		"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3,		-1,		-1, -1},
-	{"messagemode", 	"chat",				ID_CHAT,		ANIM_CHAT,		't',			-1,		-1, -1},
-	{"messagemode2", 	"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"messagemode3", 	"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"messagemode4", 	"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1,				-1,		-1, -1},
-	{"+button9",		"Charge Ki",		ID_KICHARGE,	ANIM_KICHARGE,	K_MOUSE2,		-1,		-1, -1}, // BFP - charge ki control
-	{"kiusetoggle",		"Use Ki (toggle)",	ID_KIUSETOGGLE,	ANIM_IDLE,		'e',			-1,		-1, -1}, // BFP - use ki toggle control
-	{"+button8",		"Use Ki",			ID_KIUSE,		ANIM_IDLE,		K_SHIFT,		-1,		-1, -1}, // BFP - use ki control
-	{(char*)NULL,		(char*)NULL,		0,				0,				-1,				-1,		-1,	-1},
+	G_BINDING_KEY( "+scores",			"show scores",		ID_SHOWSCORES,	ANIM_IDLE,		K_TAB )
+	G_BINDING_KEY( "+button2",			"use item",			ID_USEITEM,		ANIM_IDLE,		K_ENTER )
+	G_BINDING_KEY( "+speed", 			"run / walk",		ID_SPEED,		ANIM_RUN,		K_SHIFT )
+	G_BINDING_KEY( "+forward", 			"walk forward",		ID_FORWARD,		ANIM_WALK,		K_UPARROW )
+	G_BINDING_KEY( "+back", 			"backpedal",		ID_BACKPEDAL,	ANIM_BACK,		K_DOWNARROW )
+	G_BINDING_KEY( "+moveleft", 		"step left",		ID_MOVELEFT,	ANIM_STEPLEFT,	',' )
+	G_BINDING_KEY( "+moveright", 		"step right",		ID_MOVERIGHT,	ANIM_STEPRIGHT,	'.' )
+	G_BINDING_KEY( "+moveup",			"up / jump",		ID_MOVEUP,		ANIM_JUMP,		K_SPACE )
+	G_BINDING_KEY( "+movedown",			"down / crouch",	ID_MOVEDOWN,	ANIM_CROUCH,	'c' )
+	G_BINDING_KEY( "+left", 			"turn left",		ID_LEFT,		ANIM_TURNLEFT,	K_LEFTARROW )
+	G_BINDING_KEY( "+right", 			"turn right",		ID_RIGHT,		ANIM_TURNRIGHT,	K_RIGHTARROW )
+	G_BINDING_KEY( "+strafe", 			"sidestep / turn",	ID_STRAFE,		ANIM_IDLE,		K_ALT )
+	G_BINDING_KEY( "+button12",			"fly",				ID_ENABLEFLIGHT,ANIM_FLY,		'f' ) // BFP - flight control "fly" bind
+	G_BINDING_KEY( "+lookup", 			"look up",			ID_LOOKUP,		ANIM_LOOKUP,	K_PGDN )
+	G_BINDING_KEY( "+lookdown", 		"look down",		ID_LOOKDOWN,	ANIM_LOOKDOWN,	K_DEL )
+	G_BINDING_KEY( "+mlook", 			"mouse look",		ID_MOUSELOOK,	ANIM_IDLE,		'/' )
+	G_BINDING_KEY( "centerview", 		"center view",		ID_CENTERVIEW,	ANIM_IDLE,		K_END )
+	G_BINDING_KEY( "+zoom", 			"zoom view",		ID_ZOOMVIEW,	ANIM_IDLE,		-1 )
+	G_BINDING_KEY( "weapon 1",			"ki attack 1",		ID_KIATTACK1,	ANIM_KIATTACK1,	'1' ) // BFP - ki attack 1 (before gauntlet)
+	G_BINDING_KEY( "weapon 2",			"ki attack 2",		ID_KIATTACK2,	ANIM_KIATTACK2,	'2' ) // BFP - ki attack 2 (before machinegun)
+	G_BINDING_KEY( "weapon 3",			"ki attack 3",		ID_KIATTACK3,	ANIM_KIATTACK3,	'3' ) // BFP - ki attack 3 (before shotgun)
+	G_BINDING_KEY( "weapon 4",			"ki attack 4",		ID_KIATTACK4,	ANIM_KIATTACK4,	'4' ) // BFP - ki attack 4 (before grenade launcher)
+	G_BINDING_KEY( "weapon 5",			"ki attack 5",		ID_KIATTACK5,	ANIM_KIATTACK5,	'5' ) // BFP - ki attack 5 (before rocket launcher)
+	//G_BINDING_KEY( "weapon 6",		"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6' ) // BFP - unused
+	//G_BINDING_KEY( "weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7' ) // BFP - unused
+	//G_BINDING_KEY( "weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8' ) // BFP - unused
+	//G_BINDING_KEY( "weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9' ) // BFP - unused
+	G_BINDING_KEY( "+attack", 			"attack",			ID_ATTACK,		ANIM_KIATTACK1,	K_CTRL )
+	G_BINDING_KEY( "+button7",			"Melee Combat",		ID_MELEE,		ANIM_MELEE,		K_ALT ) // BFP - melee
+	G_BINDING_KEY( "+button10",			"Block",			ID_BLOCK,		ANIM_BLOCK,		K_CTRL ) // BFP - block
+	G_BINDING_KEY( "weapprev",			"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[' )
+	G_BINDING_KEY( "weapnext", 			"next weapon",		ID_WEAPNEXT,	ANIM_IDLE,		']' )
+	G_BINDING_KEY( "+button3", 			"gesture",			ID_GESTURE,		ANIM_GESTURE,	K_MOUSE3 )
+	G_BINDING_KEY( "messagemode", 		"chat",				ID_CHAT,		ANIM_CHAT,		't' )
+	G_BINDING_KEY( "messagemode2", 		"chat - team",		ID_CHAT2,		ANIM_CHAT,		-1 )
+	G_BINDING_KEY( "messagemode3", 		"chat - target",	ID_CHAT3,		ANIM_CHAT,		-1 )
+	G_BINDING_KEY( "messagemode4", 		"chat - attacker",	ID_CHAT4,		ANIM_CHAT,		-1 )
+	G_BINDING_KEY( "+button9",			"Charge Ki",		ID_KICHARGE,	ANIM_KICHARGE,	K_MOUSE2 ) // BFP - charge ki control
+	G_BINDING_KEY( "kiusetoggle",		"Use Ki (toggle)",	ID_KIUSETOGGLE,	ANIM_IDLE,		'e' ) // BFP - use ki toggle control
+	G_BINDING_KEY( "+button8",			"Use Ki",			ID_KIUSE,		ANIM_IDLE,		K_SHIFT ) // BFP - use ki control
+	G_BINDING_KEY( (char*)NULL,		(char*)NULL,		0,				0,				-1 )
 };
+#undef G_BINDING_KEY
 
+// BFP - A macro to shorten the number of parameters of configcvars
+#define G_CONFIGCVAR(cvarname) {cvarname, 0, 0},
 static configcvar_t g_configcvars[] =
 {
-	{"cl_run",			0,					0},
-	{"m_pitch",			0,					0},
-	{"cg_autoswitch",	0,					0},
-	{"sensitivity",		0,					0},
-	{"in_joystick",		0,					0},
-	{"joy_threshold",	0,					0},
-	{"m_filter",		0,					0},
-	{"cl_freelook",		0,					0},
-	{NULL,				0,					0}
+	G_CONFIGCVAR( "cl_run" )
+	G_CONFIGCVAR( "m_pitch" )
+	G_CONFIGCVAR( "cg_autoswitch" )
+	G_CONFIGCVAR( "sensitivity" )
+	G_CONFIGCVAR( "in_joystick" )
+	G_CONFIGCVAR( "joy_threshold" )
+	G_CONFIGCVAR( "m_filter" )
+	G_CONFIGCVAR( "cl_freelook" )
+	G_CONFIGCVAR( NULL )
 };
+#undef G_CONFIGCVAR
 
 static menucommon_s *g_movement_controls[] =
 {
