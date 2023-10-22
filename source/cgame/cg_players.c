@@ -252,10 +252,10 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 
 	// crouch backward animation
 	memcpy(&animations[LEGS_WALKCR], &animations[LEGS_WALKCR], sizeof(animation_t)); // BFP - Crouch backwards animation tweak
-	animations[LEGS_WALKCR].reversed = qtrue;
+	animations[LEGS_WALKCR].reversed = qfalse; // BFP - Make the duck walking forward only
 	// walk backward animation
 	memcpy(&animations[LEGS_WALK], &animations[LEGS_WALK], sizeof(animation_t)); // BFP - Walk backwards animation tweak
-	animations[LEGS_WALK].reversed = qtrue;
+	animations[LEGS_WALK].reversed = qfalse; // BFP - Make the walk moving forward only
 	// flag moving fast
 	animations[FLAG_RUN].firstFrame = 0;
 	animations[FLAG_RUN].numFrames = 16;
@@ -1420,9 +1420,10 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	legsAngles[YAW] = headAngles[YAW] + movementOffsets[ dir ];
 	torsoAngles[YAW] = headAngles[YAW] + 0.25 * movementOffsets[ dir ];
 
+	// BFP - Swing the angles to make the movements look smooth
 	// torso
-	CG_SwingAngles( torsoAngles[YAW], 25, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-	CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+	CG_SwingAngles( torsoAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+	CG_SwingAngles( legsAngles[YAW], 90, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
 
 	torsoAngles[YAW] = cent->pe.torso.yawAngle;
 	legsAngles[YAW] = cent->pe.legs.yawAngle;
@@ -1481,9 +1482,21 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	// BFP - when flying, set correctly into these angles
 	if ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) {
-		VectorCopy( cent->lerpAngles, headAngles );
-		VectorCopy( cent->lerpAngles, torsoAngles );
-		VectorCopy( cent->lerpAngles, legsAngles );
+		//VectorCopy( cent->lerpAngles, headAngles );
+		//VectorCopy( cent->lerpAngles, torsoAngles );
+		// only show a fraction of the pitch angle in the torso
+		VectorCopy( torsoAngles, legsAngles );
+
+		CG_SwingAngles( torsoAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+		CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+
+		torsoAngles[YAW] = cent->pe.torso.yawAngle;
+		legsAngles[YAW] = cent->pe.torso.yawAngle;
+
+		//legsAngles[YAW] = torsoAngles[YAW];
+		//CG_SwingAngles( torsoAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+		//CG_SwingAngles( legsAngles[YAW], 90, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+		//VectorCopy( cent->lerpAngles, legsAngles );
 	}
 
 	// pain twitch
@@ -1513,27 +1526,32 @@ static void CG_HasteTrail( centity_t *cent ) {
 	if ( cent->trailTime > cg.time ) {
 		return;
 	}
+	// BFP - No handling running and backwards animations
+#if 0
 	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
 	if ( anim != LEGS_RUN && anim != LEGS_BACK ) {
 		return;
 	}
+#endif
 
-	cent->trailTime += 100;
+	cent->trailTime += 50; // BFP - TODO: Just a test (before 100)
 	if ( cent->trailTime < cg.time ) {
 		cent->trailTime = cg.time;
 	}
+
+	// BFP - TODO: Make the smoke move up (always) and move a bit on the left or right (randomly)
 
 	VectorCopy( cent->lerpOrigin, origin );
 	origin[2] -= 16;
 
 	smoke = CG_SmokePuff( origin, vec3_origin, 
-				  8, 
-				  1, 1, 1, 1,
-				  500, 
-				  cg.time,
-				  0,
-				  0,
-				  cgs.media.hastePuffShader );
+				70, // BFP - TODO: Before 8, sizes between 50 ~ 70
+				1, 1, 1, 1,
+				500, 
+				cg.time,
+				0,
+				0,
+				cgs.media.hastePuffShader );
 
 	// use the optimized local entity add
 	smoke->leType = LE_SCALE_FADE;
@@ -1701,12 +1719,13 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1 );
 	}
 
+	// BFP - No flight powerup
+#if 0
 	// flight plays a looped sound
-	/*
 	if ( powerups & ( 1 << PW_FLIGHT ) ) {
 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, cgs.media.flightSound );
 	}
-	*/
+#endif
 
 	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
 	// redflag
@@ -1742,10 +1761,13 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 1.0, 1.0 );
 	}
 
+	// BFP - No haste powerup handling
+#if 0
 	// haste leaves smoke trails
 	if ( powerups & ( 1 << PW_HASTE ) ) {
 		CG_HasteTrail( cent );
 	}
+#endif
 }
 
 
@@ -1797,7 +1819,8 @@ static void CG_PlayerSprites( centity_t *cent ) {
 		return;
 	}
 
-	if ( cent->currentState.eFlags & EF_TALK ) {
+	if ( cent->currentState.eFlags & EF_TALK 
+		&& cent->currentState.number != cg.snap->ps.clientNum ) { // BFP - Don't show the chat ballon to the player itself
 		CG_PlayerFloatSprite( cent, cgs.media.balloonShader );
 		return;
 	}
@@ -1857,6 +1880,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	vec3_t		end, mins = {-15, -15, 0}, maxs = {15, 15, 2};
 	trace_t		trace;
 	float		alpha;
+	int			contents; // BFP - To detect if there is water or lava
 
 	*shadowPlane = 0;
 
@@ -1881,6 +1905,25 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	}
 
 	*shadowPlane = trace.endpos[2] + 1;
+
+	// BFP - TODO: Only show smoke where the shadow is and make one smoke of each moving to the air, 
+	// disappearing randomly according to time, making bigger according the size like BFP does
+	// CG_SmokePuff will help you to find out how to do
+
+	// BFP - Smoke trail when using ki boost on the ground
+	contents = CG_PointContents( trace.endpos, -1 );
+	if ( ( cent->currentState.eFlags & EF_AURA )
+		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLECR
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_JUMP
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_JUMPB
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYIDLE
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_WALK
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_WALKCR ) {
+		CG_HasteTrail( cent );
+	}
 
 	if ( cg_shadows.integer != 1 ) {	// no mark for stencil or projection shadows
 		return qtrue;
@@ -2000,6 +2043,7 @@ Also called by CG_Missile for quad rockets, but nobody can tell...
 */
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team ) {
 
+
 	if ( state->powerups & ( 1 << PW_INVIS ) ) {
 		ent->customShader = cgs.media.invisShader;
 		trap_R_AddRefEntityToScene( ent );
@@ -2015,6 +2059,21 @@ void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int te
 		else {*/
 			trap_R_AddRefEntityToScene( ent );
 		//}
+
+		// BFP - If the player is using lightweight auras or their own small aura
+		if ( ( state->eFlags & EF_AURA )
+			&& ( cg_lightweightAuras.integer > 0
+			|| cg_smallOwnAura.integer > 0 ) ) {
+			// BFP - TODO: If player is transformed:
+			// ent->customShader = cgs.media.auraYellowShader;
+
+			if ( team == TEAM_BLUE) {
+				ent->customShader = cgs.media.auraBlueShader;
+			} else {
+				ent->customShader = cgs.media.auraRedShader;
+			}
+			trap_R_AddRefEntityToScene( ent );
+		}
 
 		if ( state->powerups & ( 1 << PW_QUAD ) )
 		{
@@ -2095,14 +2154,13 @@ void CG_Player( centity_t *cent ) {
 	refEntity_t		torso;
 	refEntity_t		head;
 	refEntity_t		aura; // BFP - Aura
+	refEntity_t		aura2; // BFP - Secondary aura
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
 	float			shadowPlane;
-	// BFP - Aura vertical rotation variables
-	float			auraRotation;
-	float			sinAura, cosAura;
-	float			tmp0, tmp1;
+	int				aura_i, aura_j; // BFP - For aura sizes
+	vec3_t			auraInverseRotation; // BFP - For aura inverse rotation
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2121,7 +2179,8 @@ void CG_Player( centity_t *cent ) {
 
 	// get the player model information
 	renderfx = 0;
-	if ( cent->currentState.number == cg.snap->ps.clientNum) {
+	// BFP - Don't make the players look to the others with the same torso position
+	// if ( cent->currentState.number == cg.snap->ps.clientNum) {
 		if (!cg.renderingThirdPerson) {
 			renderfx = RF_THIRD_PERSON;			// only draw in mirrors
 		} /*else { // BFP - cg_cameraMode cvar doesn't exist
@@ -2129,13 +2188,14 @@ void CG_Player( centity_t *cent ) {
 				return;
 			}
 		}*/
-	}
+	// }
 
 
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
 	memset( &aura, 0, sizeof(aura) ); // BFP - Aura
+	memset( &aura2, 0, sizeof(aura2) ); // BFP - Secondary aura
 
 	// get the rotation information
 	CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
@@ -2146,72 +2206,6 @@ void CG_Player( centity_t *cent ) {
 
 	// add the talk baloon or disconnect icon
 	CG_PlayerSprites( cent );
-
-	// BFP - Aura ki using
-	if ( cent->currentState.eFlags & EF_AURA ) {
-		aura.reType = RT_MODEL;
-		aura.customShader = cgs.media.auraEffectShader;
-		aura.hModel = cgs.media.auraModel;
-		
-		// reset axis model postion
-		AxisClear( aura.axis );
-		
-		// fixes rotation when player rotates down/up/right/left... even while flying
-		// according legs position
-		// cent->lerpAngles is according player base entity position
-		AnglesToAxis( &cent->pe.legs.pitchAngle, aura.axis );
-
-		// set aura position to the player
-		VectorCopy( cent->lerpOrigin, aura.origin );
-
-		// BFP - when flying, set correctly into these angles
-		if ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) {
-			AnglesToAxis( cent->lerpAngles, aura.axis );
-		}
-
-		// BFP - TODO: Aura vertical rotation, aura rotates vertically, 
-		// but when player is flying, Z-axis isn't respecting player's position and angles
-		/*
-		auraRotation = cg.time * 0.15f * ( M_PI / 180.0f );
-		sinAura = sin( auraRotation );
-		cosAura = cos( auraRotation );
-		tmp0 = aura.axis[0][0];
-		tmp1 = aura.axis[0][1];
-		
-		aura.axis[0][0] = cosAura * tmp0 - sinAura * aura.axis[1][0];
-		aura.axis[0][1] = cosAura * tmp1 - sinAura * aura.axis[1][1];
-		aura.axis[1][0] = sinAura * tmp0 + cosAura * aura.axis[1][0];
-		aura.axis[1][1] = sinAura * tmp1 + cosAura * aura.axis[1][1];
-		*/
-
-		trap_R_AddRefEntityToScene( &aura );
-
-		aura.renderfx = renderfx;
-
-		// BFP - TODO: Add secondary aura and with little size 
-		// who knows why, BFP does that as well
-		//VectorScale( aura.axis[0], 0.9, aura.axis[0] );
-		//VectorScale( aura.axis[1], 0.9, aura.axis[1] );
-		//VectorScale( aura.axis[2], 0.9, aura.axis[2] );
-
-		// BFP - TODO: rotate secondary aura in the opposite direction
-		//trap_R_AddRefEntityToScene( &aura ); // add secondary aura, but it doesn't respect the angles to the player model
-		// or should do that so?
-		// CG_AddRefEntityWithPowerups( &aura, &cent->currentState, 0 );
-
-		// light blinking
-		trap_R_AddLightToScene( aura.origin, 100 + (rand()&32), 1, 0.01f, 0.002f );
-		trap_R_AddLightToScene( cent->lerpOrigin, 80 + (rand()&11), 1, 0.15f, 0.001f );
-
-		// BFP - Ki boost and ki charge sounds
-		if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) {
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
-				vec3_origin, cgs.media.kiUseSound );
-		} else if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_CHARGE ) {
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
-				vec3_origin, cgs.media.kiChargeSound );
-		}
-	}
 
 	// add the shadow
 	shadow = CG_PlayerShadow( cent, &shadowPlane );
@@ -2293,6 +2287,130 @@ void CG_Player( centity_t *cent ) {
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team );
 
 	//
+	// BFP - Aura 
+	//
+	// Macro for the size of the aura model
+	#define AURA_MODEL_SIZE(aura, aura_size) \
+		for ( aura_i = 0; aura_i < 3; aura_i++ ) { \
+			for ( aura_j = 0; aura_j < 3; aura_j++ ) { \
+				aura.axis[aura_i][aura_j] *= aura_size; \
+			} \
+		}
+
+	// Macro to handle the aura animations, when idling it sets the aura vertical rotation, so the aura rotates vertically
+	#define AURA_ANIMS(aura, reversed) \
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN \
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP ) { \
+			aura.hModel = cgs.media.runauraModel; \
+		} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK \
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB \
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) { \
+			aura.hModel = cgs.media.backauraModel; \
+		} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA ) { \
+			aura.hModel = cgs.media.flyauraModel; \
+		} else { \
+			aura.hModel = cgs.media.auraModel; \
+			if ( reversed ) { \
+				VectorNegate( cg.autoAngles, auraInverseRotation ); \
+				AnglesToAxis( auraInverseRotation, aura.axis ); \
+			} else { \
+				AnglesToAxis( cg.autoAngles, aura.axis ); \
+			} \
+		}
+
+	// Macro for the dynamic aura light, note: when charging it changes the shinning a bit
+	#define AURA_LIGHT(r, g, b) \
+		if ( cg_lightAuras.integer > 0 ) { \
+			if ( cg_smallOwnAura.integer > 0 ) { \
+				trap_R_AddLightToScene( torso.origin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( legs.origin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( aura.origin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
+			} \
+			if ( cg_lightweightAuras.integer > 0 ) { \
+				trap_R_AddLightToScene( torso.origin, 80 + (rand()&83), r, g, b ); \
+				trap_R_AddLightToScene( legs.origin, 80 + (rand()&63), r, g, b ); \
+				trap_R_AddLightToScene( aura.origin, 80 + (rand()&63), r, g, b ); \
+			} else { \
+				trap_R_AddLightToScene( torso.origin, 80 + (rand()&63), r, g, b ); \
+				trap_R_AddLightToScene( legs.origin, 200 + (rand()&63), r, g, b ); \
+				trap_R_AddLightToScene( aura.origin, 200 + (rand()&255), r, g, b ); \
+				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
+					trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
+				} \
+			} \
+		}
+
+	if ( cent->currentState.eFlags & EF_AURA ) {
+		// Apply the render type
+		aura.reType = aura2.reType = RT_MODEL;
+
+		// Clear the axis to keep the position
+		AxisClear( aura.axis );
+		AxisClear( aura2.axis );
+
+		// If the player is moving like going forward and backwards, then use other aura model
+		AURA_ANIMS( aura, 0 )
+		AURA_ANIMS( aura2, 1 )
+
+		// Resize the aura
+		AURA_MODEL_SIZE( aura, 1.3f )
+		AURA_MODEL_SIZE( aura2, 1.49f )
+
+		// Set aura position to the player
+		VectorCopy( legs.origin, aura.origin );
+		VectorCopy( legs.lightingOrigin, aura.lightingOrigin );
+		VectorCopy( legs.origin, aura2.origin );
+		VectorCopy( legs.lightingOrigin, aura2.lightingOrigin );
+
+		// BFP - TODO: Add yellow aura only when the player is transformed, but don't override when playing a team gamemode
+		// aura.customShader = aura2.customShader = cgs.media.auraYellowShader;
+		// Don't put this line of code here if transformed, just put outside the check EF_AURA conditional
+		// trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), 1.0, 1.0, 0 );
+
+		// Apply light blinking
+		if ( ci->team == TEAM_BLUE) {
+			aura.customShader = aura2.customShader = cgs.media.auraBlueShader;
+			AURA_LIGHT( 0.2f, 0.2f, 1.0 )
+		} else {
+			aura.customShader = aura2.customShader = cgs.media.auraRedShader;
+			AURA_LIGHT( 1.0, 0.2f, 0.2f )
+		}
+
+		aura.renderfx = aura2.renderfx = renderfx;
+		VectorCopy( aura.origin, aura.oldorigin );	// don't positionally lerp at all
+		VectorCopy( aura2.origin, aura2.oldorigin );	// don't positionally lerp at all
+
+		// Ki boost and ki charge sounds
+		if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) {
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+				vec3_origin, cgs.media.kiUseSound );
+		} else if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_CHARGE ) {
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+				vec3_origin, cgs.media.kiChargeSound );
+		}
+
+		// Keep the aura pivot tagged in tag_torso
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_RUN
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_BACK
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYA
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYB ) {
+			CG_PositionRotatedEntityOnTag( &aura, &legs, ci->legsModel, "tag_torso" );
+			CG_PositionRotatedEntityOnTag( &aura2, &legs, ci->legsModel, "tag_torso" );
+		}
+
+		// Add aura
+		if ( cg_polygonAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) {
+			trap_R_AddRefEntityToScene( &aura );
+		}
+
+		// Add secondary aura to make look cooler, a bit bigger than the other
+		if ( cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_smallOwnAura.integer <= 0  ) {
+			trap_R_AddRefEntityToScene( &aura2 );
+		}
+	}
+
+	//
 	// add the gun / barrel / flash
 	//
 	CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
@@ -2300,16 +2418,15 @@ void CG_Player( centity_t *cent ) {
 	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );
 	
-	// BFP - Smoke trail when using Ki boost in the ground
-	if ( cent->currentState.eFlags & EF_AURA ) {
-		CG_HasteTrail( cent );
-	}
 	// BFP - First person camera setup
 	if ( cg_thirdPerson.integer <= 0 
 		&& cent->currentState.number == cg.snap->ps.clientNum  ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
 		CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
 	}
 }
+#undef AURA_MODEL_SIZE
+#undef AURA_ANIMS
+#undef AURA_LIGHT
 
 /*
 ===============

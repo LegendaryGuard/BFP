@@ -622,7 +622,10 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.backauraModel = trap_R_RegisterModel( "models/effects/backaura.md3" ); // BFP - Back aura model
 	cgs.media.flyauraModel = trap_R_RegisterModel( "models/effects/flyaura.md3" ); // BFP - Fly aura model
 	cgs.media.runauraModel = trap_R_RegisterModel( "models/effects/runaura.md3" ); // BFP - Run aura model
-	cgs.media.auraEffectShader = trap_R_RegisterShader( "powerups/redtiny" ); // BFP - Aura shader
+	// BFP - Aura shaders
+	cgs.media.auraBlueShader = trap_R_RegisterShader( "powerups/bluetiny" );
+	cgs.media.auraRedShader = trap_R_RegisterShader( "powerups/redtiny" );
+	cgs.media.auraYellowShader = trap_R_RegisterShader( "powerups/yellowtiny" );
 
 	memset( cg_items, 0, sizeof( cg_items ) );
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );

@@ -769,7 +769,10 @@ typedef struct {
 	qhandle_t	backauraModel; // BFP - Back aura model
 	qhandle_t	flyauraModel; // BFP - Fly aura model
 	qhandle_t	runauraModel; // BFP - Run aura model
-	qhandle_t	auraEffectShader; // BFP - Aura shader
+	// BFP - Aura shaders
+	qhandle_t	auraRedShader;
+	qhandle_t	auraBlueShader;
+	qhandle_t	auraYellowShader;
 
 	// scoreboard headers
 	qhandle_t	scoreboardName;

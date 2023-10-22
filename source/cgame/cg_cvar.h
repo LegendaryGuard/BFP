@@ -72,6 +72,11 @@ CG_CVAR( cg_fixedThirdPerson, "cg_fixedThirdPerson", "1", CVAR_ARCHIVE ) // BFP 
 CG_CVAR( cg_drawOwnModel, "cg_drawOwnModel", "1", CVAR_ARCHIVE ) // BFP - toggle first person between traditional and vis modes
 CG_CVAR( cg_drawKiWarning, "cg_drawKiWarning", "1", CVAR_ARCHIVE ) // BFP - Ki warning
 CG_CVAR( cg_stableCrosshair, "cg_stableCrosshair", "0", CVAR_ARCHIVE ) // BFP - Accurate crosshair
+CG_CVAR( cg_lightAuras, "cg_lightAuras", "1", CVAR_ARCHIVE ) // BFP - Light auras
+CG_CVAR( cg_smallOwnAura, "cg_smallOwnAura", "0", CVAR_ARCHIVE ) // BFP - Small own aura
+CG_CVAR( cg_lightweightAuras, "cg_lightweightAuras", "0", CVAR_ARCHIVE ) // BFP - Lightweight auras
+CG_CVAR( cg_polygonAura, "cg_polygonAura", "1", CVAR_ARCHIVE ) // BFP - Polygonal aura
+CG_CVAR( cg_highPolyAura, "cg_highPolyAura", "1", CVAR_ARCHIVE ) // BFP - High polycount aura
 CG_CVAR( cg_thirdPerson, "cg_thirdPerson", "1", 0 ) // BFP
 CG_CVAR( cg_yrgolroxor, "cg_yrgolroxor", "0", 0 ) // BFP - Yrgol Roxor easter egg
 CG_CVAR( cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE )

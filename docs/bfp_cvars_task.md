@@ -34,7 +34,6 @@
 ## WIP:
 
 - g_hitStun [0/1]: turn on or off the melee hit stun.
-- cg_drawKiWarning [0/1]: turn on or off the low ki warning.
 
 #### Cvar Gametypes:
 
@@ -45,7 +44,6 @@
 - cg_stfu [0/1]: disable character voices when firing attacks.
 - cg_lowpolysphere [0/1]: force the use of a lower polycount sphere.
 - cg_kitrail [0-99]: set the length of the ki trail. 0 turns it off.
-- cg_lightauras [0/1]: turn on or off the aura dynamic lights.
 - cg_lightexplosions [0/1]: turn on or off the explosion dynamic lights.
 - cg_chargeupAlert [0/1]: turn on or off the "ready" message when charging attacks.
 - cg_explosionShell [0/1]: turn on or off the explosion shell.
@@ -66,6 +64,12 @@
 - [x] ~~cg_crosshairColor~~
 - [x] ~~cg_crosshairHealth~~
 - [x] ~~cg_flytilt~~
+- [x] ~~cg_drawKiWarning~~
+- [x] ~~cg_lightAuras~~
+- [x] ~~cg_smallOwnAura~~
+- [x] ~~cg_lightweightAuras~~
+- [x] ~~cg_polygonAura~~
+- [x] ~~cg_highPolyAura~~
 
 #### Cvar Gametypes:
 
