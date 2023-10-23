@@ -1676,14 +1676,20 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		}
 	}
 
-	if ( ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
 		// do a smooth ki charge animation and appearing the aura like BFP does
 		if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
 			pm->ps->pm_time = 300;
 		}
+		pm->ps->pm_flags &= ~PMF_KI_BOOST;
 		pm->ps->pm_flags |= PMF_KI_CHARGE;
 		PM_ContinueTorsoAnim( TORSO_CHARGE );
 		PM_ContinueLegsAnim( LEGS_CHARGE );
+	}
+
+	// handle the button to avoid toggling ki boost when already used "kiusetoggle" key bind
+	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->pm_flags & PMF_KI_BOOST ) ) {
+		pm->ps->pm_flags &= ~PMF_KI_BOOST;
 	}
 }
 

@@ -735,7 +735,9 @@ void ClientThink_real( gentity_t *ent ) {
 		ent->client->ps.speed *= 2.5;
 		ent->client->ps.eFlags |= EF_AURA;
 	} else {
-		ent->client->ps.eFlags &= ~EF_AURA;
+		if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
+			ent->client->ps.eFlags &= ~EF_AURA;
+		}
 	}
 
 	// BFP - Ki Charge
