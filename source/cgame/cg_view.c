@@ -816,14 +816,13 @@ static int CG_CalcViewValues( void ) {
 	if ( cg.renderingThirdPerson && ps->pm_type != PM_SPECTATOR ) {
 		// back away from character
 		CG_OffsetThirdPersonView();
-	}
-// BFP - Original Q3 first person view function call, not used here, moved to cg_players.c in CG_Player function
-#if 0
-	else {
+	} else {
 		// offset for local bobbing and kicks
-		CG_OffsetFirstPersonView();
+		// BFP - That only handles if cg_drawOwnModel is disabled
+		if ( cg_thirdPerson.integer <= 0 && cg_drawOwnModel.integer <= 0 ) {
+			CG_OffsetFirstPersonView( NULL, NULL, 0 );
+		}
 	}
-#endif
 
 	// position eye reletive to origin
 	AnglesToAxis( cg.refdefViewAngles, cg.refdef.viewaxis );
@@ -944,7 +943,8 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	CG_PredictPlayerState();
 
 	// decide on third person view
-	cg.renderingThirdPerson = cg_drawOwnModel.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0); //cg_thirdPerson.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
+	// BFP - Also cg_drawOwnModel handles
+	cg.renderingThirdPerson = cg_thirdPerson.integer || cg_drawOwnModel.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
 
 	// build cg.refdef
 	inwater = CG_CalcViewValues();

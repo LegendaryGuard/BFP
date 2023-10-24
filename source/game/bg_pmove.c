@@ -1278,7 +1278,7 @@ static void PM_CheckDuck (void)
 			VectorSet( pm->maxs, 15, 15, 16 );
 		}
 		pm->ps->pm_flags |= PMF_DUCKED;
-		// pm->ps->viewheight = CROUCH_VIEWHEIGHT; // BFP - don't look a bit down while pressing down
+		pm->ps->viewheight = CROUCH_VIEWHEIGHT;
 		return;
 	}
 	pm->ps->pm_flags &= ~PMF_INVULEXPAND;
@@ -1317,7 +1317,7 @@ static void PM_CheckDuck (void)
 	if (pm->ps->pm_flags & PMF_DUCKED)
 	{
 		pm->maxs[2] = 16;
-		// pm->ps->viewheight = CROUCH_VIEWHEIGHT; // BFP - don't look a bit down while pressing down
+		pm->ps->viewheight = CROUCH_VIEWHEIGHT;
 	}
 	else
 	{
