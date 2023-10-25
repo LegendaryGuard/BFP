@@ -741,7 +741,8 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 
 	// BFP - Ki Charge
-	if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && ent->client->ps.pm_time <= 0 ) {
+	if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && ent->client->ps.pm_time <= 0 
+	&& ( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
 		client->ps.eFlags |= EF_AURA;
 	}
 
