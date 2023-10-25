@@ -36,15 +36,26 @@ BFP OPTIONS MENU
 #define ID_FLIGHTILT        154
 #define ID_BIGHEADS         155
 #define ID_DEFAULTSKINS    	156
-#define ID_DISABLEVOICES   	157
+#define ID_STFU             157
 #define ID_LOWPOLYSPHERE 	158
 #define ID_BACK				159
 
+// Macros to handle the cases in that order
+#define SHADER_AURA         0
+#define LIGHTWEIGHT_AURA    1
+#define POLYGON_AURA        2
+#define HIGHPOLYCOUNT_AURA  3
+
+#define WIMPY_EXPLO         0
+#define WEAK_EXPLO          1
+#define SO_SO_EXPLO         2
+#define HARDCORE_EXPLO      3
+
 static const char *auratype_items[] = {
-	"High Polycount Aura",
-	"Polygonal Aura",
 	"Shader Aura",
 	"Lightweight Aura",
+	"Polygonal Aura",
+	"High Polycount Aura",
 	NULL
 };
 
@@ -56,10 +67,10 @@ static const char *viewpoint_items[] = {
 };
 
 static const char* explotype_items[] = {
-	"So-So",
-	"Hardcore",
 	"Wimpy",
 	"Weak",
+	"So-So",
+	"Hardcore",
 	NULL
 };
 
@@ -89,7 +100,7 @@ typedef struct {
 	menuradiobutton_s	flightilt;
 	menuradiobutton_s	bigheads;
 	menuradiobutton_s	defaultskins;
-	menuradiobutton_s	disablevoices;
+	menuradiobutton_s	stfu;
 	menuradiobutton_s	lowpolysphere;
 	menubitmap_s		back;
 
@@ -97,106 +108,113 @@ typedef struct {
 
 static bfpoptions_t s_bfpoptions;
 
-static void BFPOptions_SetMenuItems( void ) {
-	s_bfpoptions.fix3person.curvalue		= trap_Cvar_VariableValue( "cg_fixedThirdPerson" ) != 0;
-	s_bfpoptions.particlesfx.curvalue		= trap_Cvar_VariableValue( "cg_particles" ) != 0;
-	s_bfpoptions.dynauralight.curvalue		= trap_Cvar_VariableValue( "cg_lightAuras" ) != 0;
-	s_bfpoptions.dynexplolights.curvalue	= trap_Cvar_VariableValue( "cg_lightExplosions" ) != 0;
-	s_bfpoptions.transaura.curvalue			= trap_Cvar_VariableValue( "cg_transformationAura" ) != 0;
-	s_bfpoptions.smallaura.curvalue			= trap_Cvar_VariableValue( "cg_smallOwnAura" ) != 0;
-	s_bfpoptions.ssjglow.curvalue			= trap_Cvar_VariableValue( "cg_permaglowUltimate" ) != 0;
-	s_bfpoptions.accucrosshair.curvalue		= trap_Cvar_VariableValue( "cg_stableCrosshair" ) != 0;
-	s_bfpoptions.simplehud.curvalue			= trap_Cvar_VariableValue( "cg_simpleHUD" ) != 0;
-	s_bfpoptions.chargealert.curvalue		= trap_Cvar_VariableValue( "cg_chargeupAlert" ) != 0;
-	s_bfpoptions.q3hitsfx.curvalue			= trap_Cvar_VariableValue( "cg_playHitSound" ) != 0;
-	s_bfpoptions.flightilt.curvalue			= trap_Cvar_VariableValue( "cg_flytilt" ) != 0;
-	s_bfpoptions.bigheads.curvalue			= trap_Cvar_VariableValue( "cg_superdeformed" ) != 0;
-	s_bfpoptions.defaultskins.curvalue		= trap_Cvar_VariableValue( "cg_forceSkin" ) != 0;
-	s_bfpoptions.disablevoices.curvalue		= trap_Cvar_VariableValue( "cg_stfu" ) != 0;
-	s_bfpoptions.lowpolysphere.curvalue		= trap_Cvar_VariableValue( "cg_lowpolysphere" ) != 0;
-}
+// A macro to look better the code
+#define BFPOPTIONS_MENUITEM( menu_item_curvalue, cvar ) \
+	menu_item_curvalue = trap_Cvar_VariableValue( cvar ) != 0;
 
+static void BFPOptions_SetMenuItems( void ) {
+	BFPOPTIONS_MENUITEM( s_bfpoptions.fix3person.curvalue,     "cg_fixedThirdPerson" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.particlesfx.curvalue,    "cg_particles" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.dynauralight.curvalue,   "cg_lightAuras" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.dynexplolights.curvalue, "cg_lightExplosions" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.transaura.curvalue,      "cg_transformationAura" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.smallaura.curvalue,      "cg_smallOwnAura" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.ssjglow.curvalue,        "cg_permaglowUltimate" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.accucrosshair.curvalue,  "cg_stableCrosshair" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.simplehud.curvalue,      "cg_simpleHUD" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.chargealert.curvalue,    "cg_chargeupAlert" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.q3hitsfx.curvalue,       "cg_playHitSound" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.flightilt.curvalue,      "cg_flytilt" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.bigheads.curvalue,       "cg_superdeformed" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.defaultskins.curvalue,   "cg_forceSkin" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.stfu.curvalue,           "cg_stfu" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.lowpolysphere.curvalue,  "cg_lowpolysphere" )
+}
+#undef BFPOPTIONS_MENUITEM
+
+// Macros to look better the code
+#define AURATYPE_SETUP(highpoly, poly, light) \
+		trap_Cvar_SetValue( "cg_highPolyAura", highpoly ); \
+		trap_Cvar_SetValue( "cg_polygonAura", poly ); \
+		trap_Cvar_SetValue( "cg_lightweightAuras", light );
+
+#define VIEWPOINT_SETUP(tp, ownmodel) \
+		trap_Cvar_SetValue( "cg_thirdPerson", tp ); \
+		trap_Cvar_SetValue( "cg_drawOwnModel", ownmodel );
+
+#define EXPLOTYPE_SETUP(expShell, expSmoke, particles, expRing ) \
+		trap_Cvar_SetValue( "cg_explosionShell", expShell ); \
+		trap_Cvar_SetValue( "cg_explosionSmoke", expSmoke ); \
+		trap_Cvar_SetValue( "cg_particles", particles ); \
+		trap_Cvar_SetValue( "cg_explosionRing", expRing ); \
+		s_bfpoptions.particlesfx.curvalue = particles;
 
 static void BFPOptions_Event( void* ptr, int notification ) {
-	if( notification != QM_ACTIVATED ) {
+	if ( notification != QM_ACTIVATED ) {
 		return;
 	}
 
-	switch( ((menucommon_s*)ptr)->id ) {
+	switch ( ((menucommon_s*)ptr)->id ) {
 
 		//-----------------------------Aura list---------------------------------//
 
 	case ID_AURATYPE:
-		if( s_bfpoptions.auratype.curvalue == 0 ) {
-			trap_Cvar_SetValue( "cg_highPolyAura", 1 );
-			trap_Cvar_SetValue( "cg_polygonAura", 1 );
-			trap_Cvar_SetValue( "cg_lightweightAuras", 0 );
-		}
-		else if( s_bfpoptions.auratype.curvalue == 1 ) {
-			trap_Cvar_SetValue( "cg_highPolyAura", 0 );
-			trap_Cvar_SetValue( "cg_polygonAura", 1 );
-			trap_Cvar_SetValue( "cg_lightweightAuras", 0 );
-		}
-		else if( s_bfpoptions.auratype.curvalue == 2 ) {
-			trap_Cvar_SetValue( "cg_highPolyAura", 0 );
-			trap_Cvar_SetValue( "cg_polygonAura", 0 );
-			trap_Cvar_SetValue( "cg_lightweightAuras", 0 );
-		}
-		else if( s_bfpoptions.auratype.curvalue == 3 ) {
-			trap_Cvar_SetValue( "cg_highPolyAura", 0 );
-			trap_Cvar_SetValue( "cg_polygonAura", 0 );
-			trap_Cvar_SetValue( "cg_lightweightAuras", 1 );
-		}
-		else if( s_bfpoptions.auratype.curvalue == 4 ) {
-			trap_Cvar_SetValue( "cg_highPolyAura", 0 );
-			trap_Cvar_SetValue( "cg_polygonAura", 0 );
-			trap_Cvar_SetValue( "cg_lightweightAuras", 0 );
+		switch ( s_bfpoptions.auratype.curvalue ) {
+		case SHADER_AURA: // Shader Aura
+			AURATYPE_SETUP( 0, 0, 0 )
+			break;
+
+		case LIGHTWEIGHT_AURA: // Lightweight Aura
+			AURATYPE_SETUP( 0, 0, 1 )
+			break;
+
+		case POLYGON_AURA: // Polygonal Aura
+			AURATYPE_SETUP( 0, 1, 0 )
+			break;
+
+		case HIGHPOLYCOUNT_AURA: // High Polycount Aura
+			AURATYPE_SETUP( 1, 1, 0 )
+			break;
 		}
 		break;
 
 		//---------------------------View point List---------------------------------------//
 
 	case ID_VIEWPOINT:
-		if( s_bfpoptions.viewpoint.curvalue == 0 ) {
+		switch ( s_bfpoptions.viewpoint.curvalue ) {
+		case 0: // Third Person
 			trap_Cvar_SetValue( "cg_thirdPerson", 1 );
-			trap_Cvar_SetValue( "cg_drawOwnModel", 1 );
-		}
-		else if( s_bfpoptions.viewpoint.curvalue == 1 ) {
-			trap_Cvar_SetValue( "cg_thirdPerson", 0 );
-			trap_Cvar_SetValue( "cg_drawOwnModel", 0 );
-		}
-		else if( s_bfpoptions.viewpoint.curvalue == 2 ) {
-			trap_Cvar_SetValue( "cg_thirdPerson", 0 );
-			trap_Cvar_SetValue( "cg_drawOwnModel", 1 );
+			break;
+
+		case 1: // First Person
+			VIEWPOINT_SETUP( 0, 0 )
+			break;
+
+		case 2: // First Person Vis
+			VIEWPOINT_SETUP( 0, 1 )
+			break;
 		}
 		break;
 
 		//---------------------------Explosion type list---------------------------------------//
 
 	case ID_EXPLOTYPE:
-		if ( s_bfpoptions.explotype.curvalue == 0 ) {
-			trap_Cvar_SetValue( "cg_explosionShell", 1 );
-			trap_Cvar_SetValue( "cg_explosionSmoke", 0 );
-			trap_Cvar_SetValue( "cg_particles", 1 );
-			trap_Cvar_SetValue( "cg_explosionRing", 1 );
-		}
-		else if ( s_bfpoptions.explotype.curvalue == 1 ) {
-			trap_Cvar_SetValue( "cg_explosionShell", 1 );
-			trap_Cvar_SetValue( "cg_explosionSmoke", 1 );
-			trap_Cvar_SetValue( "cg_particles", 1 );
-			trap_Cvar_SetValue( "cg_explosionRing", 1 );
-		}
-		else if ( s_bfpoptions.explotype.curvalue == 2 ) {
-			trap_Cvar_SetValue( "cg_explosionShell", 0 );
-			trap_Cvar_SetValue( "cg_explosionSmoke", 0 );
-			trap_Cvar_SetValue( "cg_particles", 0 );
-			trap_Cvar_SetValue( "cg_explosionRing", 0 );
-		}
-		else if ( s_bfpoptions.explotype.curvalue == 3 ) {
-			trap_Cvar_SetValue( "cg_explosionShell", 1 );
-			trap_Cvar_SetValue( "cg_explosionSmoke", 0 );
-			trap_Cvar_SetValue( "cg_particles", 0 );
-			trap_Cvar_SetValue( "cg_explosionRing", 1 );
+		switch ( s_bfpoptions.explotype.curvalue ) {
+		case WIMPY_EXPLO: // Wimpy
+			EXPLOTYPE_SETUP( 0, 0, 0, 0 )
+			break;
+
+		case WEAK_EXPLO: // Weak
+			EXPLOTYPE_SETUP( 1, 0, 0, 1 )
+			break;
+
+		case SO_SO_EXPLO: // So-So
+			EXPLOTYPE_SETUP( 1, 0, 1, 1 )
+			break;
+
+		case HARDCORE_EXPLO: // Hardcore
+			EXPLOTYPE_SETUP( 1, 1, 1, 1 )
+			break;
 		}
 		break;
 
@@ -273,8 +291,8 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 		trap_Cvar_SetValue( "cg_forceSkin", s_bfpoptions.defaultskins.curvalue );
 		break;
 
-	case ID_DISABLEVOICES:
-		trap_Cvar_SetValue( "cg_stfu", s_bfpoptions.disablevoices.curvalue );
+	case ID_STFU:
+		trap_Cvar_SetValue( "cg_stfu", s_bfpoptions.stfu.curvalue );
 		break;
 
 	case ID_LOWPOLYSPHERE:
@@ -286,6 +304,9 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 		break;
 	}
 }
+#undef AURATYPE_SETUP
+#undef VIEWPOINT_SETUP
+#undef EXPLOTYPE_SETUP
 
 
 static void BFPOptions_MenuInit( void ) {
@@ -506,13 +527,13 @@ static void BFPOptions_MenuInit( void ) {
 	s_bfpoptions.defaultskins.generic.y			= y;
 
 	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.disablevoices.generic.type		= MTYPE_RADIOBUTTON;
-	s_bfpoptions.disablevoices.generic.name		= "Disable Voices:";
-	s_bfpoptions.disablevoices.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.disablevoices.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.disablevoices.generic.id		= ID_DISABLEVOICES;
-	s_bfpoptions.disablevoices.generic.x		= BFPOPTIONS_X_POS;
-	s_bfpoptions.disablevoices.generic.y		= y;
+	s_bfpoptions.stfu.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.stfu.generic.name		= "Disable Voices:";
+	s_bfpoptions.stfu.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.stfu.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.stfu.generic.id		= ID_STFU;
+	s_bfpoptions.stfu.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.stfu.generic.y			= y;
 
 	y += BIGCHAR_HEIGHT + 2;
 	s_bfpoptions.lowpolysphere.generic.type		= MTYPE_RADIOBUTTON;
@@ -557,7 +578,7 @@ static void BFPOptions_MenuInit( void ) {
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.flightilt );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.bigheads );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.defaultskins );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.disablevoices );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.stfu );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.lowpolysphere );
 
 //----------------------------Auras-------------------------------------//
@@ -566,14 +587,14 @@ static void BFPOptions_MenuInit( void ) {
 	polygonalaura = trap_Cvar_VariableValue( "cg_polygonAura" );
 	lightweightaura = trap_Cvar_VariableValue( "cg_lightweightAuras" );
 
-	if ( highpolyaura == 1 ) {
-		s_bfpoptions.auratype.curvalue = 0;
-	} else if ( polygonalaura == 1 )  {
-		s_bfpoptions.auratype.curvalue = 1;
-	} else if ( lightweightaura == 1 ) {
-		s_bfpoptions.auratype.curvalue = 3;
+	if ( highpolyaura >= 1 ) {
+		s_bfpoptions.auratype.curvalue = HIGHPOLYCOUNT_AURA;
+	} else if ( polygonalaura >= 1 )  {
+		s_bfpoptions.auratype.curvalue = POLYGON_AURA;
+	} else if ( lightweightaura >= 1 ) {
+		s_bfpoptions.auratype.curvalue = LIGHTWEIGHT_AURA;
 	} else {
-		s_bfpoptions.auratype.curvalue = 2;
+		s_bfpoptions.auratype.curvalue = SHADER_AURA;
 	}
 
 //----------------------------Explosions-------------------------------------//
@@ -583,14 +604,16 @@ static void BFPOptions_MenuInit( void ) {
 	particles = trap_Cvar_VariableValue( "cg_particles" );
 	explosionring = trap_Cvar_VariableValue( "cg_explosionRing" );
 
-	if ( explosionSmoke == 1 ) {
-		s_bfpoptions.explotype.curvalue = 1;
-	} else if ( particles == 1 ) {
-		s_bfpoptions.explotype.curvalue = 0;
-	} else if ( explosionShell == 1 ) {
-		s_bfpoptions.explotype.curvalue = 3;
-	} else if ( explosionring == 0 ) {
-		s_bfpoptions.explotype.curvalue = 2;
+	if ( explosionSmoke <= 0 && explosionShell <= 0 && explosionring <= 0 ) {
+		s_bfpoptions.explotype.curvalue = WIMPY_EXPLO;
+	} else if ( explosionSmoke >= 1 && explosionring >= 1 ) {
+		s_bfpoptions.explotype.curvalue = WEAK_EXPLO;
+	} else if ( explosionSmoke >= 1 && particles >= 1 && explosionring >= 1 ) {
+		s_bfpoptions.explotype.curvalue = SO_SO_EXPLO;
+	} else if ( explosionSmoke >= 1 && explosionShell >= 1 && particles >= 1 && explosionring >= 1 ) {
+		s_bfpoptions.explotype.curvalue = HARDCORE_EXPLO;
+	} else {
+		s_bfpoptions.explotype.curvalue = WIMPY_EXPLO;
 	}
 
 //----------------------------Camera-------------------------------------//
@@ -598,11 +621,11 @@ static void BFPOptions_MenuInit( void ) {
 	thirdperson = trap_Cvar_VariableValue( "cg_thirdPerson" );
 	firstpersonvis = trap_Cvar_VariableValue( "cg_drawOwnModel" );
 
-	if( thirdperson == 1 ) {
+	if ( thirdperson == 1 ) {
 		s_bfpoptions.viewpoint.curvalue = 0;
-	} else if( firstpersonvis == 1 ) {
+	} else if ( firstpersonvis == 1 ) {
 		s_bfpoptions.viewpoint.curvalue = 2;
-	} else if( firstpersonvis == 0 ) {
+	} else if ( firstpersonvis == 0 ) {
 		s_bfpoptions.viewpoint.curvalue = 1;
 	}
 
@@ -610,11 +633,18 @@ static void BFPOptions_MenuInit( void ) {
 
 	s_bfpoptions.kitrailength.curvalue  = trap_Cvar_VariableValue( "cg_kiTrail" );
 	s_bfpoptions.beamcmpxy.curvalue  = trap_Cvar_VariableValue( "cg_beamTrail" );
-
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.back );
 
 	BFPOptions_SetMenuItems();
 }
+#undef SHADER_AURA
+#undef LIGHTWEIGHT_AURA
+#undef POLYGON_AURA
+#undef HIGHPOLYCOUNT_AURA
+#undef WIMPY_EXPLO
+#undef WEAK_EXPLO
+#undef SO_SO_EXPLO
+#undef HARDCORE_EXPLO
 
 
 /*
