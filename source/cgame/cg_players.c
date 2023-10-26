@@ -1244,12 +1244,12 @@ static void CG_PlayerAnimation( centity_t *cent, int *legsOld, int *legs, float 
 
 	// if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
 	// BFP - When using ki boost use the following speed as haste powerup
-	if ( cent->currentState.number == cg.snap->ps.clientNum 
-		&& ( cent->currentState.eFlags & EF_AURA )
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-		&& ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND
-		&& ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) {
+	if ( clientNum == cg.snap->ps.clientNum 
+	&& ( cent->currentState.eFlags & EF_AURA )
+	&& ( ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND )
+	&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) ) ) {
 		speedScale = 1.5; // when using ki boost
 	} else {
 		speedScale = 1;
@@ -1398,9 +1398,14 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	// --------- yaw -------------
 
+	// BFP - Allow yaw while flying too
 	// allow yaw to drift a bit
-	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE 
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND  ) {
+	if ( ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE  
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND )
+			&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYIDLE
+			|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND )
+		&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) ) {
 		// if not standing still, always point all in the same direction
 		cent->pe.torso.yawing = qtrue;	// always center
 		cent->pe.torso.pitching = qtrue;	// always center
@@ -1422,8 +1427,8 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	// BFP - Swing the angles to make the movements look smooth
 	// torso
-	CG_SwingAngles( torsoAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-	CG_SwingAngles( legsAngles[YAW], 90, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+	CG_SwingAngles( torsoAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing ); // BFP - Before: 25, 90
+	CG_SwingAngles( legsAngles[YAW], 90, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing ); // BFP - Before: 40, 90
 
 	torsoAngles[YAW] = cent->pe.torso.yawAngle;
 	legsAngles[YAW] = cent->pe.legs.yawAngle;
@@ -1437,7 +1442,15 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	} else {
 		dest = headAngles[PITCH] * 0.75f;
 	}
-	CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
+	// BFP - When flying, set the legs in the first case
+	if ( cent->currentState.clientNum == cg.snap->ps.clientNum 
+	&& ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) ) {
+		CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.legs.pitchAngle, &cent->pe.legs.pitching );
+		legsAngles[PITCH] = cent->pe.legs.pitchAngle;
+	}
+
+	// BFP - When flying, set the torso correctly into these angles
+	CG_SwingAngles( dest, 30, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
 	torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
 
 	//
@@ -1451,6 +1464,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	// --------- roll -------------
 
+	// BFP - TODO: Make the forward and backwards movements smooth
 
 	// lean towards the direction of travel
 	VectorCopy( cent->currentState.pos.trDelta, velocity );
@@ -1459,7 +1473,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		vec3_t	axis[3];
 		float	side;
 
-		speed *= 0.01f; // BFP - adjust legs speed, before 0.05f
+		speed *= 0.025f; // BFP - adjust legs speed, before 0.05f
 
 		AnglesToAxis( legsAngles, axis );
 		side = speed * DotProduct( velocity, axis[1] );
@@ -1478,25 +1492,6 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 			legsAngles[PITCH] = 0.0f;
 			legsAngles[ROLL] = 0.0f;
 		}
-	}
-
-	// BFP - when flying, set correctly into these angles
-	if ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) {
-		//VectorCopy( cent->lerpAngles, headAngles );
-		//VectorCopy( cent->lerpAngles, torsoAngles );
-		// only show a fraction of the pitch angle in the torso
-		VectorCopy( torsoAngles, legsAngles );
-
-		CG_SwingAngles( torsoAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-		CG_SwingAngles( legsAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
-
-		torsoAngles[YAW] = cent->pe.torso.yawAngle;
-		legsAngles[YAW] = cent->pe.torso.yawAngle;
-
-		//legsAngles[YAW] = torsoAngles[YAW];
-		//CG_SwingAngles( torsoAngles[YAW], 40, 90, cg_swingSpeed.value, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-		//CG_SwingAngles( legsAngles[YAW], 90, 90, cg_swingSpeed.value, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
-		//VectorCopy( cent->lerpAngles, legsAngles );
 	}
 
 	// pain twitch
@@ -1814,49 +1809,25 @@ Float sprites over the player's head
 static void CG_PlayerSprites( centity_t *cent ) {
 	int		team;
 
-	if ( cent->currentState.eFlags & EF_CONNECTION ) {
-		CG_PlayerFloatSprite( cent, cgs.media.connectionShader );
-		return;
-	}
+	// BFP - A macro to check if there's some eflag enabled, also don't show the float sprite to the player itself
+	#define FLOATSPRITE_CHECK(eflag, flspriteshader) \
+		if ( ( cent->currentState.eFlags & eflag ) && cent->currentState.number != cg.snap->ps.clientNum ) { \
+			CG_PlayerFloatSprite( cent, flspriteshader ); \
+			return; \
+		}
 
-	if ( cent->currentState.eFlags & EF_TALK 
-		&& cent->currentState.number != cg.snap->ps.clientNum ) { // BFP - Don't show the chat ballon to the player itself
-		CG_PlayerFloatSprite( cent, cgs.media.balloonShader );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_IMPRESSIVE ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalImpressive );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_EXCELLENT ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalExcellent );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_GAUNTLET ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalGauntlet );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_DEFEND ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalDefend );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_ASSIST ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalAssist );
-		return;
-	}
-
-	if ( cent->currentState.eFlags & EF_AWARD_CAP ) {
-		CG_PlayerFloatSprite( cent, cgs.media.medalCapture );
-		return;
-	}
+	FLOATSPRITE_CHECK( EF_CONNECTION,       cgs.media.connectionShader )
+	FLOATSPRITE_CHECK( EF_TALK,             cgs.media.balloonShader )
+	FLOATSPRITE_CHECK( EF_AWARD_IMPRESSIVE, cgs.media.medalImpressive )
+	FLOATSPRITE_CHECK( EF_AWARD_EXCELLENT,  cgs.media.medalExcellent )
+	FLOATSPRITE_CHECK( EF_AWARD_GAUNTLET,   cgs.media.medalGauntlet )
+	FLOATSPRITE_CHECK( EF_AWARD_DEFEND,     cgs.media.medalDefend )
+	FLOATSPRITE_CHECK( EF_AWARD_ASSIST,     cgs.media.medalAssist )
+	FLOATSPRITE_CHECK( EF_AWARD_CAP,        cgs.media.medalCapture )
 
 	team = cgs.clientinfo[ cent->currentState.clientNum ].team;
 	if ( !(cent->currentState.eFlags & EF_DEAD) && 
+		cent->currentState.number != cg.snap->ps.clientNum && // BFP - Don't show the friend team shader to the player itself
 		cg.snap->ps.persistant[PERS_TEAM] == team &&
 		cgs.gametype >= GT_TEAM) {
 		if (cg_drawFriend.integer) {
@@ -1865,6 +1836,7 @@ static void CG_PlayerSprites( centity_t *cent ) {
 		return;
 	}
 }
+#undef FLOATSPRITE_CHECK
 
 /*
 ===============
@@ -2179,8 +2151,7 @@ void CG_Player( centity_t *cent ) {
 
 	// get the player model information
 	renderfx = 0;
-	// BFP - Don't make the players look to the others with the same torso position
-	// if ( cent->currentState.number == cg.snap->ps.clientNum) {
+	if ( cent->currentState.number == cg.snap->ps.clientNum ) {
 		if (!cg.renderingThirdPerson) {
 			renderfx = RF_THIRD_PERSON;			// only draw in mirrors
 		} /*else { // BFP - cg_cameraMode cvar doesn't exist
@@ -2188,7 +2159,7 @@ void CG_Player( centity_t *cent ) {
 				return;
 			}
 		}*/
-	// }
+	}
 
 
 	memset( &legs, 0, sizeof(legs) );
@@ -2271,8 +2242,8 @@ void CG_Player( centity_t *cent ) {
 
 	// BFP - First person vis mode doesn't have head model to be displayed
 	if ( cg_drawOwnModel.integer >= 1 && cg_thirdPerson.integer <= 0
-		&& cent->currentState.number == cg.snap->ps.clientNum
-		&& !( cent->currentState.eFlags & EF_DEAD ) ) {
+	&& clientNum == cg.snap->ps.clientNum
+	&& !( cent->currentState.eFlags & EF_DEAD ) ) {
 		head.hModel = 2; // 2: no head model display and no pivot display
 	}
 	head.customSkin = ci->headSkin;
@@ -2319,6 +2290,10 @@ void CG_Player( centity_t *cent ) {
 		}
 
 	// Macro for the dynamic aura light, note: when charging it changes the shinning a bit
+
+	// BFP - TODO: Make the light of aura of highpolycount look less bright 
+	// because bfp looks only the lightweight ones (but blinking correctly is a must)
+
 	#define AURA_LIGHT(r, g, b) \
 		if ( cg_lightAuras.integer > 0 ) { \
 			if ( cg_smallOwnAura.integer > 0 ) { \
@@ -2327,7 +2302,7 @@ void CG_Player( centity_t *cent ) {
 				trap_R_AddLightToScene( aura.origin, 200 + (rand()&255), r, g, b ); \
 				trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
 			} \
-			if ( cg_lightweightAuras.integer > 0 ) { \
+			if ( cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
 				trap_R_AddLightToScene( torso.origin, 80 + (rand()&83), r, g, b ); \
 				trap_R_AddLightToScene( legs.origin, 80 + (rand()&63), r, g, b ); \
 				trap_R_AddLightToScene( aura.origin, 80 + (rand()&63), r, g, b ); \
@@ -2420,7 +2395,7 @@ void CG_Player( centity_t *cent ) {
 	
 	// BFP - First person camera setup
 	if ( cg_thirdPerson.integer <= 0 
-		&& cent->currentState.number == cg.snap->ps.clientNum  ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
+	&& clientNum == cg.snap->ps.clientNum ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
 		CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
 	}
 }
