@@ -2131,8 +2131,16 @@ void CG_Player( centity_t *cent ) {
 	int				renderfx;
 	qboolean		shadow;
 	float			shadowPlane;
-	int				aura_i, aura_j; // BFP - For aura sizes
+	int				model_i, model_j; // BFP - For model sizes
 	vec3_t			auraInverseRotation; // BFP - For aura inverse rotation
+
+	// BFP - Macro for the size of a model
+	#define MODEL_SIZE(model, model_size) \
+		for ( model_i = 0; model_i < 3; model_i++ ) { \
+			for ( model_j = 0; model_j < 3; model_j++ ) { \
+				model.axis[model_i][model_j] *= model_size; \
+			} \
+		}
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2260,14 +2268,6 @@ void CG_Player( centity_t *cent ) {
 	//
 	// BFP - Aura 
 	//
-	// Macro for the size of the aura model
-	#define AURA_MODEL_SIZE(aura, aura_size) \
-		for ( aura_i = 0; aura_i < 3; aura_i++ ) { \
-			for ( aura_j = 0; aura_j < 3; aura_j++ ) { \
-				aura.axis[aura_i][aura_j] *= aura_size; \
-			} \
-		}
-
 	// Macro to handle the aura animations, when idling it sets the aura vertical rotation, so the aura rotates vertically
 	#define AURA_ANIMS(aura, reversed) \
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN \
@@ -2290,24 +2290,21 @@ void CG_Player( centity_t *cent ) {
 		}
 
 	// Macro for the dynamic aura light, note: when charging it changes the shinning a bit
-
-	// BFP - TODO: Make the light of aura of highpolycount look less bright 
-	// because bfp looks only the lightweight ones (but blinking correctly is a must)
-
 	#define AURA_LIGHT(r, g, b) \
 		if ( cg_lightAuras.integer > 0 ) { \
 			if ( cg_smallOwnAura.integer > 0 ) { \
-				trap_R_AddLightToScene( torso.origin, 200 + (rand()&255), r, g, b ); \
-				trap_R_AddLightToScene( legs.origin, 200 + (rand()&255), r, g, b ); \
-				trap_R_AddLightToScene( aura.origin, 200 + (rand()&255), r, g, b ); \
-				trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
-			} \
-			if ( cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
-				trap_R_AddLightToScene( torso.origin, 80 + (rand()&83), r, g, b ); \
-				trap_R_AddLightToScene( legs.origin, 80 + (rand()&63), r, g, b ); \
-				trap_R_AddLightToScene( aura.origin, 80 + (rand()&63), r, g, b ); \
+				trap_R_AddLightToScene( torso.origin, 100 + (rand()&150), r, g, b ); \
+				trap_R_AddLightToScene( legs.origin, 100 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( aura.origin, 150 + (rand()&255), r, g, b ); \
+				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
+					trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
+				} \
+			} else if ( cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
+				trap_R_AddLightToScene( torso.origin, 50 + (rand()&100), r, g, b ); \
+				trap_R_AddLightToScene( legs.origin, 50 + (rand()&100), r, g, b ); \
+				trap_R_AddLightToScene( aura.origin, 50 + (rand()&100), r, g, b ); \
 			} else { \
-				trap_R_AddLightToScene( torso.origin, 80 + (rand()&63), r, g, b ); \
+				trap_R_AddLightToScene( torso.origin, 150 + (rand()&100), r, g, b ); \
 				trap_R_AddLightToScene( legs.origin, 200 + (rand()&63), r, g, b ); \
 				trap_R_AddLightToScene( aura.origin, 200 + (rand()&255), r, g, b ); \
 				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
@@ -2329,8 +2326,8 @@ void CG_Player( centity_t *cent ) {
 		AURA_ANIMS( aura2, 1 )
 
 		// Resize the aura
-		AURA_MODEL_SIZE( aura, 1.3f )
-		AURA_MODEL_SIZE( aura2, 1.49f )
+		MODEL_SIZE( aura, 1.3f )
+		MODEL_SIZE( aura2, 1.49f )
 
 		// Set aura position to the player
 		VectorCopy( legs.origin, aura.origin );
@@ -2375,12 +2372,12 @@ void CG_Player( centity_t *cent ) {
 		}
 
 		// Add aura
-		if ( cg_polygonAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) {
+		if ( cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 && cg_smallOwnAura.integer <= 0 ) {
 			trap_R_AddRefEntityToScene( &aura );
 		}
 
 		// Add secondary aura to make look cooler, a bit bigger than the other
-		if ( cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_smallOwnAura.integer <= 0  ) {
+		if ( cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_lightweightAuras.integer <= 0 && cg_smallOwnAura.integer <= 0  ) {
 			trap_R_AddRefEntityToScene( &aura2 );
 		}
 	}
@@ -2399,7 +2396,7 @@ void CG_Player( centity_t *cent ) {
 		CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
 	}
 }
-#undef AURA_MODEL_SIZE
+#undef MODEL_SIZE
 #undef AURA_ANIMS
 #undef AURA_LIGHT
 
