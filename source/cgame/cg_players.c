@@ -2203,6 +2203,11 @@ void CG_Player( centity_t *cent ) {
 	legs.hModel = ci->legsModel;
 	legs.customSkin = ci->legsSkin;
 
+	// BFP - Super Deformed (Chibi style) easter egg for the base model (the legs apply all parts of the body)
+	if ( cg_superdeformed.integer > 0 ) {
+		MODEL_SIZE( legs, 0.8f )
+	}
+
 	VectorCopy( cent->lerpOrigin, legs.origin );
 
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
@@ -2255,6 +2260,11 @@ void CG_Player( centity_t *cent ) {
 		head.hModel = 2; // 2: no head model display and no pivot display
 	}
 	head.customSkin = ci->headSkin;
+
+	// BFP - Super Deformed (Chibi style) easter egg for the head model
+	if ( cg_superdeformed.integer > 0 ) {
+		MODEL_SIZE( head, 3.0f )
+	}
 
 	VectorCopy( cent->lerpOrigin, head.lightingOrigin );
 
