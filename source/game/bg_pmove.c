@@ -34,7 +34,6 @@ pml_t		pml;
 float	pm_stopspeed = 100.0f;
 float	pm_duckScale = 0.25f;
 float	pm_swimScale = 0.50f;
-float	pm_wadeScale = 0.70f;
 
 float	pm_accelerate = 10.0f;
 float	pm_airaccelerate = 1.0f;
@@ -50,6 +49,12 @@ int		c_pmove = 0;
 
 // BFP - Macro for jump handling, since the code looked repetitive, so this macro makes the code a bit shorter
 #define FORCEJUMP_ANIM_HANDLING() ( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB )
+
+// BFP - Macro for fly handling, since the code looked repetitive, so this macro makes the code a bit shorter
+#define CONTINUEFLY_ANIM_HANDLING() \
+	if ( pm->cmd.forwardmove > 0 ) { PM_ContinueTorsoAnim( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); } \
+	else if ( pm->cmd.forwardmove < 0 ) { PM_ContinueTorsoAnim( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); } \
+	else { PM_ContinueTorsoAnim( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
 
 /*
 ===============
@@ -186,7 +191,6 @@ static void PM_Friction( void ) {
 
 	speed = VectorLength(vec);
 	if (speed < 1) {
-		drop = 0;
 		vel[0] = 0;
 		vel[1] = 0;		// allow sinking underwater
 		// FIXME: still have z friction underwater?
@@ -536,16 +540,7 @@ static void PM_WaterMove( void ) {
 	}
 
 	// BFP - Water animation handling, uses flying animation in that case
-	if ( pm->cmd.forwardmove > 0 ) {
-		PM_ContinueTorsoAnim( TORSO_FLYA );
-		PM_ContinueLegsAnim( LEGS_FLYA );
-	} else if ( pm->cmd.forwardmove < 0 ) {
-		PM_ContinueTorsoAnim( TORSO_FLYB );
-		PM_ContinueLegsAnim( LEGS_FLYB );
-	} else {
-		PM_ContinueTorsoAnim( TORSO_STAND );
-		PM_ContinueLegsAnim( LEGS_FLYIDLE );
-	}
+	CONTINUEFLY_ANIM_HANDLING()
 
 	PM_SlideMove( qfalse );
 }
@@ -572,12 +567,11 @@ static void PM_FlyMove( void ) {
 	// user intentions
 	//
 	if ( !scale ) {
-		wishvel[0] = 0;
-		wishvel[1] = 0;
-		wishvel[2] = 0;
+		VectorClear( wishvel );
 	} else {
 		for ( i = 0; i < 3; i++ ) {
-			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove; // BFP -  (+ scale * pml.up[i] * pm->cmd.upmove) used when flying and moving upside/downside instead according the ground
+			// BFP - Before: (+ scale * pml.up[i] * pm->cmd.upmove) used when flying and moving upside/downside instead according the ground
+			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
 		}
 		// wishvel[2] += scale * pm->cmd.upmove; // BFP - disabled to work the wished velocity
 	}
@@ -605,6 +599,13 @@ static void PM_AirMove( void ) {
 	float		wishspeed;
 	float		scale;
 	usercmd_t	cmd;
+
+	// BFP - Avoid adding friction in the air while charging and flying
+	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
+	|| ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) 
+	&& ( pm->ps->pm_flags & PMF_FLYING ) ) {
+		return;
+	}
 
 	PM_Friction();
 
@@ -982,7 +983,6 @@ static void PM_CrashLand( void ) {
 	if ( delta < 1 ) {
 		return;
 	}
-
 	// create a local entity event to play the sound
 
 	// SURF_NODAMAGE is used for bounce pads where you don't ever
@@ -1002,13 +1002,9 @@ static void PM_CrashLand( void ) {
 #endif
 		else if ( delta > 7 ) {
 			PM_AddEvent( EV_FALL_SHORT );
-		}
-		// BFP - No footstep sounds
-#if 0 
-		else {
+		} else {
 			PM_AddEvent( PM_FootstepForSurface() );
 		}
-#endif
 	}
 
 	// start footstep cycle over
@@ -1606,21 +1602,12 @@ PM_FlightAnimation
 */
 static void PM_FlightAnimation( void ) { // BFP - Flight
 
-	if ( ( pm->ps->pm_flags & PMF_FLYING ) && ( pm->ps->pm_time <= 0 ) ) {
+	if ( ( pm->ps->pm_flags & PMF_FLYING ) && pm->ps->pm_time <= 0 ) {
 
 		// make sure to handle the PMF flag
 		pm->ps->pm_flags &= ~PMF_FALLING;
 
-		if ( pm->cmd.forwardmove > 0 ) {
-			PM_ContinueTorsoAnim( TORSO_FLYA );
-			PM_ContinueLegsAnim( LEGS_FLYA );
-		} else if ( pm->cmd.forwardmove < 0 ) {
-			PM_ContinueTorsoAnim( TORSO_FLYB );
-			PM_ContinueLegsAnim( LEGS_FLYB );
-		} else {
-			PM_ContinueTorsoAnim( TORSO_STAND );
-			PM_ContinueLegsAnim( LEGS_FLYIDLE );
-		}
+		CONTINUEFLY_ANIM_HANDLING()
 		return;
 	}
 
@@ -1668,6 +1655,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
+		PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & CONTENTS_SOLID )
 			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
@@ -2058,21 +2046,9 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		return;
 	}
 
-	// BFP - TODO: Handle the fall while charging
-
-	pm->cmd.forwardmove = 0;
-	pm->cmd.rightmove = 0;
-	pm->cmd.upmove = 0;
+	pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 
 	VectorClear( pm->ps->velocity );
-
-	// stop charging if it's using ki boost
-	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
-		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
-		pm->cmd.buttons &= ~BUTTON_KI_CHARGE;
-		pm->ps->pm_time = 0;
-		return;
-	}
 
 	if ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
@@ -2311,10 +2287,9 @@ void PmoveSingle (pmove_t *pmove) {
 
 	PM_Animate();
 
-	// BFP - No ground trace again
 	// set groundentity, watertype, and waterlevel
-	// PM_GroundTrace();
-	// PM_SetWaterLevel();
+	PM_GroundTrace();
+	PM_SetWaterLevel();
 
 	// weapons
 	PM_Weapon();
@@ -2393,6 +2368,7 @@ void Pmove (pmove_t *pmove) {
 
 }
 
-// BFP - Undefine the macro of jump handling
+// BFP - Undefine the macros
 #undef FORCEJUMP_ANIM_HANDLING
+#undef CONTINUEFLY_ANIM_HANDLING
 
