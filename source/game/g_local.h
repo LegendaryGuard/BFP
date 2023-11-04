@@ -143,7 +143,6 @@ struct gentity_s {
 	int			last_move_time;
 
 	int			health;
-	int			kiamount; // BFP - ki amount
 
 	qboolean	takedamage;
 

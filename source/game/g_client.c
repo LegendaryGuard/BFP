@@ -1176,8 +1176,6 @@ void ClientSpawn(gentity_t *ent) {
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
 
-	ent->kiamount = client->ps.stats[STAT_KI];
-
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
 
