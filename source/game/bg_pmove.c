@@ -558,6 +558,8 @@ static void PM_FlyMove( void ) {
 	float	wishspeed;
 	vec3_t	wishdir;
 	float	scale;
+	// BFP - Flight acceleration
+	float	flyacc;
 
 	// normal slowdown
 	PM_Friction ();
@@ -579,7 +581,10 @@ static void PM_FlyMove( void ) {
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 
-	PM_Accelerate (wishdir, wishspeed, pm_flyaccelerate);
+	// BFP - When moving during the flight, start with half acceleration
+	flyacc = (scale > pm_stopspeed) ? pm_flyaccelerate : pm_flyaccelerate/2;
+
+	PM_Accelerate (wishdir, wishspeed, flyacc);
 
 	PM_StepSlideMove( qfalse );
 }
@@ -990,17 +995,12 @@ static void PM_CrashLand( void ) {
 	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE) )  {
 		if ( delta > 180 ) { // BFP - Before Q3 default value (60), the far fall in BFP is deeper
 			PM_AddEvent( EV_FALL_FAR );
-		} 
-		// BFP - There's no medium fall on BFP
-#if 0
-		else if ( delta > 40 ) {
+		} else if ( delta > 40 ) {
 			// this is a pain grunt, so don't play it if dead
 			if ( pm->ps->stats[STAT_HEALTH] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
 			}
-		}
-#endif
-		else if ( delta > 7 ) {
+		} else if ( delta > 7 ) {
 			PM_AddEvent( EV_FALL_SHORT );
 		} else {
 			PM_AddEvent( PM_FootstepForSurface() );
