@@ -481,8 +481,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	case EV_FALL_MEDIUM:
 		DEBUGNAME("EV_FALL_MEDIUM");
+		// BFP - Use normal land sound instead
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.landSound );
 		// use normal pain sound
-		trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.wav" ) );
+		// trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.wav" ) );
 		if ( clientNum == cg.predictedPlayerState.clientNum ) {
 			// smooth landing z changes
 			cg.landChange = -16;
@@ -560,7 +562,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 	case EV_JUMP:
 		DEBUGNAME("EV_JUMP");
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) ); // BFP - Normal jump sound
+		// BFP - Use the second jump sound when using ki boost
+		if ( es->eFlags & EF_AURA ) {
+			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump2.wav" ) ); // BFP - Ki boost jump sound
+		} else {
+			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) ); // BFP - Normal jump sound
+		}
 		break;
 	case EV_TAUNT:
 		DEBUGNAME("EV_TAUNT");
