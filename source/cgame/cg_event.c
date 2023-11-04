@@ -562,8 +562,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 	case EV_JUMP:
 		DEBUGNAME("EV_JUMP");
-		// BFP - Use the second jump sound when using ki boost
-		if ( es->eFlags & EF_AURA ) {
+		// BFP - Use the second jump sound when using ki boost only when it isn't flying
+		if ( ( es->eFlags & EF_AURA ) && !( cg.predictedPlayerState.pm_flags & PMF_FLYING ) ) {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump2.wav" ) ); // BFP - Ki boost jump sound
 		} else {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) ); // BFP - Normal jump sound
