@@ -55,6 +55,7 @@
 
 ## COMPLETED:
 
+- [x] ~~cg_superdeformed~~
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
 - [x] ~~cg_fixedThirdPerson~~

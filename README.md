@@ -30,13 +30,13 @@ A legendary 90s era Quake 3 Arena mod.
 > > >
 > > > 5.4. [Optional](#optional)
 > > 6. [Notes](#notes)
-> > 7. [License](#license)
+> > 7. [Legal](#legal)
 > > 8. [Credits](#credits)
 
 # TODO list:
 
 - [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
-- [ ] Gauntlet logic must be replaced as a bind key, it will use fight animation (using kicks and fists)
+- [ ] Melee feature
 - [x] ~~Remove weapon visuals (models and stuff)~~
 - [x] ~~Animations as listed on the old docs~~
 - [x] ~~Bind key to recover ki energy~~
@@ -396,7 +396,7 @@ The information in the map file can be useful for debugging and performance anal
 - ui_specifyleague.c
 - ui_spreset.c
 
-### License
+### Legal
 
 The mod source code is GPLv3 licensed, the source code contents are based on Quake III Arena which is GPLv2 licensed.
 
@@ -405,6 +405,12 @@ The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and
 - Copyright (C) 1995-1997 Michael Hipp
 - Copyright (C) 1999 Aaron Holtzman
 - Copyright (C) 2000-2001 Tim Angus
+
+#### Bid For Power name
+
+Nobody owns the "Bid For Power" name. Bid For Power was founded by Chris James and likely ended up in the palm of Yrgol's hand (although Yrgol doesn't own the assets). The owner, the maintainer and the contributors of the repository don't own this name. <br/>
+This does not give any single person or a group of people to sell the name, basically it belongs to the original community. <br/>
+The Bid For Power team may provide sufficient security against any claims or improper use of the name.
 
 ## Credits
 
