@@ -1246,10 +1246,8 @@ static void CG_PlayerAnimation( centity_t *cent, int *legsOld, int *legs, float 
 	// BFP - When using ki boost use the following speed as haste powerup
 	if ( clientNum == cg.snap->ps.clientNum 
 	&& ( cent->currentState.eFlags & EF_AURA )
-	&& ( ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND )
-	&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) ) ) {
+	&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK ) ) {
 		speedScale = 1.5; // when using ki boost
 	} else {
 		speedScale = 1;
@@ -1443,8 +1441,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		dest = headAngles[PITCH] * 0.75f;
 	}
 	// BFP - When flying, set the legs in the first case
-	if ( cent->currentState.clientNum == cg.snap->ps.clientNum 
-	&& ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) ) {
+	if ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) {
 		CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.legs.pitchAngle, &cent->pe.legs.pitching );
 		legsAngles[PITCH] = cent->pe.legs.pitchAngle;
 	}
@@ -1473,7 +1470,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		vec3_t	axis[3];
 		float	side;
 
-		speed *= 0.025f; // BFP - adjust legs speed, before 0.05f
+		speed *= 0.03f; // BFP - adjust legs speed, before 0.05f
 
 		AnglesToAxis( legsAngles, axis );
 		side = speed * DotProduct( velocity, axis[1] );
@@ -1886,14 +1883,10 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	contents = CG_PointContents( trace.endpos, -1 );
 	if ( ( cent->currentState.eFlags & EF_AURA )
 		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLECR
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_JUMP
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_JUMPB
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYIDLE
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_WALK
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_WALKCR ) {
+		&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) ) {
 		CG_HasteTrail( cent );
 	}
 
@@ -2303,22 +2296,22 @@ void CG_Player( centity_t *cent ) {
 	#define AURA_LIGHT(r, g, b) \
 		if ( cg_lightAuras.integer > 0 ) { \
 			if ( cg_smallOwnAura.integer > 0 ) { \
-				trap_R_AddLightToScene( torso.origin, 100 + (rand()&150), r, g, b ); \
 				trap_R_AddLightToScene( legs.origin, 100 + (rand()&255), r, g, b ); \
 				trap_R_AddLightToScene( aura.origin, 150 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
 				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
-					trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&150), r, g, b ); \
 				} \
 			} else if ( cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
-				trap_R_AddLightToScene( torso.origin, 50 + (rand()&100), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
 				trap_R_AddLightToScene( legs.origin, 50 + (rand()&100), r, g, b ); \
 				trap_R_AddLightToScene( aura.origin, 50 + (rand()&100), r, g, b ); \
 			} else { \
-				trap_R_AddLightToScene( torso.origin, 150 + (rand()&100), r, g, b ); \
 				trap_R_AddLightToScene( legs.origin, 200 + (rand()&63), r, g, b ); \
 				trap_R_AddLightToScene( aura.origin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
 				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
-					trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&150), r, g, b ); \
 				} \
 			} \
 		}
@@ -2364,22 +2357,17 @@ void CG_Player( centity_t *cent ) {
 		VectorCopy( aura2.origin, aura2.oldorigin );	// don't positionally lerp at all
 
 		// Ki boost and ki charge sounds
-		if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) {
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
-				vec3_origin, cgs.media.kiUseSound );
-		} else if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_CHARGE ) {
+		if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_CHARGE ) {
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
 				vec3_origin, cgs.media.kiChargeSound );
+		} else {
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+				vec3_origin, cgs.media.kiUseSound );
 		}
 
 		// Keep the aura pivot tagged in tag_torso
-		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_RUN
-		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_BACK
-		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYA
-		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYB ) {
-			CG_PositionRotatedEntityOnTag( &aura, &legs, ci->legsModel, "tag_torso" );
-			CG_PositionRotatedEntityOnTag( &aura2, &legs, ci->legsModel, "tag_torso" );
-		}
+		CG_PositionRotatedEntityOnTag( &aura, &legs, ci->legsModel, "tag_torso" );
+		CG_PositionRotatedEntityOnTag( &aura2, &legs, ci->legsModel, "tag_torso" );
 
 		// Add aura
 		if ( cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 && cg_smallOwnAura.integer <= 0 ) {
