@@ -300,7 +300,8 @@ struct gclient_s {
 	qboolean	inactivityWarning;	// qtrue if the five seoond warning has been given
 	int			rewardTime;			// clear the EF_AWARD_IMPRESSIVE, etc when time > this
 
-	int			airOutTime;
+	// BFP - No drowning
+	// int			airOutTime;
 
 	int			lastKillTime;		// for multiple kill rewards
 	// BFP - no hook

@@ -100,6 +100,10 @@ void P_WorldEffects( gentity_t *ent ) {
 	qboolean	envirosuit;
 	int			waterlevel;
 
+	envirosuit = ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
+
+	// BFP - No drowning
+#if 0
 	if ( ent->client->noclip ) {
 		ent->client->airOutTime = level.time + 12000;	// don't need air
 		return;
@@ -107,7 +111,6 @@ void P_WorldEffects( gentity_t *ent ) {
 
 	waterlevel = ent->waterlevel;
 
-	envirosuit = ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
 
 	//
 	// check for drowning
@@ -148,6 +151,7 @@ void P_WorldEffects( gentity_t *ent ) {
 		ent->client->airOutTime = level.time + 12000;
 		ent->damage = 2;
 	}
+#endif
 
 	//
 	// check for sizzle damage (move to pmove?)
