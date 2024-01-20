@@ -88,7 +88,7 @@ Click here to see the [Old PyroFragger dev journal (Markdown edition)](docs/pyro
 ### About the repository
 
 We're making a replica of the lost source code. <br/>
-The highest priority goal is copying and recreating completely BFP game logical structure. <br/>
+The highest priority goal is to copy and recreate the complete logical structure of the BFP game. It would be a game SDK that'll provide a structured and standardized way to modify the mod.<br/>
 Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
 
 ### References and clues to know how should be the game
@@ -372,8 +372,8 @@ The information in the map file can be useful for debugging and performance anal
 
 - cg_cvar.h
 - g_cvar.h
-- ui_cvar.h
 - ui_bfpoptions.c
+- ui_cvar.h
 - ui_mem.c
 - ui_mp3decoder.c
 - ui_mp3decoder.h
@@ -389,7 +389,6 @@ The information in the map file can be useful for debugging and performance anal
 
 #### Unused source code files and unavailable in the build tools:
 
-- cg_particles.c
 - ui_rankings.c
 - ui_rankstatus.c
 - ui_signup.c
@@ -415,6 +414,8 @@ The Bid For Power team may provide sufficient security against any claims or imp
 ## Credits
 
 Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their assets.
+
+<div align="center">
 
 #### Bid For Power Staff Members	
 
@@ -462,3 +463,4 @@ Project Lead, Lead Programmer<br/>
 
 ::Additional Assistance::<br/>
 Mooky, Perfect Chaos, Dakota, Bardock, DethAyngel, Ebola, Badhead, $onik, Gigatron, Timex & Nat.
+</div>
