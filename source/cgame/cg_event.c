@@ -584,6 +584,18 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_WATER_UNDER:
 		DEBUGNAME("EV_WATER_UNDER");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrUnSound );
+		// BFP - Bubble and splash particles when entering under water
+		{
+			// BFP - TODO: Splash particles (that appears bubbles outside water but bouncing once)
+			vec3_t end = {0, 0, 1};
+
+			// Blub, blub, blub...
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
+		}
 		break;
 	case EV_WATER_CLEAR:
 		DEBUGNAME("EV_WATER_CLEAR");

@@ -327,7 +327,11 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 
 	if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
 		if ( contents & lastContents & CONTENTS_WATER ) {
-			CG_BubbleTrail( lastPos, origin, 8 );
+			// BFP - Apply particle bubble effect in that case
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 0, 20, 0 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 0, 20, 0 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 0, 20, 0 );
+			// CG_BubbleTrail( lastPos, origin, 8 );
 		}
 		return;
 	}
@@ -2033,6 +2037,8 @@ Renders bullet effects.
 ======================
 */
 void CG_Bullet( vec3_t end, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum ) {
+	// BFP - No water particles in BFP by firing a kind of ki-type bullet
+#if 0
 	trace_t trace;
 	int sourceContentType, destContentType;
 	vec3_t		start;
@@ -2065,6 +2071,7 @@ void CG_Bullet( vec3_t end, int sourceEntityNum, vec3_t normal, qboolean flesh, 
 			}
 		}
 	}
+#endif
 
 	// impact splash and mark
 	if ( flesh ) {

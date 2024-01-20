@@ -1521,10 +1521,13 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 CG_HasteTrail
 ===============
 */
-static void CG_HasteTrail( centity_t *cent ) {
+static void CG_HasteTrail( centity_t *cent, vec3_t endPos ) { // BFP - Second parameter added for smoke particles
+	// BFP - No smoke puff effect
+#if 0
 	localEntity_t	*smoke;
 	vec3_t			origin;
 	int				anim;
+#endif
 
 	if ( cent->trailTime > cg.time ) {
 		return;
@@ -1537,13 +1540,18 @@ static void CG_HasteTrail( centity_t *cent ) {
 	}
 #endif
 
-	cent->trailTime += 50; // BFP - TODO: Just a test (before 100)
+	cent->trailTime += 100;
 	if ( cent->trailTime < cg.time ) {
 		cent->trailTime = cg.time;
 	}
 
-	// BFP - TODO: Make the smoke move up (always) and move a bit on the left or right (randomly)
+	// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
+	CG_ParticleDashSmoke( cent, cgs.media.hastePuffShader, endPos );
+	CG_ParticleDashSmoke( cent, cgs.media.hastePuffShader, endPos );
+	CG_ParticleDashSmoke( cent, cgs.media.hastePuffShader, endPos );
 
+	// BFP - No smoke puff effect
+#if 0
 	VectorCopy( cent->lerpOrigin, origin );
 	origin[2] -= 16;
 
@@ -1558,6 +1566,7 @@ static void CG_HasteTrail( centity_t *cent ) {
 
 	// use the optimized local entity add
 	smoke->leType = LE_SCALE_FADE;
+#endif
 }
 
 /*
@@ -1886,19 +1895,16 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 
 	*shadowPlane = trace.endpos[2] + 1;
 
-	// BFP - TODO: Only show smoke where the shadow is and make one smoke of each moving to the air, 
-	// disappearing randomly according to time, making bigger according the size like BFP does
-	// CG_SmokePuff will help you to find out how to do
-
-	// BFP - Smoke trail when using ki boost on the ground
+	// BFP - Dash smoke particles when using ki boost on the ground
 	contents = CG_PointContents( trace.endpos, -1 );
 	if ( ( cent->currentState.eFlags & EF_AURA )
-		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
-		&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+		&& (   ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) ) {
-		CG_HasteTrail( cent );
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB )
+		&& trace.fraction <= 0.70f ) {
+		CG_HasteTrail( cent, trace.endpos );
 	}
 
 	if ( cg_shadows.integer != 1 ) {	// no mark for stencil or projection shadows
@@ -2327,6 +2333,41 @@ void CG_Player( centity_t *cent ) {
 		}
 
 	if ( cent->currentState.eFlags & EF_AURA ) {
+		// BFP - TODO: Create a new function "CG_KiTrail" only when moving to draw ki trail and add the cvar for the length
+
+		// BFP - Traces for bubble particles only when moving in the water and charging
+		int sourceContentType, destContentType;
+		vec3_t start;
+
+		sourceContentType = trap_CM_PointContents( start, 0 );
+		destContentType = trap_CM_PointContents( cent->lerpOrigin, 0 );
+
+		// spawning bubble particles
+		if ( destContentType & CONTENTS_WATER ) {
+			trace_t trace;
+			vec3_t bubbleOrigin;
+
+			VectorCopy( legs.origin, bubbleOrigin );
+			trap_CM_BoxTrace( &trace, start, bubbleOrigin, NULL, NULL, 0, CONTENTS_WATER );
+
+			bubbleOrigin[2] += -15; // put the origin below the character's feet
+
+			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
+				bubbleOrigin[2] += -10; // put the origin a little below
+
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+			}
+		}
+
 		// Apply the render type
 		aura.reType = aura2.reType = RT_MODEL;
 
