@@ -40,6 +40,8 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/cgame/cg_marks.c
 @if errorlevel 1 goto quit
+%cc% %src%/cgame/cg_particles.c
+@if errorlevel 1 goto quit
 %cc% %src%/cgame/cg_players.c
 @if errorlevel 1 goto quit
 %cc% %src%/cgame/cg_playerstate.c

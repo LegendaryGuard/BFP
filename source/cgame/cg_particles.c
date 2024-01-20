@@ -133,6 +133,10 @@ vec3_t			rforward, rright, rup;
 
 float			oldtime;
 
+#define NORMALSIZE	16
+#define LARGESIZE	32
+
+
 /*
 ===============
 CL_ClearParticles
@@ -202,9 +206,13 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				{	
 					p->time = cg.time;	
 					VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
-									
-					p->org[2] = ( p->start + crandom () * 4 );
 					
+					// BFP - Stop flickering, before: ( p->start + crandom () * 4 )
+					p->org[2] = ( p->start );
+					
+					// BFP - Make move less
+					p->vel[0] *= 0.9;
+					p->vel[1] *= 0.9;
 					
 					if (p->type == P_BUBBLE_TURBULENT)
 					{
@@ -448,9 +456,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		else 
 			invratio = 1 * p->alpha;
 
-		if ( cgs.glconfig.hardwareType == GLHW_RAGEPRO )
-			invratio = 1;
-
 		if (invratio > 1)
 			invratio = 1;
 	
@@ -553,9 +558,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 
 		alpha = p->alpha;
 		
-		if ( cgs.glconfig.hardwareType == GLHW_RAGEPRO )
-			alpha = 1;
-
 		if (p->roll) 
 		{
 			vectoangles( cg.refdef.viewaxis[0], rotate_ang );
@@ -873,37 +875,9 @@ void CG_AddParticles (void)
 			continue;
 		}
 
-		if (p->type == P_SMOKE || p->type == P_ANIM || p->type == P_BLEED || p->type == P_SMOKE_IMPACT)
-		{
-			if (cg.time > p->endtime)
-			{
-				p->next = free_particles;
-				free_particles = p;
-				p->type = 0;
-				p->color = 0;
-				p->alpha = 0;
-			
-				continue;
-			}
-
-		}
-
-		if (p->type == P_WEATHER_FLURRY)
-		{
-			if (cg.time > p->endtime)
-			{
-				p->next = free_particles;
-				free_particles = p;
-				p->type = 0;
-				p->color = 0;
-				p->alpha = 0;
-			
-				continue;
-			}
-		}
-
-
-		if (p->type == P_FLAT_SCALEUP_FADE)
+		if (p->type == P_SMOKE || p->type == P_ANIM || p->type == P_BLEED || p->type == P_SMOKE_IMPACT
+		|| p->type == P_WEATHER_FLURRY || p->type == P_FLAT_SCALEUP_FADE
+		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT) // BFP - Add P_BUBBLE types to remove particles
 		{
 			if (cg.time > p->endtime)
 			{
@@ -914,7 +888,6 @@ void CG_AddParticles (void)
 				p->alpha = 0;
 				continue;
 			}
-
 		}
 
 		if ((p->type == P_BAT || p->type == P_SPRITE) && p->endtime < 0) {
@@ -956,11 +929,6 @@ void CG_AddParticles (void)
 	active_particles = active;
 }
 
-/*
-======================
-CG_AddParticles
-======================
-*/
 void CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent)
 {
 	cparticle_t	*p;
@@ -1086,13 +1054,14 @@ void CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb
 
 }
 
-void CG_ParticleBubble (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum)
+void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum)
 {
 	cparticle_t	*p;
 	float		randsize;
 
-	if (!pshader)
-		CG_Printf ("CG_ParticleSnow pshader == ZERO!\n");
+	// if (!pshader) CG_Printf ("CG_ParticleSnow pshader == ZERO!\n");
+
+	// BFP - TODO: Make bubbles appear by moving one at a time without being timescaled
 
 	if (!free_particles)
 		return;
@@ -1101,19 +1070,22 @@ void CG_ParticleBubble (qhandle_t pshader, vec3_t origin, vec3_t origin2, int tu
 	p->next = active_particles;
 	active_particles = p;
 	p->time = cg.time;
+
+	// BFP - Add end time to remove particles, if there's no end time the particles will remain there
+	p->endtime = cg.time + 1000;
+	p->startfade = cg.time + 200;
+
 	p->color = 0;
 	p->alpha = 0.40f;
 	p->alphavel = 0;
-	p->start = origin[2];
-	p->end = origin2[2];
+	// BFP - Apply to player's origin
+	p->start = cent->currentState.origin[2];
+	p->end = cent->currentState.origin2[2];
 	p->pshader = pshader;
 	
-	randsize = 1 + (crandom() * 0.5);
+	randsize = 2 + (crandom() * 0.5);
 	
-	p->height = randsize;
-	p->width = randsize;
-	
-	p->vel[2] = 50 + ( crandom() * 10 );
+	p->height = p->width = randsize;
 
 	if (turb)
 	{
@@ -1124,16 +1096,41 @@ void CG_ParticleBubble (qhandle_t pshader, vec3_t origin, vec3_t origin2, int tu
 	{
 		p->type = P_BUBBLE;
 	}
-	
+
 	VectorCopy(origin, p->org);
 
-	p->org[0] = p->org[0] + ( crandom() * range);
-	p->org[1] = p->org[1] + ( crandom() * range);
-	p->org[2] = p->org[2] + ( crandom() * (p->start - p->end)); 
+	p->org[0] += (crandom() * range);
+	p->org[1] += (crandom() * range);
+	p->org[2] += (crandom() * (p->start - p->end)); 
 
-	p->vel[0] = p->vel[1] = 0;
-	
-	p->accel[0] = p->accel[1] = p->accel[2] = 0;
+	if ( ( cent->currentState.eFlags & EF_AURA ) 
+	&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
+		VectorSet( p->vel, 
+				(rand() % 801) - 400,
+				(rand() % 801) - 400,
+				20 );
+
+		// dispersion
+		VectorSet( p->accel, 
+				crandom() * 20, 
+				crandom() * 20, 
+				1400 );
+	} else {
+		// BFP - Apply end time to remove particles in that case, if there's no end time the particles will remain there
+		p->endtime = cg.time + 700;
+		p->startfade = cg.time + 200;
+
+		VectorSet( p->vel, 
+				(rand() % 401) - 200,
+				(rand() % 401) - 200,
+				20 );
+
+		// dispersion
+		VectorSet( p->accel, 
+				crandom() * 20, 
+				crandom() * 20, 
+				300 );
+	}
 
 	if (turb)
 	{
@@ -1144,7 +1141,6 @@ void CG_ParticleBubble (qhandle_t pshader, vec3_t origin, vec3_t origin2, int tu
 	// Rafael snow pvs check
 	p->snum = snum;
 	p->link = qtrue;
-
 }
 
 void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)
@@ -1252,7 +1248,7 @@ void CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 
 	// find the animation string
 	for (anim=0; shaderAnimNames[anim]; anim++) {
-		if (!stricmp( animStr, shaderAnimNames[anim] ))
+		if (!Q_stricmp( animStr, shaderAnimNames[anim] ))
 			break;
 	}
 	if (!shaderAnimNames[anim]) {
@@ -1305,15 +1301,12 @@ void CG_AddParticleShrapnel (localEntity_t *le)
 int CG_NewParticleArea (int num)
 {
 	// const char *str;
-	char *str;
-	char *token;
+	char *str, *token;
 	int type;
 	vec3_t origin, origin2;
 	int		i;
 	float range = 0;
-	int turb;
-	int	numparticles;
-	int	snum;
+	int turb, numparticles, snum;
 	
 	str = (char *) CG_ConfigString (num);
 	if (!str[0])
@@ -1323,23 +1316,16 @@ int CG_NewParticleArea (int num)
 	token = COM_Parse (&str);
 	type = atoi (token);
 	
-	if (type == 1)
-		range = 128;
-	else if (type == 2)
-		range = 64;
-	else if (type == 3)
-		range = 32;
-	else if (type == 0)
-		range = 256;
-	else if (type == 4)
-		range = 8;
-	else if (type == 5)
-		range = 16;
-	else if (type == 6)
-		range = 32;
-	else if (type == 7)
-		range = 64;
-
+	switch( type ) {
+		case 4: range =   8; break;
+		case 5: range =  16; break;
+		case 3:
+		case 6: range =  32; break;
+		case 2: 
+		case 7: range =  64; break;
+		case 1: range = 128; break;
+		case 0: range = 256; break;
+	}
 
 	for (i=0; i<3; i++)
 	{
@@ -1364,9 +1350,9 @@ int CG_NewParticleArea (int num)
 	
 	for (i=0; i<numparticles; i++)
 	{
-		if (type >= 4)
+		/*if (type >= 4)
 			CG_ParticleBubble (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
-		else
+		else*/
 			CG_ParticleSnow (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
 	}
 
@@ -1398,6 +1384,56 @@ void	CG_SnowLink (centity_t *cent, qboolean particleOn)
 	}
 }
 
+// BFP - Particle for dash smoke when using ki boost and moving in the ground
+void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
+{
+	cparticle_t	*p;
+
+	// if (!pshader) CG_Printf ("CG_ParticleDashSmoke pshader == ZERO!\n");
+
+	if (!free_particles)
+		return;
+
+	// BFP - TODO: Make smoke appear by moving one at a time without being timescaled
+
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+
+	p->time = cg.time;
+
+	p->alpha = 0.4;
+	p->alphavel = 0;
+
+	p->pshader = pshader;
+	p->start = cent->currentState.origin[2];
+	p->end = cent->currentState.origin2[2];
+
+	p->endtime = cg.time + 250;
+	p->startfade = cg.time + 100;
+
+	p->height = p->width = 25;
+
+	p->endheight = p->height * 2;
+	p->endwidth = p->width * 2;
+
+	p->type = P_SMOKE;
+
+	VectorCopy( origin, p->org );
+	VectorSet( p->vel, 
+				(rand() % 401) - 200,
+				(rand() % 401) - 200,
+				20 );
+
+	// dispersion
+	VectorSet( p->accel, 
+			crandom() * 20, 
+			crandom() * 20, 
+			1400 );
+}
+
+#if 0
 void CG_ParticleImpactSmokePuff (qhandle_t pshader, vec3_t origin)
 {
 	cparticle_t	*p;
@@ -1752,9 +1788,6 @@ void CG_BloodPool (localEntity_t *le, qhandle_t pshader, trace_t *tr)
 	p->color = BLOODRED;
 }
 
-#define NORMALSIZE	16
-#define LARGESIZE	32
-
 void CG_ParticleBloodCloud (centity_t *cent, vec3_t origin, vec3_t dir)
 {
 	float	length;
@@ -1831,6 +1864,7 @@ void CG_ParticleBloodCloud (centity_t *cent, vec3_t origin, vec3_t dir)
 
 	
 }
+#endif
 
 void CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, float speed)
 {
@@ -1980,8 +2014,7 @@ void CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 {
 	cparticle_t	*p;
 
-	if (!pshader)
-		CG_Printf ("CG_ParticleImpactSmokePuff pshader == ZERO!\n");
+	// if (!pshader) CG_Printf ("CG_ParticleImpactSmokePuff pshader == ZERO!\n");
 
 	if (!free_particles)
 		return;

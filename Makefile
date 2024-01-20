@@ -372,7 +372,6 @@ makedirs:
 #############################################################################
 ## BASEQ3 CGAME
 #############################################################################
-# $(B)/cgame/cg_particles.o \ 
 
 CGOBJ_ = \
   $(B)/cgame/cg_main.o \
@@ -389,6 +388,7 @@ CGOBJ_ = \
   $(B)/cgame/cg_info.o \
   $(B)/cgame/cg_localents.o \
   $(B)/cgame/cg_marks.o \
+  $(B)/cgame/cg_particles.o \
   $(B)/cgame/cg_players.o \
   $(B)/cgame/cg_playerstate.o \
   $(B)/cgame/cg_predict.o \
