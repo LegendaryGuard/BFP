@@ -34,7 +34,7 @@ char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*pain100_1.wav",
 	"*falling1.wav",
 	"*gasp.wav",
-	"*drown.wav",
+	// "*drown.wav", // BFP - No drowning
 	"*fall1.wav",
 	"*taunt.wav"
 };
@@ -1244,8 +1244,7 @@ static void CG_PlayerAnimation( centity_t *cent, int *legsOld, int *legs, float 
 
 	// if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
 	// BFP - When using ki boost use the following speed as haste powerup
-	if ( clientNum == cg.snap->ps.clientNum 
-	&& ( cent->currentState.eFlags & EF_AURA )
+	if ( ( cent->currentState.eFlags & EF_AURA )
 	&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK ) ) {
 		speedScale = 1.5; // when using ki boost
@@ -1461,7 +1460,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	// --------- roll -------------
 
-	// BFP - TODO: Make the forward and backwards movements smooth
+	// BFP - TODO: Make forward and backwards movements smooth when starting to move
 
 	// lean towards the direction of travel
 	VectorCopy( cent->currentState.pos.trDelta, velocity );
@@ -1470,7 +1469,11 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		vec3_t	axis[3];
 		float	side;
 
-		speed *= 0.03f; // BFP - adjust legs speed, before 0.05f
+		// BFP - Speed handling when moving too much the angles
+		if ( speed <= -480.0f ) speed = -480.0f;
+		if ( speed >=  480.0f ) speed =  480.0f;
+
+		speed *= 0.03f; // BFP - Adjust speed when rotate the angles (not a starting velocity), before: 0.05f
 
 		AnglesToAxis( legsAngles, axis );
 		side = speed * DotProduct( velocity, axis[1] );
@@ -1478,8 +1481,15 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 		side = speed * DotProduct( velocity, axis[0] );
 		legsAngles[PITCH] += side;
+
+		// BFP - Make the torso move the pitch angle a bit
+		AnglesToAxis( torsoAngles, axis );
+		side = speed * DotProduct( velocity, axis[0] );
+		torsoAngles[PITCH] += side;
 	}
 
+	// BFP - Don't make every player forced to see this way with their legs to the others
+#if 0
 	//
 	clientNum = cent->currentState.clientNum;
 	if ( clientNum >= 0 && clientNum < MAX_CLIENTS ) {
@@ -1490,6 +1500,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 			legsAngles[ROLL] = 0.0f;
 		}
 	}
+#endif
 
 	// pain twitch
 	CG_AddPainTwitch( cent, torsoAngles );
@@ -1537,7 +1548,7 @@ static void CG_HasteTrail( centity_t *cent ) {
 	origin[2] -= 16;
 
 	smoke = CG_SmokePuff( origin, vec3_origin, 
-				70, // BFP - TODO: Before 8, sizes between 50 ~ 70
+				8,
 				1, 1, 1, 1,
 				500, 
 				cg.time,
@@ -2008,7 +2019,6 @@ Also called by CG_Missile for quad rockets, but nobody can tell...
 */
 void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team ) {
 
-
 	if ( state->powerups & ( 1 << PW_INVIS ) ) {
 		ent->customShader = cgs.media.invisShader;
 		trap_R_AddRefEntityToScene( ent );
@@ -2369,14 +2379,17 @@ void CG_Player( centity_t *cent ) {
 		CG_PositionRotatedEntityOnTag( &aura, &legs, ci->legsModel, "tag_torso" );
 		CG_PositionRotatedEntityOnTag( &aura2, &legs, ci->legsModel, "tag_torso" );
 
-		// Add aura
-		if ( cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 && cg_smallOwnAura.integer <= 0 ) {
-			trap_R_AddRefEntityToScene( &aura );
-		}
+		// BFP - Small own aura only can be shown to the one who enables it for themself, not everyone
+		if ( clientNum != cg.snap->ps.clientNum || cg_smallOwnAura.integer <= 0 ) {
+			// Add aura
+			if ( cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
+				trap_R_AddRefEntityToScene( &aura );
+			}
 
-		// Add secondary aura to make look cooler, a bit bigger than the other
-		if ( cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_lightweightAuras.integer <= 0 && cg_smallOwnAura.integer <= 0  ) {
-			trap_R_AddRefEntityToScene( &aura2 );
+			// Add secondary aura to make look cooler, a bit bigger than the other
+			if ( cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
+				trap_R_AddRefEntityToScene( &aura2 );
+			}
 		}
 	}
 
