@@ -1645,7 +1645,8 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & CONTENTS_SOLID )
 			&& !( pm->ps->pm_flags & PMF_FLYING )
-			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
+			&& ( pm->ps->pm_flags & PMF_FALLING )
+			&& pm->waterlevel <= 1 ) { // Don't force inside the water
 			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
 			FORCEJUMP_ANIM_HANDLING();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
@@ -1658,7 +1659,8 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & CONTENTS_SOLID )
-			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
+			&& ( pm->ps->pm_flags & PMF_FALLING )
+			&& pm->waterlevel <= 1 ) { // Don't force inside the water
 			FORCEJUMP_ANIM_HANDLING();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
