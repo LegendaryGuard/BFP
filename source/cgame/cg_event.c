@@ -590,11 +590,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			vec3_t end = {0, 0, 1};
 
 			// Blub, blub, blub...
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 0, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 1, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 1, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 1, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 1, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 1, 20, 0 );
 		}
 		break;
 	case EV_WATER_CLEAR:

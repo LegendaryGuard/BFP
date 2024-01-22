@@ -326,11 +326,12 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	ent->trailTime = cg.time;
 
 	if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
-		if ( contents & lastContents & CONTENTS_WATER ) {
+		if ( ( contents & lastContents & CONTENTS_WATER ) 
+		&& cg.frametime > 0.0f ) { // BFP - If paused, don't spawn bubble particles (cg_paused.integer < 1 is another solution, but not good enough for server responses)
 			// BFP - Apply particle bubble effect in that case
-			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 0, 20, 0 );
-			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 0, 20, 0 );
-			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 0, 20, 0 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 1, 20, 0 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 1, 20, 0 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, origin, lastPos, 1, 20, 0 );
 			// CG_BubbleTrail( lastPos, origin, 8 );
 		}
 		return;

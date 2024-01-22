@@ -1540,14 +1540,12 @@ static void CG_HasteTrail( centity_t *cent, vec3_t endPos ) { // BFP - Second pa
 	}
 #endif
 
-	cent->trailTime += 100;
+	cent->trailTime += 50; // BFP - Before: += 100
 	if ( cent->trailTime < cg.time ) {
 		cent->trailTime = cg.time;
 	}
 
 	// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
-	CG_ParticleDashSmoke( cent, cgs.media.hastePuffShader, endPos );
-	CG_ParticleDashSmoke( cent, cgs.media.hastePuffShader, endPos );
 	CG_ParticleDashSmoke( cent, cgs.media.hastePuffShader, endPos );
 
 	// BFP - No smoke puff effect
@@ -1888,24 +1886,29 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 
 	trap_CM_BoxTrace( &trace, cent->lerpOrigin, end, mins, maxs, 0, MASK_PLAYERSOLID );
 
+	// BFP - Dash smoke and bubble particles when using ki boost on the ground or above the water
+	contents = CG_PointContents( trace.endpos, -1 );
+	if ( ( cent->currentState.eFlags & EF_AURA )
+		&& (   ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) ) {
+		if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+		&& trace.fraction <= 0.70f ) {
+			CG_HasteTrail( cent, trace.endpos );
+		} else if ( contents & CONTENTS_WATER ) {
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, end, trace.endpos, 1, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, end, trace.endpos, 1, 20, 0 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, end, trace.endpos, 1, 20, 0 );
+		}
+	}
+
 	// no shadow if too high
 	if ( trace.fraction == 1.0 || trace.startsolid || trace.allsolid ) {
 		return qfalse;
 	}
 
 	*shadowPlane = trace.endpos[2] + 1;
-
-	// BFP - Dash smoke particles when using ki boost on the ground
-	contents = CG_PointContents( trace.endpos, -1 );
-	if ( ( cent->currentState.eFlags & EF_AURA )
-		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
-		&& (   ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB )
-		&& trace.fraction <= 0.70f ) {
-		CG_HasteTrail( cent, trace.endpos );
-	}
 
 	if ( cg_shadows.integer != 1 ) {	// no mark for stencil or projection shadows
 		return qtrue;
@@ -2354,9 +2357,9 @@ void CG_Player( centity_t *cent ) {
 
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 20, 0 );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -10; // put the origin a little below
 
