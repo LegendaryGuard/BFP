@@ -133,6 +133,9 @@ vec3_t			rforward, rright, rup;
 
 float			oldtime;
 
+// BFP - NOTE: Particles use non-timescaled, before it was timescaled by game using cg.time
+int				timenonscaled;
+
 #define NORMALSIZE	16
 #define LARGESIZE	32
 
@@ -204,29 +207,28 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			{
 				if (org[2] > p->end)			
 				{	
-					p->time = cg.time;	
+					p->time = timenonscaled;	
 					VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
 					
-					// BFP - Stop flickering, before: ( p->start + crandom () * 4 )
+					// BFP - Stop shivering, before: ( p->start + crandom () * 4 )
 					p->org[2] = ( p->start );
 					
 					// BFP - Make move less
-					p->vel[0] *= 0.9;
-					p->vel[1] *= 0.9;
-					
-					if (p->type == P_BUBBLE_TURBULENT)
-					{
-						p->vel[0] = crandom() * 4;
-						p->vel[1] = crandom() * 4;
+					if (p->type == P_BUBBLE_TURBULENT) {
+						p->vel[0] *= 0.95;
+						p->vel[1] *= 0.95;
 					}
-				
+					else {
+						p->vel[0] *= 0.9;
+						p->vel[1] *= 0.9;
+					}
 				}
 			}
 			else
 			{
 				if (org[2] < p->end)			
 				{	
-					p->time = cg.time;	
+					p->time = timenonscaled;	
 					VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
 									
 					while (p->org[2] < p->end) 
@@ -840,6 +842,8 @@ void CG_AddParticles (void)
 	int				type;
 	vec3_t			rotate_ang;
 
+	timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
+
 	if (!initparticles)
 		CG_ClearParticles ();
 
@@ -854,24 +858,22 @@ void CG_AddParticles (void)
 	
 	oldtime = cg.time;
 
-	active = NULL;
-	tail = NULL;
+	active = tail = NULL;
 
 	for (p=active_particles ; p ; p=next)
 	{
-
 		next = p->next;
 
-		time = (cg.time - p->time)*0.001;
+		time = (timenonscaled - p->time)*0.001;
 
-		alpha = p->alpha + time*p->alphavel;
-		if (alpha <= 0)
+		// BFP - Make alpha timescaled for smoke-like particles
+		alpha = p->alpha + time*p->alphavel*(cg_timescale.value <= 0.1 ? 0.1 : cg_timescale.value);
+		if (p->alphavel < 0.0f) p->alpha = alpha; // BFP - Alpha fading out
+		if (p->alpha <= 0 && cg.frametime > 0.0f) // BFP - If paused, don't fade out
 		{	// faded out
 			p->next = free_particles;
 			free_particles = p;
-			p->type = 0;
-			p->color = 0;
-			p->alpha = 0;
+			p->type = p->color = p->alpha = 0;
 			continue;
 		}
 
@@ -879,13 +881,11 @@ void CG_AddParticles (void)
 		|| p->type == P_WEATHER_FLURRY || p->type == P_FLAT_SCALEUP_FADE
 		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT) // BFP - Add P_BUBBLE types to remove particles
 		{
-			if (cg.time > p->endtime)
+			if (timenonscaled > p->endtime)
 			{
 				p->next = free_particles;
 				free_particles = p;
-				p->type = 0;
-				p->color = 0;
-				p->alpha = 0;
+				p->type = p->color = p->alpha = 0;
 				continue;
 			}
 		}
@@ -895,9 +895,7 @@ void CG_AddParticles (void)
 			CG_AddParticleToScene (p, p->org, alpha);
 			p->next = free_particles;
 			free_particles = p;
-			p->type = 0;
-			p->color = 0;
-			p->alpha = 0;
+			p->type = p->color = p->alpha = 0;
 			continue;
 		}
 
@@ -943,7 +941,7 @@ void CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent)
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	p->color = 0;
 	p->alpha = 0.90f;
 	p->alphavel = 0;
@@ -951,7 +949,7 @@ void CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent)
 	p->start = cent->currentState.origin2[0];
 	p->end = cent->currentState.origin2[1];
 	
-	p->endtime = cg.time + cent->currentState.time;
+	p->endtime = timenonscaled + cent->currentState.time;
 	p->startfade = cg.time + cent->currentState.time2;
 	
 	p->pshader = pshader;
@@ -1010,7 +1008,7 @@ void CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	p->color = 0;
 	p->alpha = 0.40f;
 	p->alphavel = 0;
@@ -1061,18 +1059,16 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 
 	// if (!pshader) CG_Printf ("CG_ParticleSnow pshader == ZERO!\n");
 
-	// BFP - TODO: Make bubbles appear by moving one at a time without being timescaled
-
 	if (!free_particles)
 		return;
 	p = free_particles;
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 
 	// BFP - Add end time to remove particles, if there's no end time the particles will remain there
-	p->endtime = cg.time + 1000;
+	p->endtime = timenonscaled + 1000;
 	p->startfade = cg.time + 200;
 
 	p->color = 0;
@@ -1083,41 +1079,15 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->end = cent->currentState.origin2[2];
 	p->pshader = pshader;
 	
-	randsize = 2 + (crandom() * 0.5);
+	randsize = 3 + (crandom() * 0.5);
 	
 	p->height = p->width = randsize;
 
 	if (turb)
 	{
 		p->type = P_BUBBLE_TURBULENT;
-		p->vel[2] = 50 * 1.3;
-	}
-	else
-	{
-		p->type = P_BUBBLE;
-	}
-
-	VectorCopy(origin, p->org);
-
-	p->org[0] += (crandom() * range);
-	p->org[1] += (crandom() * range);
-	p->org[2] += (crandom() * (p->start - p->end)); 
-
-	if ( ( cent->currentState.eFlags & EF_AURA ) 
-	&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
-		VectorSet( p->vel, 
-				(rand() % 801) - 400,
-				(rand() % 801) - 400,
-				20 );
-
-		// dispersion
-		VectorSet( p->accel, 
-				crandom() * 20, 
-				crandom() * 20, 
-				1400 );
-	} else {
 		// BFP - Apply end time to remove particles in that case, if there's no end time the particles will remain there
-		p->endtime = cg.time + 700;
+		p->endtime = timenonscaled + 700;
 		p->startfade = cg.time + 200;
 
 		VectorSet( p->vel, 
@@ -1131,12 +1101,26 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 				crandom() * 20, 
 				300 );
 	}
-
-	if (turb)
+	else
 	{
-		p->vel[0] = crandom() * 4;
-		p->vel[1] = crandom() * 4;
+		p->type = P_BUBBLE;
+		VectorSet( p->vel, 
+				(rand() % 801) - 400,
+				(rand() % 801) - 400,
+				20 );
+
+		// dispersion
+		VectorSet( p->accel, 
+				crandom() * 20, 
+				crandom() * 20, 
+				1400 );
 	}
+
+	VectorCopy(origin, p->org);
+
+	p->org[0] += (crandom() * range);
+	p->org[1] += (crandom() * range);
+	p->org[2] += (crandom() * (p->start - p->end));
 
 	// Rafael snow pvs check
 	p->snum = snum;
@@ -1159,9 +1143,9 @@ void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	
-	p->endtime = cg.time + cent->currentState.time;
+	p->endtime = timenonscaled + cent->currentState.time;
 	p->startfade = cg.time + cent->currentState.time2;
 	
 	p->color = 0;
@@ -1202,9 +1186,9 @@ void CG_ParticleBulletDebris (vec3_t org, vec3_t vel, int duration)
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	
-	p->endtime = cg.time + duration;
+	p->endtime = timenonscaled + duration;
 	p->startfade = cg.time + duration/2;
 	
 	p->color = EMISIVEFADE;
@@ -1262,7 +1246,7 @@ void CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	p->alpha = 1.0;
 	p->alphavel = 0;
 
@@ -1281,7 +1265,7 @@ void CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 	p->endheight = sizeEnd;
 	p->endwidth = sizeEnd*shaderAnimSTRatio[anim];
 
-	p->endtime = cg.time + duration;
+	p->endtime = timenonscaled + duration;
 
 	p->type = P_ANIM;
 
@@ -1394,23 +1378,21 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 	if (!free_particles)
 		return;
 
-	// BFP - TODO: Make smoke appear by moving one at a time without being timescaled
-
 	p = free_particles;
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
 
-	p->time = cg.time;
+	p->time = timenonscaled;
 
-	p->alpha = 0.4;
-	p->alphavel = 0;
+	p->alpha = 0.45;
+	p->alphavel = -0.1;
 
 	p->pshader = pshader;
 	p->start = cent->currentState.origin[2];
 	p->end = cent->currentState.origin2[2];
 
-	p->endtime = cg.time + 250;
+	p->endtime = timenonscaled + 2000;
 	p->startfade = cg.time + 100;
 
 	p->height = p->width = 25;
@@ -1418,7 +1400,7 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 	p->endheight = p->height * 2;
 	p->endwidth = p->width * 2;
 
-	p->type = P_SMOKE;
+	p->type = P_SMOKE_IMPACT;
 
 	VectorCopy( origin, p->org );
 	VectorSet( p->vel, 
@@ -1428,8 +1410,8 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 
 	// dispersion
 	VectorSet( p->accel, 
-			crandom() * 20, 
-			crandom() * 20, 
+			crandom() * 10, 
+			crandom() * 10, 
 			1400 );
 }
 
@@ -1447,14 +1429,14 @@ void CG_ParticleImpactSmokePuff (qhandle_t pshader, vec3_t origin)
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	p->alpha = 0.25;
 	p->alphavel = 0;
 	p->roll = crandom()*179;
 
 	p->pshader = pshader;
 
-	p->endtime = cg.time + 1000;
+	p->endtime = timenonscaled + 1000;
 	p->startfade = cg.time + 100;
 
 	p->width = rand()%4 + 8;
@@ -1463,7 +1445,7 @@ void CG_ParticleImpactSmokePuff (qhandle_t pshader, vec3_t origin)
 	p->endheight = p->height *2;
 	p->endwidth = p->width * 2;
 
-	p->endtime = cg.time + 500;
+	p->endtime = timenonscaled + 500;
 
 	p->type = P_SMOKE_IMPACT;
 
@@ -1487,14 +1469,14 @@ void CG_Particle_Bleed (qhandle_t pshader, vec3_t start, vec3_t dir, int fleshEn
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	p->alpha = 1.0;
 	p->alphavel = 0;
 	p->roll = 0;
 
 	p->pshader = pshader;
 
-	p->endtime = cg.time + duration;
+	p->endtime = timenonscaled + duration;
 	
 	if (fleshEntityNum)
 		p->startfade = cg.time;
@@ -1548,14 +1530,14 @@ void CG_Particle_OilParticle (qhandle_t pshader, centity_t *cent)
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	p->alpha = 1.0;
 	p->alphavel = 0;
 	p->roll = 0;
 
 	p->pshader = pshader;
 
-	p->endtime = cg.time + duration;
+	p->endtime = timenonscaled + duration;
 	
 	p->startfade = p->endtime;
 
@@ -1601,12 +1583,12 @@ void CG_Particle_OilSlick (qhandle_t pshader, centity_t *cent)
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	
 	if (cent->currentState.angles2[2])
-		p->endtime = cg.time + cent->currentState.angles2[2];
+		p->endtime = timenonscaled + cent->currentState.angles2[2];
 	else
-		p->endtime = cg.time + 60000;
+		p->endtime = timenonscaled + 60000;
 
 	p->startfade = p->endtime;
 
@@ -1672,7 +1654,7 @@ void CG_OilSlickRemove (centity_t *cent)
 		{
 			if (p->snum == id)
 			{
-				p->endtime = cg.time + 100;
+				p->endtime = timenonscaled + 100;
 				p->startfade = p->endtime;
 				p->type = P_FLAT_SCALEUP_FADE;
 
@@ -1751,9 +1733,9 @@ void CG_BloodPool (localEntity_t *le, qhandle_t pshader, trace_t *tr)
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	
-	p->endtime = cg.time + 3000;
+	p->endtime = timenonscaled + 3000;
 	p->startfade = p->endtime;
 
 	p->alpha = 1.0;
@@ -1826,14 +1808,14 @@ void CG_ParticleBloodCloud (centity_t *cent, vec3_t origin, vec3_t dir)
 		p->next = active_particles;
 		active_particles = p;
 
-		p->time = cg.time;
+		p->time = timenonscaled;
 		p->alpha = 1.0;
 		p->alphavel = 0;
 		p->roll = 0;
 
 		p->pshader = cgs.media.smokePuffShader;
 
-		p->endtime = cg.time + 350 + (crandom() * 100);
+		p->endtime = timenonscaled + 350 + (crandom() * 100);
 		
 		p->startfade = cg.time;
 		
@@ -1876,9 +1858,9 @@ void CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, 
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	
-	p->endtime = cg.time + duration;
+	p->endtime = timenonscaled + duration;
 	p->startfade = cg.time + duration/2;
 	
 	p->color = EMISIVEFADE;
@@ -1953,7 +1935,7 @@ void CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir)
 		p->next = active_particles;
 		active_particles = p;
 
-		p->time = cg.time;
+		p->time = timenonscaled;
 		p->alpha = 5.0;
 		p->alphavel = 0;
 		p->roll = 0;
@@ -1962,9 +1944,9 @@ void CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir)
 
 		// RF, stay around for long enough to expand and dissipate naturally
 		if (length)
-			p->endtime = cg.time + 4500 + (crandom() * 3500);
+			p->endtime = timenonscaled + 4500 + (crandom() * 3500);
 		else
-			p->endtime = cg.time + 750 + (crandom() * 500);
+			p->endtime = timenonscaled + 750 + (crandom() * 500);
 		
 		p->startfade = cg.time;
 		
@@ -2023,7 +2005,7 @@ void CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 	free_particles = p->next;
 	p->next = active_particles;
 	active_particles = p;
-	p->time = cg.time;
+	p->time = timenonscaled;
 	p->alpha = 1.0;
 	p->alphavel = 0;
 	p->roll = rand()%179;
@@ -2031,7 +2013,7 @@ void CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 	p->pshader = pshader;
 
 	if (duration > 0)
-		p->endtime = cg.time + duration;
+		p->endtime = timenonscaled + duration;
 	else
 		p->endtime = duration;
 
