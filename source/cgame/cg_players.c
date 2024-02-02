@@ -1546,7 +1546,7 @@ static void CG_HasteTrail( centity_t *cent, vec3_t endPos ) { // BFP - Second pa
 	}
 
 	// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
-	CG_ParticleDashSmoke( cent, cgs.media.hastePuffShader, endPos );
+	CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, endPos );
 
 	// BFP - No smoke puff effect
 #if 0
@@ -1865,7 +1865,7 @@ Returns the Z component of the surface being shadowed
 #define	SHADOW_DISTANCE		128
 static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	vec3_t		end, mins = {-15, -15, 0}, maxs = {15, 15, 2};
-	trace_t		trace;
+	trace_t		trace, waterTrace; // BFP - Trace for the water
 	float		alpha;
 	int			contents; // BFP - To detect if there is water or lava
 
@@ -1885,21 +1885,43 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	end[2] -= SHADOW_DISTANCE;
 
 	trap_CM_BoxTrace( &trace, cent->lerpOrigin, end, mins, maxs, 0, MASK_PLAYERSOLID );
+	// BFP - Tracing the water surface
+	trap_CM_BoxTrace( &waterTrace, cent->lerpOrigin, end, mins, maxs, 0, CONTENTS_WATER );
 
 	// BFP - Dash smoke and bubble particles when using ki boost on the ground or above the water
 	contents = CG_PointContents( trace.endpos, -1 );
-	if ( ( cent->currentState.eFlags & EF_AURA )
-		&& (   ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+	if ( cent->currentState.eFlags & EF_AURA ) {
+		if ( !( cg.snap->ps.pm_flags & PMF_KI_CHARGE ) && 
+			 ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) ) {
-		if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
-		&& trace.fraction <= 0.70f ) {
-			CG_HasteTrail( cent, trace.endpos );
-		} else if ( contents & CONTENTS_WATER ) {
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, end, trace.endpos, 1, 20, 0 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, end, trace.endpos, 1, 20, 0 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, end, trace.endpos, 1, 20, 0 );
+			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
+			&& trace.fraction <= 0.70f ) {
+				CG_HasteTrail( cent, trace.endpos );
+			} else if ( waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
+			}
+		} else if ( ( cg.snap->ps.pm_flags & PMF_KI_CHARGE ) // BFP - Antigrav rock particles on ki charging status
+		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+		&& trace.fraction <= 0.50f ) {
+			// BFP - Spawn randomly the antigrav rock shaders with the particles
+			int shaderIndex = rand() % 3;
+			switch ( shaderIndex ) {
+				case 0: {
+					CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, trace.endpos );
+					break;
+				}
+				case 1: {
+					CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, trace.endpos );
+					break;
+				}
+				default: {
+					CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, trace.endpos );
+				}
+			}
 		}
 	}
 
@@ -2357,17 +2379,17 @@ void CG_Player( centity_t *cent ) {
 
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 0, 0 );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -10; // put the origin a little below
 
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
 			}
 		}
 
