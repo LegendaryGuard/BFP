@@ -71,6 +71,7 @@ typedef struct particle_s
 typedef enum
 {
 	P_NONE,
+	P_ANTIGRAV_ROCK, // BFP - Antigrav rock particles
 	P_WEATHER,
 	P_FLAT,
 	P_SMOKE,
@@ -161,7 +162,7 @@ void CG_ClearParticles (void)
 	}
 	particles[cl_numparticles-1].next = NULL;
 
-	oldtime = cg.time;
+	oldtime = timenonscaled;
 
 	// Ridah, init the shaderAnims
 	for (i=0; shaderAnimNames[i]; i++) {
@@ -185,7 +186,6 @@ CG_AddParticleToScene
 */
 void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 {
-
 	vec3_t		point;
 	polyVert_t	verts[4];
 	float		width;
@@ -197,55 +197,29 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	polyVert_t	TRIverts[3];
 	vec3_t		rright2, rup2;
 
-	if (p->type == P_WEATHER || p->type == P_WEATHER_TURBULENT || p->type == P_WEATHER_FLURRY
-		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT)
+	if (p->type == P_WEATHER || p->type == P_WEATHER_TURBULENT || p->type == P_WEATHER_FLURRY)
 	{// create a front facing polygon
 			
 		if (p->type != P_WEATHER_FLURRY)
 		{
-			if (p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT)
-			{
-				if (org[2] > p->end)			
-				{	
-					p->time = timenonscaled;	
-					VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
-					
-					// BFP - Stop shivering, before: ( p->start + crandom () * 4 )
-					p->org[2] = ( p->start );
-					
-					// BFP - Make move less
-					if (p->type == P_BUBBLE_TURBULENT) {
-						p->vel[0] *= 0.95;
-						p->vel[1] *= 0.95;
-					}
-					else {
-						p->vel[0] *= 0.9;
-						p->vel[1] *= 0.9;
-					}
+			if (org[2] < p->end)			
+			{	
+				p->time = timenonscaled;
+				VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
+								
+				while (p->org[2] < p->end) 
+				{
+					p->org[2] += (p->start - p->end); 
 				}
-			}
-			else
-			{
-				if (org[2] < p->end)			
-				{	
-					p->time = timenonscaled;	
-					VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
-									
-					while (p->org[2] < p->end) 
-					{
-						p->org[2] += (p->start - p->end); 
-					}
-					
-					
-					if (p->type == P_WEATHER_TURBULENT)
-					{
-						p->vel[0] = crandom() * 16;
-						p->vel[1] = crandom() * 16;
-					}
 				
+				
+				if (p->type == P_WEATHER_TURBULENT)
+				{
+					p->vel[0] = crandom() * 16;
+					p->vel[1] = crandom() * 16;
 				}
-			}
 			
+			}
 
 			// Rafael snow pvs check
 			if (!p->link)
@@ -259,82 +233,36 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			return;
 		}
 		// done.
-	
-		if (p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT)
-		{
-			VectorMA (org, -p->height, vup, point);	
-			VectorMA (point, -p->width, vright, point);	
-			VectorCopy (point, verts[0].xyz);	
-			verts[0].st[0] = 0;	
-			verts[0].st[1] = 0;	
-			verts[0].modulate[0] = 255;	
-			verts[0].modulate[1] = 255;	
-			verts[0].modulate[2] = 255;	
-			verts[0].modulate[3] = 255 * p->alpha;	
 
-			VectorMA (org, -p->height, vup, point);	
-			VectorMA (point, p->width, vright, point);	
-			VectorCopy (point, verts[1].xyz);	
-			verts[1].st[0] = 0;	
-			verts[1].st[1] = 1;	
-			verts[1].modulate[0] = 255;	
-			verts[1].modulate[1] = 255;	
-			verts[1].modulate[2] = 255;	
-			verts[1].modulate[3] = 255 * p->alpha;	
+		VectorMA (org, -p->height, vup, point);
+		VectorMA (point, -p->width, vright, point);
+		VectorCopy( point, TRIverts[0].xyz );
+		TRIverts[0].st[0] = 1;
+		TRIverts[0].st[1] = 0;
+		TRIverts[0].modulate[0] = 255;
+		TRIverts[0].modulate[1] = 255;
+		TRIverts[0].modulate[2] = 255;
+		TRIverts[0].modulate[3] = 255 * p->alpha;
 
-			VectorMA (org, p->height, vup, point);	
-			VectorMA (point, p->width, vright, point);	
-			VectorCopy (point, verts[2].xyz);	
-			verts[2].st[0] = 1;	
-			verts[2].st[1] = 1;	
-			verts[2].modulate[0] = 255;	
-			verts[2].modulate[1] = 255;	
-			verts[2].modulate[2] = 255;	
-			verts[2].modulate[3] = 255 * p->alpha;	
+		VectorMA (org, p->height, vup, point);
+		VectorMA (point, -p->width, vright, point);
+		VectorCopy (point, TRIverts[1].xyz);
+		TRIverts[1].st[0] = 0;
+		TRIverts[1].st[1] = 0;
+		TRIverts[1].modulate[0] = 255;
+		TRIverts[1].modulate[1] = 255;
+		TRIverts[1].modulate[2] = 255;
+		TRIverts[1].modulate[3] = 255 * p->alpha;
 
-			VectorMA (org, p->height, vup, point);	
-			VectorMA (point, -p->width, vright, point);	
-			VectorCopy (point, verts[3].xyz);	
-			verts[3].st[0] = 1;	
-			verts[3].st[1] = 0;	
-			verts[3].modulate[0] = 255;	
-			verts[3].modulate[1] = 255;	
-			verts[3].modulate[2] = 255;	
-			verts[3].modulate[3] = 255 * p->alpha;	
-		}
-		else
-		{
-			VectorMA (org, -p->height, vup, point);	
-			VectorMA (point, -p->width, vright, point);	
-			VectorCopy( point, TRIverts[0].xyz );
-			TRIverts[0].st[0] = 1;
-			TRIverts[0].st[1] = 0;
-			TRIverts[0].modulate[0] = 255;
-			TRIverts[0].modulate[1] = 255;
-			TRIverts[0].modulate[2] = 255;
-			TRIverts[0].modulate[3] = 255 * p->alpha;	
-
-			VectorMA (org, p->height, vup, point);	
-			VectorMA (point, -p->width, vright, point);	
-			VectorCopy (point, TRIverts[1].xyz);	
-			TRIverts[1].st[0] = 0;
-			TRIverts[1].st[1] = 0;
-			TRIverts[1].modulate[0] = 255;
-			TRIverts[1].modulate[1] = 255;
-			TRIverts[1].modulate[2] = 255;
-			TRIverts[1].modulate[3] = 255 * p->alpha;	
-
-			VectorMA (org, p->height, vup, point);	
-			VectorMA (point, p->width, vright, point);	
-			VectorCopy (point, TRIverts[2].xyz);	
-			TRIverts[2].st[0] = 0;
-			TRIverts[2].st[1] = 1;
-			TRIverts[2].modulate[0] = 255;
-			TRIverts[2].modulate[1] = 255;
-			TRIverts[2].modulate[2] = 255;
-			TRIverts[2].modulate[3] = 255 * p->alpha;	
-		}
-	
+		VectorMA (org, p->height, vup, point);
+		VectorMA (point, p->width, vright, point);
+		VectorCopy (point, TRIverts[2].xyz);
+		TRIverts[2].st[0] = 0;
+		TRIverts[2].st[1] = 1;
+		TRIverts[2].modulate[0] = 255;
+		TRIverts[2].modulate[1] = 255;
+		TRIverts[2].modulate[2] = 255;
+		TRIverts[2].modulate[3] = 255 * p->alpha;
 	}
 	else if (p->type == P_SPRITE)
 	{
@@ -342,7 +270,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		vec3_t	rotate_ang;
 
 		VectorSet (color, 1.0, 1.0, 1.0);
-		time = cg.time - p->time;
+		time = timenonscaled - p->time;
 		time2 = p->endtime - p->time;
 		ratio = time / time2;
 
@@ -409,7 +337,9 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		verts[3].modulate[2] = 255;	
 		verts[3].modulate[3] = 255;	
 	}
-	else if (p->type == P_SMOKE || p->type == P_SMOKE_IMPACT)
+	else if (p->type == P_SMOKE || p->type == P_SMOKE_IMPACT
+	|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Bubble types moved here for better management
+	|| p->type == P_ANTIGRAV_ROCK) // BFP - Added antigrav rock type
 	{// create a front rotating facing polygon
 
 		if ( p->type == P_SMOKE_IMPACT && Distance( cg.snap->ps.origin, org ) > 1024) {
@@ -437,13 +367,13 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		else
 			VectorSet (color, 1.0, 1.0, 1.0);
 
-		time = cg.time - p->time;
+		time = timenonscaled - p->time;
 		time2 = p->endtime - p->time;
 		ratio = time / time2;
 		
-		if (cg.time > p->startfade)
+		if (timenonscaled > p->startfade)
 		{
-			invratio = 1 - ( (cg.time - p->startfade) / (p->endtime - p->startfade) );
+			invratio = 1 - ( (timenonscaled - p->startfade) / (p->endtime - p->startfade) );
 
 			if (p->color == EMISIVEFADE)
 			{
@@ -458,7 +388,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		else 
 			invratio = 1 * p->alpha;
 
-		if (invratio > 1)
+		if (invratio > 1 || p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT) // BFP - Don't disappear opaquely the bubbles
 			invratio = 1;
 	
 		width = p->width + ( ratio * ( p->endwidth - p->width) );
@@ -478,7 +408,64 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorCopy (rright, rright2);
 			VectorCopy (rup, rup2);
 		}
-		
+
+		// BFP - Bubble types here
+		if (p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT)
+		{
+			if (org[2] > p->end)			
+			{	
+				p->time = timenonscaled;
+				VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
+				
+				// BFP - Stop shivering, before: ( p->start + crandom () * 4 )
+				p->org[2] = ( p->start );
+				
+				// BFP - Make move less
+				if (p->type == P_BUBBLE_TURBULENT) {
+					p->vel[0] *= 0.95;
+					p->vel[1] *= 0.95;
+				} else {
+					p->vel[0] *= 0.9;
+					p->vel[1] *= 0.9;
+				}
+			}
+		}
+
+		// BFP - Antigrav rock type
+		if (p->type == P_ANTIGRAV_ROCK)
+		{
+			// BFP - To detect if there is something solid
+			trace_t		trace;
+			CG_Trace( &trace, p->org, vec3_origin, vec3_origin, org, -1, CONTENTS_SOLID );
+
+			// BFP - Make each particle fall when they aren't on ki charging status
+			if ( !( cg.snap->ps.pm_flags & PMF_KI_CHARGE ) && !p->link ) {
+				p->endtime = timenonscaled + 2000;
+				p->link = qtrue;
+			}
+
+			// BFP - When the particle, checked to be fallen, won't be reactivated when entering ki charging status again
+			if (p->link) {
+				p->time = timenonscaled;
+				// not hit anything or not a collider
+				if ( trace.fraction == 1.0f && p->roll > 0 )
+				{
+					VectorCopy (org, p->org);
+					p->vel[2] -= 30;
+					p->accel[2] -= 200;
+				}
+				else
+				{
+					// bouncing
+					p->roll--;
+					p->vel[2] = (p->roll > 0) ? 100 * p->roll : 1;
+					if (p->roll <= 0) { // stop moving
+						p->vel[2] = p->accel[2] = 0;
+					}
+				}
+			}
+		}
+
 		if (p->rotate)
 		{
 			VectorMA (org, -height, rup2, point);	
@@ -550,7 +537,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		verts[3].modulate[1] = 255 * color[1];	
 		verts[3].modulate[2] = 255 * color[2];	
 		verts[3].modulate[3] = 255  * invratio;	
-		
 	}
 	else if (p->type == P_BLEED)
 	{
@@ -623,7 +609,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		else
 			VectorSet (color, 0.5, 0.5, 0.5);
 		
-		time = cg.time - p->time;
+		time = timenonscaled - p->time;
 		time2 = p->endtime - p->time;
 		ratio = time / time2;
 
@@ -729,7 +715,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		vec3_t	rotate_ang;
 		int i, j;
 
-		time = cg.time - p->time;
+		time = timenonscaled - p->time;
 		time2 = p->endtime - p->time;
 		ratio = time / time2;
 		if (ratio >= 1.0f) {
@@ -852,11 +838,11 @@ void CG_AddParticles (void)
 	VectorCopy( cg.refdef.viewaxis[2], vup );
 
 	vectoangles( cg.refdef.viewaxis[0], rotate_ang );
-	roll += ((cg.time - oldtime) * 0.1) ;
+	roll += ((timenonscaled - oldtime) * 0.1) ;
 	rotate_ang[ROLL] += (roll*0.9);
 	AngleVectors ( rotate_ang, rforward, rright, rup);
 	
-	oldtime = cg.time;
+	oldtime = timenonscaled;
 
 	active = tail = NULL;
 
@@ -879,7 +865,8 @@ void CG_AddParticles (void)
 
 		if (p->type == P_SMOKE || p->type == P_ANIM || p->type == P_BLEED || p->type == P_SMOKE_IMPACT
 		|| p->type == P_WEATHER_FLURRY || p->type == P_FLAT_SCALEUP_FADE
-		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT) // BFP - Add P_BUBBLE types to remove particles
+		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Add P_BUBBLE types to remove particles
+		|| p->type == P_ANTIGRAV_ROCK) // BFP - Add P_ANTIGRAV_ROCK to remove particles
 		{
 			if (timenonscaled > p->endtime)
 			{
@@ -950,7 +937,7 @@ void CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent)
 	p->end = cent->currentState.origin2[1];
 	
 	p->endtime = timenonscaled + cent->currentState.time;
-	p->startfade = cg.time + cent->currentState.time2;
+	p->startfade = timenonscaled + cent->currentState.time2;
 	
 	p->pshader = pshader;
 	
@@ -1055,7 +1042,6 @@ void CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb
 void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum)
 {
 	cparticle_t	*p;
-	float		randsize;
 
 	// if (!pshader) CG_Printf ("CG_ParticleSnow pshader == ZERO!\n");
 
@@ -1068,27 +1054,23 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->time = timenonscaled;
 
 	// BFP - Add end time to remove particles, if there's no end time the particles will remain there
-	p->endtime = timenonscaled + 1000;
-	p->startfade = cg.time + 200;
+	p->endtime = timenonscaled + 1250 + (crandom() * 20);
+	p->startfade = timenonscaled + 200;
 
 	p->color = 0;
-	p->alpha = 0.40f;
+	p->alpha = 1;
 	p->alphavel = 0;
 	// BFP - Apply to player's origin
 	p->start = cent->currentState.origin[2];
 	p->end = cent->currentState.origin2[2];
 	p->pshader = pshader;
-	
-	randsize = 3 + (crandom() * 0.5);
-	
-	p->height = p->width = randsize;
+	p->height = p->width = 2 + (crandom() * 0.5);
 
 	if (turb)
 	{
 		p->type = P_BUBBLE_TURBULENT;
 		// BFP - Apply end time to remove particles in that case, if there's no end time the particles will remain there
 		p->endtime = timenonscaled + 700;
-		p->startfade = cg.time + 200;
 
 		VectorSet( p->vel, 
 				(rand() % 401) - 200,
@@ -1113,7 +1095,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		VectorSet( p->accel, 
 				crandom() * 20, 
 				crandom() * 20, 
-				1400 );
+				2000 );
 	}
 
 	VectorCopy(origin, p->org);
@@ -1146,7 +1128,7 @@ void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)
 	p->time = timenonscaled;
 	
 	p->endtime = timenonscaled + cent->currentState.time;
-	p->startfade = cg.time + cent->currentState.time2;
+	p->startfade = timenonscaled + cent->currentState.time2;
 	
 	p->color = 0;
 	p->alpha = 1.0;
@@ -1189,7 +1171,7 @@ void CG_ParticleBulletDebris (vec3_t org, vec3_t vel, int duration)
 	p->time = timenonscaled;
 	
 	p->endtime = timenonscaled + duration;
-	p->startfade = cg.time + duration/2;
+	p->startfade = timenonscaled + duration/2;
 	
 	p->color = EMISIVEFADE;
 	p->alpha = 1.0;
@@ -1393,7 +1375,7 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 	p->end = cent->currentState.origin2[2];
 
 	p->endtime = timenonscaled + 2000;
-	p->startfade = cg.time + 100;
+	p->startfade = timenonscaled + 100;
 
 	p->height = p->width = 25;
 
@@ -1413,6 +1395,47 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 			crandom() * 10, 
 			crandom() * 10, 
 			1400 );
+}
+
+// BFP - Antigrav rock particles for ki charging status
+void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin)
+{
+	cparticle_t	*p;
+
+	// if (!pshader) CG_Printf ("CG_ParticleAntigravRock == ZERO!\n");
+
+	if (!free_particles)
+		return;
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+	p->time = timenonscaled;
+
+	p->endtime = timenonscaled + 450 + (crandom() * 20);
+	p->startfade = timenonscaled + 200;
+	p->roll = 5; // used as bounce counter
+	p->link = qfalse; // to handle the ki charging status
+
+	p->color = 0;
+	p->alpha = 1;
+	p->alphavel = 0;
+	p->start = cent->currentState.origin[2];
+	p->end = cent->currentState.origin2[2];
+	p->pshader = pshader;
+	p->height = p->width = 2 + (crandom() * 0.5);
+	p->type = P_ANTIGRAV_ROCK;
+
+	VectorCopy( origin, p->org );
+
+	p->org[0] += (crandom() * 40);
+	p->org[1] += (crandom() * 40);
+
+	p->vel[0] = p->vel[1] = 0;
+	p->accel[0] = p->accel[1] = 0;
+
+	p->vel[2] = 20;
+	p->accel[2] = 1000;
 }
 
 #if 0
@@ -1437,7 +1460,7 @@ void CG_ParticleImpactSmokePuff (qhandle_t pshader, vec3_t origin)
 	p->pshader = pshader;
 
 	p->endtime = timenonscaled + 1000;
-	p->startfade = cg.time + 100;
+	p->startfade = timenonscaled + 100;
 
 	p->width = rand()%4 + 8;
 	p->height = rand()%4 + 8;
@@ -1479,9 +1502,9 @@ void CG_Particle_Bleed (qhandle_t pshader, vec3_t start, vec3_t dir, int fleshEn
 	p->endtime = timenonscaled + duration;
 	
 	if (fleshEntityNum)
-		p->startfade = cg.time;
+		p->startfade = timenonscaled;
 	else
-		p->startfade = cg.time + 100;
+		p->startfade = timenonscaled + 100;
 
 	p->width = 4;
 	p->height = 4;
@@ -1516,8 +1539,8 @@ void CG_Particle_OilParticle (qhandle_t pshader, centity_t *cent)
 
 	float	duration = 1500;
 
-	time = cg.time;
-	time2 = cg.time + cent->currentState.time;
+	time = timenonscaled;
+	time2 = timenonscaled + cent->currentState.time;
 
 	ratio =(float)1 - ((float)time / (float)time2);
 
@@ -1817,7 +1840,7 @@ void CG_ParticleBloodCloud (centity_t *cent, vec3_t origin, vec3_t dir)
 
 		p->endtime = timenonscaled + 350 + (crandom() * 100);
 		
-		p->startfade = cg.time;
+		p->startfade = timenonscaled;
 		
 		p->width = LARGESIZE;
 		p->height = LARGESIZE;
@@ -1861,7 +1884,7 @@ void CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, 
 	p->time = timenonscaled;
 	
 	p->endtime = timenonscaled + duration;
-	p->startfade = cg.time + duration/2;
+	p->startfade = timenonscaled + duration/2;
 	
 	p->color = EMISIVEFADE;
 	p->alpha = 0.4f;
@@ -1948,7 +1971,7 @@ void CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir)
 		else
 			p->endtime = timenonscaled + 750 + (crandom() * 500);
 		
-		p->startfade = cg.time;
+		p->startfade = timenonscaled;
 		
 		p->width = LARGESIZE;
 		p->height = LARGESIZE;
@@ -2017,7 +2040,7 @@ void CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 	else
 		p->endtime = duration;
 
-	p->startfade = cg.time;
+	p->startfade = timenonscaled;
 
 	p->width = size;
 	p->height = size;

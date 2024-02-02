@@ -618,10 +618,12 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.medalAssist = trap_R_RegisterShaderNoMip( "medal_assist" );
 	cgs.media.medalCapture = trap_R_RegisterShaderNoMip( "medal_capture" );
 
-	cgs.media.auraModel = trap_R_RegisterModel( "models/effects/aura.md3" ); // BFP - Aura model
+	// BFP - Aura models
+	cgs.media.auraModel = trap_R_RegisterModel( "models/effects/aura.md3" ); // BFP - Normal aura model
 	cgs.media.backauraModel = trap_R_RegisterModel( "models/effects/backaura.md3" ); // BFP - Back aura model
 	cgs.media.flyauraModel = trap_R_RegisterModel( "models/effects/flyaura.md3" ); // BFP - Fly aura model
 	cgs.media.runauraModel = trap_R_RegisterModel( "models/effects/runaura.md3" ); // BFP - Run aura model
+
 	// BFP - Aura shaders
 	cgs.media.auraBlueShader = trap_R_RegisterShader( "powerups/bluetiny" );
 	cgs.media.auraRedShader = trap_R_RegisterShader( "powerups/redtiny" );
@@ -648,6 +650,12 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.shadowMarkShader = trap_R_RegisterShader( "markShadow" );
 	cgs.media.wakeMarkShader = trap_R_RegisterShader( "wake" );
 	cgs.media.bloodMarkShader = trap_R_RegisterShader( "bloodMark" );
+
+	// BFP - Particle shaders
+	cgs.media.pebbleShader1 = trap_R_RegisterShader( "pebbleShader1" ); // BFP - Rock particles for charging and explosion
+	cgs.media.pebbleShader2 = trap_R_RegisterShader( "pebbleShader2" ); // BFP - Rock particles for charging and explosion
+	cgs.media.pebbleShader3 = trap_R_RegisterShader( "pebbleShader3" ); // BFP - Rock particles for charging and explosion
+	cgs.media.particleSmokeShader = trap_R_RegisterShader( "particleSmokeShader" ); // BFP - Smoke particle when using ki boost in the ground and for the explosion
 
 	// register the inline models
 	cgs.numInlineModels = trap_CM_NumInlineModels();

@@ -765,7 +765,14 @@ typedef struct {
 
 	qhandle_t	invulnerabilityPowerupModel;
 
-	qhandle_t	auraModel; // BFP - Aura model
+	// BFP - Particle shaders
+	qhandle_t	pebbleShader1;
+	qhandle_t	pebbleShader2;
+	qhandle_t	pebbleShader3;
+	qhandle_t	particleSmokeShader;
+
+	// BFP - Aura models
+	qhandle_t	auraModel; // BFP - Normal aura model
 	qhandle_t	backauraModel; // BFP - Back aura model
 	qhandle_t	flyauraModel; // BFP - Fly aura model
 	qhandle_t	runauraModel; // BFP - Run aura model
@@ -1492,6 +1499,8 @@ void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum);
 // BFP - Dash smoke particle for ki boost when moving in the ground
 void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
+// BFP - Antigrav rock particles for charging
+void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin);
 extern qboolean		initparticles;
 int CG_NewParticleArea ( int num );
 
