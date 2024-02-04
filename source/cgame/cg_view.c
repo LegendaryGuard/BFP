@@ -237,14 +237,6 @@ static void CG_OffsetThirdPersonView( void ) {
 	// BFP - Last angled for fly tilt angle to move smoothly similar to BFP vanilla
 	static float	lastAngled = 0.0f, lastRightAngled = 0.0f, lastUpAngled = 0.0f;
 	float		rightAngled, upAngled;
-	// BFP - Frametime handling
-	static	int	previous;
-	int		t, frameTime;
-
-	// BFP - Handle frametime to avoid being timescaled
-	t = trap_Milliseconds();
-	frameTime = t - previous;
-	previous = t;
 
 	// BFP - Camera setup
 	camAngle  =  cg_thirdPersonAngle.value;
@@ -302,6 +294,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
 
 	// BFP - cg_cameraMode cvar to detect if it's disabled doesn't exist
+	// BFP - NOTE: Originally, BFP uses MASK_SOLID for tracing and it might not be a good solution, so use MASK_PLAYERSOLID for all traces here instead in the future
 	// That traces the camera pivot
 	CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
 	if ( trace.fraction != 1.0 ) {
@@ -342,21 +335,22 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	// BFP - TODO: If cg_thirdPersonAngle is changed, the roll rotation should be moved like in 0º (or fixed)
 
-	focusAngles[ROLL] = LERP( lastAngled, 0.0f, (float)(frameTime / 1000.00f) * 20.0f );
-	rightAngled = LERP( lastRightAngled, 0.0f, (float)(frameTime / 1000.00f) * 20.0f );
-	upAngled = LERP( lastUpAngled, 0.0f, (float)(frameTime / 1000.00f) * 20.0f );
+	focusAngles[ROLL] = LERP( lastAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
+	rightAngled = LERP( lastRightAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
+	upAngled = LERP( lastUpAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
 
 	if ( cg_flytilt.integer >= 1 
+	&& ( cg.predictedPlayerState.eFlags & EF_AURA ) 
 	&& ( cg.predictedPlayerState.pm_flags & PMF_FLYING )
-	&& ( cg.predictedPlayerState.eFlags & EF_AURA ) && &cmd ) {
-		if ( cmd.rightmove < 0 && ( cmd.buttons & BUTTON_KI_USE ) ) { // Left
-			focusAngles[ROLL] = LERP( lastAngled, -20.0f, (float)(frameTime / 1000.00f) * 15.0f );
-			rightAngled = LERP( lastRightAngled, focusAngles[ROLL] - 0.55f, (float)(frameTime / 1000.00f) * 15.0f );
-			upAngled = LERP( lastUpAngled, -acos( focusAngles[ROLL] / 180 * M_PI ) - 1.7f, (float)(frameTime / 1000.00f) * 15.0f );
-		} else if ( cmd.rightmove > 0 && ( cmd.buttons & BUTTON_KI_USE ) ) { // Right
-			focusAngles[ROLL] = LERP( lastAngled, 20.0f, (float)(frameTime / 1000.00f) * 15.0f );
-			rightAngled = LERP( lastRightAngled, focusAngles[ROLL] - 0.55f, (float)(frameTime / 1000.00f) * 15.0f );
-			upAngled = LERP( lastUpAngled, -acos( focusAngles[ROLL] / 180 * M_PI ) - 1.7f, (float)(frameTime / 1000.00f) * 15.0f );
+	&& !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) {
+		if ( cmd.rightmove < 0 ) { // Left
+			focusAngles[ROLL] = LERP( lastAngled, -20.0f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			rightAngled = LERP( lastRightAngled, focusAngles[ROLL] - 0.55f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			upAngled = LERP( lastUpAngled, -acos( focusAngles[ROLL] / 180 * M_PI ) - 1.7f, (float)(cg.frametime / 1000.00f) * 15.0f );
+		} else if ( cmd.rightmove > 0 ) { // Right
+			focusAngles[ROLL] = LERP( lastAngled, 20.0f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			rightAngled = LERP( lastRightAngled, focusAngles[ROLL] - 0.55f, (float)(cg.frametime / 1000.00f) * 15.0f );
+			upAngled = LERP( lastUpAngled, -acos( focusAngles[ROLL] / 180 * M_PI ) - 1.7f, (float)(cg.frametime / 1000.00f) * 15.0f );
 		}
 	}
 	// Last roll where it was "lerped"
