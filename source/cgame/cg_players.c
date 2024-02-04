@@ -1896,8 +1896,10 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) ) {
-			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
-			&& trace.fraction <= 0.70f ) {
+			if ( ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
+			&& trace.fraction <= 0.70f )
+			// If the player is stepping a mover:
+			|| cg.snap->ps.groundEntityNum != ENTITYNUM_NONE ) {
 				CG_HasteTrail( cent, trace.endpos );
 			} else if ( waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
@@ -1905,8 +1907,10 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
 			}
 		} else if ( ( cg.snap->ps.pm_flags & PMF_KI_CHARGE ) // BFP - Antigrav rock particles on ki charging status
-		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
-		&& trace.fraction <= 0.50f ) {
+		&& ( ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+		&& trace.fraction <= 0.50f )
+		// If the player is stepping a mover:
+		|| cg.snap->ps.groundEntityNum != ENTITYNUM_NONE ) ) {
 			// BFP - Spawn randomly the antigrav rock shaders with the particles
 			int shaderIndex = rand() % 3;
 			switch ( shaderIndex ) {
@@ -2360,12 +2364,11 @@ void CG_Player( centity_t *cent ) {
 	if ( cent->currentState.eFlags & EF_AURA ) {
 		// BFP - TODO: Create a new function "CG_KiTrail" only when moving to draw ki trail and add the cvar for the length
 
-		// BFP - Traces for bubble particles only when moving in the water and charging
-		int sourceContentType, destContentType;
+		// BFP - Trace for bubble particles only when moving in the water and charging
+		int destContentType;
 		vec3_t start;
 
-		sourceContentType = trap_CM_PointContents( start, 0 );
-		destContentType = trap_CM_PointContents( cent->lerpOrigin, 0 );
+		destContentType = CG_PointContents( cent->lerpOrigin, -1 );
 
 		// spawning bubble particles
 		if ( destContentType & CONTENTS_WATER ) {

@@ -436,11 +436,11 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		{
 			// BFP - To detect if there is something solid
 			trace_t		trace;
-			CG_Trace( &trace, p->org, vec3_origin, vec3_origin, org, -1, CONTENTS_SOLID );
+			CG_Trace( &trace, p->org, vec3_origin, vec3_origin, org, -1, MASK_PLAYERSOLID );
 
 			// BFP - Make each particle fall when they aren't on ki charging status
 			if ( !( cg.snap->ps.pm_flags & PMF_KI_CHARGE ) && !p->link ) {
-				p->endtime = timenonscaled + 2000;
+				p->endtime = timenonscaled + 1650;
 				p->link = qtrue;
 			}
 
@@ -454,13 +454,15 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 					p->vel[2] -= 30;
 					p->accel[2] -= 200;
 				}
-				else
+				else // bouncing
 				{
-					// bouncing
-					p->roll--;
-					p->vel[2] = (p->roll > 0) ? 100 * p->roll : 1;
-					if (p->roll <= 0) { // stop moving
-						p->vel[2] = p->accel[2] = 0;
+					// BFP - TODO: Temporary solution... Make bouncing more interactive when there's a mover moving
+					if ( trace.fraction <= 0 // if the particle is touching a mover and moves down, so keep bouncing
+					&& cg.snap->ps.groundEntityNum != ENTITYNUM_NONE ) {
+						p->roll = 10;
+					} else {
+						p->vel[2] = p->accel[2] = (p->roll > 0) ? 50 * p->roll : 0;
+						p->roll--; // that decreases bounces 
 					}
 				}
 			}
