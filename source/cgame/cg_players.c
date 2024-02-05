@@ -2341,20 +2341,29 @@ void CG_Player( centity_t *cent ) {
 	#define AURA_LIGHT(r, g, b) \
 		if ( cg_lightAuras.integer > 0 ) { \
 			if ( cg_smallOwnAura.integer > 0 ) { \
-				trap_R_AddLightToScene( legs.origin, 100 + (rand()&255), r, g, b ); \
-				trap_R_AddLightToScene( aura.origin, 150 + (rand()&255), r, g, b ); \
-				trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
 				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
-					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&150), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+				} else { \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
 				} \
 			} else if ( cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
 				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
-				trap_R_AddLightToScene( legs.origin, 50 + (rand()&100), r, g, b ); \
-				trap_R_AddLightToScene( aura.origin, 50 + (rand()&100), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
 			} else { \
-				trap_R_AddLightToScene( legs.origin, 200 + (rand()&63), r, g, b ); \
-				trap_R_AddLightToScene( aura.origin, 200 + (rand()&255), r, g, b ); \
-				trap_R_AddLightToScene( aura2.origin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&63), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
 				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
 					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&150), r, g, b ); \
 				} \
