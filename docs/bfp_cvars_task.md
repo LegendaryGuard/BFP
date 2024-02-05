@@ -71,6 +71,7 @@
 - [x] ~~cg_lightweightAuras~~
 - [x] ~~cg_polygonAura~~
 - [x] ~~cg_highPolyAura~~
+- [x] ~~g_noFlight (disables "fly" bind too, original BFP has a leak though)~~
 
 #### Cvar Gametypes:
 

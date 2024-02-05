@@ -1597,6 +1597,11 @@ Cmd_BFP_Fly_f
 */
 void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 
+	// BFP - No flight
+	if ( g_noFlight.integer > 0 ) {
+		return;
+	}
+
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		// do not play the sound in the charging status
 		if ( !( ent->client->ps.pm_flags & PMF_FLYING ) && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
