@@ -1126,14 +1126,6 @@ static void PM_GroundTrace( void ) {
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
 
-	// BFP - NOTE: Originally, BFP doesn't stop "groundtracing" when the player is flying
-#if 0
-	// BFP - If flying, do nothing when touching the ground
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		return;
-	}
-#endif
-
 	// BFP - No ground trace handling in the water
 	if ( pm->waterlevel > 1 ) {
 		return;
@@ -1223,6 +1215,12 @@ static void PM_GroundTrace( void ) {
 			}
 			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
 		}
+		return;
+	}
+
+	// BFP - NOTE: Originally, BFP doesn't stop "groundtracing" until here when the player is flying
+	// BFP - If flying, prevent from doing a jumping action on flat ground
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
 		return;
 	}
 
