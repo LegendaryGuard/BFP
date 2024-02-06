@@ -1627,8 +1627,24 @@ void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) { // BFP - TODO: Set Ki idle
 	Com_Printf( "Cmd_BFP_SetKiIdle_f\n" );
 }
 
-void Cmd_BFP_SelectCharacter_f( gentity_t* ent ) { // BFP - TODO: Select character
-	Com_Printf( "Cmd_BFP_SelectCharacter_f\n" );
+/*
+=====================
+Cmd_BFP_SelectCharacter_f
+=====================
+*/
+void Cmd_BFP_SelectCharacter_f( gentity_t* ent ) { // BFP - Select character
+	char		characterselected[MAX_TOKEN_CHARS];
+
+	// BFP - NOTE: That command was left without finishing the implementation to change the character of this way
+	// What could it be?
+
+	if ( trap_Argc() != 2 ) {
+		return;
+	}
+	trap_Argv( 1, characterselected, sizeof( characterselected ) );
+
+	// that prints the info in the server
+	G_Printf( "Character: %s\n", characterselected );
 }
 
 void Cmd_BFP_StartBlock_f( gentity_t* ent ) { // BFP - TODO: Start block
@@ -1761,7 +1777,7 @@ void ClientCommand( int clientNum ) {
 		Cmd_BFP_KiUseToggle_f( ent );
 	else if (Q_stricmp (cmd, "set_ki_idle") == 0) // BFP - TODO: Set Ki idle
 		Cmd_BFP_SetKiIdle_f( ent );
-	else if (Q_stricmp (cmd, "selectcharacter") == 0) // BFP - TODO: Select character
+	else if (Q_stricmp (cmd, "selectcharacter") == 0) // BFP - Select character
 		Cmd_BFP_SelectCharacter_f( ent );
 	else if (Q_stricmp (cmd, "start_block") == 0) // BFP - TODO: Start Block
 		Cmd_BFP_StartBlock_f( ent );
