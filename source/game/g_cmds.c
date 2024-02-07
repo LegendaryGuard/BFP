@@ -1613,6 +1613,40 @@ void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 
 /*
 =====================
+Cmd_BFP_SetKiCharge_f
+=====================
+*/
+void Cmd_BFP_SetKiCharge_f( gentity_t* ent ) { // BFP - Set Ki charge
+	// BFP - NOTE: Charging only when ki use has been toggled,
+	// but it's a charging pose animation only,
+	// what were they (original BFP devs) thinking?
+
+	// Nah, that implementation doesn't make sense, 
+	// if you want silly and useless stuff like that, play it in original BFP
+	if ( ent->client->ps.pm_type != PM_DEAD
+	&& ( ent->client->ps.eFlags & EF_AURA ) ) {
+		ent->client->ps.torsoTimer = ent->client->ps.legsTimer = 0;
+		ent->client->ps.legsAnim = LEGS_CHARGE;
+		ent->client->ps.torsoAnim = TORSO_CHARGE;
+	}
+}
+
+/*
+=====================
+Cmd_BFP_SetKiUse_f
+=====================
+*/
+void Cmd_BFP_SetKiUse_f( gentity_t* ent ) { // BFP - Set Ki use
+	// BFP - NOTE: Originally, an unfinished command...
+#if 0
+	if ( ent->client->ps.pm_type != PM_DEAD ) {
+		ent->client->ps.pm_flags |= PMF_KI_BOOST;
+	}
+#endif
+}
+
+/*
+=====================
 Cmd_BFP_KiUseToggle_f
 =====================
 */
@@ -1623,8 +1657,17 @@ void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) { // BFP - Ki use toggle
 	}
 }
 
-void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) { // BFP - TODO: Set Ki idle
-	Com_Printf( "Cmd_BFP_SetKiIdle_f\n" );
+/*
+=====================
+Cmd_BFP_SetKiIdle_f
+=====================
+*/
+void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) { // BFP - Set Ki idle
+
+	// BFP - NOTE: originally... Ki idling means disabling the ki? Sounds like it isn't operating...
+	if ( ent->client->ps.pm_type != PM_DEAD ) {
+		ent->client->ps.pm_flags &= ~PMF_KI_BOOST;
+	}
 }
 
 /*
@@ -1773,9 +1816,13 @@ void ClientCommand( int clientNum ) {
 		Cmd_Stats_f( ent );
 	else if (Q_stricmp (cmd, "fly") == 0) // BFP - Flight
 		Cmd_BFP_Fly_f( ent );
+	else if (Q_stricmp (cmd, "set_ki_charge") == 0) // BFP - Set Ki charge
+		Cmd_BFP_SetKiCharge_f( ent );
+	else if (Q_stricmp (cmd, "set_ki_use") == 0) // BFP - Set Ki use
+		Cmd_BFP_SetKiUse_f( ent );
 	else if (Q_stricmp (cmd, "kiusetoggle") == 0) // BFP - Ki use toggle
 		Cmd_BFP_KiUseToggle_f( ent );
-	else if (Q_stricmp (cmd, "set_ki_idle") == 0) // BFP - TODO: Set Ki idle
+	else if (Q_stricmp (cmd, "set_ki_idle") == 0) // BFP - Set Ki idle
 		Cmd_BFP_SetKiIdle_f( ent );
 	else if (Q_stricmp (cmd, "selectcharacter") == 0) // BFP - Select character
 		Cmd_BFP_SelectCharacter_f( ent );
