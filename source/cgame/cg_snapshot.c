@@ -190,9 +190,9 @@ static void CG_TransitionSnapshot( void ) {
 	// adjust the mouse's yaw direction to prevent the player from 
 	// looking in the incorrect horizontal direction
 	if ( cg.refdefViewAngles[PITCH] <= -100 || cg.refdefViewAngles[PITCH] >= 100 ) {
-		trap_SendConsoleCommand( "seta m_yaw -0.022" );
+		trap_SendConsoleCommand( "seta m_yaw -0.022\n" );
 	} else {
-		trap_SendConsoleCommand( "seta m_yaw 0.022" );
+		trap_SendConsoleCommand( "seta m_yaw 0.022\n" );
 	}
 }
 
