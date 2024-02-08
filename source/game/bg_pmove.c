@@ -42,7 +42,7 @@ float	pm_flyaccelerate = 8.0f;
 
 float	pm_friction = 6.0f;
 float	pm_waterfriction = 1.0f;
-float	pm_flightfriction = 3.0f;
+float	pm_flightfriction = 2.0f; // BFP - Add less flight friction, before 3.0f
 float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
@@ -1167,6 +1167,11 @@ static void PM_GroundTrace( void ) {
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
 		pml.groundPlane = qtrue;
 		pml.walking = qfalse;
+
+		// BFP - If flying, prevent from doing a jumping action on slopes
+		if ( pm->ps->pm_flags & PMF_FLYING ) {
+			return;
+		}
 
 		// BFP - Handle if the player is trying to jump and/or do another movements
 		// when stepping the steep slopes
