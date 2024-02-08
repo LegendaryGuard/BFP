@@ -56,6 +56,20 @@ int		c_pmove = 0;
 	else if ( pm->cmd.forwardmove < 0 ) { PM_ContinueTorsoAnim( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); } \
 	else { PM_ContinueTorsoAnim( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
 
+// BFP - TODO: For future clean code... Macro for movement handling in the slopes, since the code looked repetitive, so this macro makes the code a bit shorter
+#define SLOPES_NEARGROUND_ANIM_HANDLING() \
+	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) { PM_ContinueLegsAnim( LEGS_IDLE ); return; } \
+	if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) { \
+		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); PM_ContinueTorsoAnim( TORSO_STAND ); } \
+		else if ( pm->cmd.forwardmove > 0 \
+		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_RUN ); PM_ContinueTorsoAnim( TORSO_RUN ); } \
+	} else { \
+		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); } \
+		else if ( pm->cmd.forwardmove > 0 \
+		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_WALK ); } \
+		PM_ContinueTorsoAnim( TORSO_STAND ); \
+	}
+
 /*
 ===============
 PM_AddEvent
@@ -439,10 +453,13 @@ static qboolean	PM_CheckWaterJump( void ) {
 
 	// jump out of water
 	VectorScale (pml.forward, 200, pm->ps->velocity);
-	pm->ps->velocity[2] = 350;
+	pm->ps->velocity[2] = 250; // BFP - before 350
 
+	// BFP - No handling PMF_TIME_WATERJUMP
+#if 0
 	pm->ps->pm_flags |= PMF_TIME_WATERJUMP;
 	pm->ps->pm_time = 2000;
+#endif
 
 	return qtrue;
 }
@@ -463,18 +480,14 @@ static void PM_WaterJumpMove( void ) {
 	PM_StepSlideMove( qtrue );
 
 	pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
+	// BFP - No handling PMF_ALL_TIMES
+#if 0
 	if (pm->ps->velocity[2] < 0) {
 		// cancel as soon as we are falling down again
 		pm->ps->pm_flags &= ~PMF_ALL_TIMES;
 		pm->ps->pm_time = 0;
 	}
-
-	// BFP - Handle jumping animation when getting out of the water
-	if ( !( pm->ps->pm_flags & PMF_FLYING )
-	&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
-		pm->ps->pm_flags &= ~PMF_FALLING;
-		FORCEJUMP_ANIM_HANDLING();
-	}
+#endif
 }
 
 /*
@@ -490,6 +503,13 @@ static void PM_WaterMove( void ) {
 	vec3_t	wishdir;
 	float	scale;
 	float	vel;
+
+	// BFP - Avoid adding friction in the water while charging and flying
+	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
+	|| ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) 
+	&& ( pm->ps->pm_flags & PMF_FLYING ) ) {
+		return;
+	}
 
 	if ( PM_CheckWaterJump() ) {
 		PM_WaterJumpMove();
@@ -1185,7 +1205,7 @@ static void PM_GroundTrace( void ) {
 			return;
 		}
 
-		// BFP - Handling the PMF flag when that happens
+		// BFP - Handling the PMF flags when that happens
 		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 
 		if ( pm->ps->pm_flags & PMF_DUCKED ) {
@@ -1232,12 +1252,15 @@ static void PM_GroundTrace( void ) {
 	pml.groundPlane = qtrue;
 	pml.walking = qtrue;
 
+	// BFP - No handling PMF_TIME_WATERJUMP
+#if 0
 	// hitting solid ground will end a waterjump
 	if (pm->ps->pm_flags & PMF_TIME_WATERJUMP)
 	{
 		pm->ps->pm_flags &= ~PMF_TIME_WATERJUMP; // BFP: before: ~(PMF_TIME_WATERJUMP | PMF_TIME_LAND);
 		pm->ps->pm_time = 0;
 	}
+#endif
 
 	// BFP - Handle when the player isn't flying
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE && !( pm->ps->pm_flags & PMF_FLYING ) 
@@ -1642,9 +1665,10 @@ static void PM_TorsoAnimation( void ) {
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
 
-	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+	// BFP - Falling distantly from the ground
+	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND )
+	&& !( pm->ps->pm_flags & PMF_FLYING ) ) {
 		pm->ps->pm_flags |= PMF_NEARGROUND;
-		pm->ps->pm_flags &= ~PMF_FALLING;
 		FORCEJUMP_ANIM_HANDLING();
 		PM_ContinueTorsoAnim( TORSO_STAND );
 	}
@@ -1652,6 +1676,41 @@ static void PM_TorsoAnimation( void ) {
 	// If idling, keep the torso
 	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
 		PM_ContinueTorsoAnim( TORSO_STAND );
+	}
+
+	// BFP - That happens when the player is landing nearly
+	if ( !( pm->ps->pm_flags & PMF_NEARGROUND )
+	&& !( pm->ps->pm_flags & PMF_FLYING )
+	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
+
+		// If it's trying to crouch, then play the jump animation
+		if ( pm->ps->pm_flags & PMF_DUCKED ) {
+			pm->ps->pm_flags |= PMF_NEARGROUND; // stop here, don't change any animation
+			FORCEJUMP_ANIM_HANDLING();
+			return;
+		}
+
+		if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
+			PM_ContinueLegsAnim( LEGS_IDLE );
+			return;
+		}
+
+		if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
+			if ( pm->cmd.forwardmove < 0 ) {
+				PM_ContinueLegsAnim( LEGS_BACK );
+				PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
+			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
+				PM_ContinueLegsAnim( LEGS_RUN );
+				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Keep the torso
+			}
+		} else {
+			if ( pm->cmd.forwardmove < 0 ) {
+				PM_ContinueLegsAnim( LEGS_BACK );
+			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
+				PM_ContinueLegsAnim( LEGS_WALK );
+			}
+			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
+		}
 	}
 
 #if 0
@@ -1675,20 +1734,23 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 
 	if ( ( pm->ps->pm_flags & PMF_FLYING ) && pm->ps->pm_time <= 0 ) {
 
-		// make sure to handle the PMF flag
+		// make sure to handle the PMF flags
 		pm->ps->pm_flags &= ~PMF_FALLING;
+		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 
 		CONTINUEFLY_ANIM_HANDLING()
 		return;
 	}
 
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
-	if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID ) && !( pm->ps->pm_flags & PMF_FALLING ) ) {
+	if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
+	&& !( pm->ps->pm_flags & PMF_FALLING )
+	&& !( pm->ps->pm_flags & PMF_FLYING ) ) {
 
 		// stops entering again here and don't change the animation to backwards/forward
 		pm->ps->pm_flags |= PMF_FALLING;
 
-		if ( pm->cmd.forwardmove < 0 && !( pm->ps->pm_flags & PMF_FLYING ) ) { // when failing backwards after flying
+		if ( pm->cmd.forwardmove < 0 ) { // when failing backwards after flying
 			PM_StartLegsAnim( LEGS_JUMPB );
 		} else {
 			PM_StartLegsAnim( LEGS_JUMP );
@@ -1726,6 +1788,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	}
 
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
 		PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
 		// do jump animation if it's falling
@@ -2008,10 +2071,14 @@ PM_DropTimers
 static void PM_DropTimers( void ) {
 	// drop misc timing counter
 	if ( pm->ps->pm_time ) {
+	// BFP - No handling PMF_ALL_TIMES
+#if 0
 		if ( pml.msec >= pm->ps->pm_time ) {
 			pm->ps->pm_flags &= ~PMF_ALL_TIMES;
 			pm->ps->pm_time = 0;
-		} else {
+		} else 
+#endif
+		{
 			pm->ps->pm_time -= pml.msec;
 		}
 	}
@@ -2343,9 +2410,13 @@ void PmoveSingle (pmove_t *pmove) {
 		PM_AirMove();
 	}
 #endif
+	// BFP - No handling PMF_TIME_WATERJUMP
+#if 0
 	else if (pm->ps->pm_flags & PMF_TIME_WATERJUMP) {
 		PM_WaterJumpMove();
-	} else if ( pm->waterlevel > 1 ) {
+	}
+#endif
+	else if ( pm->waterlevel > 1 ) {
 		// swimming
 		PM_WaterMove();
 	} else if ( pml.walking ) {
@@ -2442,4 +2513,5 @@ void Pmove (pmove_t *pmove) {
 // BFP - Undefine the macros
 #undef FORCEJUMP_ANIM_HANDLING
 #undef CONTINUEFLY_ANIM_HANDLING
+#undef SLOPES_NEARGROUND_ANIM_HANDLING
 

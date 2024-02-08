@@ -154,7 +154,8 @@ typedef enum {
 // BFP - PMF_TIME_KNOCKBACK is unused
 // #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
 #define PMF_KI_BOOST		128		// BFP - Using Ki
-#define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
+// BFP - PMF_TIME_WATERJUMP is unused
+// #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
 // BFP - no hook
@@ -169,7 +170,8 @@ typedef enum {
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
-#define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP) // BFP: before: (PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
+// BFP - That combination of PMF_TIME_* flags is unused
+// #define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
 
 #define	MAXTOUCH	32
 typedef struct {
