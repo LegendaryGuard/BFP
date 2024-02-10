@@ -1246,6 +1246,9 @@ static void PM_GroundTrace( void ) {
 	// BFP - NOTE: Originally, BFP doesn't stop "groundtracing" until here when the player is flying
 	// BFP - If flying, prevent from doing a jumping action on flat ground
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
+		// BFP - To stick to the movers if the player is near to them
+		pm->ps->groundEntityNum = trace.entityNum;
+		PM_AddTouchEnt( trace.entityNum );
 		return;
 	}
 
@@ -1424,6 +1427,11 @@ static void PM_Footsteps( void ) {
 
 	// BFP - Hit stun
 	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+		return;
+	}
+
+	// BFP - Hit stun
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
 		return;
 	}
 
@@ -2145,8 +2153,18 @@ Enables/disables flight
 */
 static qboolean PM_EnableFlight( void ) { // BFP - Flight
 
+	// BFP - Hit stun, avoid enabling flight if the player is in this status
+	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+		return qfalse;
+	}
+
 	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
 		return qfalse;
+	}
+
+	// Handle the PMF flag if it's already flying
+	if ( ( pm->ps->pm_flags & PMF_FLYING ) && !( pm->ps->pm_flags & PMF_FALLING ) ) {
+		return qtrue;
 	}
 
 	// do not proceed to the jump event while enables the flight in the charging status
@@ -2155,7 +2173,7 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		return qfalse;
 	}
 
-	if ( ( pm->ps->pm_flags & PMF_FLYING ) && !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+	if ( pm->ps->pm_flags & PMF_FLYING ) {
 		if ( ( pml.groundTrace.contents & MASK_PLAYERSOLID ) && pm->ps->groundEntityNum != ENTITYNUM_NONE ) {
 			// do a smooth jump animation like BFP does
 			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
@@ -2192,7 +2210,10 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
-	pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
+	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
+		pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
+	}
+
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && pm->ps->pm_time <= 0 ) {
 		pm->ps->stats[STAT_KI]++;
 	}
