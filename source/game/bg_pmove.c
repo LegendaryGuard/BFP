@@ -632,13 +632,6 @@ static void PM_AirMove( void ) {
 	float		scale;
 	usercmd_t	cmd;
 
-	// BFP - Avoid adding friction in the air while charging and flying
-	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
-	|| ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) 
-	&& ( pm->ps->pm_flags & PMF_FLYING ) ) {
-		return;
-	}
-
 	PM_Friction();
 
 	fmove = pm->cmd.forwardmove;
@@ -1430,7 +1423,7 @@ static void PM_Footsteps( void ) {
 		return;
 	}
 
-	// BFP - Hit stun
+	// BFP - Avoid when flying
 	if ( pm->ps->pm_flags & PMF_FLYING ) {
 		return;
 	}
@@ -1798,6 +1791,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
+		pm->ps->pm_flags &= ~PMF_NEARGROUND; // Make sure to handle the PMF flag
 		PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
