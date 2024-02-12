@@ -732,21 +732,22 @@ void ClientThink_real( gentity_t *ent ) {
 	client->ps.speed = g_speed.value;
 
 	// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
-	// BFP - If BUTTON_KI_USE > speed
-	if ( !( ent->client->ps.pm_flags & PMF_HITSTUN )
+	if ( !( client->ps.pm_flags & PMF_HITSTUN )
 	&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
-	|| ( ent->client->ps.pm_flags & PMF_KI_BOOST ) ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
-		ent->client->ps.speed *= 2.5;
-		ent->client->ps.eFlags |= EF_AURA;
+	|| ( client->ps.pm_flags & PMF_KI_BOOST ) ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
+		if ( !( client->ps.pm_flags & PMF_FLYING ) ) {
+			client->ps.speed *= 2.5;
+		}
+		client->ps.eFlags |= EF_AURA;
 	} else {
 		if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
-			ent->client->ps.eFlags &= ~EF_AURA;
+			client->ps.eFlags &= ~EF_AURA;
 		}
 	}
 
 	// BFP - Ki Charge
-	if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && ent->client->ps.pm_time <= 0 
-	&& ( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+	if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
+	&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
 		client->ps.eFlags |= EF_AURA;
 	}
 
@@ -755,7 +756,7 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
 
-	// BFP - if BUTTON_ENABLEFLIGHT enable flight
+	// BFP - Enable flight
 	FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 
 // BFP - no hook
@@ -958,13 +959,13 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 	}
 
 	// BFP - PMF_SCOREBOARD is unused
-	/*
+#if 0
 	if ( ent->client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
 		ent->client->ps.pm_flags |= PMF_SCOREBOARD;
 	} else {
 		ent->client->ps.pm_flags &= ~PMF_SCOREBOARD;
 	}
-	*/
+#endif
 }
 
 /*
