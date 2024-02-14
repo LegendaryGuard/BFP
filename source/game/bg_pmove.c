@@ -38,7 +38,7 @@ float	pm_swimScale = 0.50f;
 float	pm_accelerate = 10.0f;
 float	pm_airaccelerate = 1.0f;
 float	pm_wateraccelerate = 4.0f;
-float	pm_flyaccelerate = 8.0f;
+float	pm_flyaccelerate = 2.0f; // BFP - Add less flight acceleration, before 8.0f
 
 float	pm_friction = 6.0f;
 float	pm_waterfriction = 1.0f;
@@ -47,27 +47,46 @@ float	pm_spectatorfriction = 5.0f;
 
 int		c_pmove = 0;
 
+// BFP - TODO: Macro for torso handling, since the code looked repetitive, so this macro makes the code a bit shorter
+#define TORSOSTATUS_ANIM_HANDLING(other_torsostatus) ( pm->ps->pm_flags & PMF_INVULEXPAND ) ? PM_ContinueTorsoAnim( TORSO_BLOCK ) : PM_ContinueTorsoAnim( other_torsostatus )
+
 // BFP - Macro for jump handling, since the code looked repetitive, so this macro makes the code a bit shorter
 #define FORCEJUMP_ANIM_HANDLING() ( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB )
 
 // BFP - Macro for fly handling, since the code looked repetitive, so this macro makes the code a bit shorter
 #define CONTINUEFLY_ANIM_HANDLING() \
-	if ( pm->cmd.forwardmove > 0 ) { PM_ContinueTorsoAnim( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); } \
-	else if ( pm->cmd.forwardmove < 0 ) { PM_ContinueTorsoAnim( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); } \
-	else { PM_ContinueTorsoAnim( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
+	if ( pm->cmd.forwardmove > 0 ) { TORSOSTATUS_ANIM_HANDLING( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); } \
+	else if ( pm->cmd.forwardmove < 0 ) { TORSOSTATUS_ANIM_HANDLING( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); } \
+	else { TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
 
-// BFP - TODO: For future clean code... Macro for movement handling in the slopes, since the code looked repetitive, so this macro makes the code a bit shorter
-#define SLOPES_NEARGROUND_ANIM_HANDLING() \
+// BFP - Macro for movement handling in the slopes and when being near to the ground, since the code looked repetitive, so this macro makes the code a bit shorter
+#define SLOPES_NEARGROUND_ANIM_HANDLING(is_slope) \
+	if (is_slope) { \
+		if ( pm->ps->pm_flags & PMF_DUCKED ) { \
+			PM_ContinueLegsAnim( LEGS_IDLECR ); \
+			if ( pm->cmd.forwardmove < 0 \
+			|| ( pm->cmd.forwardmove > 0 \
+			|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) ) { PM_ContinueLegsAnim( LEGS_WALKCR ); } \
+			TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); \
+			return; \
+		} \
+	} else { \
+		if ( pm->ps->pm_flags & PMF_DUCKED ) { \
+			pm->ps->pm_flags |= PMF_NEARGROUND; \
+			FORCEJUMP_ANIM_HANDLING(); \
+			return; \
+		} \
+	} \
 	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) { PM_ContinueLegsAnim( LEGS_IDLE ); return; } \
 	if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) { \
-		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); PM_ContinueTorsoAnim( TORSO_STAND ); } \
+		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); } \
 		else if ( pm->cmd.forwardmove > 0 \
-		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_RUN ); PM_ContinueTorsoAnim( TORSO_RUN ); } \
+		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_RUN ); TORSOSTATUS_ANIM_HANDLING( TORSO_RUN ); } \
 	} else { \
 		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); } \
 		else if ( pm->cmd.forwardmove > 0 \
 		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_WALK ); } \
-		PM_ContinueTorsoAnim( TORSO_STAND ); \
+		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); \
 	}
 
 /*
@@ -409,7 +428,7 @@ static qboolean PM_CheckJump( void ) {
 	// BFP - No PMF_BACKWARDS_JUMP handling (code removed)
 	FORCEJUMP_ANIM_HANDLING();
 
-	PM_ContinueTorsoAnim( TORSO_STAND );
+	TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
 
 	return qtrue;
 }
@@ -585,8 +604,6 @@ static void PM_FlyMove( void ) {
 	float	wishspeed;
 	vec3_t	wishdir;
 	float	scale;
-	// BFP - Flight acceleration
-	float	flyacc;
 
 	// normal slowdown
 	PM_Friction ();
@@ -599,19 +616,19 @@ static void PM_FlyMove( void ) {
 		VectorClear( wishvel );
 	} else {
 		for ( i = 0; i < 3; i++ ) {
-			// BFP - Before: (+ scale * pml.up[i] * pm->cmd.upmove) used when flying and moving upside/downside instead according the ground
-			wishvel[i] = scale * pml.forward[i] * pm->cmd.forwardmove + scale * pml.right[i] * pm->cmd.rightmove + scale * pml.up[i] * pm->cmd.upmove;
+			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove;
 		}
-		// wishvel[2] += scale * pm->cmd.upmove; // BFP - disabled to work the wished velocity
+		wishvel[2] += scale * pm->cmd.upmove;
 	}
 
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
+	if ( !( pm->ps->pm_flags & PMF_INVULEXPAND ) // BFP - Don't increase the speed when blocking
+	&& ( ( pm->ps->pm_flags & PMF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		wishspeed *= scale;
+	}
 
-	// BFP - When moving during the flight, start with half acceleration
-	flyacc = (scale > pm_stopspeed) ? pm_flyaccelerate : pm_flyaccelerate/2;
-
-	PM_Accelerate (wishdir, wishspeed, flyacc);
+	PM_Accelerate (wishdir, wishspeed, pm_flyaccelerate);
 
 	PM_StepSlideMove( qfalse );
 }
@@ -678,6 +695,7 @@ static void PM_AirMove( void ) {
 	else
 		PM_SlideMove ( qtrue );
 #endif
+	TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
 
 	PM_StepSlideMove ( qtrue );
 }
@@ -1170,6 +1188,32 @@ static void PM_GroundTrace( void ) {
 		return;
 	}
 
+	// BFP - Make sure to handle the PMF flags when the player isn't flying
+	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
+		pm->ps->pm_flags |= PMF_FALLING;
+		pm->ps->pm_flags &= ~PMF_NEARGROUND;
+	}
+
+	// BFP - If the player is in the ground, then jump!
+	// And make sure to handle the PMF flag when the player isn't flying and falling
+	if ( ( pm->ps->pm_flags & PMF_FLYING )
+	&& ( pm->ps->pm_flags & PMF_FALLING ) 
+	&& !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+		if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
+			// do a smooth jump animation like BFP does
+			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+				pm->ps->pm_time = 500;
+			}
+			pml.groundPlane = qfalse;		// jumping away
+			pml.walking = qfalse;
+			pm->ps->velocity[2] = JUMP_VELOCITY;
+			PM_ForceLegsAnim( LEGS_JUMP );
+		}
+		pm->ps->pm_flags &= ~PMF_FALLING;	
+		pm->ps->groundEntityNum = ENTITYNUM_NONE;
+		return;
+	}
+
 	// slopes that are too steep will not be considered onground
 	if ( trace.plane.normal[2] < MIN_WALK_NORMAL ) {
 		if ( pm->debugLevel ) {
@@ -1201,38 +1245,7 @@ static void PM_GroundTrace( void ) {
 		// BFP - Handling the PMF flags when that happens
 		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 
-		if ( pm->ps->pm_flags & PMF_DUCKED ) {
-			PM_ContinueLegsAnim( LEGS_IDLECR );
-			if ( pm->cmd.forwardmove < 0 
-			|| ( pm->cmd.forwardmove > 0 
-			|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) ) {
-				PM_ContinueLegsAnim( LEGS_WALKCR );
-			}
-			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
-			return;
-		}
-
-		if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
-			PM_ContinueLegsAnim( LEGS_IDLE );
-			return;
-		}
-
-		if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
-			if ( pm->cmd.forwardmove < 0 ) {
-				PM_ContinueLegsAnim( LEGS_BACK );
-				PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
-			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
-				PM_ContinueLegsAnim( LEGS_RUN );
-				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Keep the torso
-			}
-		} else {
-			if ( pm->cmd.forwardmove < 0 ) {
-				PM_ContinueLegsAnim( LEGS_BACK );
-			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
-				PM_ContinueLegsAnim( LEGS_WALK );
-			}
-			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
-		}
+		SLOPES_NEARGROUND_ANIM_HANDLING( 1 )
 		return;
 	}
 
@@ -1242,6 +1255,7 @@ static void PM_GroundTrace( void ) {
 		// BFP - To stick to the movers if the player is near to them
 		pm->ps->groundEntityNum = trace.entityNum;
 		PM_AddTouchEnt( trace.entityNum );
+		pm->ps->pm_flags |= PMF_NEARGROUND;
 		return;
 	}
 
@@ -1259,8 +1273,8 @@ static void PM_GroundTrace( void ) {
 #endif
 
 	// BFP - Handle when the player isn't flying
-	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE && !( pm->ps->pm_flags & PMF_FLYING ) 
-	&& ( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE 
+	&& !( pm->ps->pm_flags & PMF_FLYING ) ) {
 		// just hit the ground
 		if ( pm->debugLevel ) {
 			Com_Printf("%i:Land\n", c_pmove);
@@ -1482,7 +1496,7 @@ static void PM_Footsteps( void ) {
 			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_WALKCR );
 			}
-			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
+			TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); // BFP - Keep the torso
 		}
 		// ducked characters never play footsteps
 	/*
@@ -1501,10 +1515,10 @@ static void PM_Footsteps( void ) {
 			// BFP - Replaced PMF_BACKWARDS_RUN handling
 			if ( pm->cmd.forwardmove < 0 ) {
 				PM_ContinueLegsAnim( LEGS_BACK );
-				PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
+				TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); // BFP - Keep the torso
 			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_RUN );
-				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Keep the torso
+				TORSOSTATUS_ANIM_HANDLING( TORSO_RUN ); // BFP - Keep the torso
 			}
 			footstep = qtrue;
 		} else if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
@@ -1515,7 +1529,7 @@ static void PM_Footsteps( void ) {
 			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_WALK );
 			}
-			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
+			TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); // BFP - Keep the torso
 		}
 	}
 
@@ -1650,9 +1664,9 @@ static void PM_TorsoAnimation( void ) {
 	trace_t		trace;
 	vec3_t		point;
 
-	// BFP - TODO: Melee, block and ki attack animation handling (these are for torso animations)
+	// BFP - TODO: Melee and ki attack animation handling (these are for torso animations)
 	// Keep in mind about the implementations of the steep slopes, 
-	// PM_ContinueTorsoAnim( TORSO_STAND ) and
+	// TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ) and
 	// !pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.buttons thingies
 
 	// BFP - No ground trace handling in the water
@@ -1671,47 +1685,32 @@ static void PM_TorsoAnimation( void ) {
 	&& !( pm->ps->pm_flags & PMF_FLYING ) ) {
 		pm->ps->pm_flags |= PMF_NEARGROUND;
 		FORCEJUMP_ANIM_HANDLING();
-		PM_ContinueTorsoAnim( TORSO_STAND );
+		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
 	}
 
 	// If idling, keep the torso
 	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
-		PM_ContinueTorsoAnim( TORSO_STAND );
+		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+	}
+
+	// Handle the player movement animation when stopping to fly and falling near to the ground
+	// that happens when PMF_FALLING flag isn't handled correctly
+	if ( ( pml.groundTrace.contents & MASK_PLAYERSOLID )
+	&& !( pm->ps->pm_flags & PMF_FLYING )
+	&& !( pm->ps->pm_flags & PMF_FALLING )
+	&& ( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+		pm->ps->pm_flags |= PMF_FALLING;
+		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 	}
 
 	// BFP - That happens when the player is landing nearly
 	if ( !( pm->ps->pm_flags & PMF_NEARGROUND )
 	&& !( pm->ps->pm_flags & PMF_FLYING )
+	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
 
-		// If it's trying to crouch, then play the jump animation
-		if ( pm->ps->pm_flags & PMF_DUCKED ) {
-			pm->ps->pm_flags |= PMF_NEARGROUND; // stop here, don't change any animation
-			FORCEJUMP_ANIM_HANDLING();
-			return;
-		}
-
-		if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
-			PM_ContinueLegsAnim( LEGS_IDLE );
-			return;
-		}
-
-		if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
-			if ( pm->cmd.forwardmove < 0 ) {
-				PM_ContinueLegsAnim( LEGS_BACK );
-				PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
-			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
-				PM_ContinueLegsAnim( LEGS_RUN );
-				PM_ContinueTorsoAnim( TORSO_RUN ); // BFP - Keep the torso
-			}
-		} else {
-			if ( pm->cmd.forwardmove < 0 ) {
-				PM_ContinueLegsAnim( LEGS_BACK );
-			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
-				PM_ContinueLegsAnim( LEGS_WALK );
-			}
-			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - Keep the torso
-		}
+		// If it's trying to crouch, then play the jump animation once
+		SLOPES_NEARGROUND_ANIM_HANDLING( 0 )
 	}
 
 #if 0
@@ -1735,9 +1734,8 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 
 	if ( ( pm->ps->pm_flags & PMF_FLYING ) && pm->ps->pm_time <= 0 ) {
 
-		// make sure to handle the PMF flags
+		// make sure to handle the PMF flag
 		pm->ps->pm_flags &= ~PMF_FALLING;
-		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 
 		CONTINUEFLY_ANIM_HANDLING()
 		return;
@@ -1750,13 +1748,14 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 
 		// stops entering again here and don't change the animation to backwards/forward
 		pm->ps->pm_flags |= PMF_FALLING;
+		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 
 		if ( pm->cmd.forwardmove < 0 ) { // when failing backwards after flying
 			PM_StartLegsAnim( LEGS_JUMPB );
 		} else {
 			PM_StartLegsAnim( LEGS_JUMP );
 		}
-		PM_ContinueTorsoAnim( TORSO_STAND );
+		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
 	}
 }
 
@@ -1827,7 +1826,7 @@ PM_HitStunAnimation
 static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 
 	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
-		PM_ContinueTorsoAnim( TORSO_STUN );
+		PM_StartTorsoAnim( TORSO_STUN );
 		PM_StartLegsAnim( LEGS_IDLECR );
 	}
 
@@ -2165,18 +2164,6 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->pm_flags & PMF_FLYING ) ) {
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
 		return qfalse;
-	}
-
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
-		if ( ( pml.groundTrace.contents & MASK_PLAYERSOLID ) && pm->ps->groundEntityNum != ENTITYNUM_NONE ) {
-			// do a smooth jump animation like BFP does
-			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
-				pm->ps->pm_time = 500;
-			}
-			pm->ps->velocity[2] = JUMP_VELOCITY;
-			PM_ForceLegsAnim( LEGS_JUMP );
-		}
-		pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	}
 
 	return qtrue;
@@ -2526,6 +2513,7 @@ void Pmove (pmove_t *pmove) {
 }
 
 // BFP - Undefine the macros
+#undef TORSOSTATUS_ANIM_HANDLING
 #undef FORCEJUMP_ANIM_HANDLING
 #undef CONTINUEFLY_ANIM_HANDLING
 #undef SLOPES_NEARGROUND_ANIM_HANDLING
