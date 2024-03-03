@@ -339,9 +339,9 @@ static void CG_OffsetThirdPersonView( void ) {
 	rightAngled = LERP( lastRightAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
 	upAngled = LERP( lastUpAngled, 0.0f, (float)(cg.frametime / 1000.00f) * 20.0f );
 
-	if ( cg_flytilt.integer >= 1 
+	if ( cg_flytilt.integer > 0 
 	&& ( cg.predictedPlayerState.eFlags & EF_AURA ) 
-	&& ( cg.predictedPlayerState.pm_flags & PMF_FLYING )
+	&& cg.predictedPlayerState.powerups[PW_FLIGHT] > 0 
 	&& !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) {
 		if ( cmd.rightmove < 0 ) { // Left
 			focusAngles[ROLL] = LERP( lastAngled, -20.0f, (float)(cg.frametime / 1000.00f) * 15.0f );

@@ -252,7 +252,7 @@ static void PM_Friction( void ) {
 
 	// apply flying friction
 	// BFP - Flight
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
+	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
 	}
@@ -526,7 +526,7 @@ static void PM_WaterMove( void ) {
 	// BFP - Avoid adding friction in the water while charging and flying
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
 	|| ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) 
-	&& ( pm->ps->pm_flags & PMF_FLYING ) ) {
+	&& pm->ps->powerups[PW_FLIGHT] > 0 ) {
 		return;
 	}
 
@@ -624,7 +624,7 @@ static void PM_FlyMove( void ) {
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	if ( !( pm->ps->pm_flags & PMF_INVULEXPAND ) // BFP - Don't increase the speed when blocking
-	&& ( ( pm->ps->pm_flags & PMF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		wishspeed *= scale;
 	}
 
@@ -1189,14 +1189,14 @@ static void PM_GroundTrace( void ) {
 	}
 
 	// BFP - Make sure to handle the PMF flags when the player isn't flying
-	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
+	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 	}
 
 	// BFP - If the player is in the ground, then jump!
 	// And make sure to handle the PMF flag when the player isn't flying and falling
-	if ( ( pm->ps->pm_flags & PMF_FLYING )
+	if ( pm->ps->powerups[PW_FLIGHT] > 0
 	&& ( pm->ps->pm_flags & PMF_FALLING ) 
 	&& !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
 		if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
@@ -1226,7 +1226,7 @@ static void PM_GroundTrace( void ) {
 		pml.walking = qfalse;
 
 		// BFP - If flying, prevent from doing a jumping action on slopes
-		if ( pm->ps->pm_flags & PMF_FLYING ) {
+		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
 			return;
 		}
 
@@ -1251,7 +1251,7 @@ static void PM_GroundTrace( void ) {
 
 	// BFP - NOTE: Originally, BFP doesn't stop "groundtracing" until here when the player is flying
 	// BFP - If flying, prevent from doing a jumping action on flat ground
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
+	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
 		// BFP - To stick to the movers if the player is near to them
 		pm->ps->groundEntityNum = trace.entityNum;
 		PM_AddTouchEnt( trace.entityNum );
@@ -1274,7 +1274,7 @@ static void PM_GroundTrace( void ) {
 
 	// BFP - Handle when the player isn't flying
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE 
-	&& !( pm->ps->pm_flags & PMF_FLYING ) ) {
+	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 		// just hit the ground
 		if ( pm->debugLevel ) {
 			Com_Printf("%i:Land\n", c_pmove);
@@ -1438,7 +1438,7 @@ static void PM_Footsteps( void ) {
 	}
 
 	// BFP - Avoid when flying
-	if ( pm->ps->pm_flags & PMF_FLYING ) {
+	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
 		return;
 	}
 
@@ -1578,7 +1578,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 	if (pml.previous_waterlevel && !pm->waterlevel) {
 		PM_AddEvent( EV_WATER_LEAVE );
 		// BFP - Handle jumping animation when getting out of the water
-		if ( !( pm->ps->pm_flags & PMF_FLYING )
+		if ( pm->ps->powerups[PW_FLIGHT] <= 0
 		&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
 			pm->ps->pm_flags &= ~PMF_FALLING;
 			FORCEJUMP_ANIM_HANDLING();
@@ -1682,7 +1682,7 @@ static void PM_TorsoAnimation( void ) {
 
 	// BFP - Falling distantly from the ground
 	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND )
-	&& !( pm->ps->pm_flags & PMF_FLYING ) ) {
+	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 		pm->ps->pm_flags |= PMF_NEARGROUND;
 		FORCEJUMP_ANIM_HANDLING();
 		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
@@ -1696,7 +1696,7 @@ static void PM_TorsoAnimation( void ) {
 	// Handle the player movement animation when stopping to fly and falling near to the ground
 	// that happens when PMF_FALLING flag isn't handled correctly
 	if ( ( pml.groundTrace.contents & MASK_PLAYERSOLID )
-	&& !( pm->ps->pm_flags & PMF_FLYING )
+	&& pm->ps->powerups[PW_FLIGHT] <= 0
 	&& !( pm->ps->pm_flags & PMF_FALLING )
 	&& ( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
 		pm->ps->pm_flags |= PMF_FALLING;
@@ -1705,7 +1705,7 @@ static void PM_TorsoAnimation( void ) {
 
 	// BFP - That happens when the player is landing nearly
 	if ( !( pm->ps->pm_flags & PMF_NEARGROUND )
-	&& !( pm->ps->pm_flags & PMF_FLYING )
+	&& pm->ps->powerups[PW_FLIGHT] <= 0
 	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
 
@@ -1732,7 +1732,7 @@ PM_FlightAnimation
 */
 static void PM_FlightAnimation( void ) { // BFP - Flight
 
-	if ( ( pm->ps->pm_flags & PMF_FLYING ) && pm->ps->pm_time <= 0 ) {
+	if ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->pm_time <= 0 ) {
 
 		// make sure to handle the PMF flag
 		pm->ps->pm_flags &= ~PMF_FALLING;
@@ -1744,7 +1744,7 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
 	if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
 	&& !( pm->ps->pm_flags & PMF_FALLING )
-	&& !( pm->ps->pm_flags & PMF_FLYING ) ) {
+	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 
 		// stops entering again here and don't change the animation to backwards/forward
 		pm->ps->pm_flags |= PMF_FALLING;
@@ -1777,7 +1777,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->ps->pm_time = 0;
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
-			&& !( pm->ps->pm_flags & PMF_FLYING )
+			&& pm->ps->powerups[PW_FLIGHT] <= 0
 			&& ( pm->ps->pm_flags & PMF_FALLING )
 			&& pm->waterlevel <= 1 ) { // Don't force inside the water
 			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
@@ -1806,15 +1806,15 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
 			pm->ps->pm_time = 300;
 		}
-		pm->ps->pm_flags &= ~PMF_KI_BOOST;
+		pm->ps->powerups[PW_HASTE] = 0;
 		pm->ps->pm_flags |= PMF_KI_CHARGE;
 		PM_ContinueTorsoAnim( TORSO_CHARGE );
 		PM_ContinueLegsAnim( LEGS_CHARGE );
 	}
 
 	// handle the button to avoid toggling ki boost when already used "kiusetoggle" key bind
-	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->pm_flags & PMF_KI_BOOST ) ) {
-		pm->ps->pm_flags &= ~PMF_KI_BOOST;
+	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->powerups[PW_HASTE] > 0 ) ) {
+		pm->ps->powerups[PW_HASTE] = 0;
 	}
 }
 
@@ -1832,7 +1832,7 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 
 	// When the player doesn't have more ki, play hit stun animation
 	if ( pm->ps->stats[STAT_KI] <= 0 && !( pm->ps->pm_flags & PMF_HITSTUN )
-		|| ( ( pm->ps->pm_flags & PMF_FLYING ) && pm->ps->stats[STAT_KI] <= 24 ) // BFP - TODO: Apply some timer if used any ki, if flying and has less ki, then hit stun (also BFP does that)
+		|| ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->stats[STAT_KI] <= 24 ) // BFP - TODO: Apply some timer if used any ki, if flying and has less ki, then hit stun (also BFP does that)
 		|| ( ( pm->cmd.buttons & BUTTON_ATTACK ) && ( pm->ps->pm_flags & PMF_HITSTUN ) ) ) {
 		pm->ps->pm_time = 1000;
 		pm->ps->pm_flags |= PMF_HITSTUN;
@@ -2123,7 +2123,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];
-		if ( i == PITCH && !( ps->pm_flags & PMF_FLYING ) ) { // BFP - Avoid that when flying
+		if ( i == PITCH && ps->powerups[PW_FLIGHT] <= 0 ) { // BFP - Avoid that when flying
 			// don't let the player look up or down more than 90 degrees
 			if ( temp > 16000 ) {
 				ps->delta_angles[i] = 16000 - cmd->angles[i];
@@ -2151,17 +2151,17 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		return qfalse;
 	}
 
-	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
+	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 		return qfalse;
 	}
 
 	// Handle the PMF flag if it's already flying
-	if ( ( pm->ps->pm_flags & PMF_FLYING ) && !( pm->ps->pm_flags & PMF_FALLING ) ) {
+	if ( pm->ps->powerups[PW_FLIGHT] > 0 && !( pm->ps->pm_flags & PMF_FALLING ) ) {
 		return qtrue;
 	}
 
 	// do not proceed to the jump event while enables the flight in the charging status
-	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->pm_flags & PMF_FLYING ) ) {
+	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && pm->ps->powerups[PW_FLIGHT] > 0 ) {
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
 		return qfalse;
 	}
@@ -2191,7 +2191,7 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
-	if ( !( pm->ps->pm_flags & PMF_FLYING ) ) {
+	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 		pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
 	}
 
@@ -2213,8 +2213,8 @@ static void PM_HitStun( void ) { // BFP - Hit stun
 		pm->cmd.buttons &= ~( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
-	pm->ps->pm_flags &= ~PMF_FLYING;
-	pm->ps->pm_flags &= ~PMF_KI_BOOST;
+	pm->ps->powerups[PW_FLIGHT] = 0;
+	pm->ps->powerups[PW_HASTE] = 0;
 	pm->ps->eFlags &= ~EF_AURA;
 
 	// BFP - NOTE: BFP doesn't handle nothing the button directions when there's hit stun
@@ -2332,8 +2332,8 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( pm->ps->pm_type >= PM_DEAD ) {
 
 		// BFP - If player is dead, disable the following statuses
-		pm->ps->pm_flags &= ~PMF_FLYING;
-		pm->ps->pm_flags &= ~PMF_KI_BOOST;
+			pm->ps->powerups[PW_FLIGHT] = 0;
+		pm->ps->powerups[PW_HASTE] = 0;
 		pm->ps->eFlags &= ~EF_AURA;
 
 // BFP - NOTE: disabled for notes, don't allow pressing these buttons

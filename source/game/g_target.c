@@ -65,6 +65,19 @@ takes away all the activators powerups.
 Used to drop flight powerups into death puts.
 */
 void Use_target_remove_powerups( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
+	// BFP - To keep flight and ki boost statuses
+	int keepPW[MAX_POWERUPS];
+
+	// BFP - NOTE: Originally, on BFP, they used PMF flags to keep the statuses,
+	// as long as these weren't affected from that,
+	// when the powerups variable is being reset entering in a target_remove_powerups zone.
+	// BFP original solution was ugly, because the client side visual of CG_PlayerAngles
+	// didn't handle the positions of the legs.
+	// This solution here is better than the original one.
+
+	keepPW[PW_FLIGHT] = activator->client->ps.powerups[PW_FLIGHT];
+	keepPW[PW_HASTE] = activator->client->ps.powerups[PW_HASTE];
+
 	if( !activator->client ) {
 		return;
 	}
@@ -78,6 +91,10 @@ void Use_target_remove_powerups( gentity_t *ent, gentity_t *other, gentity_t *ac
 	}
 
 	memset( activator->client->ps.powerups, 0, sizeof( activator->client->ps.powerups ) );
+
+	// BFP - Keep the statuses!
+	activator->client->ps.powerups[PW_FLIGHT] = keepPW[PW_FLIGHT];
+	activator->client->ps.powerups[PW_HASTE] = keepPW[PW_HASTE];
 }
 
 void SP_target_remove_powerups( gentity_t *ent ) {

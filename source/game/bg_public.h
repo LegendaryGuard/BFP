@@ -142,7 +142,6 @@ typedef enum {
 // pmove->pm_flags
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
-#define PMF_FLYING 			4 		// BFP - Flight
 // BFP - PMF_BACKWARDS_JUMP is unused
 // #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
 #define	PMF_NEARGROUND		8		// BFP - Near ground check
@@ -153,7 +152,7 @@ typedef enum {
 #define PMF_FALLING			32		// BFP - Falling status
 // BFP - PMF_TIME_KNOCKBACK is unused
 // #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
-#define PMF_KI_BOOST		128		// BFP - Using Ki
+#define PMF_KI_CHARGE		128		// BFP - Ki charge
 // BFP - PMF_TIME_WATERJUMP is unused
 // #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
@@ -164,7 +163,6 @@ typedef enum {
 #define PMF_FOLLOW			4096	// spectate following another player
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
-#define PMF_KI_CHARGE		8192	// BFP - Ki charge
 // BFP - TODO: Reuse the following flag (used on Team Arena), change name if it'll be used
 #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
@@ -264,7 +262,8 @@ typedef enum {
 #define	EF_AWARD_GAUNTLET	0x00000040		// draw a gauntlet sprite
 #define	EF_NODRAW			0x00000080		// may have an event, but no model (unspawned items)
 #define	EF_FIRING			0x00000100		// for lightning gun
-#define	EF_KAMIKAZE			0x00000200
+// BFP - No EF_KAMIKAZE flag
+// #define	EF_KAMIKAZE			0x00000200
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
 #define EF_AWARD_CAP		0x00000800		// draw the capture sprite
 #define	EF_TALK				0x00001000		// draw a talk balloon
@@ -273,11 +272,9 @@ typedef enum {
 #define	EF_AWARD_IMPRESSIVE	0x00008000		// draw an impressive sprite
 #define	EF_AWARD_DEFEND		0x00010000		// draw a defend sprite
 #define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
-#define EF_AWARD_DENIED		0x00040000		// denied
+// BFP - Unused EF flag
+// #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
-
-// BFP - NOTE: Should use PW_* instead using pm_flags? 
-// That goes for PW_HASTE and PW_FLIGHT, instead using PMF_KI_BOOST and PMF_FLYING
 
 // NOTE: may not have more than 16
 typedef enum {
@@ -285,10 +282,10 @@ typedef enum {
 
 	PW_QUAD,
 	PW_BATTLESUIT,
-	PW_HASTE,
+	PW_HASTE, // BFP - Used for ki boost status
 	PW_INVIS,
 	PW_REGEN,
-	PW_FLIGHT,
+	PW_FLIGHT, // BFP - Used for flying status
 
 	PW_REDFLAG,
 	PW_BLUEFLAG,
@@ -355,8 +352,23 @@ typedef enum {
 
 #define	EVENT_VALID_MSEC	300
 
+// BFP - NOTE: Take a look about original BFP events, the events (and event numbers) should be the same
 typedef enum {
 	EV_NONE,
+
+	EV_MELEE_READY, // BFP - EV_MELEE_READY (10), preparing melee
+	EV_MELEE, // BFP - EV_MELEE (11), melee attack
+
+	// EV_TIER_RESET, // EV_TIER_RESET (13), reset tier when the player respawns and changes to the default or a bit less ki energy?
+
+	// BFP - EV_TIER_0-4 (14-18), when the player frags, increases their PL and obtains a new skill (in the last tier, transforms)
+	EV_TIER_0,
+	EV_TIER_1,
+	EV_TIER_2,
+	EV_TIER_3,
+	EV_TIER_4,
+
+	EV_ENABLE_FLIGHT, // BFP - EV_ENABLE_FLIGHT (22), enable flight
 
 	EV_FOOTSTEP,
 	EV_FOOTSTEP_METAL,
@@ -426,6 +438,7 @@ typedef enum {
 	EV_SHOTGUN,
 	EV_BULLET,				// otherEntity is the shooter
 
+	EV_MISSILE_DETONATE, // BFP - EV_MISSILE_DETONATE (76), when ki attack explodes after some time
 	EV_PAIN,
 	EV_DEATH1,
 	EV_DEATH2,

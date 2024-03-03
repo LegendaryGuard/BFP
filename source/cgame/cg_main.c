@@ -684,7 +684,9 @@ static void CG_RegisterGraphics( void ) {
 	}
 
 	CG_ClearParticles ();
-/*
+
+// BFP - Unused function for particles, looks like here is to determine in the areas
+#if 0
 	for (i=1; i<MAX_PARTICLES_AREAS; i++)
 	{
 		{
@@ -695,7 +697,7 @@ static void CG_RegisterGraphics( void ) {
 				break;
 		}
 	}
-*/
+#endif
 }
 
 

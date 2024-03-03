@@ -1440,10 +1440,10 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		dest = headAngles[PITCH] * 0.75f;
 	}
 	// BFP - When flying, set the legs in the first case
-	if ( cg.predictedPlayerState.pm_flags & PMF_FLYING ) {
+	if ( cent->currentState.powerups & ( 1 << PW_FLIGHT ) ) {
 		CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.legs.pitchAngle, &cent->pe.legs.pitching );
 		legsAngles[PITCH] = cent->pe.legs.pitchAngle;
-	}
+	} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {}
 
 	// BFP - When flying, set the torso correctly into these angles
 	CG_SwingAngles( dest, 30, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
@@ -1459,8 +1459,6 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	}
 
 	// --------- roll -------------
-
-	// BFP - TODO: Make forward and backwards movements smooth when starting to move
 
 	// lean towards the direction of travel
 	VectorCopy( cent->currentState.pos.trDelta, velocity );
@@ -1482,10 +1480,12 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		side = speed * DotProduct( velocity, axis[0] );
 		legsAngles[PITCH] += side;
 
-		// BFP - Make the torso move the pitch angle a bit
-		AnglesToAxis( torsoAngles, axis );
-		side = speed * DotProduct( velocity, axis[0] );
-		torsoAngles[PITCH] += side;
+		// BFP - Make the torso move the pitch angle a bit in the flight
+		if ( cent->currentState.powerups & ( 1 << PW_FLIGHT ) ) {
+			AnglesToAxis( torsoAngles, axis );
+			side = speed * DotProduct( velocity, axis[0] );
+			torsoAngles[PITCH] += side;
+		}
 	}
 
 	// BFP - Don't make every player forced to see this way with their legs to the others
@@ -1516,40 +1516,32 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 //==========================================================================
 
+// BFP - No smoke puff effect
+#if 0
 /*
 ===============
 CG_HasteTrail
 ===============
 */
-static void CG_HasteTrail( centity_t *cent, vec3_t endPos ) { // BFP - Second parameter added for smoke particles
-	// BFP - No smoke puff effect
-#if 0
+static void CG_HasteTrail( centity_t *cent ) {
 	localEntity_t	*smoke;
 	vec3_t			origin;
 	int				anim;
-#endif
 
 	if ( cent->trailTime > cg.time ) {
 		return;
 	}
-	// BFP - No handling running and backwards animations
-#if 0
+
 	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
 	if ( anim != LEGS_RUN && anim != LEGS_BACK ) {
 		return;
 	}
-#endif
 
-	cent->trailTime += 50; // BFP - Before: += 100
+	cent->trailTime += 100;
 	if ( cent->trailTime < cg.time ) {
 		cent->trailTime = cg.time;
 	}
 
-	// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
-	CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, endPos );
-
-	// BFP - No smoke puff effect
-#if 0
 	VectorCopy( cent->lerpOrigin, origin );
 	origin[2] -= 16;
 
@@ -1564,8 +1556,8 @@ static void CG_HasteTrail( centity_t *cent, vec3_t endPos ) { // BFP - Second pa
 
 	// use the optimized local entity add
 	smoke->leType = LE_SCALE_FADE;
-#endif
 }
+#endif
 
 /*
 ===============
@@ -1871,15 +1863,6 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 
 	*shadowPlane = 0;
 
-	if ( cg_shadows.integer == 0 ) {
-		return qfalse;
-	}
-
-	// no shadows when invisible
-	if ( cent->currentState.powerups & ( 1 << PW_INVIS ) ) {
-		return qfalse;
-	}
-
 	// send a trace down from the player to the ground
 	VectorCopy( cent->lerpOrigin, end );
 	end[2] -= SHADOW_DISTANCE;
@@ -1891,42 +1874,57 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	// BFP - Dash smoke and bubble particles when using ki boost on the ground or above the water
 	contents = CG_PointContents( trace.endpos, -1 );
 	if ( cent->currentState.eFlags & EF_AURA ) {
-		if ( !( cg.snap->ps.pm_flags & PMF_KI_CHARGE ) && 
-			 ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+		if ( !( cent->currentState.powerups & ( 1 << PW_HASTE ) )
+		&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) ) {
-			if ( ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
-			&& trace.fraction <= 0.70f )
+			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
+			&& ( trace.fraction <= 0.70f
 			// If the player is stepping a mover:
-			|| cg.snap->ps.groundEntityNum != ENTITYNUM_NONE ) {
-				CG_HasteTrail( cent, trace.endpos );
-			} else if ( waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 0, 0 );
+			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
+				// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
+				CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, trace.endpos );
 			}
-		} else if ( ( cg.snap->ps.pm_flags & PMF_KI_CHARGE ) // BFP - Antigrav rock particles on ki charging status
-		&& ( ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
-		&& trace.fraction <= 0.50f )
-		// If the player is stepping a mover:
-		|| cg.snap->ps.groundEntityNum != ENTITYNUM_NONE ) ) {
-			// BFP - Spawn randomly the antigrav rock shaders with the particles
-			int shaderIndex = rand() % 3;
-			switch ( shaderIndex ) {
-				case 0: {
-					CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, trace.endpos );
-					break;
-				}
-				case 1: {
-					CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, trace.endpos );
-					break;
-				}
-				default: {
-					CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, trace.endpos );
+
+			if ( waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 10, 0 );
+			}
+		}
+
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // BFP - Antigrav rock particles on ki charging status
+			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+			&& ( trace.fraction <= 0.30f
+			// If the player is stepping a mover:
+			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
+				// BFP - Spawn randomly the antigrav rock shaders with the particles
+				int shaderIndex = rand() % 3;
+				switch ( shaderIndex ) {
+					case 0: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, trace.endpos );
+						break;
+					}
+					case 1: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, trace.endpos );
+						break;
+					}
+					default: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, trace.endpos );
+					}
 				}
 			}
 		}
+	}
+
+	if ( cg_shadows.integer == 0 ) {
+		return qfalse;
+	}
+
+	// no shadows when invisible
+	if ( cent->currentState.powerups & ( 1 << PW_INVIS ) ) {
+		return qfalse;
 	}
 
 	// no shadow if too high
@@ -2073,7 +2071,8 @@ void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int te
 		// BFP - If the player is using lightweight auras or their own small aura
 		if ( ( state->eFlags & EF_AURA )
 			&& ( cg_lightweightAuras.integer > 0
-			|| cg_smallOwnAura.integer > 0 ) ) {
+			|| ( state->clientNum == cg.snap->ps.clientNum 
+				&& cg_smallOwnAura.integer > 0 ) ) ) {
 			// BFP - TODO: If player is transformed:
 			// ent->customShader = cgs.media.auraYellowShader;
 
@@ -2197,7 +2196,7 @@ void CG_Player( centity_t *cent ) {
 
 	// get the player model information
 	renderfx = 0;
-	if ( cent->currentState.number == cg.snap->ps.clientNum ) {
+	if ( clientNum == cg.snap->ps.clientNum ) {
 		if (!cg.renderingThirdPerson) {
 			renderfx = RF_THIRD_PERSON;			// only draw in mirrors
 		} /*else { // BFP - cg_cameraMode cvar doesn't exist
@@ -2226,6 +2225,9 @@ void CG_Player( centity_t *cent ) {
 
 	// add the shadow
 	shadow = CG_PlayerShadow( cent, &shadowPlane );
+
+	// BFP - Handle the antigrav rock particles when the player is charging
+	CG_AntigravRockHandling( cent );
 
 	// add a water splash if partially in and out of water
 	CG_PlayerSplash( cent );
@@ -2338,9 +2340,11 @@ void CG_Player( centity_t *cent ) {
 		}
 
 	// Macro for the dynamic aura light, note: when charging it changes the shinning a bit
+	// Aura lights like cg_smallOwnAura only can be shown to itself and not the other clients, 
+	// the other clients only show small lights
 	#define AURA_LIGHT(r, g, b) \
 		if ( cg_lightAuras.integer > 0 ) { \
-			if ( cg_smallOwnAura.integer > 0 ) { \
+			if ( clientNum == cg.snap->ps.clientNum && cg_smallOwnAura.integer > 0 ) { \
 				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
 				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
 				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
@@ -2356,7 +2360,7 @@ void CG_Player( centity_t *cent ) {
 					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
 					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
 				} \
-			} else if ( cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
+			} else if ( clientNum != cg.snap->ps.clientNum || cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
 				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
 				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
 				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
@@ -2391,17 +2395,19 @@ void CG_Player( centity_t *cent ) {
 
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -10; // put the origin a little below
 
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 0, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
 			}
 		}
 
@@ -2445,7 +2451,7 @@ void CG_Player( centity_t *cent ) {
 		VectorCopy( aura2.origin, aura2.oldorigin );	// don't positionally lerp at all
 
 		// Ki boost and ki charge sounds
-		if ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_CHARGE ) {
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
 				vec3_origin, cgs.media.kiChargeSound );
 		} else {

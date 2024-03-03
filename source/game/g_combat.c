@@ -160,6 +160,8 @@ void GibEntity( gentity_t *self, int killer ) {
 	gentity_t *ent;
 	int i;
 
+// BFP - No EF_KAMIKAZE flag
+#if 0
 	//if this entity still has kamikaze
 	if (self->s.eFlags & EF_KAMIKAZE) {
 		// check if there is a kamikaze timer around for this owner
@@ -175,6 +177,7 @@ void GibEntity( gentity_t *self, int killer ) {
 			break;
 		}
 	}
+#endif
 	G_AddEvent( self, EV_GIB_PLAYER, killer );
 	self->takedamage = qfalse;
 	self->s.eType = ET_INVISIBLE;
@@ -761,9 +764,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		damage *= 0.5;
 	}
 
-// BFP - TODO: Make hit stun received from melee attack with PMF_KI_BOOST
+// BFP - TODO: Make hit stun received from melee attack with PW_HASTE
 #if 0
-	if ( g_hitStun.integer >= 1 && ( attacker->client->ps.pm_flags & PMF_KI_BOOST ) 
+	if ( g_hitStun.integer >= 1 && ( attacker->client->ps.powerups[PW_HASTE] > 0 ) 
 		&& targ != attacker && !OnSameTeam (targ, attacker) ) {
 			attacker->client->ps.hitStunTime = -3; // just an idea, enable the hit stun with a conditional of == -3
 	}

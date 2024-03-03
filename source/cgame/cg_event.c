@@ -541,6 +541,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_JUMP_PAD:
 		DEBUGNAME("EV_JUMP_PAD");
 //		CG_Printf( "EV_JUMP_PAD w/effect #%i\n", es->eventParm );
+// BFP - No smoke puff effect when using a jump pad
+#if 0
 		{
 			localEntity_t	*smoke;
 			vec3_t			up = {0, 0, 1};
@@ -554,6 +556,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 						  LEF_PUFF_DONT_SCALE, 
 						  cgs.media.smokePuffShader );
 		}
+#endif
 
 		// boing sound at origin, jump sound on player
 		trap_S_StartSound ( cent->lerpOrigin, -1, CHAN_VOICE, cgs.media.jumpPadSound );
@@ -563,7 +566,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_JUMP:
 		DEBUGNAME("EV_JUMP");
 		// BFP - Use the second jump sound when using ki boost only when it isn't flying
-		if ( ( es->eFlags & EF_AURA ) && !( cg.predictedPlayerState.pm_flags & PMF_FLYING ) ) {
+		if ( ( es->eFlags & EF_AURA ) && !( cent->currentState.powerups & ( 1 << PW_FLIGHT ) ) ) {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump2.wav" ) ); // BFP - Ki boost jump sound
 		} else {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) ); // BFP - Normal jump sound
@@ -672,6 +675,43 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_FIRE_WEAPON:
 		DEBUGNAME("EV_FIRE_WEAPON");
 		CG_FireWeapon( cent );
+		break;
+
+	case EV_MELEE_READY:
+		// DEBUGNAME("EV_MELEE_READY");
+		break;
+
+	// BFP - TODO: Implement EV_MELEE (when punching someone using Melee)
+	case EV_MELEE:
+		DEBUGNAME("EV_MELEE");
+		break;
+
+	// BFP - TODO: Implement EV_TIER_0-4 (Tiers)
+	case EV_TIER_0:
+		DEBUGNAME("EV_TIER_0");
+		break;
+
+	case EV_TIER_1:
+		DEBUGNAME("EV_TIER_1");
+		break;
+
+	case EV_TIER_2:
+		DEBUGNAME("EV_TIER_2");
+		break;
+
+	case EV_TIER_3:
+		DEBUGNAME("EV_TIER_3");
+		break;
+
+	case EV_TIER_4:
+		DEBUGNAME("EV_TIER_4");
+		break;
+	// BFP - TODO: Implement EV_TIER_0-4 (Tiers) ^
+
+	// BFP - A normal jump sound is played when enables the flight
+	case EV_ENABLE_FLIGHT:
+		// DEBUGNAME("EV_ENABLE_FLIGHT");
+		trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) );
 		break;
 
 	case EV_USE_ITEM0:
@@ -794,6 +834,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_MISSILE_MISS_METAL");
 		ByteToDir( es->eventParm, dir );
 		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
+		break;
+
+	// BFP - TODO: Implement EV_MISSILE_DETONATE (it has been used on ki grenade bounces and ki disc, that happens when these explode after some time)
+	case EV_MISSILE_DETONATE:
+		DEBUGNAME("EV_MISSILE_DETONATE");
 		break;
 
 	case EV_RAILTRAIL:
@@ -990,9 +1035,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		// don't play gib sound when using the kamikaze because it interferes
 		// with the kamikaze sound, downside is that the gib sound will also
 		// not be played when someone is gibbed while just carrying the kamikaze
-		if ( !(es->eFlags & EF_KAMIKAZE) ) {
+		// BFP - No EF_KAMIKAZE flag
+		// if ( !(es->eFlags & EF_KAMIKAZE) ) {
 			trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.gibSound );
-		}
+		// }
 		CG_GibPlayer( cent->lerpOrigin );
 		break;
 

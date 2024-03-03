@@ -430,7 +430,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// BFP - Ki up/down when flying/ki use
-		if ( client->ps.pm_flags & PMF_FLYING ) {
+		if ( client->ps.powerups[PW_FLIGHT] > 0 ) {
 
 			// BFP - TODO: Add cvar for flight cost
 
@@ -447,7 +447,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		// BFP - if ki drops to 0, disable flight
 		if ( client->ps.stats[STAT_KI] <= 0 ) {
 			client->ps.stats[STAT_KI] = 0;
-			client->ps.pm_flags &= ~PMF_FLYING;
+			client->ps.powerups[PW_FLIGHT] = 0;
 			// Com_Printf( "ki amount: %d\n", client->ps.stats[STAT_KI] );
 		}
 
@@ -731,33 +731,36 @@ void ClientThink_real( gentity_t *ent ) {
 	// set speed
 	client->ps.speed = g_speed.value;
 
-	// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
-	if ( !( client->ps.pm_flags & PMF_HITSTUN )
-	&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
-	|| ( client->ps.pm_flags & PMF_KI_BOOST ) ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
-		if ( !( client->ps.pm_flags & PMF_FLYING ) ) {
-			client->ps.speed *= 2.5;
+	if ( client->ps.pm_type != PM_DEAD && client->ps.pm_type != PM_SPECTATOR ) {
+
+		// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
+		if ( !( client->ps.pm_flags & PMF_HITSTUN )
+		&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
+		|| client->ps.powerups[PW_HASTE] > 0 ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
+			if ( client->ps.powerups[PW_FLIGHT] <= 0 ) {
+				client->ps.speed *= 2.5;
+			}
+			client->ps.eFlags |= EF_AURA;
+		} else {
+			if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
+				client->ps.eFlags &= ~EF_AURA;
+			}
 		}
-		client->ps.eFlags |= EF_AURA;
-	} else {
-		if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
-			client->ps.eFlags &= ~EF_AURA;
+
+		// BFP - Ki Charge
+		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
+		&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+			client->ps.eFlags |= EF_AURA;
 		}
-	}
 
-	// BFP - Ki Charge
-	if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
-	&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
-		client->ps.eFlags |= EF_AURA;
-	}
+		if ( client->ps.powerups[PW_FLIGHT] > 0 ) { // BFP - Flight speed
+			client->ps.speed *= 2;
+		}
+		// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
 
-	if ( client->ps.pm_flags & PMF_FLYING ) { // BFP - Flight speed
-		client->ps.speed *= 1.5;
+		// BFP - Enable flight
+		FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 	}
-	// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
-
-	// BFP - Enable flight
-	FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 
 // BFP - no hook
 #if 0
@@ -990,6 +993,8 @@ void ClientEndFrame( gentity_t *ent ) {
 
 	// turn off any expired powerups
 	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
+		// BFP - Flight and haste are skipped, these are treated for player status
+		if ( i == PW_FLIGHT || i == PW_HASTE ) continue;
 		if ( ent->client->ps.powerups[ i ] < level.time ) {
 			ent->client->ps.powerups[ i ] = 0;
 		}

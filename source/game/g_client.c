@@ -1080,7 +1080,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->pers.teamState.state = TEAM_ACTIVE;
 
 	// always clear the kamikaze flag
-	ent->s.eFlags &= ~EF_KAMIKAZE;
+	// ent->s.eFlags &= ~EF_KAMIKAZE; // BFP - No EF_KAMIKAZE flag
 
 	// toggle the teleport bit so the client knows to not lerp
 	// and never clear the voted flag
@@ -1148,9 +1148,9 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.clientNum = index;
 
-	// TODO: BFP - list of 5 skills
+	// BFP - TODO: list of 5 skills
 
-	client->ps.stats[STAT_KI] = 1000; // BFP - give ki at start
+	client->ps.stats[STAT_KI] = 8160.0f; // BFP - TODO: give ki at start
 
 	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 	client->ps.ammo[WP_MACHINEGUN] = 100;

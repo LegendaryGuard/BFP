@@ -1604,10 +1604,10 @@ void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		// do not play the sound in the charging status
-		if ( !( ent->client->ps.pm_flags & PMF_FLYING ) && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
-			G_AddEvent( ent, EV_JUMP, 0 ); // play jump sound
+		if ( ent->client->ps.powerups[PW_FLIGHT] <= 0 && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+			G_AddEvent( ent, EV_ENABLE_FLIGHT, 0 ); // play the sound
 		}
-		ent->client->ps.pm_flags ^= PMF_FLYING;
+		ent->client->ps.powerups[PW_FLIGHT] ^= 1;
 	}
 }
 
@@ -1640,7 +1640,7 @@ void Cmd_BFP_SetKiUse_f( gentity_t* ent ) { // BFP - Set Ki use
 	// BFP - NOTE: Originally, an unfinished command...
 #if 0
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		ent->client->ps.pm_flags |= PMF_KI_BOOST;
+		ent->client->ps.powerups[PW_HASTE] = 1;
 	}
 #endif
 }
@@ -1653,7 +1653,7 @@ Cmd_BFP_KiUseToggle_f
 void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) { // BFP - Ki use toggle
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		ent->client->ps.pm_flags ^= PMF_KI_BOOST;
+		ent->client->ps.powerups[PW_HASTE] ^= 1;
 	}
 }
 
@@ -1666,7 +1666,7 @@ void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) { // BFP - Set Ki idle
 
 	// BFP - NOTE: originally... Ki idling means disabling the ki? Sounds like it isn't operating...
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		ent->client->ps.pm_flags &= ~PMF_KI_BOOST;
+		ent->client->ps.powerups[PW_HASTE] = 0;
 	}
 }
 

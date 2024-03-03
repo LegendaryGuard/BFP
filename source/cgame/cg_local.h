@@ -1486,22 +1486,27 @@ qboolean	trap_GetEntityToken( char *buffer, int bufferSize );
 
 void	CG_ClearParticles (void);
 void	CG_AddParticles (void);
-void	CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum);
 void	CG_ParticleSmoke (qhandle_t pshader, centity_t *cent);
-void	CG_AddParticleShrapnel (localEntity_t *le);
-void	CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent);
 void	CG_ParticleBulletDebris (vec3_t	org, vec3_t vel, int duration);
 void	CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, float speed);
 void	CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir);
 void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, float alpha);
 void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
 // BFP - Bubble particle
-void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum);
+void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum);
 // BFP - Dash smoke particle for ki boost when moving in the ground
-void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
+void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
 // BFP - Antigrav rock particles for charging
-void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin);
+void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin);
+void	CG_AntigravRockHandling (centity_t *cent);
+
+// BFP - Unused particle stuff, saved for later :P
+#if 0
+void	CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum);
+void	CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent);
+int		CG_NewParticleArea ( int num ); // BFP - Unused function for particles, looks like here is to determine in the areas
+#endif
+
 extern qboolean		initparticles;
-int CG_NewParticleArea ( int num );
 
 
