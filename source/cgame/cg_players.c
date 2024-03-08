@@ -2378,15 +2378,12 @@ void CG_Player( centity_t *cent ) {
 		// BFP - TODO: Create a new function "CG_KiTrail" only when moving to draw ki trail and add the cvar for the length
 
 		// BFP - Trace for bubble particles only when moving in the water and charging
-		int destContentType;
-		vec3_t start;
-
-		destContentType = CG_PointContents( cent->lerpOrigin, -1 );
+		int destContentType = CG_PointContents( legs.origin, -1 );
 
 		// spawning bubble particles
 		if ( destContentType & CONTENTS_WATER ) {
 			trace_t trace;
-			vec3_t bubbleOrigin;
+			vec3_t start, bubbleOrigin;
 
 			VectorCopy( legs.origin, bubbleOrigin );
 			trap_CM_BoxTrace( &trace, start, bubbleOrigin, NULL, NULL, 0, CONTENTS_WATER );
@@ -2399,7 +2396,7 @@ void CG_Player( centity_t *cent ) {
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
-				bubbleOrigin[2] += -10; // put the origin a little below
+				bubbleOrigin[2] += -7; // put the origin a little below
 
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );

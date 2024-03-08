@@ -143,6 +143,8 @@ int				timenonscaled;
 #define NORMALSIZE	16
 #define LARGESIZE	32
 
+// BFP - Function to handle bubbles
+void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org );
 
 /*
 ===============
@@ -420,38 +422,21 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		// BFP - Bubble types here
 		if (p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT)
 		{
-			// BFP - Apply less end time to remove particles if the player is still charging
+			CG_BubblesWaterHandling( p, org );
+
+			// BFP - Apply more end time to remove particles if the player stops charging
 			if (p->type == P_BUBBLE) {
-				if ( ( cg.snap->ps.eFlags & EF_AURA )
-				&& ( cg.snap->ps.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE
+				if ( ( cg.snap->ps.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
 				&& !p->link )
 				{
-					p->endtime = timenonscaled + 400;
+					p->endtime = timenonscaled + 2500 + (crandom() * 150);
 					p->link = qtrue;
 				}
-				if ( ( cg.snap->ps.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-				&& p->link )
+			} else {
+				if ( !p->link )
 				{
-					p->endtime = timenonscaled + 2000 + (crandom() * 150);
-					p->link = qfalse;
-				}
-			}
-
-			if (org[2] > p->end)			
-			{	
-				p->time = timenonscaled;
-				VectorCopy (org, p->org); // Ridah, fixes rare snow flakes that flicker on the ground
-				
-				// BFP - Stop shivering, before: ( p->start + crandom () * 4 )
-				p->org[2] = ( p->start - p->end );
-				
-				// BFP - Make move less
-				if (p->type == P_BUBBLE_TURBULENT) {
-					p->vel[0] *= 0.95;
-					p->vel[1] *= 0.95;
-				} else {
-					p->vel[0] *= 0.9;
-					p->vel[1] *= 0.9;
+					p->endtime = timenonscaled + 500 + (crandom() * 150);
+					p->link = qtrue;
 				}
 			}
 		}
@@ -485,7 +470,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 					// BFP - TODO: Temporary solution... Make bouncing more interactive when there's a mover moving
 					// if the particle is touching a mover and moves down, so keep bouncing
 					if ( trace.fraction <= 0 ) {
-						p->roll = 10;
+						p->roll = 16;
 					} else {
 						p->vel[2] = p->accel[2] = (p->roll > 0) ? 50 * p->roll : 0;
 						p->roll--; // that decreases bounces 
@@ -970,7 +955,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->time = timenonscaled;
 
 	// BFP - Add end time to remove particles, if there's no end time the particles will remain there
-	p->endtime = timenonscaled + 2000 + (crandom() * 150);
+	p->endtime = timenonscaled + 400;
 	p->startfade = timenonscaled + 200;
 
 	p->color = 0;
@@ -1003,26 +988,68 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	{
 		p->type = P_BUBBLE;
 		VectorSet( p->vel, 
-				(rand() % 801) - 400,
-				(rand() % 801) - 400,
-				40 );
+				(rand() % 521) - 250,
+				(rand() % 521) - 250,
+				20 );
 
 		// dispersion
 		VectorSet( p->accel, 
-				crandom() * 20, 
-				crandom() * 20, 
-				2000 );
+				crandom() * 10, 
+				crandom() * 10, 
+				800 );
 	}
 
 	VectorCopy(origin, p->org);
 
 	p->org[0] += (crandom() * range);
 	p->org[1] += (crandom() * range);
-	p->org[2] += (crandom() * (p->start - p->end));
+	p->org[2] += (crandom() * 5);
 
-	// Rafael snow pvs check
-	p->snum = snum;
+	p->snum = 3 - (crandom() * 6); // used to randomize where the bubbles stop when these touches the surface
 	p->link = qfalse;
+}
+
+// BFP - Handle bubble particles when reaching to the top
+void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
+	trace_t		trace;
+	vec3_t		start, end;
+	int			contents;
+
+	VectorCopy( org, end );
+	end[2] -= 15;
+
+	VectorCopy( org, start );
+	start[2] += 10;
+
+	// trace down to find the surface
+	trap_CM_BoxTrace( &trace, start, end, vec3_origin, vec3_origin, 0, CONTENTS_WATER );
+
+	// if the particle is touching something solid, it will skip instead stopping
+	contents = trap_CM_PointContents( start, 0 );
+	if ( contents & (CONTENTS_WATER | CONTENTS_SOLID) ) {
+		return;
+	}
+
+	contents = trap_CM_PointContents( trace.endpos, 0 );
+	if ( !( contents & CONTENTS_WATER ) ) {
+		p->time = timenonscaled;
+		VectorCopy (trace.endpos, p->org);
+		p->org[2] = trace.endpos[2] - p->snum;
+
+		// trace again if the bubble went outside, then set it near to the surface
+		contents = trap_CM_PointContents( p->org, 0 );
+		if ( !( contents & CONTENTS_WATER ) ) {
+			p->org[2] = trace.endpos[2];
+		}
+
+		// BFP - Stop going up and decrease dispersion speed
+		p->vel[2] = 0;
+		VectorClear( p->accel );
+		
+		// BFP - Make move less
+		p->vel[0] *= 0.9;
+		p->vel[1] *= 0.9;
+	}
 }
 
 // BFP - Particle for dash smoke when using ki boost and moving in the ground
