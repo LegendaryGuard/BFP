@@ -221,9 +221,13 @@ void Use_target_push( gentity_t *self, gentity_t *other, gentity_t *activator ) 
 	if ( activator->client->ps.pm_type != PM_NORMAL ) {
 		return;
 	}
+
+// BFP - Flight status can be interacted to push something
+#if 0
 	if ( activator->client->ps.powerups[PW_FLIGHT] ) {
 		return;
 	}
+#endif
 
 	VectorCopy (self->s.origin2, activator->client->ps.velocity);
 

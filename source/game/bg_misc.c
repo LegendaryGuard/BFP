@@ -1083,10 +1083,13 @@ void BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad ) {
 		return;
 	}
 
+// BFP - Flight status can be interacted to bounce pads
+#if 0
 	// flying characters don't hit bounce pads
 	if ( ps->powerups[PW_FLIGHT] ) {
 		return;
 	}
+#endif
 
 	// if we didn't hit this same jumppad the previous frame
 	// then don't play the event sound again if we are in a fat trigger
