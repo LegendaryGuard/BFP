@@ -127,18 +127,18 @@ static int	numShaderAnims;
 #define		PARTICLE_GRAVITY	40
 #define		MAX_PARTICLES	1024 * 8
 
-cparticle_t	*active_particles, *free_particles;
-cparticle_t	particles[MAX_PARTICLES];
-int		cl_numparticles = MAX_PARTICLES;
+static cparticle_t	*active_particles, *free_particles;
+static cparticle_t	particles[MAX_PARTICLES];
+static int		cl_numparticles = MAX_PARTICLES;
 
-qboolean		initparticles = qfalse;
-vec3_t			vforward, vright, vup;
-vec3_t			rforward, rright, rup;
+static qboolean		initparticles = qfalse;
+static vec3_t			vforward, vright, vup;
+static vec3_t			rforward, rright, rup;
 
-float			oldtime;
+static float			oldtime;
 
 // BFP - NOTE: Particles use non-timescaled, before it was timescaled by game using cg.time
-int				timenonscaled;
+static int				timenonscaled;
 
 #define NORMALSIZE	16
 #define LARGESIZE	32
@@ -996,7 +996,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		VectorSet( p->accel, 
 				crandom() * 10, 
 				crandom() * 10, 
-				800 );
+				900 );
 	}
 
 	VectorCopy(origin, p->org);

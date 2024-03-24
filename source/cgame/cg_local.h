@@ -1506,7 +1506,3 @@ void	CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb
 void	CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent);
 int		CG_NewParticleArea ( int num ); // BFP - Unused function for particles, looks like here is to determine in the areas
 #endif
-
-extern qboolean		initparticles;
-
-
