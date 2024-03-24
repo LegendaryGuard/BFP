@@ -2185,13 +2185,19 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 
 	pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 
-	VectorClear( pm->ps->velocity );
+	// Decelerate the fall
+	pm->ps->velocity[2] *= 0.85;
 
 	if ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
 	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
+		// Decelerate smoothly when it's on air
+		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
+			pm->ps->velocity[0] *= 0.85;
+			pm->ps->velocity[1] *= 0.85;
+		}
 		pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
 	}
 
