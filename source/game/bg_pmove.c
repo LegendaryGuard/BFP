@@ -48,7 +48,7 @@ float	pm_spectatorfriction = 5.0f;
 int		c_pmove = 0;
 
 // BFP - TODO: Macro for torso handling, since the code looked repetitive, so this macro makes the code a bit shorter
-#define TORSOSTATUS_ANIM_HANDLING(other_torsostatus) ( pm->ps->pm_flags & PMF_INVULEXPAND ) ? PM_ContinueTorsoAnim( TORSO_BLOCK ) : PM_ContinueTorsoAnim( other_torsostatus )
+#define TORSOSTATUS_ANIM_HANDLING(other_torsostatus) ( pm->ps->pm_flags & PMF_BLOCK ) ? PM_ContinueTorsoAnim( TORSO_BLOCK ) : PM_ContinueTorsoAnim( other_torsostatus )
 
 // BFP - Macro for jump handling, since the code looked repetitive, so this macro makes the code a bit shorter
 #define FORCEJUMP_ANIM_HANDLING() ( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB )
@@ -623,7 +623,7 @@ static void PM_FlyMove( void ) {
 
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
-	if ( !( pm->ps->pm_flags & PMF_INVULEXPAND ) // BFP - Don't increase the speed when blocking
+	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		wishspeed *= scale;
 	}

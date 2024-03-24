@@ -3,14 +3,10 @@
 ## PENDING:
 
 - g_basepl [1-999]: set the starting power level from one thousand to one mil.
-- g_blockLength = "3"
-- g_blockDelay = "2"
 - g_kiChargePct = "15"
 - g_kiCharge = "0"
 - g_kiRegenPct = "0.6"
 - g_kiRegen = "0"
-- g_blockCostPct = "3"
-- g_blockCost = "0"
 - g_boostCostPct = "0"
 - g_boostCost = "150"
 - g_flightCostPct = "0"
@@ -72,6 +68,10 @@
 - [x] ~~cg_polygonAura~~
 - [x] ~~cg_highPolyAura~~
 - [x] ~~g_noFlight (disables "fly" bind too, original BFP has a leak though)~~
+- [x] ~~g_blockLength~~
+- [x] ~~g_blockDelay~~
+- [x] ~~g_blockCost~~
+- [x] ~~g_blockCostPct~~
 
 #### Cvar Gametypes:
 

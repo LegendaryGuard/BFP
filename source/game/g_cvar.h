@@ -76,15 +76,17 @@ G_CVAR( g_maxSpawnPL, "g_maxSpawnPL", "999", 0, 0, qtrue ) // BFP - Max spawn po
 G_CVAR( g_flightCost, "g_flightCost", "50", 0, 0, qtrue ) // BFP - Flight cost
 G_CVAR( g_flightCostPct, "g_flightCostPct", "0", 0, 0, qtrue ) // BFP - Flight cost percentage
 G_CVAR( g_boostCost, "g_boostCost", "350", 0, 0, qtrue ) // BFP - Boost cost
-G_CVAR( g_boostCostPct, "g_boostCostPct", "3", 0, 0, qtrue ) // BFP - Boost cost percentage
+G_CVAR( g_boostCostPct, "g_boostCostPct", "0", 0, 0, qtrue ) // BFP - Boost cost percentage
+
 G_CVAR( g_blockCost, "g_blockCost", "2", 0, 0, qtrue ) // BFP - Block cost
-G_CVAR( g_blockCostPct, "g_blockCostPct", "3", 0, 0, qtrue ) // BFP - Block cost percentage
+G_CVAR( g_blockCostPct, "g_blockCostPct", "0", 0, 0, qtrue ) // BFP - Block cost percentage
+G_CVAR( g_blockDelay, "g_blockDelay", "2", 0, 0, qtrue ) // BFP - Block delay
+G_CVAR( g_blockLength, "g_blockLength", "2", 0, 0, qtrue ) // BFP - Block length
+
 G_CVAR( g_kiRegen, "g_kiRegen", "0", 0, 0, qtrue ) // BFP - Ki regeneration
 G_CVAR( g_kiRegenPct, "g_kiRegenPct", "0.6", 0, 0, qtrue ) // BFP - Ki regeneration percentage
 G_CVAR( g_kiCharge, "g_kiCharge", "0", 0, 0, qtrue ) // BFP - Ki charge
 G_CVAR( g_kiChargePct, "g_kiChargePct", "15", 0, 0, qtrue ) // BFP - Ki charge percentage
-G_CVAR( g_blockDelay, "g_blockDelay", "2", 0, 0, qtrue ) // BFP - Block delay
-G_CVAR( g_blockLength, "g_blockLength", "3", 0, 0, qtrue ) // BFP - Block length
 
 G_CVAR( g_podiumDist, "g_podiumDist", "80", 0, 0, qfalse )
 G_CVAR( g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse )

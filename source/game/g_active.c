@@ -735,6 +735,7 @@ void ClientThink_real( gentity_t *ent ) {
 
 		// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
 		if ( !( client->ps.pm_flags & PMF_HITSTUN )
+		&& !( client->ps.pm_flags & PMF_BLOCK )
 		&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
 		|| client->ps.powerups[PW_HASTE] > 0 ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
 			if ( client->ps.powerups[PW_FLIGHT] <= 0 ) {
@@ -746,6 +747,84 @@ void ClientThink_real( gentity_t *ent ) {
 				client->ps.eFlags &= ~EF_AURA;
 			}
 		}
+
+		// BFP - Block, reflect ki attacks and reduce health damage
+		// Block handling:
+		// Initialize the blocking and start the block length duration, specifically, ki boost and aura are disabled
+		if ( !( client->ps.pm_flags & PMF_BLOCK )
+		&& ( ucmd->buttons & BUTTON_BLOCK )
+		&& client->ps.stats[STAT_BLOCK] <= 0 ) {
+			client->ps.pm_flags |= PMF_BLOCK;
+			client->ps.powerups[PW_HASTE] = 0;
+			client->ps.eFlags &= ~EF_AURA;
+			ucmd->buttons &= ~BUTTON_KI_USE;
+			client->ps.stats[STAT_BLOCK] = (g_blockLength.integer * 100);
+		}
+
+		// Handle block status (it's like block time)
+		if ( client->ps.stats[STAT_BLOCK] >= 0 ) {
+			client->ps.stats[STAT_BLOCK]--;
+			// Print debug
+#if 0
+			if ( ( client->ps.pm_flags & PMF_BLOCK ) && client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 100) )
+				Com_Printf( "BLOCK LENGTH: %d\n", client->ps.stats[STAT_BLOCK] );
+			else if ( !( client->ps.pm_flags & PMF_BLOCK ) && client->ps.stats[STAT_BLOCK] <= (g_blockDelay.integer * 100) ) 
+				Com_Printf( "BLOCK DELAY: %d\n", client->ps.stats[STAT_BLOCK] );
+#endif
+		}
+
+		// BFP - Blocking status. Ki energy is being consumed and ki boost can't be used
+		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 100)
+		&& client->ps.stats[STAT_BLOCK] >= 0 ) {
+			
+			// BFP - NOTE: Approximate calculation of ki consumption while blocking
+			float blockCostPct = g_blockCostPct.integer * 0.1; // Percentage of ki consumed per millisecond
+			float bCost = g_blockCost.integer > 0 ? g_blockCost.integer : 1; // Absolute value of ki consumed per millisecond
+			float kiBlockConsume = bCost / (g_blockLength.integer * 1000.0);
+			float totalBlockConsume;
+			// Random variable to make an approximate calculation of the ki consumption while using block
+			float rndkiConsume = rand() % 2;
+
+			// BFP - TODO: Implement random calculations correctly?
+			if ( crandom() > 0.5 && crandom() < 0.8 ) {
+				rndkiConsume = rand() % 1;
+			} else if ( crandom() > 0.2 && crandom() < 0.5 ) {
+				rndkiConsume = random() + 0.38;
+			}
+
+			// Calculate total ki being consumed
+			totalBlockConsume = kiBlockConsume * (g_blockLength.integer * 1000.0) * rndkiConsume;
+
+			client->ps.stats[STAT_KI] -= totalBlockConsume;
+		}
+
+		// When the block length duration has been expired, then start the delay to avoid user 
+		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 100)
+		&& client->ps.stats[STAT_BLOCK] <= 0 ) {
+			client->ps.pm_flags &= ~PMF_BLOCK;
+			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 100);
+		}
+
+		// If the block length duration hasn't been expired yet and 
+		// pressing ki charge (if the aura is lighting) or attack buttons, then stop blocking and start the delay
+		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+		&& ( ( ucmd->buttons & BUTTON_MELEE )
+		|| ( ucmd->buttons & BUTTON_ATTACK )
+		|| ( client->ps.eFlags & EF_AURA ) ) ) {
+			client->ps.pm_flags &= ~PMF_BLOCK;
+			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 100);
+		}
+
+		// Handle the delay and don't leave the user get away with it
+		if ( !( client->ps.pm_flags & PMF_BLOCK )
+		&& client->ps.stats[STAT_BLOCK] <= (g_blockDelay.integer * 100) 
+		&& client->ps.stats[STAT_BLOCK] >= 0 ) {
+			client->ps.pm_flags &= ~PMF_BLOCK;
+			ucmd->buttons &= ~BUTTON_BLOCK; // If the user holds the key, when that ends, then immediately enters to this status again
+		}
+		// BFP - End of block handling
 
 		// BFP - Ki Charge
 		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 

@@ -142,6 +142,7 @@ typedef enum {
 // pmove->pm_flags
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
+#define	PMF_BLOCK			4		// BFP - Block
 // BFP - PMF_BACKWARDS_JUMP is unused
 // #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
 #define	PMF_NEARGROUND		8		// BFP - Near ground check
@@ -218,6 +219,7 @@ void Pmove (pmove_t *pmove);
 typedef enum {
 	STAT_HEALTH,
 	STAT_KI,						// BFP - KI amount
+	STAT_BLOCK,						// BFP - Block amount treated as time
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				

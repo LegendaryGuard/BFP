@@ -47,7 +47,7 @@ A legendary 90s era Quake 3 Arena mod.
 - [ ] Powerlevel and Power Tiers indicated on old docs
 - [ ] Hit Stun (makes player can't use ki, melee, block and charge)
 - [ ] Power Struggles (when two beam attacks collide)
-- [ ] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
+- [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
 - [ ] Short-Range Teleport (when pressing 2 times left or right)
 - [ ] Transformations (related to Power Tiers)
 - [ ] Attacksets (configurable for cfgs)

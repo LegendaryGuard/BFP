@@ -775,7 +775,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)
 	if ( attacker->client && targ != attacker && targ->health > 0
 			&& targ->s.eType != ET_MISSILE
-			&& targ->s.eType != ET_GENERAL) {
+			&& targ->s.eType != ET_GENERAL
+	&& !( client->ps.pm_flags & PMF_BLOCK ) ) { // BFP - When blocking, don't receive any hit
 		if ( OnSameTeam( targ, attacker ) ) {
 			attacker->client->ps.persistant[PERS_HITS]--;
 		} else {
@@ -808,7 +809,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// add to the damage inflicted on a player this frame
 	// the total will be turned into screen blends and view angle kicks
 	// at the end of the frame
-	if ( client ) {
+	if ( client
+	&& !( client->ps.pm_flags & PMF_BLOCK ) ) { // BFP - When blocking, don't receive screams of pain
 		if ( attacker ) {
 			client->ps.persistant[PERS_ATTACKER] = attacker->s.number;
 		} else {
@@ -838,7 +840,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 
 	// do the damage
-	if (take) {
+	if (take
+	&& !( client->ps.pm_flags & PMF_BLOCK )) { // BFP - When blocking, don't receive damage
 		targ->health = targ->health - take;
 		if ( targ->client ) {
 			targ->client->ps.stats[STAT_HEALTH] = targ->health;

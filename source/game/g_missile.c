@@ -116,6 +116,22 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		if ( ent->damage ) {
 			vec3_t	velocity;
 
+			// BFP - When blocking... Deflect the projectile!
+			if ( other->client->ps.pm_flags & PMF_BLOCK ) {
+				// PUSH!
+				BG_EvaluateTrajectoryDelta( &ent->s.pos, level.time, velocity );
+				if ( VectorLength( velocity ) == 0 ) {
+					velocity[2] = 1;
+				}
+				G_Damage (other, ent, &g_entities[ent->r.ownerNum], velocity,
+					ent->s.origin, ent->damage, 
+					0, ent->methodOfDeath);
+				
+				// DEFLECT!
+				G_BounceMissile( ent, trace );
+				return;
+			}
+
 			if( LogAccuracyHit( other, &g_entities[ent->r.ownerNum] ) ) {
 				g_entities[ent->r.ownerNum].client->accuracy_hits++;
 				hitClient = qtrue;
