@@ -71,6 +71,7 @@ int		c_pmove = 0;
 			return; \
 		} \
 	} else { \
+		/* If it's trying to crouch, then play the jump animation once */ \
 		if ( pm->ps->pm_flags & PMF_DUCKED ) { \
 			pm->ps->pm_flags |= PMF_NEARGROUND; \
 			FORCEJUMP_ANIM_HANDLING(); \
@@ -1203,11 +1204,11 @@ static void PM_GroundTrace( void ) {
 			// do a smooth jump animation like BFP does
 			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 				pm->ps->pm_time = 500;
+				pm->ps->velocity[2] = JUMP_VELOCITY;
+				PM_ForceLegsAnim( LEGS_JUMP );
 			}
 			pml.groundPlane = qfalse;		// jumping away
 			pml.walking = qfalse;
-			pm->ps->velocity[2] = JUMP_VELOCITY;
-			PM_ForceLegsAnim( LEGS_JUMP );
 		}
 		pm->ps->pm_flags &= ~PMF_FALLING;	
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
@@ -1439,6 +1440,11 @@ static void PM_Footsteps( void ) {
 
 	// BFP - Avoid when flying
 	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+		return;
+	}
+
+	// BFP - Avoid when charging
+	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
 		return;
 	}
 
@@ -1708,8 +1714,6 @@ static void PM_TorsoAnimation( void ) {
 	&& pm->ps->powerups[PW_FLIGHT] <= 0
 	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
-
-		// If it's trying to crouch, then play the jump animation once
 		SLOPES_NEARGROUND_ANIM_HANDLING( 0 )
 	}
 
@@ -2072,14 +2076,11 @@ PM_DropTimers
 static void PM_DropTimers( void ) {
 	// drop misc timing counter
 	if ( pm->ps->pm_time ) {
-	// BFP - No handling PMF_ALL_TIMES
-#if 0
 		if ( pml.msec >= pm->ps->pm_time ) {
-			pm->ps->pm_flags &= ~PMF_ALL_TIMES;
+			// BFP - No handling PMF_ALL_TIMES
+			// pm->ps->pm_flags &= ~PMF_ALL_TIMES;
 			pm->ps->pm_time = 0;
-		} else 
-#endif
-		{
+		} else {
 			pm->ps->pm_time -= pml.msec;
 		}
 	}
@@ -2185,18 +2186,16 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 
 	pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 
-	// Decelerate the fall
-	pm->ps->velocity[2] *= 0.85;
-
 	if ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
 	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
-		// Decelerate smoothly when it's on air
-		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
-			pm->ps->velocity[0] *= 0.85;
-			pm->ps->velocity[1] *= 0.85;
+		// Don't move from the position when falling
+		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
+		&& pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
+			pm->ps->velocity[0] = 0;
+			pm->ps->velocity[1] = 0;
 		}
 		pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
 	}
@@ -2338,7 +2337,7 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( pm->ps->pm_type >= PM_DEAD ) {
 
 		// BFP - If player is dead, disable the following statuses
-			pm->ps->powerups[PW_FLIGHT] = 0;
+		pm->ps->powerups[PW_FLIGHT] = 0;
 		pm->ps->powerups[PW_HASTE] = 0;
 		pm->ps->eFlags &= ~EF_AURA;
 
