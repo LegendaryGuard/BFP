@@ -432,12 +432,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 					p->endtime = timenonscaled + 2500 + (crandom() * 150);
 					p->link = qtrue;
 				}
-			} else {
-				if ( !p->link )
-				{
-					p->endtime = timenonscaled + 500 + (crandom() * 150);
-					p->link = qtrue;
-				}
 			}
 		}
 
@@ -940,7 +934,7 @@ void CG_AddParticles (void)
 	active_particles = active;
 }
 
-void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum)
+void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range, int snum)
 {
 	cparticle_t	*p;
 
@@ -955,7 +949,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->time = timenonscaled;
 
 	// BFP - Add end time to remove particles, if there's no end time the particles will remain there
-	p->endtime = timenonscaled + 400;
+	p->endtime = timenonscaled + 600;
 	p->startfade = timenonscaled + 200;
 
 	p->color = 0;
@@ -965,13 +959,20 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->start = cent->currentState.origin[2];
 	p->end = cent->currentState.origin2[2];
 	p->pshader = pshader;
-	p->height = p->width = 2 + (crandom() * 0.5);
+	p->height = p->width = (rand() % 2) + 1;
 
-	if (turb)
+	VectorCopy(origin, p->org);
+
+	if (turbtime)
 	{
 		p->type = P_BUBBLE_TURBULENT;
 		// BFP - Apply end time to remove particles in that case, if there's no end time the particles will remain there
-		p->endtime = timenonscaled + 700;
+		p->endtime = timenonscaled + turbtime;
+		p->height = p->width = (rand() % 1) + 2;
+
+		p->org[0] += (rand() % (int)range) + (crandom() * range);
+		p->org[1] += (rand() % (int)range) + (crandom() * range);
+		p->org[2] += (rand() % (int)20);
 
 		VectorSet( p->vel, 
 				(rand() % 401) - 200,
@@ -980,13 +981,18 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 
 		// dispersion
 		VectorSet( p->accel, 
-				crandom() * 20, 
-				crandom() * 20, 
+				crandom() * 10, 
+				crandom() * 10, 
 				300 );
 	}
 	else
 	{
 		p->type = P_BUBBLE;
+
+		p->org[0] += (crandom() * range);
+		p->org[1] += (crandom() * range);
+		p->org[2] += (crandom() * 5);
+
 		VectorSet( p->vel, 
 				(rand() % 521) - 250,
 				(rand() % 521) - 250,
@@ -998,12 +1004,6 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 				crandom() * 10, 
 				900 );
 	}
-
-	VectorCopy(origin, p->org);
-
-	p->org[0] += (crandom() * range);
-	p->org[1] += (crandom() * range);
-	p->org[2] += (crandom() * 5);
 
 	p->snum = 3 - (crandom() * 6); // used to randomize where the bubbles stop when these touches the surface
 	p->link = qfalse;
@@ -1020,6 +1020,15 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 
 	VectorCopy( org, start );
 	start[2] += 10;
+
+	// BFP - Make move less
+	if ( p->vel[0] > -0.9 && p->vel[0] < 0.9 ) p->vel[0] = 0;
+	if ( p->vel[1] > -0.9 && p->vel[1] < 0.9 ) p->vel[1] = 0;
+	if ( p->vel[0] != 0 ) p->vel[0] *= 0.99;
+	if ( p->vel[1] != 0 ) p->vel[1] *= 0.99;
+
+	// Decelerate
+	if ( p->accel[2] > 0 ) p->accel[2]--;
 
 	// trace down to find the surface
 	trap_CM_BoxTrace( &trace, start, end, vec3_origin, vec3_origin, 0, CONTENTS_WATER );
@@ -1047,8 +1056,10 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 		VectorClear( p->accel );
 		
 		// BFP - Make move less
-		p->vel[0] *= 0.9;
-		p->vel[1] *= 0.9;
+		if ( p->vel[0] >= -1 && p->vel[0] <= 0.9 ) p->vel[0] = 0;
+		else p->vel[0] *= 0.9;
+		if ( p->vel[1] >= -1 && p->vel[1] <= 0.9 ) p->vel[1] = 0;
+		else p->vel[1] *= 0.9;
 	}
 }
 

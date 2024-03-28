@@ -1887,15 +1887,20 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 				CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, trace.endpos );
 			}
 
+			waterTrace.endpos[2] -= 20; // BFP - Put a bit down to make the bubbles move
 			if ( waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 1, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10, 0 );
 			}
 		}
 
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // BFP - Antigrav rock particles on ki charging status
 			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+			// if the player isn't moving 
+			&& !cent->currentState.pos.trDelta[0] 
+			&& !cent->currentState.pos.trDelta[1] 
+			&& !cent->currentState.pos.trDelta[2] 
 			&& ( trace.fraction <= 0.30f
 			// If the player is stepping a mover:
 			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
@@ -2392,9 +2397,9 @@ void CG_Player( centity_t *cent ) {
 
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 1, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10, 0 );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -7; // put the origin a little below
 
