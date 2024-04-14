@@ -1690,12 +1690,17 @@ void Cmd_BFP_SelectCharacter_f( gentity_t* ent ) { // BFP - Select character
 	G_Printf( "Character: %s\n", characterselected );
 }
 
-void Cmd_BFP_StartBlock_f( gentity_t* ent ) { // BFP - TODO: Start block
-	Com_Printf( "Cmd_BFP_StartBlock_f\n" );
-}
+/*
+=================
+Cmd_BFP_Block_f
+=================
+*/
+void Cmd_BFP_Block_f( gentity_t* ent ) { // BFP - Block
 
-void Cmd_BFP_StopBlock_f( gentity_t* ent ) { // BFP - TODO: Stop block
-	Com_Printf( "Cmd_BFP_StopBlock_f\n" );
+	if ( ent->client->ps.pm_type != PM_DEAD ) {
+		ent->client->ps.pm_flags |= PMF_BLOCK;
+		ent->client->ps.stats[STAT_BLOCK] = (g_blockLength.integer * 1000);
+	}
 }
 
 void Cmd_BFP_StartMelee_f( gentity_t* ent ) { // BFP - TODO: Start melee
@@ -1826,10 +1831,8 @@ void ClientCommand( int clientNum ) {
 		Cmd_BFP_SetKiIdle_f( ent );
 	else if (Q_stricmp (cmd, "selectcharacter") == 0) // BFP - Select character
 		Cmd_BFP_SelectCharacter_f( ent );
-	else if (Q_stricmp (cmd, "start_block") == 0) // BFP - TODO: Start Block
-		Cmd_BFP_StartBlock_f( ent );
-	else if (Q_stricmp (cmd, "stop_block") == 0) // BFP - TODO: Stop block
-		Cmd_BFP_StopBlock_f( ent );
+	else if (Q_stricmp (cmd, "block") == 0) // BFP - Block
+		Cmd_BFP_Block_f( ent );
 	else if (Q_stricmp (cmd, "start_melee") == 0) // BFP - TODO: Start melee
 		Cmd_BFP_StartMelee_f( ent );
 	else if (Q_stricmp (cmd, "stop_melee") == 0) // BFP - TODO: Stop melee

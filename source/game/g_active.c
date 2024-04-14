@@ -758,24 +758,12 @@ void ClientThink_real( gentity_t *ent ) {
 			client->ps.powerups[PW_HASTE] = 0;
 			client->ps.eFlags &= ~EF_AURA;
 			ucmd->buttons &= ~BUTTON_KI_USE;
-			client->ps.stats[STAT_BLOCK] = (g_blockLength.integer * 100);
-		}
-
-		// Handle block status (it's like block time)
-		if ( client->ps.stats[STAT_BLOCK] >= 0 ) {
-			client->ps.stats[STAT_BLOCK]--;
-			// Print debug
-#if 0
-			if ( ( client->ps.pm_flags & PMF_BLOCK ) && client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 100) )
-				Com_Printf( "BLOCK LENGTH: %d\n", client->ps.stats[STAT_BLOCK] );
-			else if ( !( client->ps.pm_flags & PMF_BLOCK ) && client->ps.stats[STAT_BLOCK] <= (g_blockDelay.integer * 100) ) 
-				Com_Printf( "BLOCK DELAY: %d\n", client->ps.stats[STAT_BLOCK] );
-#endif
+			client->ps.stats[STAT_BLOCK] = (g_blockLength.integer * 1000);
 		}
 
 		// BFP - Blocking status. Ki energy is being consumed and ki boost can't be used
 		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 100)
+		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 1000)
 		&& client->ps.stats[STAT_BLOCK] >= 0 ) {
 			
 			// BFP - NOTE: Approximate calculation of ki consumption while blocking
@@ -801,10 +789,10 @@ void ClientThink_real( gentity_t *ent ) {
 
 		// When the block length duration has been expired, then start the delay to avoid user 
 		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 100)
+		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 1000)
 		&& client->ps.stats[STAT_BLOCK] <= 0 ) {
 			client->ps.pm_flags &= ~PMF_BLOCK;
-			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 100);
+			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 1000);
 		}
 
 		// If the block length duration hasn't been expired yet and 
@@ -814,12 +802,12 @@ void ClientThink_real( gentity_t *ent ) {
 		|| ( ucmd->buttons & BUTTON_ATTACK )
 		|| ( client->ps.eFlags & EF_AURA ) ) ) {
 			client->ps.pm_flags &= ~PMF_BLOCK;
-			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 100);
+			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 1000);
 		}
 
 		// Handle the delay and don't leave the user get away with it
 		if ( !( client->ps.pm_flags & PMF_BLOCK )
-		&& client->ps.stats[STAT_BLOCK] <= (g_blockDelay.integer * 100) 
+		&& client->ps.stats[STAT_BLOCK] <= (g_blockDelay.integer * 1000) 
 		&& client->ps.stats[STAT_BLOCK] >= 0 ) {
 			client->ps.pm_flags &= ~PMF_BLOCK;
 			ucmd->buttons &= ~BUTTON_BLOCK; // If the user holds the key, when that ends, then immediately enters to this status again
