@@ -741,10 +741,12 @@ void ClientThink_real( gentity_t *ent ) {
 			if ( client->ps.powerups[PW_FLIGHT] <= 0 ) {
 				client->ps.speed *= 2.5;
 			}
+			client->ps.powerups[PW_HASTE] = 1; // Handle ki boost status
 			client->ps.eFlags |= EF_AURA;
 		} else {
 			if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
 				client->ps.eFlags &= ~EF_AURA;
+				client->ps.powerups[PW_HASTE] = 0; // Handle ki boost status
 			}
 		}
 
