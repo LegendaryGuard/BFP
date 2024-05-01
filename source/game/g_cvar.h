@@ -70,7 +70,7 @@ G_CVAR( g_meleeRange, "g_meleeRange", "32", 0, 0, qtrue ) // BFP - Melee range
 G_CVAR( g_chargeDelay, "g_chargeDelay", "750", 0, 0, qtrue ) // BFP - Charge delay
 G_CVAR( g_hitStun, "g_hitStun", "", 0, 0, qtrue ) // BFP - Hit stun
 G_CVAR( g_meleeOnly, "g_meleeOnly", "", 0, 0, qtrue ) // BFP - Melee only
-G_CVAR( g_noFlight, "g_noFlight", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH, 0, qtrue ) // BFP - No flight
+G_CVAR( g_noFlight, "g_noFlight", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qtrue ) // BFP - No flight
 G_CVAR( g_plKillBonusPct, "g_plKillBonusPct", ".1", 0, 0, qtrue ) // BFP - Kill bonus percentage
 G_CVAR( g_maxSpawnPL, "g_maxSpawnPL", "999", 0, 0, qtrue ) // BFP - Max spawn powerlevel
 G_CVAR( g_flightCost, "g_flightCost", "50", 0, 0, qtrue ) // BFP - Flight cost
@@ -78,10 +78,10 @@ G_CVAR( g_flightCostPct, "g_flightCostPct", "0", 0, 0, qtrue ) // BFP - Flight c
 G_CVAR( g_boostCost, "g_boostCost", "350", 0, 0, qtrue ) // BFP - Boost cost
 G_CVAR( g_boostCostPct, "g_boostCostPct", "0", 0, 0, qtrue ) // BFP - Boost cost percentage
 
-G_CVAR( g_blockCost, "g_blockCost", "2", 0, 0, qtrue ) // BFP - Block cost
-G_CVAR( g_blockCostPct, "g_blockCostPct", "0", 0, 0, qtrue ) // BFP - Block cost percentage
-G_CVAR( g_blockDelay, "g_blockDelay", "2", 0, 0, qtrue ) // BFP - Block delay
-G_CVAR( g_blockLength, "g_blockLength", "2", 0, 0, qtrue ) // BFP - Block length
+G_CVAR( g_blockCost, "g_blockCost", "2", CVAR_ARCHIVE, 0, qtrue ) // BFP - Block cost
+G_CVAR( g_blockCostPct, "g_blockCostPct", "0", CVAR_ARCHIVE, 0, qtrue ) // BFP - Block cost percentage
+G_CVAR( g_blockDelay, "g_blockDelay", "2", CVAR_ARCHIVE, 0, qtrue ) // BFP - Block delay
+G_CVAR( g_blockLength, "g_blockLength", "2", CVAR_ARCHIVE, 0, qtrue ) // BFP - Block length
 
 G_CVAR( g_kiRegen, "g_kiRegen", "0", 0, 0, qtrue ) // BFP - Ki regeneration
 G_CVAR( g_kiRegenPct, "g_kiRegenPct", "0.6", 0, 0, qtrue ) // BFP - Ki regeneration percentage
