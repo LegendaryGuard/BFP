@@ -117,7 +117,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 			vec3_t	velocity;
 
 			// BFP - When blocking... Deflect the projectile!
-			if ( other->client->ps.pm_flags & PMF_BLOCK ) {
+			if ( other->client && ( other->client->ps.pm_flags & PMF_BLOCK ) ) {
 				// PUSH!
 				BG_EvaluateTrajectoryDelta( &ent->s.pos, level.time, velocity );
 				if ( VectorLength( velocity ) == 0 ) {
