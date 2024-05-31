@@ -222,8 +222,14 @@ static void CG_Obituary( entityState_t *ent ) {
 		case MOD_GRAPPLE:
 			message = "was caught by";
 			break;
+		// BFP - No gauntlet
+#if 0
 		case MOD_GAUNTLET:
 			message = "was pummeled by";
+			break;
+#endif
+		case MOD_MELEE: // BFP - Melee
+			message = "was beaten up by";
 			break;
 		case MOD_MACHINEGUN:
 			message = "was machinegunned by";
@@ -677,14 +683,34 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_FireWeapon( cent );
 		break;
 
-	case EV_MELEE_READY:
-		// DEBUGNAME("EV_MELEE_READY");
-		break;
-
-	// BFP - TODO: Implement EV_MELEE (when punching someone using Melee)
+	// BFP - Melee
 	case EV_MELEE:
+	{
+		int rndMeleeSnd = rand() % 5;
 		DEBUGNAME("EV_MELEE");
+		switch ( rndMeleeSnd ) {
+			case 0: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit1.wav" ) );
+				break;
+			}
+			case 1: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit2.wav" ) );
+				break;
+			}
+			case 2: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit3.wav" ) );
+				break;
+			}
+			case 3: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit4.wav" ) );
+				break;
+			}
+			default: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit5.wav" ) );
+			}
+		}
 		break;
+	}
 
 	// BFP - TODO: Implement EV_TIER_0-4 (Tiers)
 	case EV_TIER_0:

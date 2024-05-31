@@ -36,7 +36,7 @@ A legendary 90s era Quake 3 Arena mod.
 # TODO list:
 
 - [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
-- [ ] Melee feature
+- [x] ~~Melee feature~~
 - [x] ~~Remove weapon visuals (models and stuff)~~
 - [x] ~~Animations as listed on the old docs~~
 - [x] ~~Bind key to recover ki energy~~
@@ -45,7 +45,7 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Third person traceable crosshair~~
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
 - [ ] Powerlevel and Power Tiers indicated on old docs
-- [ ] Hit Stun (makes player can't use ki, melee, block and charge)
+- [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
 - [ ] Power Struggles (when two beam attacks collide)
 - [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
 - [ ] Short-Range Teleport (when pressing 2 times left or right)

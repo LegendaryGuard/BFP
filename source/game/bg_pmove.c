@@ -48,7 +48,10 @@ float	pm_spectatorfriction = 5.0f;
 int		c_pmove = 0;
 
 // BFP - TODO: Macro for torso handling, since the code looked repetitive, so this macro makes the code a bit shorter
-#define TORSOSTATUS_ANIM_HANDLING(other_torsostatus) ( pm->ps->pm_flags & PMF_BLOCK ) ? PM_ContinueTorsoAnim( TORSO_BLOCK ) : PM_ContinueTorsoAnim( other_torsostatus )
+#define TORSOSTATUS_ANIM_HANDLING(other_torsostatus) \
+	( pm->ps->pm_flags & PMF_BLOCK ) ? PM_ContinueTorsoAnim( TORSO_BLOCK ) : \
+	( ( pm->cmd.buttons & BUTTON_MELEE ) && !( pm->ps->pm_flags & PMF_MELEE ) ) ? PM_ContinueTorsoAnim( TORSO_MELEE_READY ) : \
+	( pm->ps->pm_flags & PMF_MELEE ) ? PM_ContinueTorsoAnim( TORSO_MELEE_STRIKE ) : PM_ContinueTorsoAnim( other_torsostatus )
 
 // BFP - Macro for jump handling, since the code looked repetitive, so this macro makes the code a bit shorter
 #define FORCEJUMP_ANIM_HANDLING() ( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB )
@@ -58,6 +61,12 @@ int		c_pmove = 0;
 	if ( pm->cmd.forwardmove > 0 ) { TORSOSTATUS_ANIM_HANDLING( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); } \
 	else if ( pm->cmd.forwardmove < 0 ) { TORSOSTATUS_ANIM_HANDLING( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); } \
 	else { TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
+
+// BFP - Macro for melee strike handling, since the code looked repetitive, so this macro makes the code a bit shorter
+#define CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING(condition) \
+	/* Keep moving the legs when the player is attacking to the target through melee. If the condition variable isn't used leave using this value: 1 */ \
+	if ( ( condition ) && ( pm->ps->pm_flags & PMF_MELEE ) \
+	&& !( pm->ps->pm_flags & PMF_HITSTUN ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) { PM_ContinueLegsAnim( LEGS_MELEE_STRIKE ); }
 
 // BFP - Macro for movement handling in the slopes and when being near to the ground, since the code looked repetitive, so this macro makes the code a bit shorter
 #define SLOPES_NEARGROUND_ANIM_HANDLING(is_slope) \
@@ -78,7 +87,8 @@ int		c_pmove = 0;
 			return; \
 		} \
 	} \
-	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) { PM_ContinueLegsAnim( LEGS_IDLE ); return; } \
+	/* If it's very near to the other entity and the melee strike is executed, continue playing the melee strike legs animation */ \
+	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) { PM_ContinueLegsAnim( LEGS_IDLE ); CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 ) return; } \
 	if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) { \
 		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); } \
 		else if ( pm->cmd.forwardmove > 0 \
@@ -88,7 +98,8 @@ int		c_pmove = 0;
 		else if ( pm->cmd.forwardmove > 0 \
 		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_WALK ); } \
 		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); \
-	}
+	} \
+	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
 
 /*
 ===============
@@ -589,6 +600,9 @@ static void PM_WaterMove( void ) {
 	// BFP - Water animation handling, uses flying animation in that case
 	CONTINUEFLY_ANIM_HANDLING()
 
+	// BFP - Melee strike legs animation
+	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
+
 	PM_SlideMove( qfalse );
 }
 
@@ -1055,16 +1069,32 @@ static void PM_CrashLand( void ) {
 PM_CheckStuck
 =============
 */
-/*
-void PM_CheckStuck(void) {
+static void PM_CheckStuck(void) {
+	// BFP - NOTE: Curiously and originally, BFP uses this function to animate when the player is stuck, 
+	// that can be tested when the player is pretty near to the other player
+	// or being stuck in the same origin as the other player, specially outside water.
+	// It has been implemented when melee animations were being used
 	trace_t trace;
 
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, pm->ps->origin, pm->ps->clientNum, pm->tracemask);
 	if (trace.allsolid) {
 		//int shit = qtrue;
+
+		// BFP - TODO: Ki attack animation handling (these are for torso animations)
+		// Try to handle the animations when the player is shooting
+
+		// BFP - Handle the animations when being stuck! (Only outside water)
+		if ( pm->waterlevel < 1 ) {
+			if ( pm->cmd.forwardmove < 0 ) {
+				PM_ContinueLegsAnim( LEGS_JUMPB );
+			} else {
+				PM_ContinueLegsAnim( LEGS_JUMP );
+			}
+		}
+		// BFP - Melee strike legs animation
+		CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
 	}
 }
-*/
 
 /*
 =============
@@ -1438,8 +1468,10 @@ static void PM_Footsteps( void ) {
 		return;
 	}
 
-	// BFP - Avoid when flying
+	// BFP - Avoid when flying (for melee strike animation, that's applied)
 	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+		// BFP - Melee strike legs animation, don't apply if it's playing the starting jump animation in the flight status
+		CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( pm->ps->pm_time <= 0 )
 		return;
 	}
 
@@ -1471,6 +1503,9 @@ static void PM_Footsteps( void ) {
 			PM_ContinueLegsAnim( LEGS_SWIM );
 		}
 #endif
+		// BFP - PM_CheckStuck has been moved here, Q3 and the rest of mods hadn't used this
+		PM_CheckStuck();
+
 		return;
 	}
 
@@ -1487,6 +1522,8 @@ static void PM_Footsteps( void ) {
 		} else if ( !( pm->ps->pm_flags & PMF_DUCKED ) ) { // BFP - Handle the legs while it isn't doing nothing
 			PM_ContinueLegsAnim( LEGS_IDLE );
 		}
+		// BFP - Melee strike legs animation
+		CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
 		return;
 	}
 	
@@ -1538,6 +1575,9 @@ static void PM_Footsteps( void ) {
 			TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); // BFP - Keep the torso
 		}
 	}
+
+	// BFP - Melee strike legs animation
+	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
 
 	// check for footstep / splash sounds
 	old = pm->ps->bobCycle;
@@ -1670,7 +1710,7 @@ static void PM_TorsoAnimation( void ) {
 	trace_t		trace;
 	vec3_t		point;
 
-	// BFP - TODO: Melee and ki attack animation handling (these are for torso animations)
+	// BFP - TODO: Ki attack animation handling (these are for torso animations)
 	// Keep in mind about the implementations of the steep slopes, 
 	// TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ) and
 	// !pm->cmd.forwardmove && !pm->cmd.rightmove && !pm->cmd.buttons thingies
@@ -1716,6 +1756,9 @@ static void PM_TorsoAnimation( void ) {
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
 		SLOPES_NEARGROUND_ANIM_HANDLING( 0 )
 	}
+
+	// BFP - Melee strike legs animation, don't apply if it isn't touching the ground
+	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( pm->ps->groundEntityNum != ENTITYNUM_NONE )
 
 #if 0
 	if ( pm->ps->weaponstate == WEAPON_READY ) {
@@ -1855,6 +1898,20 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 
 /*
 ==============
+PM_Melee
+==============
+*/
+static void PM_Melee( void ) { // BFP - Melee
+	// Don't allow pressing ki attack and block buttons when melee is being used
+	if ( ( pm->ps->pm_flags & PMF_MELEE ) 
+	|| ( pm->cmd.buttons & BUTTON_MELEE ) ) {
+		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_BLOCK );
+	}
+}
+
+
+/*
+==============
 PM_Weapon
 
 Generates weapon events and modifes the weapon counter
@@ -1907,6 +1964,11 @@ static void PM_Weapon( void ) {
 		pm->ps->weaponTime -= pml.msec;
 	}
 
+	// BFP - Hit stun melee delay time
+	if ( pm->ps->stats[STAT_HITSTUN_MELEE_DELAY] > 0 ) {
+		pm->ps->stats[STAT_HITSTUN_MELEE_DELAY] -= pml.msec;
+	}
+
 	// check for weapon change
 	// can't change if weapon is firing, but can change
 	// again if lowering or raising
@@ -1923,6 +1985,16 @@ static void PM_Weapon( void ) {
 	// change weapon if time
 	if ( pm->ps->weaponstate == WEAPON_DROPPING ) {
 		PM_FinishWeaponChange();
+		return;
+	}
+
+	// BFP - Melee, avoid shooting if the player is in this status
+	if ( pm->cmd.buttons & BUTTON_MELEE ) {
+		// Melee fight handling
+		if ( pm->gauntletHit && pm->ps->weaponTime <= 0 ) {
+			pm->ps->weaponTime += 300;
+			pm->ps->pm_flags |= PMF_MELEE;
+		}
 		return;
 	}
 
@@ -2422,6 +2494,9 @@ void PmoveSingle (pmove_t *pmove) {
 	// BFP - Block
 	PM_BlockTime();
 
+	// BFP - Melee
+	PM_Melee();
+
 	PM_DropTimers();
 
 	// BFP - Flight
@@ -2532,14 +2607,12 @@ void Pmove (pmove_t *pmove) {
 			pmove->cmd.upmove = 20;
 		}
 	}
-
-	//PM_CheckStuck();
-
 }
 
 // BFP - Undefine the macros
 #undef TORSOSTATUS_ANIM_HANDLING
 #undef FORCEJUMP_ANIM_HANDLING
 #undef CONTINUEFLY_ANIM_HANDLING
+#undef CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING
 #undef SLOPES_NEARGROUND_ANIM_HANDLING
 

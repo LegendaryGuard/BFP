@@ -764,14 +764,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		damage *= 0.5;
 	}
 
-// BFP - TODO: Make hit stun received from melee attack with PW_HASTE
-#if 0
-	if ( g_hitStun.integer >= 1 && ( attacker->client->ps.powerups[PW_HASTE] > 0 ) 
-		&& targ != attacker && !OnSameTeam (targ, attacker) ) {
-			attacker->client->ps.hitStunTime = -3; // just an idea, enable the hit stun with a conditional of == -3
-	}
-#endif
-
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)
 	if ( attacker->client && targ != attacker && targ->health > 0
 			&& targ->s.eType != ET_MISSILE

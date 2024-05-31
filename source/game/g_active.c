@@ -816,6 +816,11 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 		// BFP - End of block handling
 
+		// BFP - Melee handling
+		if ( !( ucmd->buttons & BUTTON_MELEE ) ) {
+			client->ps.pm_flags &= ~PMF_MELEE;
+		}
+
 		// BFP - Ki Charge
 		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
 		&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
@@ -845,11 +850,21 @@ void ClientThink_real( gentity_t *ent ) {
 
 	memset (&pm, 0, sizeof(pm));
 
+// BFP - No gauntlet hit check
+#if 0
 	// check for the hit-scan gauntlet, don't let the action
 	// go through as an attack unless it actually hits something
 	if ( client->ps.weapon == WP_GAUNTLET && !( ucmd->buttons & BUTTON_TALK ) &&
 		( ucmd->buttons & BUTTON_ATTACK ) && client->ps.weaponTime <= 0 ) {
 		pm.gauntletHit = CheckGauntletAttack( ent );
+	}
+#endif
+
+	// BFP - Melee
+	if ( !( ucmd->buttons & BUTTON_TALK ) && ( ucmd->buttons & BUTTON_MELEE )
+	&& !( client->ps.pm_flags & PMF_KI_CHARGE )
+	&& client->ps.weaponTime <= 0 ) {
+		pm.gauntletHit = CheckMeleeAttack( ent );
 	}
 
 	if ( ent->flags & FL_FORCE_GESTURE ) {

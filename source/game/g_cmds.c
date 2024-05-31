@@ -1703,12 +1703,12 @@ void Cmd_BFP_Block_f( gentity_t* ent ) { // BFP - Block
 	}
 }
 
-void Cmd_BFP_StartMelee_f( gentity_t* ent ) { // BFP - TODO: Start melee
-	Com_Printf( "Cmd_BFP_StartMelee_f\n" );
+void Cmd_BFP_StartMelee_f( gentity_t* ent ) { // BFP - Start melee
+	// BFP - NOTE: That command was left without finishing the implementation to start melee
 }
 
-void Cmd_BFP_StopMelee_f( gentity_t* ent ) { // BFP - TODO: Stop melee
-	Com_Printf( "Cmd_BFP_StopMelee_f\n" );
+void Cmd_BFP_StopMelee_f( gentity_t* ent ) { // BFP - Stop melee
+	// BFP - NOTE: That command was left without finishing the implementation to stop melee
 }
 
 
@@ -1833,9 +1833,9 @@ void ClientCommand( int clientNum ) {
 		Cmd_BFP_SelectCharacter_f( ent );
 	else if (Q_stricmp (cmd, "block") == 0) // BFP - Block
 		Cmd_BFP_Block_f( ent );
-	else if (Q_stricmp (cmd, "start_melee") == 0) // BFP - TODO: Start melee
+	else if (Q_stricmp (cmd, "start_melee") == 0) // BFP - Start melee
 		Cmd_BFP_StartMelee_f( ent );
-	else if (Q_stricmp (cmd, "stop_melee") == 0) // BFP - TODO: Stop melee
+	else if (Q_stricmp (cmd, "stop_melee") == 0) // BFP - Stop melee
 		Cmd_BFP_StopMelee_f( ent );
 	else
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );

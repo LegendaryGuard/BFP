@@ -148,6 +148,7 @@ typedef enum {
 #define	PMF_NEARGROUND		8		// BFP - Near ground check
 // BFP - PMF_BACKWARDS_RUN is unused
 // #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
+#define	PMF_MELEE			16		// BFP - Melee
 // BFP - PMF_TIME_LAND is unused
 // #define	PMF_TIME_LAND		32		// pm_time is time before rejump
 #define PMF_FALLING			32		// BFP - Falling status
@@ -220,6 +221,7 @@ typedef enum {
 	STAT_HEALTH,
 	STAT_KI,						// BFP - KI amount
 	STAT_BLOCK,						// BFP - Block amount treated as time
+	STAT_HITSTUN_MELEE_DELAY,		// BFP - Hitstun delay time status
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
@@ -680,6 +682,7 @@ typedef enum {
 typedef enum {
 	MOD_UNKNOWN,
 	MOD_SHOTGUN,
+	MOD_MELEE, // BFP - Melee
 	MOD_GAUNTLET,
 	MOD_MACHINEGUN,
 	MOD_GRENADE,

@@ -12,9 +12,6 @@
 - g_flightCostPct = "0"
 - g_flightCost = "50"
 - g_chargeDelay = "250"
-- g_meleeRange = "32"
-- g_meleeDiveRange = "700"
-- g_meleeDamage = "10"
 
 #### Cvar Gametypes:
 
@@ -29,7 +26,6 @@
 
 ## WIP:
 
-- g_hitStun [0/1]: turn on or off the melee hit stun.
 
 #### Cvar Gametypes:
 
@@ -72,6 +68,11 @@
 - [x] ~~g_blockDelay~~
 - [x] ~~g_blockCost~~
 - [x] ~~g_blockCostPct~~
+- [x] ~~g_hitStun~~
+- [x] ~~g_meleeOnly~~
+- [x] ~~g_meleeRange~~
+- [x] ~~g_meleeDiveRange~~
+- [x] ~~g_meleeDamage~~
 
 #### Cvar Gametypes:
 

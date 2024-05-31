@@ -61,6 +61,8 @@ void Weapon_Gauntlet( gentity_t *ent ) {
 
 }
 
+// BFP - No check gauntlet attack
+#if 0
 /*
 ===============
 CheckGauntletAttack
@@ -112,7 +114,168 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 
 	return qtrue;
 }
+#endif
 
+/*
+===================
+GetEntityNearMeleeRadius
+===================
+*/
+gentity_t *GetEntityNearMeleeRadius( vec3_t point, gentity_t *attacker, gentity_t *target ) { // BFP - Melee near radius detection
+	int			i, num, touch[MAX_GENTITIES];
+	vec3_t		mins, maxs;
+	gentity_t	*prevTarget = target;
+
+	// if already exists, don't apply calculation detection
+	if ( prevTarget->client ) {
+		return prevTarget;
+	}
+
+	VectorAdd( point, attacker->r.mins, mins );
+	VectorAdd( point, attacker->r.maxs, maxs );
+	num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
+
+	for ( i = 0 ; i < num ; i++ ) {
+		target = &g_entities[ touch[i] ];
+		if ( target->client && target->client != attacker->client ) {
+			return target;
+		}
+	}
+
+	return prevTarget;
+}
+
+/*
+===============
+CheckMeleeAttack
+===============
+*/
+qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
+	trace_t		tr;
+	vec3_t		velocity, end;
+	gentity_t	*traceTarget;
+
+	// set aiming directions
+	AngleVectors( attacker->client->ps.viewangles, forward, NULL, NULL );
+
+	CalcMuzzlePoint( attacker, forward, NULL, NULL, muzzle );
+
+	VectorMA( muzzle, g_meleeDiveRange.integer, forward, end );
+
+	// that part is where the target can be detected when the attacker is on air, if not, the trace will be different
+	trap_Trace( &tr, muzzle, attacker->r.mins, attacker->r.maxs, end, attacker->s.number, MASK_SHOT );
+	if ( attacker->client->ps.groundEntityNum != ENTITYNUM_NONE ) {
+		trap_Trace( &tr, muzzle, NULL, NULL, end, attacker->s.number, MASK_SHOT );
+	}
+
+	// when the attacker is very near from the target, continue attacking if that happens
+	traceTarget = GetEntityNearMeleeRadius( muzzle, attacker, &g_entities[ tr.entityNum ] );
+
+	// stop melee if there's no entity
+	if ( !traceTarget->takedamage ) {
+		attacker->client->ps.pm_flags &= ~PMF_MELEE;
+		return qfalse;
+	}
+
+	// the target's corpse is starting to sink, avoid interacting with a sinking corpse, nothing special happens
+	if ( traceTarget->physicsObject ) {
+		attacker->client->ps.pm_flags &= ~PMF_MELEE;
+		return qfalse;
+	}
+
+	// BFP - NOTE: Apply g_friendlyFire for melee, originally in BFP, friendly fire wasn't never applied
+	// stop melee if the entity is in the same team
+	if ( OnSameTeam( traceTarget, attacker ) ) {
+		attacker->client->ps.pm_flags &= ~PMF_MELEE;
+		return qfalse;
+	}
+
+	// ENTITY DETECTED!
+	if ( traceTarget->client ) {
+		gentity_t	*target;
+		vec3_t		direction;
+		float		distance;
+		// BFP - Melee range, it isn't known why, but it's the approximation
+		float		rangeMultiplier = g_meleeRange.integer + 45;
+
+		VectorSubtract( traceTarget->client->ps.origin, attacker->client->ps.origin, direction );
+		distance = VectorLength( direction );
+
+		// distance from the attacker and the target, more range = attacker can attack at that distance without being teleported
+		// the distance needs to be greater than 25, otherwise it won't respect the lengths around the target
+		if ( distance >= rangeMultiplier && distance >= 25 ) {
+			// trace only when the player is alive
+			if ( traceTarget->client->ps.pm_type != PM_DEAD ) {
+				trap_Trace( &tr, muzzle, attacker->r.mins, attacker->r.maxs, end, attacker->s.number, MASK_PLAYERSOLID );
+			}
+
+			// if the target is very near to some brush (solid or surface with no impact) from the map
+			// avoid the attacker teleporting there, otherwise gets stuck
+			if ( tr.startsolid || tr.allsolid ) {
+				attacker->client->ps.pm_flags &= ~PMF_MELEE;
+				return qfalse;
+			}
+
+			// if the target position is being covered under something solid (e.g. a brush from the map), 
+			// avoid the attacker teleporting there, otherwise gets stuck
+			target = &g_entities[ tr.entityNum ];
+			if ( target->client->ps.pm_type != PM_DEAD && !target->takedamage ) {
+				attacker->client->ps.pm_flags &= ~PMF_MELEE;
+				return qfalse;
+			}
+
+			// try to trace when the target is dead, that's what BFP originally did, and teleport near the corpse
+			if ( traceTarget->client->ps.pm_type == PM_DEAD ) {
+				trap_Trace( &tr, muzzle, attacker->r.mins, attacker->r.maxs, end, attacker->s.number, MASK_PLAYERSOLID );
+			}
+
+			// TELEPORT!
+			if ( attacker->client->ps.origin[2] == target->client->ps.origin[2] ) {
+				tr.endpos[2] = target->client->ps.origin[2];
+			}
+			VectorCopy( tr.endpos, attacker->client->ps.origin );
+		}
+
+		// PUSH AND DEAL DAMAGE!
+		if ( g_meleeDamage.integer > 0 ) {
+			float forceMultiplier = 100.0f + 2.0f * (g_meleeDamage.integer - 10);
+
+			// only when the target isn't dead
+			if ( traceTarget->client->ps.pm_type != PM_DEAD ) {
+				VectorSubtract( traceTarget->client->ps.origin, attacker->client->ps.origin, velocity );
+				VectorNormalize( velocity );
+
+				// apply the push force (proportional to the melee damage) in the direction of the attack
+				VectorScale( velocity, g_meleeDamage.integer * forceMultiplier, traceTarget->client->ps.velocity );
+			}
+
+			G_Damage ( traceTarget, attacker, attacker, velocity, attacker->s.origin, 
+				g_meleeDamage.integer, 0, MOD_MELEE );
+		}
+	}
+
+	// melee sound event is randomly executed
+	{
+		int rndSnd = rand() % 6;
+		if ( rndSnd > 4 ) {
+			G_AddEvent( attacker, EV_MELEE, 0 );
+		}
+	}
+
+	// if the attacker is using ki boost, stun the target! (g_hitStun enabled only)
+	if ( g_hitStun.integer >= 1 
+	&& attacker->client->ps.powerups[PW_HASTE] > 0 
+	&& !( traceTarget->client->ps.pm_flags & PMF_HITSTUN )
+	&& !( traceTarget->client->ps.pm_flags & PMF_BLOCK ) 
+	&& attacker->client->ps.stats[STAT_HITSTUN_MELEE_DELAY] <= 0 ) {
+		// add 3 seconds to the hitstun when there's no delay
+		traceTarget->client->ps.pm_time = 3000;
+		traceTarget->client->ps.pm_flags |= PMF_HITSTUN;
+		attacker->client->ps.stats[STAT_HITSTUN_MELEE_DELAY] += 6000;
+	}
+
+	return qtrue;
+}
 
 /*
 ======================================================================
