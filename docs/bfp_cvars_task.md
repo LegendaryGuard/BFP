@@ -46,7 +46,6 @@
 - cg_explosionSmoke [0/1]: turn on or off the explosion smoke.
 - cg_explosionRing [0/1]: turn on or off the explosion ring.
 - cg_particles [0/1]: turn on or off particle effects.
-- cg_playHitSound [0/1]: turn on or off the q3 hit "ping".
 
 
 ## COMPLETED:
@@ -67,6 +66,7 @@
 - [x] ~~cg_lightweightAuras~~
 - [x] ~~cg_polygonAura~~
 - [x] ~~cg_highPolyAura~~
+- [x] ~~cg_playHitSound~~
 - [x] ~~g_noFlight (disables "fly" bind too, original BFP has a leak though)~~
 - [x] ~~g_blockLength~~
 - [x] ~~g_blockDelay~~

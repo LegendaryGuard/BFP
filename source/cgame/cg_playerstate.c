@@ -313,7 +313,10 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 		cg.opponentHitBlendTime = cg.time + 0.5f; // BFP - For crosshair opponent hit effect
 		armor  = ps->persistant[PERS_ATTACKEE_ARMOR] & 0xff;
 		health = ps->persistant[PERS_ATTACKEE_ARMOR] >> 8;
-		trap_S_StartLocalSound( cgs.media.hitSound, CHAN_LOCAL_SOUND );
+		// BFP - Play hit sound
+		if ( cg_playHitSound.integer > 0 ) {
+			trap_S_StartLocalSound( cgs.media.hitSound, CHAN_LOCAL_SOUND );
+		}
 	} else if ( ps->persistant[PERS_HITS] < ops->persistant[PERS_HITS] ) {
 		trap_S_StartLocalSound( cgs.media.hitTeamSound, CHAN_LOCAL_SOUND );
 	}
