@@ -732,6 +732,11 @@ void ClientThink_real( gentity_t *ent ) {
 	client->ps.speed = g_speed.value;
 
 	if ( client->ps.pm_type != PM_DEAD && client->ps.pm_type != PM_SPECTATOR ) {
+		// BFP - Hit stun melee delay time
+		if ( client->hitStunMeleeDelayTime > 0 
+		&& level.time >= client->hitStunMeleeDelayTime ) {
+			client->hitStunMeleeDelayTime = 0;
+		}
 
 		// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
 		if ( !( client->ps.pm_flags & PMF_HITSTUN )
@@ -755,19 +760,19 @@ void ClientThink_real( gentity_t *ent ) {
 		// Initialize the blocking and start the block length duration, specifically, ki boost and aura are disabled
 		if ( !( client->ps.pm_flags & PMF_BLOCK )
 		&& ( ucmd->buttons & BUTTON_BLOCK )
-		&& client->ps.stats[STAT_BLOCK] <= 0 ) {
+		&& client->blockTime <= 0
+		&& client->blockDelayTime <= 0 ) {
 			client->ps.pm_flags |= PMF_BLOCK;
 			client->ps.powerups[PW_HASTE] = 0;
 			client->ps.eFlags &= ~EF_AURA;
 			ucmd->buttons &= ~BUTTON_KI_USE;
-			client->ps.stats[STAT_BLOCK] = (g_blockLength.integer * 1000);
+			client->blockTime = level.time + (g_blockLength.integer * 1000);
 		}
 
 		// BFP - Blocking status. Ki energy is being consumed and ki boost can't be used
 		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 1000)
-		&& client->ps.stats[STAT_BLOCK] >= 0 ) {
-			
+		&& client->blockTime > 0 
+		&& level.time < client->blockTime ) {			
 			// BFP - NOTE: Approximate calculation of ki consumption while blocking
 			float blockCostPct = g_blockCostPct.integer * 0.1; // Percentage of ki consumed per millisecond
 			float bCost = g_blockCost.integer > 0 ? g_blockCost.integer : 1; // Absolute value of ki consumed per millisecond
@@ -791,28 +796,44 @@ void ClientThink_real( gentity_t *ent ) {
 
 		// When the block length duration has been expired, then start the delay to avoid user 
 		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& client->ps.stats[STAT_BLOCK] <= (g_blockLength.integer * 1000)
-		&& client->ps.stats[STAT_BLOCK] <= 0 ) {
+		&& client->blockTime > 0 
+		&& level.time >= client->blockTime ) {
 			client->ps.pm_flags &= ~PMF_BLOCK;
-			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 1000);
+			client->blockTime = 0;
+			client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
 		}
 
 		// If the block length duration hasn't been expired yet and 
 		// pressing ki charge (if the aura is lighting) or attack buttons, then stop blocking and start the delay
 		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& ( ( ucmd->buttons & BUTTON_MELEE )
+		&& ( ( client->ps.pm_flags & PMF_KI_CHARGE )
+		|| ( ucmd->buttons & BUTTON_KI_CHARGE )
 		|| ( ucmd->buttons & BUTTON_ATTACK )
-		|| ( client->ps.eFlags & EF_AURA ) ) ) {
+		|| ( ucmd->buttons & BUTTON_MELEE ) ) ) {
 			client->ps.pm_flags &= ~PMF_BLOCK;
-			client->ps.stats[STAT_BLOCK] = (g_blockDelay.integer * 1000);
+			client->blockTime = 0;
+			client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
 		}
+
+		// Debug print block length and delay duration
+#if 0
+		Com_Printf( "BLOCK LENGTH: %d\n", client->blockTime );
+		Com_Printf( "BLOCK DELAY: %d\n", client->blockDelayTime );
+#endif
 
 		// Handle the delay and don't leave the user get away with it
 		if ( !( client->ps.pm_flags & PMF_BLOCK )
-		&& client->ps.stats[STAT_BLOCK] <= (g_blockDelay.integer * 1000) 
-		&& client->ps.stats[STAT_BLOCK] >= 0 ) {
-			client->ps.pm_flags &= ~PMF_BLOCK;
+		&& client->blockDelayTime > 0 
+		&& level.time < client->blockDelayTime ) {
+			client->blockTime = 0;
 			ucmd->buttons &= ~BUTTON_BLOCK; // If the user holds the key, when that ends, then immediately enters to this status again
+		}
+
+		// Reset block delay time if expired
+		if ( !( client->ps.pm_flags & PMF_BLOCK )
+		&& client->blockDelayTime > 0
+		&& level.time >= client->blockDelayTime ) {
+			client->blockDelayTime = 0;
 		}
 		// BFP - End of block handling
 

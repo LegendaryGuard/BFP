@@ -314,6 +314,14 @@ struct gclient_s {
 	// like health / armor countdowns and regeneration
 	int			timeResidual;
 
+	// BFP - Hit stun melee delay time
+	int			hitStunMeleeDelayTime;
+
+	// BFP - Block timers
+	int			blockTime;
+	int			blockDelayTime;
+
+
 	char		*areabits;
 };
 

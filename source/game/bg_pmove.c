@@ -1964,11 +1964,6 @@ static void PM_Weapon( void ) {
 		pm->ps->weaponTime -= pml.msec;
 	}
 
-	// BFP - Hit stun melee delay time
-	if ( pm->ps->stats[STAT_HITSTUN_MELEE_DELAY] > 0 ) {
-		pm->ps->stats[STAT_HITSTUN_MELEE_DELAY] -= pml.msec;
-	}
-
 	// check for weapon change
 	// can't change if weapon is firing, but can change
 	// again if lowering or raising
@@ -2300,23 +2295,6 @@ static void PM_HitStun( void ) { // BFP - Hit stun
 
 /*
 ================
-PM_BlockTime
-
-Handle block status (treated as block time)
-================
-*/
-static void PM_BlockTime( void ) { // BFP - Block
-	if ( pm->ps->stats[STAT_BLOCK] >= 0 ) {
-		pm->ps->stats[STAT_BLOCK] -= pml.msec;
-		// Print block length duration debug
-#if 0
-		Com_Printf( "BLOCK LENGTH: %d\n", pm->ps->stats[STAT_BLOCK] );
-#endif
-	}
-}
-
-/*
-================
 PmoveSingle
 
 ================
@@ -2490,9 +2468,6 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( pm->ps->pm_type == PM_DEAD ) {
 		PM_DeadMove ();
 	}
-
-	// BFP - Block
-	PM_BlockTime();
 
 	// BFP - Melee
 	PM_Melee();

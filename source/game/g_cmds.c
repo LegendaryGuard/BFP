@@ -1699,7 +1699,7 @@ void Cmd_BFP_Block_f( gentity_t* ent ) { // BFP - Block
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		ent->client->ps.pm_flags |= PMF_BLOCK;
-		ent->client->ps.stats[STAT_BLOCK] = (g_blockLength.integer * 1000);
+		ent->client->blockTime = level.time + (g_blockLength.integer * 1000);
 	}
 }
 

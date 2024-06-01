@@ -220,8 +220,6 @@ void Pmove (pmove_t *pmove);
 typedef enum {
 	STAT_HEALTH,
 	STAT_KI,						// BFP - KI amount
-	STAT_BLOCK,						// BFP - Block amount treated as time
-	STAT_HITSTUN_MELEE_DELAY,		// BFP - Hitstun delay time status
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				

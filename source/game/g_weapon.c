@@ -267,11 +267,11 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	&& attacker->client->ps.powerups[PW_HASTE] > 0 
 	&& !( traceTarget->client->ps.pm_flags & PMF_HITSTUN )
 	&& !( traceTarget->client->ps.pm_flags & PMF_BLOCK ) 
-	&& attacker->client->ps.stats[STAT_HITSTUN_MELEE_DELAY] <= 0 ) {
+	&& attacker->client->hitStunMeleeDelayTime <= 0 ) {
 		// add 3 seconds to the hitstun when there's no delay
 		traceTarget->client->ps.pm_time = 3000;
 		traceTarget->client->ps.pm_flags |= PMF_HITSTUN;
-		attacker->client->ps.stats[STAT_HITSTUN_MELEE_DELAY] += 6000;
+		attacker->client->hitStunMeleeDelayTime = level.time + 6000;
 	}
 
 	return qtrue;
