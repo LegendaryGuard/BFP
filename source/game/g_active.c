@@ -884,7 +884,8 @@ void ClientThink_real( gentity_t *ent ) {
 	// BFP - Melee
 	if ( !( ucmd->buttons & BUTTON_TALK ) && ( ucmd->buttons & BUTTON_MELEE )
 	&& !( client->ps.pm_flags & PMF_KI_CHARGE )
-	&& client->ps.weaponTime <= 0 ) {
+	&& client->ps.weaponTime <= 0
+	&& client->ps.pm_type != PM_DEAD ) {
 		pm.gauntletHit = CheckMeleeAttack( ent );
 	}
 
