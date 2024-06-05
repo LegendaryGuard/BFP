@@ -632,6 +632,92 @@ void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
 }
 
 /*
+=================
+BlockHandling
+=================
+*/
+static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block, reflect ki attacks and reduce health damage
+	// initialize the blocking and start the block length duration, specifically, ki boost and aura are disabled
+	if ( !( client->ps.pm_flags & PMF_BLOCK )
+	&& ( ucmd->buttons & BUTTON_BLOCK )
+	&& client->blockTime <= 0
+	&& client->blockDelayTime <= 0 ) {
+		client->ps.pm_flags |= PMF_BLOCK;
+		client->ps.powerups[PW_HASTE] = 0;
+		client->ps.eFlags &= ~EF_AURA;
+		ucmd->buttons &= ~BUTTON_KI_USE;
+		client->blockTime = level.time + (g_blockLength.integer * 1000);
+	}
+
+	// BFP - Blocking status. Ki energy is being consumed and ki boost can't be used
+	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+	&& client->blockTime > 0 
+	&& level.time < client->blockTime ) {
+		// BFP - NOTE: Approximate calculation of ki consumption while blocking
+		float blockCostPct = g_blockCostPct.integer * 0.1; // percentage of ki consumed per millisecond
+		float bCost = g_blockCost.integer > 0 ? g_blockCost.integer : 1; // absolute value of ki consumed per millisecond
+		float kiBlockConsume = bCost / (g_blockLength.integer * 1000.0);
+		float totalBlockConsume;
+		// random variable to make an approximate calculation of the ki consumption while using block
+		float rndkiConsume = rand() % 2;
+
+		// BFP - TODO: Implement random calculations correctly?
+		if ( crandom() > 0.5 && crandom() < 0.8 ) {
+			rndkiConsume = rand() % 1;
+		} else if ( crandom() > 0.2 && crandom() < 0.5 ) {
+			rndkiConsume = random() + 0.38;
+		}
+
+		// calculate total ki being consumed
+		totalBlockConsume = kiBlockConsume * (g_blockLength.integer * 1000.0) * rndkiConsume;
+
+		client->ps.stats[STAT_KI] -= totalBlockConsume;
+	}
+
+	// when the block length duration has been expired, then start the delay to avoid user 
+	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+	&& client->blockTime > 0 
+	&& level.time >= client->blockTime ) {
+		client->ps.pm_flags &= ~PMF_BLOCK;
+		client->blockTime = 0;
+		client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
+	}
+
+	// if the block length duration hasn't been expired yet and 
+	// pressing ki charge (if the aura is lighting) or attack buttons, then stop blocking and start the delay
+	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+	&& ( ( client->ps.pm_flags & PMF_KI_CHARGE )
+	|| ( ucmd->buttons & BUTTON_KI_CHARGE )
+	|| ( ucmd->buttons & BUTTON_ATTACK )
+	|| ( ucmd->buttons & BUTTON_MELEE ) ) ) {
+		client->ps.pm_flags &= ~PMF_BLOCK;
+		client->blockTime = 0;
+		client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
+	}
+
+	// debug print block length and delay duration
+#if 0
+	Com_Printf( "BLOCK LENGTH: %d\n", client->blockTime );
+	Com_Printf( "BLOCK DELAY: %d\n", client->blockDelayTime );
+#endif
+
+	// handle the delay and don't leave the user get away with it
+	if ( !( client->ps.pm_flags & PMF_BLOCK )
+	&& client->blockDelayTime > 0 
+	&& level.time < client->blockDelayTime ) {
+		client->blockTime = 0;
+		ucmd->buttons &= ~BUTTON_BLOCK; // if the user holds the key, when that ends, then immediately enters to this status again
+	}
+
+	// reset block delay time if expired
+	if ( !( client->ps.pm_flags & PMF_BLOCK )
+	&& client->blockDelayTime > 0
+	&& level.time >= client->blockDelayTime ) {
+		client->blockDelayTime = 0;
+	}
+}
+
+/*
 ============
 Zanzoken
 ============
@@ -902,86 +988,7 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 
 		// BFP - Block, reflect ki attacks and reduce health damage
-		// Block handling:
-		// Initialize the blocking and start the block length duration, specifically, ki boost and aura are disabled
-		if ( !( client->ps.pm_flags & PMF_BLOCK )
-		&& ( ucmd->buttons & BUTTON_BLOCK )
-		&& client->blockTime <= 0
-		&& client->blockDelayTime <= 0 ) {
-			client->ps.pm_flags |= PMF_BLOCK;
-			client->ps.powerups[PW_HASTE] = 0;
-			client->ps.eFlags &= ~EF_AURA;
-			ucmd->buttons &= ~BUTTON_KI_USE;
-			client->blockTime = level.time + (g_blockLength.integer * 1000);
-		}
-
-		// BFP - Blocking status. Ki energy is being consumed and ki boost can't be used
-		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& client->blockTime > 0 
-		&& level.time < client->blockTime ) {			
-			// BFP - NOTE: Approximate calculation of ki consumption while blocking
-			float blockCostPct = g_blockCostPct.integer * 0.1; // Percentage of ki consumed per millisecond
-			float bCost = g_blockCost.integer > 0 ? g_blockCost.integer : 1; // Absolute value of ki consumed per millisecond
-			float kiBlockConsume = bCost / (g_blockLength.integer * 1000.0);
-			float totalBlockConsume;
-			// Random variable to make an approximate calculation of the ki consumption while using block
-			float rndkiConsume = rand() % 2;
-
-			// BFP - TODO: Implement random calculations correctly?
-			if ( crandom() > 0.5 && crandom() < 0.8 ) {
-				rndkiConsume = rand() % 1;
-			} else if ( crandom() > 0.2 && crandom() < 0.5 ) {
-				rndkiConsume = random() + 0.38;
-			}
-
-			// Calculate total ki being consumed
-			totalBlockConsume = kiBlockConsume * (g_blockLength.integer * 1000.0) * rndkiConsume;
-
-			client->ps.stats[STAT_KI] -= totalBlockConsume;
-		}
-
-		// When the block length duration has been expired, then start the delay to avoid user 
-		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& client->blockTime > 0 
-		&& level.time >= client->blockTime ) {
-			client->ps.pm_flags &= ~PMF_BLOCK;
-			client->blockTime = 0;
-			client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
-		}
-
-		// If the block length duration hasn't been expired yet and 
-		// pressing ki charge (if the aura is lighting) or attack buttons, then stop blocking and start the delay
-		if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-		&& ( ( client->ps.pm_flags & PMF_KI_CHARGE )
-		|| ( ucmd->buttons & BUTTON_KI_CHARGE )
-		|| ( ucmd->buttons & BUTTON_ATTACK )
-		|| ( ucmd->buttons & BUTTON_MELEE ) ) ) {
-			client->ps.pm_flags &= ~PMF_BLOCK;
-			client->blockTime = 0;
-			client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
-		}
-
-		// Debug print block length and delay duration
-#if 0
-		Com_Printf( "BLOCK LENGTH: %d\n", client->blockTime );
-		Com_Printf( "BLOCK DELAY: %d\n", client->blockDelayTime );
-#endif
-
-		// Handle the delay and don't leave the user get away with it
-		if ( !( client->ps.pm_flags & PMF_BLOCK )
-		&& client->blockDelayTime > 0 
-		&& level.time < client->blockDelayTime ) {
-			client->blockTime = 0;
-			ucmd->buttons &= ~BUTTON_BLOCK; // If the user holds the key, when that ends, then immediately enters to this status again
-		}
-
-		// Reset block delay time if expired
-		if ( !( client->ps.pm_flags & PMF_BLOCK )
-		&& client->blockDelayTime > 0
-		&& level.time >= client->blockDelayTime ) {
-			client->blockDelayTime = 0;
-		}
-		// BFP - End of block handling
+		BlockHandling( client, ucmd );
 
 		// BFP - Melee handling
 		if ( !( ucmd->buttons & BUTTON_MELEE ) ) {
