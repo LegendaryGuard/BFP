@@ -48,7 +48,7 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
 - [ ] Power Struggles (when two beam attacks collide)
 - [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
-- [ ] Short-Range Teleport (when pressing 2 times left or right)
+- [x] ~~Short-Range Teleport - Zanzoken (when pressing 2 times left or right)~~
 - [ ] Transformations (related to Power Tiers)
 - [ ] Attacksets (configurable for cfgs)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. "Custom plugin models")

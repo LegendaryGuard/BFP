@@ -712,6 +712,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 	}
 
+	// BFP - Short-Range Teleport (Zanzoken)
+	case EV_ZANZOKEN:
+		DEBUGNAME("EV_ZANZOKEN");
+		trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/srteleport.wav" ) );
+		break;
+
 	// BFP - TODO: Implement EV_TIER_0-4 (Tiers)
 	case EV_TIER_0:
 		DEBUGNAME("EV_TIER_0");

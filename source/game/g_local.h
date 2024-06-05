@@ -321,6 +321,12 @@ struct gclient_s {
 	int			blockTime;
 	int			blockDelayTime;
 
+	// BFP - Zanzoken handlers
+	int			zanzokenPressTime;
+	qboolean	zanzokenNow;
+	qboolean	zanzokenLeft, zanzokenRight;
+	int			zanzokenNumberTimesAllowed;
+	int			zanzokenDelay;
 
 	char		*areabits;
 };

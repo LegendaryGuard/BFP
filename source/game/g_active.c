@@ -632,6 +632,148 @@ void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
 }
 
 /*
+============
+Zanzoken
+============
+*/
+qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (Zanzoken)
+	trace_t	tr;
+	vec3_t	right, up, start, direction;
+	int		startRightRange = ( range < 0 ) ? -10 : 10;
+
+	// set diagonal direction, included the up vector for upward detection
+	AngleVectors( ent->client->ps.viewangles, NULL, right, up );
+
+	// upward detection, avoid if the player is touching the surface above
+	VectorMA( ent->client->ps.origin, 10, up, start );
+	VectorMA( start, 100, up, direction );
+
+	trap_Trace( &tr, start, ent->r.mins, ent->r.maxs, direction, ent->s.number, MASK_PLAYERSOLID );
+	if ( tr.startsolid || tr.allsolid ) {
+		return qfalse;
+	}
+
+	// if there's something solid diagonally, then avoid the teleportation
+	VectorMA( ent->client->ps.origin, startRightRange, right, start );
+	VectorMA( ent->client->ps.origin, range, right, direction );
+
+	trap_Trace( &tr, start, ent->r.mins, ent->r.maxs, direction, ent->s.number, MASK_PLAYERSOLID );
+	if ( tr.startsolid || tr.allsolid ) {
+		return qfalse;
+	}
+
+	// TELEPORT!
+	VectorCopy( tr.endpos, ent->client->ps.origin );
+
+	// sound event
+	G_AddEvent( ent, EV_ZANZOKEN, 0 );
+
+	return qtrue;
+}
+
+/*
+=================
+ZanzokenHandling
+=================
+*/
+#define ZANZOKEN_NUMBER_TIMES_ALLOWED	20
+#define ZANZOKEN_ABUSE_DELAY			2000
+static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handling short-range teleport
+	// zanzoken cannot be used with ki charging status
+	if ( !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+		// restriction: stop abusing zanzoken technique all time
+		if ( ent->client->zanzokenNumberTimesAllowed >= ZANZOKEN_NUMBER_TIMES_ALLOWED ) {
+			ent->client->zanzokenNumberTimesAllowed = 0;
+			ent->client->zanzokenDelay = level.time;
+			return;
+		}
+		if ( ent->client->zanzokenDelay > 0
+		&& level.time - ent->client->zanzokenDelay <= ZANZOKEN_ABUSE_DELAY ) {
+			return;
+		}
+
+		if ( ucmd->rightmove && ent->client->zanzokenPressTime <= 0 ) {
+			ent->client->zanzokenPressTime = level.time;
+			ent->client->zanzokenNow = qfalse;
+			// handle directions to avoid pressing the opposite
+			if ( ucmd->rightmove > 0 ) {
+				ent->client->zanzokenLeft = qfalse;
+				ent->client->zanzokenRight = qtrue;
+			} else {
+				ent->client->zanzokenLeft = qtrue;
+				ent->client->zanzokenRight = qfalse;
+			}
+		}
+
+		// once pressed and having one moment to press again, zanzoken will be possible at these milliseconds
+		if ( !ucmd->rightmove 
+		&& level.time - ent->client->zanzokenPressTime > 100
+		&& level.time - ent->client->zanzokenPressTime <= 250
+		&& !ent->client->zanzokenNow ) {
+			ent->client->zanzokenNow = qtrue;
+			ent->client->zanzokenNumberTimesAllowed++;
+		}
+
+		if ( !ucmd->rightmove 
+		&& level.time - ent->client->zanzokenPressTime > 250 ) {
+			ent->client->zanzokenNumberTimesAllowed = 0;
+			ent->client->zanzokenPressTime = 0;
+			ent->client->zanzokenNow = qfalse;
+			ent->client->zanzokenLeft = qfalse;
+			ent->client->zanzokenRight = qfalse;
+			return;
+		}
+
+		// BFP - TODO: Zanzoken ki consume looks relative to powerlevel and the maximum ki quantity 
+		// (so, if it's 8160 as ki max quantity, then consumes 408)
+		if ( ent->client->ps.stats[STAT_KI] > 408
+		&& ucmd->rightmove
+		&& ent->client->zanzokenNow ) {
+			int	range = ( ucmd->rightmove > 0 ) ? 500 : -500;
+
+			// handle the directions correctly
+			if ( ucmd->rightmove > 0 && !ent->client->zanzokenRight ) {
+				ent->client->zanzokenLeft = qfalse;
+				ent->client->zanzokenRight = qfalse;
+				return;
+			}
+			if ( ucmd->rightmove < 0 && !ent->client->zanzokenLeft ) {
+				ent->client->zanzokenLeft = qfalse;
+				ent->client->zanzokenRight = qfalse;
+				return;
+			}
+
+			// put in 1 second delay before the player can 'zanzoken' out of stun
+			if ( ( ent->client->ps.pm_flags & PMF_HITSTUN )
+			&& ent->client->ps.pm_time > 2000 ) {
+				ent->client->zanzokenPressTime = 0;
+				ent->client->zanzokenNow = qfalse;
+				ent->client->zanzokenLeft = qfalse;
+				ent->client->zanzokenRight = qfalse;
+				return;
+			}
+
+			if ( Zanzoken( ent, range ) ) {
+				// block and stun statuses are removed when using zanzoken
+				if ( ( ent->client->ps.pm_flags & PMF_HITSTUN )
+				&& ent->client->ps.pm_time <= 2000 ) {
+					ent->client->ps.pm_flags &= ~PMF_HITSTUN;
+					ent->client->ps.pm_time = 0;
+				}
+				ent->client->ps.pm_flags &= ~PMF_BLOCK;
+				ent->client->ps.stats[STAT_KI] -= 408;
+				ent->client->zanzokenPressTime = 0;
+				ent->client->zanzokenNow = qfalse;
+				ent->client->zanzokenLeft = qfalse;
+				ent->client->zanzokenRight = qfalse;
+			}
+		}
+	}
+}
+#undef ZANZOKEN_NUMBER_TIMES_ALLOWED
+#undef ZANZOKEN_ABUSE_DELAY
+
+/*
 ==============
 ClientThink
 
@@ -732,6 +874,10 @@ void ClientThink_real( gentity_t *ent ) {
 	client->ps.speed = g_speed.value;
 
 	if ( client->ps.pm_type != PM_DEAD && client->ps.pm_type != PM_SPECTATOR ) {
+		
+		// BFP - Short-Range Teleport (Zanzoken)
+		ZanzokenHandling( ent, ucmd );
+
 		// BFP - Hit stun melee delay time
 		if ( client->hitStunMeleeDelayTime > 0 
 		&& level.time >= client->hitStunMeleeDelayTime ) {

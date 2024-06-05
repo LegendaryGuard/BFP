@@ -361,6 +361,8 @@ typedef enum {
 	EV_MELEE_READY, // BFP - EV_MELEE_READY (10), preparing melee
 	EV_MELEE, // BFP - EV_MELEE (11), melee attack
 
+	EV_ZANZOKEN, // BFP - EV_ZANZOKEN (maybe 12?), ki teleport
+
 	// EV_TIER_RESET, // EV_TIER_RESET (13), reset tier when the player respawns and changes to the default or a bit less ki energy?
 
 	// BFP - EV_TIER_0-4 (14-18), when the player frags, increases their PL and obtains a new skill (in the last tier, transforms)
