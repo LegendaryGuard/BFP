@@ -2298,12 +2298,6 @@ void CG_Player( centity_t *cent ) {
 		head.hModel = 0; // 0: no head model display, display pivot only
 	}
 
-	// BFP - First person vis mode doesn't have head model to be displayed
-	if ( cg_drawOwnModel.integer >= 1 && cg_thirdPerson.integer <= 0
-	&& clientNum == cg.snap->ps.clientNum
-	&& !( cent->currentState.eFlags & EF_DEAD ) ) {
-		head.hModel = 2; // 2: no head model display and no pivot display
-	}
 	head.customSkin = ci->headSkin;
 
 	// BFP - Super Deformed (Chibi style) easter egg for the head model
@@ -2317,6 +2311,13 @@ void CG_Player( centity_t *cent ) {
 
 	head.shadowPlane = shadowPlane;
 	head.renderfx = renderfx;
+
+	// BFP - First person vis mode doesn't have head model to be displayed
+	if ( cg_drawOwnModel.integer >= 1 && cg_thirdPerson.integer <= 0
+	&& clientNum == cg.snap->ps.clientNum
+	&& !( cent->currentState.eFlags & EF_DEAD ) ) {
+		memset( &head, 0, sizeof(head) );
+	}
 
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team );
 
@@ -2490,7 +2491,17 @@ void CG_Player( centity_t *cent ) {
 	// BFP - First person camera setup
 	if ( cg_thirdPerson.integer <= 0 
 	&& clientNum == cg.snap->ps.clientNum ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
-		CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
+		static vec3_t	deadOriginDrawOwnModel;
+
+		if ( !( cent->currentState.eFlags & EF_DEAD ) ) {
+			// BFP - Set dead origin where the player was alive when First person vis mode is being used
+			VectorCopy( cg.refdef.vieworg, deadOriginDrawOwnModel );
+			CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
+		} else if ( cg.snap->ps.stats[STAT_HEALTH] <= 0
+		&& ( cent->currentState.eFlags & EF_DEAD ) ) {
+			VectorCopy( deadOriginDrawOwnModel, cg.refdef.vieworg );
+			cg.refdefViewAngles[YAW] = cg.snap->ps.stats[STAT_DEAD_YAW];
+		}
 	}
 }
 #undef MODEL_SIZE
