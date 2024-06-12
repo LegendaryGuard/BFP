@@ -125,7 +125,7 @@ static int	numShaderAnims;
 // done.
 
 #define		PARTICLE_GRAVITY	40
-#define		MAX_PARTICLES	1024 * 8
+#define		MAX_PARTICLES	1024 * 3
 
 static cparticle_t	*active_particles, *free_particles;
 static cparticle_t	particles[MAX_PARTICLES];
@@ -934,7 +934,7 @@ void CG_AddParticles (void)
 	active_particles = active;
 }
 
-void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range, int snum)
+void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range)
 {
 	cparticle_t	*p;
 
@@ -970,20 +970,24 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		p->endtime = timenonscaled + turbtime;
 		p->height = p->width = (rand() % 1) + 2;
 
-		p->org[0] += (rand() % (int)range) + (crandom() * range);
-		p->org[1] += (rand() % (int)range) + (crandom() * range);
+		p->org[0] += (crandom() * range);
+		p->org[1] += (crandom() * range);
 		p->org[2] += (rand() % (int)20);
 
 		VectorSet( p->vel, 
-				(rand() % 401) - 200,
-				(rand() % 401) - 200,
-				20 );
+				(rand() % 521) - 250,
+				(rand() % 521) - 250,
+				30 * (rand() % (int)range) );
 
 		// dispersion
 		VectorSet( p->accel, 
 				crandom() * 10, 
 				crandom() * 10, 
-				300 );
+				20 * (rand() % (int)range) );
+
+		// avoid if both upwards are zero or less
+		if ( p->vel[2] <= 0 ) p->vel[2] = 10 + (rand() % (int)range);
+		if ( p->accel[2] <= 0 ) p->accel[2] = 10 + (rand() % (int)range);
 	}
 	else
 	{
@@ -1014,6 +1018,7 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 	trace_t		trace;
 	vec3_t		start, end;
 	int			contents;
+	int			i;
 
 	VectorCopy( org, end );
 	end[2] -= 15;
@@ -1021,45 +1026,49 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 	VectorCopy( org, start );
 	start[2] += 10;
 
-	// BFP - Make move less
-	if ( p->vel[0] > -0.9 && p->vel[0] < 0.9 ) p->vel[0] = 0;
-	if ( p->vel[1] > -0.9 && p->vel[1] < 0.9 ) p->vel[1] = 0;
-	if ( p->vel[0] != 0 ) p->vel[0] *= 0.99;
-	if ( p->vel[1] != 0 ) p->vel[1] *= 0.99;
+	// decelerate
+	for (i = 0; i < 2; ++i) {
+		if (fabs(p->vel[i]) > 0) {
+			p->vel[i] *= 0.99;
+		}
+	}
 
-	// Decelerate
-	if ( p->accel[2] > 0 ) p->accel[2]--;
+	for (i = 0; i < 2; ++i) {
+		if (fabs(p->accel[i]) > 0) {
+			p->accel[i] *= 0.99;
+		}
+	}
 
 	// trace down to find the surface
 	trap_CM_BoxTrace( &trace, start, end, vec3_origin, vec3_origin, 0, CONTENTS_WATER );
 
 	// if the particle is touching something solid, it will skip instead stopping
-	contents = trap_CM_PointContents( start, 0 );
+	contents = trap_CM_PointContents( trace.endpos, 0 );
 	if ( contents & (CONTENTS_WATER | CONTENTS_SOLID) ) {
 		return;
 	}
 
-	contents = trap_CM_PointContents( trace.endpos, 0 );
 	if ( !( contents & CONTENTS_WATER ) ) {
 		p->time = timenonscaled;
 		VectorCopy (trace.endpos, p->org);
 		p->org[2] = trace.endpos[2] - p->snum;
 
+		// stop going up and decrease dispersion speed
+		p->vel[2] = 0;
+		VectorClear( p->accel );
+
 		// trace again if the bubble went outside, then set it near to the surface
 		contents = trap_CM_PointContents( p->org, 0 );
 		if ( !( contents & CONTENTS_WATER ) ) {
-			p->org[2] = trace.endpos[2];
+			VectorCopy (trace.endpos, p->org);
 		}
-
-		// BFP - Stop going up and decrease dispersion speed
-		p->vel[2] = 0;
-		VectorClear( p->accel );
-		
-		// BFP - Make move less
-		if ( p->vel[0] >= -1 && p->vel[0] <= 0.9 ) p->vel[0] = 0;
-		else p->vel[0] *= 0.9;
-		if ( p->vel[1] >= -1 && p->vel[1] <= 0.9 ) p->vel[1] = 0;
-		else p->vel[1] *= 0.9;
+		if ( p->type == P_BUBBLE ) {
+			if ( p->vel[0] != 0 ) p->vel[0] *= 0.9;
+			if ( p->vel[1] != 0 ) p->vel[1] *= 0.9;
+		} else {
+			if ( p->vel[0] != 0 ) p->vel[0] *= 0.99;
+			if ( p->vel[1] != 0 ) p->vel[1] *= 0.99;
+		}
 	}
 }
 
@@ -1152,7 +1161,7 @@ void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin)
 	p->alpha = 1;
 	p->alphavel = 0;
 	p->pshader = pshader;
-	p->height = p->width = 2 + (crandom() * 0.5);
+	p->height = p->width = (rand() % 2) + 2;
 	p->type = P_ANTIGRAV_ROCK;
 
 	VectorCopy( origin, p->org );
@@ -1164,14 +1173,14 @@ void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin)
 	// maybe BFP used to debug the client side visual of the other player with this top limit
 	p->end = (cent->currentState.clientNum != cg.snap->ps.clientNum) 
 		? p->org[2] + 130 + (crandom() * 10)
-		: p->org[2] + 170 + (crandom() * 10);
+		: p->org[2] + 200 + (crandom() * 10);
 
 	p->vel[0] = 0;
 	p->vel[1] = 0;
 	// maybe BFP used to debug the client side visual of the other player with this velocity
 	p->vel[2] = (cent->currentState.clientNum != cg.snap->ps.clientNum) 
 		? 200
-		: 470;
+		: 450;
 
 	p->accel[0] = 0;
 	p->accel[1] = 0;
@@ -1196,6 +1205,7 @@ void CG_AntigravRockHandling (centity_t *cent)
 		if (p->type == P_ANTIGRAV_ROCK)
 		{
 			if ( cent->currentState.clientNum == cg.snap->ps.clientNum
+			&& !( cent->currentState.eFlags & EF_DEAD )
 			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE )
 			{
 				// BFP - Make each particle fall when they aren't on ki charging status
@@ -1209,6 +1219,7 @@ void CG_AntigravRockHandling (centity_t *cent)
 			// to correct the client side visuals in this case
 			if ( cent->currentState.clientNum != cg.snap->ps.clientNum
 			&& ( cent->currentState.eFlags & EF_AURA )
+			&& !( cent->currentState.eFlags & EF_DEAD )
 			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE
 			&& !p->snum ) { // use p->snum to handle the client side visual of the other player
 				p->link = qfalse; // keep this way, otherwise the rocks fall

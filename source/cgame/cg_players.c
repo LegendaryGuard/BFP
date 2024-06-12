@@ -1859,7 +1859,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	vec3_t		end, mins = {-15, -15, 0}, maxs = {15, 15, 2};
 	trace_t		trace, waterTrace; // BFP - Trace for the water
 	float		alpha;
-	int			contents; // BFP - To detect if there is water or lava
+	int			contents, waterContents; // BFP - To detect if there is water or lava
 
 	*shadowPlane = 0;
 
@@ -1888,15 +1888,17 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 			}
 
 			waterTrace.endpos[2] -= 20; // BFP - Put a bit down to make the bubbles move
-			if ( waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10, 0 );
+			if ( ( contents & CONTENTS_WATER ) 
+			&& waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10 );
 			}
 		}
 
+		waterContents = CG_PointContents( cent->lerpOrigin, -1 ); // BFP - Detect if the player is entirely under water
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // BFP - Antigrav rock particles on ki charging status
-			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+			if ( !( waterContents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
 			// if the player isn't moving 
 			&& !cent->currentState.pos.trDelta[0] 
 			&& !cent->currentState.pos.trDelta[1] 
@@ -2398,19 +2400,19 @@ void CG_Player( centity_t *cent ) {
 
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -7; // put the origin a little below
 
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20, 0 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
 			}
 		}
 
@@ -2441,7 +2443,7 @@ void CG_Player( centity_t *cent ) {
 		// trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), 1.0, 1.0, 0 );
 
 		// Apply light blinking
-		if ( ci->team == TEAM_BLUE) {
+		if ( ci->team == TEAM_BLUE ) {
 			aura.customShader = aura2.customShader = cgs.media.auraBlueShader;
 			AURA_LIGHT( 0.2f, 0.2f, 1.0 )
 		} else {
