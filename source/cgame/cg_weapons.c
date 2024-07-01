@@ -1578,6 +1578,11 @@ void CG_FireWeapon( centity_t *cent ) {
 		}
 	}
 
+	// BFP - Just testing, WP_SHOTGUN treated as ki explosion example
+	if ( ent->weapon == WP_SHOTGUN ) {
+		return;
+	}
+
 	// play quad sound if needed
 	if ( cent->currentState.powerups & ( 1 << PW_QUAD ) ) {
 		trap_S_StartSound (NULL, cent->currentState.number, CHAN_ITEM, cgs.media.quadSound );

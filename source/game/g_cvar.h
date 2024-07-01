@@ -67,7 +67,7 @@ G_CVAR( g_allowSpectatorChat, "g_allowSpectatorChat", "", 0, 0, qtrue ) // BFP -
 G_CVAR( g_meleeDamage, "g_meleeDamage", "10", CVAR_ARCHIVE, 0, qtrue ) // BFP - Melee damage
 G_CVAR( g_meleeDiveRange, "g_meleeDiveRange", "700", CVAR_ARCHIVE, 0, qtrue ) // BFP - Melee dive range
 G_CVAR( g_meleeRange, "g_meleeRange", "32", CVAR_ARCHIVE, 0, qtrue ) // BFP - Melee range
-G_CVAR( g_chargeDelay, "g_chargeDelay", "750", 0, 0, qtrue ) // BFP - Charge delay
+G_CVAR( g_chargeDelay, "g_chargeDelay", "750", CVAR_ARCHIVE, 0, qtrue ) // BFP - Charge delay
 G_CVAR( g_hitStun, "g_hitStun", "", 0, 0, qtrue ) // BFP - Hit stun
 G_CVAR( g_meleeOnly, "g_meleeOnly", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qtrue ) // BFP - Melee only
 G_CVAR( g_noFlight, "g_noFlight", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qtrue ) // BFP - No flight

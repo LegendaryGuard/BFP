@@ -718,6 +718,27 @@ static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block
 }
 
 /*
+=================
+MeleeHandling
+=================
+*/
+static void MeleeHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // BFP - Melee
+	gclient_t	*client;
+
+	client = ent->client;
+
+	if ( !( ucmd->buttons & BUTTON_MELEE ) ) {
+		client->ps.pm_flags &= ~PMF_MELEE;
+	}
+
+	if ( !( ucmd->buttons & BUTTON_TALK ) && ( ucmd->buttons & BUTTON_MELEE )
+	&& !( client->ps.pm_flags & PMF_KI_CHARGE )
+	&& client->ps.weaponTime <= 0 ) {
+		pm->gauntletHit = CheckMeleeAttack( ent );
+	}
+}
+
+/*
 ============
 Zanzoken
 ============
@@ -765,8 +786,10 @@ ZanzokenHandling
 #define ZANZOKEN_NUMBER_TIMES_ALLOWED	20
 #define ZANZOKEN_ABUSE_DELAY			2000
 static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handling short-range teleport
-	// zanzoken cannot be used with ki charging status
-	if ( !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+	// zanzoken cannot be used with ki charging status and using explosion wave even while being stun after using explosion wave
+	if ( !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) 
+	&& ( ent->client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
+		&& ent->client->ps.weaponstate != WEAPON_STUN ) ) {
 		// restriction: stop abusing zanzoken technique all time
 		if ( ent->client->zanzokenNumberTimesAllowed >= ZANZOKEN_NUMBER_TIMES_ALLOWED ) {
 			ent->client->zanzokenNumberTimesAllowed = 0;
@@ -858,6 +881,209 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 }
 #undef ZANZOKEN_NUMBER_TIMES_ALLOWED
 #undef ZANZOKEN_ABUSE_DELAY
+
+/*
+=================
+KiAttackWeaponHandling
+=================
+*/
+#define ATTACK_CHARGE_LIMIT 6	// BFP - Ki attack charge limit
+// BFP - TODO: Use pmove_t variable to handle the ki attacks and send the info to bg_pmove.c
+static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) {
+	gclient_t	*client;
+	int			addTime;
+
+	client = ent->client;
+
+	// BFP - Hit stun, avoid shooting if the player is in this status
+	if ( client->ps.pm_flags & PMF_HITSTUN ) {
+		return;
+	}
+
+#define KI_CONSUME(addTime, kiconsume) \
+	client->ps.stats[STAT_KI] -= kiconsume; \
+	client->ps.weaponTime += addTime;
+
+#define CHARGE_KI_ATTACK_STATE(minCharge, maxCharge, addTime, kiconsume) \
+	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < maxCharge ) { \
+		++client->ps.stats[STAT_KI_ATTACK_CHARGE]; \
+	} \
+	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] >= minCharge ) { \
+		client->ps.stats[STAT_READY_KI_ATTACK] = qtrue; \
+	} \
+	KI_CONSUME( addTime, kiconsume )
+
+	// Weapon states, Q3 doesn't have this way
+	switch( client->ps.weaponstate ) {
+	case WEAPON_READY:
+		client->ps.stats[STAT_READY_KI_ATTACK] = qfalse;
+		if ( client->ps.weaponTime <= 0 ) {
+			// check for fire
+			if ( ucmd->buttons & BUTTON_ATTACK ) {
+
+				// BFP - NOTE: These are just examples of ki charging and shooting,
+				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNINGGUN to keep the continuous shooting animations
+				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
+				// - WP_SHOTGUN is used as example of ki explosion wave
+				// - WP_PLASMAGUN is used as example of dividing ki ball
+				// - WP_BFG is used as example of ki beam
+				switch( client->ps.weapon ) {
+				case WP_SHOTGUN: // add time to handle ki explosion wave animation
+					client->ps.weaponTime += 700;
+					break;
+				case WP_LIGHTNING: // only play once this sound for ki attacks like eyebeam
+					G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
+					break;
+				case WP_GRENADE_LAUNCHER:
+				case WP_PLASMAGUN:
+				case WP_BFG:
+				default: 
+					break;
+				}
+			}
+		}
+		if ( !( ucmd->buttons & BUTTON_ATTACK ) ) {
+			// BFP - When the ki attack is fully charged, enter beam firing state
+			// or enter dividing ki ball firing state if it's a dividing ki ball
+
+			// BFP - TODO: Apply minCharge and maxCharge from reading bfp_weapon.cfg 
+			switch( client->ps.weapon ) {
+			case WP_GRENADE_LAUNCHER:
+				break;
+			case WP_PLASMAGUN:
+				break;
+			case WP_BFG:
+				break;
+			}
+		}
+		break;
+	case WEAPON_DROPPING:
+	case WEAPON_RAISING:
+		break;
+	case WEAPON_CHARGING:
+		// BFP - Shoot the projectile or beam already charged surpassing the minimum
+		if ( !( ucmd->buttons & BUTTON_ATTACK ) ) {
+			client->ps.stats[STAT_READY_KI_ATTACK] = qfalse;
+			// no fully charged, skip...
+			// BFP - TODO: Apply minCharge in that condition also
+			if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < 2 ) {
+				client->ps.weaponstate = WEAPON_READY;
+				break;
+			}
+			// Fire and make a sound
+			FireWeapon( ent );
+			G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
+
+			// Handle the animation for the start of beam or ball shoot
+			switch( client->ps.weapon ) {
+			case WP_GRENADE_LAUNCHER: 
+			case WP_BFG: 
+				client->ps.weaponTime += 500;
+			}
+		}
+
+		if ( client->ps.weaponTime <= 0 ) {
+			// check for fire
+			if ( ucmd->buttons & BUTTON_ATTACK ) {
+
+				// BFP - NOTE: These are just examples of ki charging and shooting,
+				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNING to keep the continuous shooting animations
+				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
+				// - WP_SHOTGUN is used as example of ki explosion wave
+				// - WP_PLASMAGUN is used as example of dividing ki ball
+				// - WP_BFG is used as example of ki beam
+
+				// BFP - TODO: Also? Apply minCharge and maxCharge from reading bfp_weapon.cfg 
+				switch( client->ps.weapon ) {
+				case WP_GRENADE_LAUNCHER:
+					CHARGE_KI_ATTACK_STATE( 2, 2, 700, 20 )
+					break;
+				case WP_PLASMAGUN:
+					CHARGE_KI_ATTACK_STATE( 2, ATTACK_CHARGE_LIMIT, 1000, 120 )
+					client->divideBallKiCharged = client->ps.stats[STAT_KI_ATTACK_CHARGE];
+					break;
+				case WP_BFG:
+					CHARGE_KI_ATTACK_STATE( 2, ATTACK_CHARGE_LIMIT, 1000, 20 )
+					break;
+				default: 
+					break;
+				}
+			}
+		}
+		break;
+	case WEAPON_FIRING:
+		if ( ucmd->buttons & BUTTON_ATTACK ) {
+			if ( client->ps.weaponTime <= 0
+			&& client->ps.weapon != WP_LIGHTNING ) {
+				client->ps.pm_flags &= ~PMF_KI_ATTACK;
+			}
+
+#define KI_CONSUME_ADDTIME(weptime, kiconsume) \
+	addTime = weptime; \
+	client->ps.stats[STAT_KI] -= kiconsume;
+
+			switch( client->ps.weapon ) {
+			default:
+			case WP_MACHINEGUN:
+				FireWeapon( ent );
+				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
+				KI_CONSUME_ADDTIME( 100, 10 )
+				break;
+			case WP_ROCKET_LAUNCHER:
+				FireWeapon( ent );
+				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
+				KI_CONSUME_ADDTIME( 800, 50 )
+				break;
+			case WP_LIGHTNING:
+				if ( client->ps.weaponTime <= 0 ) {
+					FireWeapon( ent );
+					KI_CONSUME_ADDTIME( 50, 70 )
+				}
+				break;
+			case WP_RAILGUN:
+				FireWeapon( ent );
+				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
+				KI_CONSUME_ADDTIME( 1500, 150 )
+				break;
+			}
+
+			client->ps.weaponTime += addTime;
+		}
+		break;
+	// BFP - NOTE: The beam is triggering until pressing the attack key again after holded, using ki charge or blocking
+	// Pressing attack key again or changing weapon, the beam is exploded before the impact
+	case WEAPON_BEAMFIRING:
+		break;
+	// BFP - NOTE: That happens when the player uses a quick ki explosion themself or a homing ki ball is being triggered
+	case WEAPON_EXPLODING_KIBALLFIRING:
+		break;
+	// BFP - NOTE: The dividing ki ball is triggering until pressing the attack key again after holded or changing weapon
+	case WEAPON_DIVIDINGKIBALLFIRING:
+		if ( ucmd->buttons & BUTTON_ATTACK ) {
+			KI_CONSUME( 0, 120 )
+		}
+		break;
+	// BFP - NOTE: That ki explosion wave is triggering until stop pressing the attack key or changing weapon,
+	// also when stopped enters in WEAPON_STUN state in 1 sec
+	case WEAPON_KIEXPLOSIONWAVE:
+		if ( client->ps.weaponTime <= 0 ) {
+			KI_CONSUME( 200, 20 )
+			if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < ATTACK_CHARGE_LIMIT ) {
+				++client->ps.stats[STAT_KI_ATTACK_CHARGE];
+			}
+		}
+
+		// fall even whether the player is flying
+		//client->ps.velocity[2] -= client->ps.gravity * pml.frametime;
+		break;
+	// BFP - NOTE: This stun state makes the player can't move in 1 sec, it's different from "hit stun"
+	case WEAPON_STUN:
+		break;
+	}
+}
+#undef KI_CONSUME
+#undef CHARGE_KI_ATTACK_STATE
+#undef KI_CONSUME_ADDTIME
 
 /*
 ==============
@@ -959,57 +1185,6 @@ void ClientThink_real( gentity_t *ent ) {
 	// set speed
 	client->ps.speed = g_speed.value;
 
-	if ( client->ps.pm_type != PM_DEAD && client->ps.pm_type != PM_SPECTATOR ) {
-		
-		// BFP - Short-Range Teleport (Zanzoken)
-		ZanzokenHandling( ent, ucmd );
-
-		// BFP - Hit stun melee delay time
-		if ( client->hitStunMeleeDelayTime > 0 
-		&& level.time >= client->hitStunMeleeDelayTime ) {
-			client->hitStunMeleeDelayTime = 0;
-		}
-
-		// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
-		if ( !( client->ps.pm_flags & PMF_HITSTUN )
-		&& !( client->ps.pm_flags & PMF_BLOCK )
-		&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
-		|| client->ps.powerups[PW_HASTE] > 0 ) ) { // BFP - When "kiusetoggle" is binded, enables/disables
-			if ( client->ps.powerups[PW_FLIGHT] <= 0 ) {
-				client->ps.speed *= 2.5;
-			}
-			client->ps.powerups[PW_HASTE] = 1; // Handle ki boost status
-			client->ps.eFlags |= EF_AURA;
-		} else {
-			if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
-				client->ps.eFlags &= ~EF_AURA;
-				client->ps.powerups[PW_HASTE] = 0; // Handle ki boost status
-			}
-		}
-
-		// BFP - Block, reflect ki attacks and reduce health damage
-		BlockHandling( client, ucmd );
-
-		// BFP - Melee handling
-		if ( !( ucmd->buttons & BUTTON_MELEE ) ) {
-			client->ps.pm_flags &= ~PMF_MELEE;
-		}
-
-		// BFP - Ki Charge
-		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
-		&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
-			client->ps.eFlags |= EF_AURA;
-		}
-
-		if ( client->ps.powerups[PW_FLIGHT] > 0 ) { // BFP - Flight speed
-			client->ps.speed *= 2;
-		}
-		// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
-
-		// BFP - Enable flight
-		FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
-	}
-
 // BFP - no hook
 #if 0
 	// Let go of the hook if we aren't firing
@@ -1024,22 +1199,64 @@ void ClientThink_real( gentity_t *ent ) {
 
 	memset (&pm, 0, sizeof(pm));
 
-// BFP - No gauntlet hit check
-#if 0
-	// check for the hit-scan gauntlet, don't let the action
-	// go through as an attack unless it actually hits something
-	if ( client->ps.weapon == WP_GAUNTLET && !( ucmd->buttons & BUTTON_TALK ) &&
-		( ucmd->buttons & BUTTON_ATTACK ) && client->ps.weaponTime <= 0 ) {
-		pm.gauntletHit = CheckGauntletAttack( ent );
-	}
-#endif
+	if ( client->ps.pm_type != PM_DEAD && client->ps.pm_type != PM_SPECTATOR ) {
+		
+		// BFP - Short-Range Teleport (Zanzoken)
+		ZanzokenHandling( ent, ucmd );
 
-	// BFP - Melee
-	if ( !( ucmd->buttons & BUTTON_TALK ) && ( ucmd->buttons & BUTTON_MELEE )
-	&& !( client->ps.pm_flags & PMF_KI_CHARGE )
-	&& client->ps.weaponTime <= 0
-	&& client->ps.pm_type != PM_DEAD ) {
-		pm.gauntletHit = CheckMeleeAttack( ent );
+		// BFP - Ki attack handling (as weapon handling)
+		KiAttackWeaponHandling( ent, ucmd, &pm );
+
+		// BFP - Hit stun melee delay time
+		if ( client->hitStunMeleeDelayTime > 0 
+		&& level.time >= client->hitStunMeleeDelayTime ) {
+			client->hitStunMeleeDelayTime = 0;
+		}
+
+		// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
+		if ( !( client->ps.pm_flags & PMF_HITSTUN )
+		&& !( client->ps.pm_flags & PMF_BLOCK )
+		&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
+			|| client->ps.powerups[PW_HASTE] > 0 ) // BFP - When "kiusetoggle" is binded, enables/disables
+		&& ( client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
+			&& client->ps.weaponstate != WEAPON_STUN ) ) {
+			if ( client->ps.powerups[PW_FLIGHT] <= 0 ) {
+				client->ps.speed *= 2.5;
+			}
+			client->ps.powerups[PW_HASTE] = 1; // Handle ki boost status
+			client->ps.eFlags |= EF_AURA;
+		} else {
+			if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
+				client->ps.eFlags &= ~EF_AURA;
+				client->ps.powerups[PW_HASTE] = 0; // Handle ki boost status
+			}
+
+			// BFP - g_chargeDelay cvar for ki charge animation and appearing the aura after this time
+			if ( ( ucmd->buttons & BUTTON_KI_CHARGE )  
+			&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+				client->ps.pm_time = ( g_chargeDelay.integer > 0 ) ? g_chargeDelay.integer : 0;
+			}
+		}
+
+		// BFP - Block, reflect ki attacks and reduce health damage
+		BlockHandling( client, ucmd );
+
+		// BFP - Melee handling
+		MeleeHandling( ent, ucmd, &pm );
+
+		// BFP - Ki Charge
+		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
+		&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+			client->ps.eFlags |= EF_AURA;
+		}
+
+		if ( client->ps.powerups[PW_FLIGHT] > 0 ) { // BFP - Flight speed
+			client->ps.speed *= 2;
+		}
+		// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
+
+		// BFP - Enable flight
+		FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 	}
 
 	if ( ent->flags & FL_FORCE_GESTURE ) {

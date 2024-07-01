@@ -1775,6 +1775,35 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 
 /*
 ===============
+CG_KiAttackSounds
+===============
+*/
+static void CG_KiAttackSounds( centity_t *cent ) { // BFP - Ki attack sounds
+	switch ( cg.predictedPlayerState.weaponstate ) {
+	case WEAPON_KIEXPLOSIONWAVE:
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			vec3_origin, cgs.media.defaultKiBeamExplosionWaveSound );
+		break;
+	case WEAPON_BEAMFIRING:
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			vec3_origin, cgs.media.defaultKiBeamExplosionWaveSound );
+		break;
+	case WEAPON_FIRING:
+		// ki attacks like eyebeam shouldn't use that kind of firing sound
+		if ( cg.predictedPlayerState.weapon != WP_LIGHTNING ) {
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+				vec3_origin, cgs.media.defaultKiFiringAttackSound );
+		}
+		break;
+	case WEAPON_CHARGING:
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			vec3_origin, cgs.media.defaultKiChargingSound );
+	}
+}
+
+
+/*
+===============
 CG_PlayerFloatSprite
 
 Float a sprite over the player's head
@@ -2404,7 +2433,7 @@ void CG_Player( centity_t *cent ) {
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
-				bubbleOrigin[2] += -7; // put the origin a little below
+				bubbleOrigin[2] += -3; // put the origin a little below
 
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
@@ -2482,6 +2511,9 @@ void CG_Player( centity_t *cent ) {
 		}
 	}
 
+	// BFP - Ki attack sounds
+	CG_KiAttackSounds( cent );
+
 	//
 	// add the gun / barrel / flash
 	//
@@ -2500,7 +2532,8 @@ void CG_Player( centity_t *cent ) {
 			VectorCopy( cg.refdef.vieworg, deadOriginDrawOwnModel );
 			CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
 		} else if ( cg.snap->ps.stats[STAT_HEALTH] <= 0
-		&& ( cent->currentState.eFlags & EF_DEAD ) ) {
+		&& ( cent->currentState.eFlags & EF_DEAD )
+		&& cg_drawOwnModel.integer >= 1 ) { // BFP - Death camera only for First person vis
 			VectorCopy( deadOriginDrawOwnModel, cg.refdef.vieworg );
 			cg.refdefViewAngles[YAW] = cg.snap->ps.stats[STAT_DEAD_YAW];
 		}

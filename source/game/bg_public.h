@@ -136,7 +136,13 @@ typedef enum {
 	WEAPON_READY, 
 	WEAPON_RAISING,
 	WEAPON_DROPPING,
-	WEAPON_FIRING
+	WEAPON_CHARGING, // BFP - Ki attack charging
+	WEAPON_FIRING,
+	WEAPON_BEAMFIRING, // BFP - Beam fire
+	WEAPON_EXPLODING_KIBALLFIRING, // BFP - Quick ki explosion and homing ball fire
+	WEAPON_DIVIDINGKIBALLFIRING, // BFP - Dividing ball fire
+	WEAPON_KIEXPLOSIONWAVE, // BFP - Ki explosion wave
+	WEAPON_STUN // BFP - Stun status (not hit stun) when using ki explosion wave
 } weaponstate_t;
 
 // pmove->pm_flags
@@ -154,6 +160,7 @@ typedef enum {
 #define PMF_FALLING			32		// BFP - Falling status
 // BFP - PMF_TIME_KNOCKBACK is unused
 // #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
+#define PMF_KI_ATTACK		64		// BFP - Ki attack
 #define PMF_KI_CHARGE		128		// BFP - Ki charge
 // BFP - PMF_TIME_WATERJUMP is unused
 // #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
@@ -220,6 +227,8 @@ void Pmove (pmove_t *pmove);
 typedef enum {
 	STAT_HEALTH,
 	STAT_KI,						// BFP - KI amount
+	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
+	STAT_READY_KI_ATTACK,			// BFP - Ready ki attack notification
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				

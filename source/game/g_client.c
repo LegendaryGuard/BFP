@@ -1167,9 +1167,6 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_BFG );
 	client->ps.ammo[WP_BFG] = 100;
 
-	// TODO: BFP - Gauntlet must be replaced as a bind key (Alt key), 
-	// it will use fight animation (using kicks and fists)
-
 	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
 	client->ps.ammo[WP_GAUNTLET] = -1;
 	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;

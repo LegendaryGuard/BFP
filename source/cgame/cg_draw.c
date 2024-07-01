@@ -2084,10 +2084,49 @@ static void CG_DrawHitStun( void ) { // BFP - Hit stun bottom centerprint
 		s = "Stun";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-	UI_DrawProportionalString( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ) + 23, 
+	UI_DrawProportionalString( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ) + 24, 
 		s, UI_SMALLFONT, colorWhite );
 	if ( t > 0 && ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) ) {
-		CG_DrawField ( 320 - w - 16, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 4 ) + 13, 3, t );
+		CG_DrawField ( 320 - w - 16, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 4 ) + 12, 3, t );
+	}
+}
+
+/*
+=================
+CG_DrawReadyKiAttack
+=================
+*/
+static void CG_DrawReadyKiAttack( void ) { // BFP - Ready message in the bottom centerprint when charging attacks
+	const char	*s;
+	int			w;
+
+	s = ""; // avoid printing when there are no status changes, for dll and shared objects
+	if ( cg_chargeupAlert.integer <= 0 ) { // if disabled, don't show it
+		return;
+	}
+	if ( cg.predictedPlayerState.stats[STAT_READY_KI_ATTACK] ) {
+		s = "Ready";
+	}
+	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
+	UI_DrawProportionalString( 327 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ) + 76, 
+		s, UI_SMALLFONT, colorWhite );
+}
+
+/*
+=====================
+CG_DrawKiAttackChargeUpPoints
+=====================
+*/
+static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up points
+	int			x = 105, y = 412, i;
+
+	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0 ) {
+        for ( i = 1; i <= 6; ++i ) {
+            if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] >= i ) {
+                CG_DrawPic( x, y, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );
+            }
+            x += 16;
+        }
 	}
 }
 
@@ -2245,6 +2284,8 @@ static void CG_Draw2D( void ) {
 			CG_DrawStatusBar();
 			CG_DrawKiWarning(); // BFP - ki warning
 			CG_DrawHitStun(); // BFP - Hit stun bottom centerprint
+			CG_DrawKiAttackChargeUpPoints(); // BFP - Ki attack charge up points
+			CG_DrawReadyKiAttack(); // BFP - Ready message in the bottom centerprint when charging attacks
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();

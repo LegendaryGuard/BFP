@@ -85,6 +85,8 @@ struct gentity_s {
 	qboolean	neverFree;			// if true, FreeEntity will only unlink
 									// bodyque uses this
 
+	qboolean	enabledivide;		// BFP - Projectile state for dividing ball
+
 	int			flags;				// FL_* variables
 
 	char		*model;
@@ -327,6 +329,9 @@ struct gclient_s {
 	qboolean	zanzokenLeft, zanzokenRight;
 	int			zanzokenNumberTimesAllowed;
 	int			zanzokenDelay;
+
+	// BFP - Charged points for ki dividing ball
+	int			divideBallKiCharged;
 
 	char		*areabits;
 };

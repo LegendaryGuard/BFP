@@ -237,6 +237,8 @@ void G_RunMissile( gentity_t *ent ) {
 	vec3_t		origin;
 	trace_t		tr;
 	int			passent;
+	// BFP - Shortcut variable to make sure who is using this projectile
+	gclient_t	*client = g_entities[ ent->r.ownerNum ].client;
 
 	// get current position
 	BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
@@ -263,7 +265,127 @@ void G_RunMissile( gentity_t *ent ) {
 
 	trap_LinkEntity( ent );
 
+	// BFP - When the player stopped shooting the charged beam/projectile by pressing the attack key
+	// These are sample weapons used as examples for BFP: 
+
+	// WP_BFG would be the beam
+	if ( client 
+	&& client->ps.weaponstate != WEAPON_BEAMFIRING
+	&& ent->s.weapon == WP_BFG ) {
+		client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		G_MissileImpact( ent, &tr );
+	}
+
+	// WP_PLASMAGUN would be that dividing ball, when pressing the attack key again, divides by the number of balls depending on the ki attack charge points had
+	if ( client 
+	&& !( client->ps.pm_flags & PMF_KI_ATTACK ) 
+	&& client->ps.weapon == WP_PLASMAGUN
+	&& ent->s.weapon == WP_PLASMAGUN
+	&& !ent->enabledivide ) {
+		client->ps.weaponstate = WEAPON_DIVIDINGKIBALLFIRING;
+		client->ps.pm_flags |= PMF_KI_ATTACK;
+	}
+
+	if ( client 
+	&& ( client->pers.cmd.buttons & BUTTON_ATTACK )
+	&& client->ps.weapon == WP_PLASMAGUN
+	&& ent->s.weapon == WP_PLASMAGUN
+	&& !ent->enabledivide ) {
+		vec3_t dir, angles;
+		gentity_t *proj1 = NULL, *proj2 = NULL, *proj3 = NULL;
+
+		// BFP - TODO: Apply minCharge and maxCharge from reading bfp_weapon.cfg 
+
+		// if charge attack is 2:
+		// horizontal:
+		// ←   →
+		//   ↓
+		if ( client->divideBallKiCharged >= 2 ) {
+			angles[PITCH] = 0;
+			angles[YAW] -= 270;
+			angles[ROLL] = 0;
+			AngleVectors( angles, dir, NULL, NULL );
+			proj1 = fire_plasma( ent, ent->r.currentOrigin, dir );
+			VectorCopy( proj1->s.angles, angles );
+
+			angles[PITCH] = 0;
+			angles[YAW] -= 360;
+			angles[ROLL] = 0;
+			AngleVectors( angles, dir, NULL, NULL );
+			proj2 = fire_plasma( ent, ent->r.currentOrigin, dir );
+			VectorCopy( proj2->s.angles, angles );
+
+			angles[PITCH] = 0;
+			angles[YAW] -= 90;
+			angles[ROLL] = 0;
+			AngleVectors( angles, dir, NULL, NULL );
+			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
+			VectorCopy( proj3->s.angles, angles );
+		}
+
+		// if charge attack is 3:
+		// horizontal:
+		//   ↑
+		// ←   →
+		//   ↓
+		if ( client->divideBallKiCharged >= 3 ) {
+			angles[PITCH] = 0;
+			angles[YAW] -= 180;
+			angles[ROLL] = 0;
+			AngleVectors( angles, dir, NULL, NULL );
+			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
+		}		
+
+		// if charge attack is 4:
+		// horizontal:
+		//   ↑
+		// ←   →
+		//   ↓
+		// vertical: ↑
+		if ( client->divideBallKiCharged >= 4 ) {
+			angles[PITCH] -= 90;
+			angles[YAW] = 0;
+			angles[ROLL] = 0;
+			AngleVectors( angles, dir, NULL, NULL );
+			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
+		}
+
+		// if charge attack is 5 and above:
+		// horizontal:
+		//   ↑
+		// ←   →
+		//   ↓
+		// vertical: ↑ and ↓
+		if ( client->divideBallKiCharged >= 5 ) {
+			angles[PITCH] -= 180;
+			angles[YAW] = 0;
+			angles[ROLL] = 0;
+			AngleVectors( angles, dir, NULL, NULL );
+			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
+		}
+
+		client->ps.pm_flags &= ~PMF_KI_ATTACK;
+
+		ent->enabledivide = qtrue;
+		G_FreeEntity( ent );
+	}
+
+	if ( client 
+	&& client->ps.weapon == WP_PLASMAGUN
+	&& client->ps.weaponstate == WEAPON_DIVIDINGKIBALLFIRING
+	&& ent->s.weapon == WP_PLASMAGUN ) {
+		client->ps.pm_flags |= PMF_KI_ATTACK;
+	}
+
 	if ( tr.fraction != 1 ) {
+
+		// BFP - When the charged projectile touches into something, disable ki attack PMF flag
+		if ( client 
+		&& ( client->ps.weaponstate == WEAPON_BEAMFIRING
+		|| client->ps.weaponstate == WEAPON_DIVIDINGKIBALLFIRING ) ) {
+			client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		}
+
 		// never explode or bounce on sky
 		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 // BFP - no hook

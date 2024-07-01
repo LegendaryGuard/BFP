@@ -711,6 +711,9 @@ typedef struct {
 	qhandle_t	backTileShader;
 	qhandle_t	noammoShader;
 
+	// BFP - Ki attack charge up points
+	qhandle_t	chargeupbuttgreen;
+
 	qhandle_t	smokePuffShader;
 	qhandle_t	smokePuffRageProShader;
 	qhandle_t	shotgunSmokePuffShader;
@@ -914,6 +917,9 @@ typedef struct {
 	sfxHandle_t kiChargeSound; 	// BFP - Ki charge sound
 	sfxHandle_t kiUseSound;		// BFP - Ki use sound
 
+	sfxHandle_t defaultKiBeamExplosionWaveSound;	// BFP - Default ki beam and ki explosion wave sound
+	sfxHandle_t defaultKiFiringAttackSound;			// BFP - Default ki firing sound
+	sfxHandle_t defaultKiChargingSound;				// BFP - Default ki attack charging sound
 } cgMedia_t;
 
 

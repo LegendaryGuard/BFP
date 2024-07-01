@@ -468,6 +468,11 @@ static void CG_RegisterSounds( void ) {
 
 	cgs.media.kiChargeSound = trap_S_RegisterSound("sound/bfp/kicharge1.wav", qfalse); // BFP - Ki charge sound
 	cgs.media.kiUseSound = trap_S_RegisterSound("sound/bfp/kiuse1.wav", qfalse); // BFP - Ki use sound
+	cgs.media.defaultKiChargingSound = trap_S_RegisterSound("sound/bfp/attackcharge1.wav", qfalse); // BFP - Default ki charging attack sound
+
+	// BFP - NOTE: Sounds like that are reusing Q3 ones
+	cgs.media.defaultKiBeamExplosionWaveSound = trap_S_RegisterSound("sound/weapons/rocket/rockfly.wav", qfalse); // BFP - Default ki beam and ki explosion wave sound
+	cgs.media.defaultKiFiringAttackSound = trap_S_RegisterSound("sound/weapons/bfg/bfg_fire.wav", qfalse); // BFP - Default ki firing sound
 }
 
 
@@ -547,6 +552,9 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.backTileShader = trap_R_RegisterShader( "gfx/2d/backtile" );
 	cgs.media.noammoShader = trap_R_RegisterShader( "icons/noammo" );
+
+	// BFP - Ki attack charge up points
+	cgs.media.chargeupbuttgreen = trap_R_RegisterShader( "menu/art/chargeupbuttgreen" );
 
 	// powerup shaders
 	cgs.media.quadShader = trap_R_RegisterShader("powerups/quad" );
