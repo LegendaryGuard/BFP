@@ -49,7 +49,7 @@ int		c_pmove = 0;
 
 // BFP - Macro for torso handling when using ki attacks, since the code looked repetitive, so this macro makes the code a bit shorter
 /* BFP - TODO: When implementing ki attacks, look up about the properties of the ki attacks from cfg and correct animation changes if required
-And tweak pmove_t struct, so we can handle that on g_active.c (like gauntletHit), adding:
+And tweak pmove_t struct, so we can handle that on g_active.c (like meleeHit), adding:
 attackType ("beam", "hitscan", "missile", "rdmissile", "sbeam" or "forcefield"), // type of attack
 randomWeaponTime (int, number of miliseconds), // random weapon time, maybe the max msec range of the random value
 chargeAttack (int / qboolean), // charging yes or no
@@ -1577,8 +1577,10 @@ static void PM_Footsteps( void ) {
 		if ( pm->waterlevel > 1 ) {
 			CONTINUEFLY_ANIM_HANDLING()
 		} else {
-			// BFP - Keep the torso when using a ki attack even after charged
-			KI_ATTACK_TORSO_ANIM_HANDLING()
+			// BFP - Keep the torso when using a ki attack even after charged, avoid when melee is being used
+			if ( !( pm->cmd.buttons & BUTTON_MELEE ) ) {
+				KI_ATTACK_TORSO_ANIM_HANDLING()
+			}
 		}
 
 		return;
@@ -2089,7 +2091,7 @@ static void PM_Weapon( void ) {
 			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 		}
 		// Melee fight handling
-		if ( pm->gauntletHit && pm->ps->weaponTime <= 0 ) {
+		if ( pm->meleeHit && pm->ps->weaponTime <= 0 ) {
 			pm->ps->weaponTime += 300;
 			pm->ps->pm_flags |= PMF_MELEE;
 		}

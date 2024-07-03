@@ -564,9 +564,9 @@ void CG_PredictPlayerState( void ) {
 			}
 		}
 
-		// don't predict gauntlet firing, which is only supposed to happen
-		// when it actually inflicts damage
-		cg_pmove.gauntletHit = qfalse;
+		// BFP - don't predict melee attack, which is only supposed to happen
+		// when it actually inflicts damage (on Q3 comment says the same, but with gauntlet :P)
+		cg_pmove.meleeHit = qfalse;
 
 		if ( cg_pmove.pmove_fixed ) {
 			cg_pmove.cmd.serverTime = ((cg_pmove.cmd.serverTime + pmove_msec.integer-1) / pmove_msec.integer) * pmove_msec.integer;

@@ -26,6 +26,92 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ================
+HandleDivideKiBall
+================
+*/
+static void HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - WP_PLASMAGUN would be that dividing ball, when pressing the attack key again, divides by the number of balls depending on the ki attack charge points had
+	vec3_t	dir, angles;
+	int		i;
+	int		chargePoints = client->divideBallKiCharged;
+	int		projectiles_to_spawn;
+	int		yawAdjustments[6] = {
+		// if charge attack is 2:
+		// horizontal:
+		// ←   →
+		//   ↓
+		-270, -360, -90,
+		// if charge attack is 3:
+		// horizontal:
+		//   ↑
+		// ←   →
+		//   ↓
+		-180,
+		0, 0
+	};
+	int		pitchAdjustments[6] = {
+		0, 0, 0, 0,
+		// if charge attack is 4:
+		// horizontal:
+		//   ↑
+		// ←   →
+		//   ↓
+		// vertical: ↑
+		-90,
+		// if charge attack is 5 and above:
+		// horizontal:
+		//   ↑
+		// ←   →
+		//   ↓
+		// vertical: ↑ and ↓
+		90
+	};
+
+	// BFP - TODO: Apply minCharge and maxCharge from reading bfp_weapon.cfg 
+	if ( chargePoints < 2 ) {
+		return;
+	}
+
+	// determine the number of projectiles to spawn based on the ki attack charge points
+	switch( chargePoints ) {
+	case 2:
+		projectiles_to_spawn = 3;
+		break;
+	case 3:
+		projectiles_to_spawn = 4;
+		break;
+	case 4:
+		projectiles_to_spawn = 5;
+		break;
+	case 5:
+	case 6:
+		projectiles_to_spawn = 6;
+		break;
+	default:
+		projectiles_to_spawn = 0;
+		break;
+	}
+
+	if ( projectiles_to_spawn == 0 ) {
+		return;
+	}
+
+	for ( i = 0; i < projectiles_to_spawn; i++ ) {
+		gentity_t *proj = NULL;
+		VectorCopy( ent->s.angles, angles );
+
+		angles[YAW] += yawAdjustments[i];
+		angles[PITCH] += pitchAdjustments[i];
+
+		AngleVectors( angles, dir, NULL, NULL );
+		proj = fire_plasma( ent, ent->r.currentOrigin, dir );
+		VectorCopy( proj->s.angles, angles );
+	}
+
+	client->ps.pm_flags &= ~PMF_KI_ATTACK;
+}
+
+/*
+================
 G_BounceMissile
 
 ================
@@ -291,81 +377,7 @@ void G_RunMissile( gentity_t *ent ) {
 	&& client->ps.weapon == WP_PLASMAGUN
 	&& ent->s.weapon == WP_PLASMAGUN
 	&& !ent->enabledivide ) {
-		vec3_t dir, angles;
-		gentity_t *proj1 = NULL, *proj2 = NULL, *proj3 = NULL;
-
-		// BFP - TODO: Apply minCharge and maxCharge from reading bfp_weapon.cfg 
-
-		// if charge attack is 2:
-		// horizontal:
-		// ←   →
-		//   ↓
-		if ( client->divideBallKiCharged >= 2 ) {
-			angles[PITCH] = 0;
-			angles[YAW] -= 270;
-			angles[ROLL] = 0;
-			AngleVectors( angles, dir, NULL, NULL );
-			proj1 = fire_plasma( ent, ent->r.currentOrigin, dir );
-			VectorCopy( proj1->s.angles, angles );
-
-			angles[PITCH] = 0;
-			angles[YAW] -= 360;
-			angles[ROLL] = 0;
-			AngleVectors( angles, dir, NULL, NULL );
-			proj2 = fire_plasma( ent, ent->r.currentOrigin, dir );
-			VectorCopy( proj2->s.angles, angles );
-
-			angles[PITCH] = 0;
-			angles[YAW] -= 90;
-			angles[ROLL] = 0;
-			AngleVectors( angles, dir, NULL, NULL );
-			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
-			VectorCopy( proj3->s.angles, angles );
-		}
-
-		// if charge attack is 3:
-		// horizontal:
-		//   ↑
-		// ←   →
-		//   ↓
-		if ( client->divideBallKiCharged >= 3 ) {
-			angles[PITCH] = 0;
-			angles[YAW] -= 180;
-			angles[ROLL] = 0;
-			AngleVectors( angles, dir, NULL, NULL );
-			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
-		}		
-
-		// if charge attack is 4:
-		// horizontal:
-		//   ↑
-		// ←   →
-		//   ↓
-		// vertical: ↑
-		if ( client->divideBallKiCharged >= 4 ) {
-			angles[PITCH] -= 90;
-			angles[YAW] = 0;
-			angles[ROLL] = 0;
-			AngleVectors( angles, dir, NULL, NULL );
-			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
-		}
-
-		// if charge attack is 5 and above:
-		// horizontal:
-		//   ↑
-		// ←   →
-		//   ↓
-		// vertical: ↑ and ↓
-		if ( client->divideBallKiCharged >= 5 ) {
-			angles[PITCH] -= 180;
-			angles[YAW] = 0;
-			angles[ROLL] = 0;
-			AngleVectors( angles, dir, NULL, NULL );
-			proj3 = fire_plasma( ent, ent->r.currentOrigin, dir );
-		}
-
-		client->ps.pm_flags &= ~PMF_KI_ATTACK;
-
+		HandleDivideKiBall( ent, client );
 		ent->enabledivide = qtrue;
 		G_FreeEntity( ent );
 	}
@@ -437,6 +449,8 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->splashMethodOfDeath = MOD_PLASMA_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
+
+	bolt->enabledivide = qfalse; // BFP - For dividing ki ball
 
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame

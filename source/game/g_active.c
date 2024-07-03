@@ -734,7 +734,7 @@ static void MeleeHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 	if ( !( ucmd->buttons & BUTTON_TALK ) && ( ucmd->buttons & BUTTON_MELEE )
 	&& !( client->ps.pm_flags & PMF_KI_CHARGE )
 	&& client->ps.weaponTime <= 0 ) {
-		pm->gauntletHit = CheckMeleeAttack( ent );
+		pm->meleeHit = CheckMeleeAttack( ent );
 	}
 }
 
@@ -815,16 +815,17 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 		}
 
 		// once pressed and having one moment to press again, zanzoken will be possible at these milliseconds
+#define MAX_ZANZOKEN_PRESS_TIME		240
 		if ( !ucmd->rightmove 
 		&& level.time - ent->client->zanzokenPressTime > 100
-		&& level.time - ent->client->zanzokenPressTime <= 250
+		&& level.time - ent->client->zanzokenPressTime <= MAX_ZANZOKEN_PRESS_TIME
 		&& !ent->client->zanzokenNow ) {
 			ent->client->zanzokenNow = qtrue;
 			ent->client->zanzokenNumberTimesAllowed++;
 		}
 
 		if ( !ucmd->rightmove 
-		&& level.time - ent->client->zanzokenPressTime > 250 ) {
+		&& level.time - ent->client->zanzokenPressTime > MAX_ZANZOKEN_PRESS_TIME ) {
 			ent->client->zanzokenNumberTimesAllowed = 0;
 			ent->client->zanzokenPressTime = 0;
 			ent->client->zanzokenNow = qfalse;
@@ -832,6 +833,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 			ent->client->zanzokenRight = qfalse;
 			return;
 		}
+#undef MAX_ZANZOKEN_PRESS_TIME
 
 		// BFP - TODO: Zanzoken ki consume looks relative to powerlevel and the maximum ki quantity 
 		// (so, if it's 8160 as ki max quantity, then consumes 408)
