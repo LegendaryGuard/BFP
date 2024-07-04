@@ -143,6 +143,7 @@ void SP_func_button (gentity_t *ent);
 void SP_func_door (gentity_t *ent);
 void SP_func_train (gentity_t *ent);
 void SP_func_timer (gentity_t *self);
+void SP_func_breakable (gentity_t *ent); // BFP - Breakable map entities
 
 void SP_trigger_always (gentity_t *ent);
 void SP_trigger_multiple (gentity_t *ent);
@@ -186,7 +187,7 @@ void SP_team_CTF_blueplayer( gentity_t *ent );
 void SP_team_CTF_redspawn( gentity_t *ent );
 void SP_team_CTF_bluespawn( gentity_t *ent );
 
-void SP_item_botroam( gentity_t *ent ) {};
+void SP_item_botroam( gentity_t *ent ) { (void)ent; }
 
 spawn_t	spawns[] = {
 	// info entities don't do anything at all, but provide positional
@@ -207,6 +208,7 @@ spawn_t	spawns[] = {
 	{"func_pendulum", SP_func_pendulum},
 	{"func_train", SP_func_train},
 	{"func_group", SP_info_null},
+	{"func_breakable", SP_func_breakable},		// BFP - Breakable map entities
 	{"func_timer", SP_func_timer},			// rename trigger_timer?
 
 	// Triggers are brush objects that cause an effect when contacted

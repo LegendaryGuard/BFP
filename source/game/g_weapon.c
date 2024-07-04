@@ -177,6 +177,12 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 		return qfalse;
 	}
 
+	// avoid if the entity isn't a player (e.g. a breakable map entity)
+	if ( traceTarget->s.eType != ET_PLAYER ) {
+		attacker->client->ps.pm_flags &= ~PMF_MELEE;
+		return qfalse;
+	}
+
 	// the target's corpse is starting to sink, avoid interacting with a sinking corpse, nothing special happens
 	if ( traceTarget->physicsObject ) {
 		attacker->client->ps.pm_flags &= ~PMF_MELEE;

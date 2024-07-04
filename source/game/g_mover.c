@@ -1574,3 +1574,20 @@ void SP_func_pendulum(gentity_t *ent) {
 	ent->s.apos.trType = TR_SINE;
 	ent->s.apos.trDelta[2] = speed;
 }
+
+
+// BFP - Breakable map entities
+void func_breakable_use( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
+	if ( ent->health <= 0 ) {
+		G_FreeEntity( ent );
+	}
+}
+
+void SP_func_breakable( gentity_t *ent ) {
+	trap_SetBrushModel( ent, ent->model );
+	ent->s.eType = ET_MOVER;
+	ent->r.contents = CONTENTS_SOLID;
+	ent->health = 100;
+	ent->takedamage = qtrue;
+	ent->use = func_breakable_use;
+}

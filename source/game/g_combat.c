@@ -676,6 +676,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		if ( targ->use && targ->moverState == MOVER_POS1 ) {
 			targ->use( targ, inflictor, attacker );
 		}
+		// BFP - For breakable map entities
+		if ( targ->takedamage && targ->health > 0 ) {
+			if ( damage < 1 ) {
+				damage = 1;
+			}
+			take = damage;
+			targ->health = targ->health - take;
+		}
 		return;
 	}
 	// reduce damage by the attacker's handicap value
