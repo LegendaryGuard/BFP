@@ -637,6 +637,11 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.auraRedShader = trap_R_RegisterShader( "powerups/redtiny" );
 	cgs.media.auraYellowShader = trap_R_RegisterShader( "powerups/yellowtiny" );
 
+	// BFP - Ki trail shaders
+	cgs.media.kiTrailBlueShader = trap_R_RegisterShader( "powerups/bluekitrail" );
+	cgs.media.kiTrailRedShader = trap_R_RegisterShader( "powerups/redkitrail" );
+	cgs.media.kiTrailYellowShader = trap_R_RegisterShader( "powerups/yellowkitrail" );
+
 	memset( cg_items, 0, sizeof( cg_items ) );
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );
 
@@ -877,6 +882,9 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_InitLocalEntities();
 
 	CG_InitMarkPolys();
+
+	// BFP - Initialize ki trails
+	CG_InitKiTrails();
 
 	// remove the last loading update
 	cg.infoScreenText[0] = 0;

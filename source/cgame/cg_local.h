@@ -140,6 +140,7 @@ typedef struct {
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;
+	int				kiTrailTime;	// BFP - Ki trail time
 
 	// railgun trail spawning
 	vec3_t			railgunImpact;
@@ -784,6 +785,11 @@ typedef struct {
 	qhandle_t	auraBlueShader;
 	qhandle_t	auraYellowShader;
 
+	// BFP - Ki trail shaders
+	qhandle_t	kiTrailRedShader;
+	qhandle_t	kiTrailBlueShader;
+	qhandle_t	kiTrailYellowShader;
+
 	// scoreboard headers
 	qhandle_t	scoreboardName;
 	qhandle_t	scoreboardPing;
@@ -1246,6 +1252,14 @@ localEntity_t *CG_SmokePuff( const vec3_t p,
 void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
 void CG_ScorePlum( int client, vec3_t org, int score );
+
+// BFP - Ki trail
+//
+// cg_trails.c
+//
+void CG_InitKiTrails( void );
+void CG_ResetKiTrail( int entityNum, vec3_t origin );
+void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader );
 
 void CG_GibPlayer( vec3_t playerOrigin );
 void CG_BigExplode( vec3_t playerOrigin );

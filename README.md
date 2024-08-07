@@ -44,6 +44,7 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Replace ammo to ki energy stamina~~
 - [x] ~~Third person traceable crosshair~~
 - [x] ~~Breakable map entities ("func_breakable")~~
+- [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
 - [ ] Powerlevel and Power Tiers indicated on old docs
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
@@ -372,6 +373,7 @@ The information in the map file can be useful for debugging and performance anal
 #### Added source code files:
 
 - cg_cvar.h
+- cg_trails.c
 - g_cvar.h
 - ui_bfpoptions.c
 - ui_cvar.h

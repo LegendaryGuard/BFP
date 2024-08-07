@@ -35,7 +35,6 @@
 
 - cg_stfu [0/1]: disable character voices when firing attacks.
 - cg_lowpolysphere [0/1]: force the use of a lower polycount sphere.
-- cg_kitrail [0-99]: set the length of the ki trail. 0 turns it off.
 - cg_lightexplosions [0/1]: turn on or off the explosion dynamic lights.
 - cg_chargeupAlert [0/1]: turn on or off the "ready" message when charging attacks.
 - cg_explosionShell [0/1]: turn on or off the explosion shell.
@@ -47,6 +46,7 @@
 ## COMPLETED:
 
 - [x] ~~cg_superdeformed~~
+- [x] ~~cg_kiTrail~~
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
 - [x] ~~cg_fixedThirdPerson~~

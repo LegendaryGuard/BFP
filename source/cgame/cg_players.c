@@ -2206,6 +2206,9 @@ void CG_Player( centity_t *cent ) {
 	float			shadowPlane;
 	int				model_i, model_j; // BFP - For model sizes
 	vec3_t			auraInverseRotation; // BFP - For aura inverse rotation
+	// BFP - Ki trail setup
+	vec3_t			kiTrailOrigin;
+	qhandle_t		kiTrailShader;
 
 	// BFP - Macro for the size of a model
 	#define MODEL_SIZE(model, model_size) \
@@ -2223,6 +2226,14 @@ void CG_Player( centity_t *cent ) {
 		CG_Error( "Bad clientNum on player entity");
 	}
 	ci = &cgs.clientinfo[ clientNum ];
+
+	// BFP - Ki trail shader set
+	kiTrailShader = cgs.media.kiTrailRedShader;
+	// BFP - TODO: Add yellow ki trail only when the player is transformed, but don't override when playing a team gamemode
+	// kiTrailShader = cgs.media.kiTrailYellowShader;
+	if ( ci->team == TEAM_BLUE ) {
+		kiTrailShader = cgs.media.kiTrailBlueShader;
+	}
 
 	// it is possible to see corpses from disconnected players that may
 	// not have valid clientinfo
@@ -2352,6 +2363,12 @@ void CG_Player( centity_t *cent ) {
 
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team );
 
+	// BFP - Origin setup for ki trails
+	#define KI_TRAIL_ZPOS 5
+	VectorCopy( cent->currentState.pos.trBase, kiTrailOrigin );
+	kiTrailOrigin[2] += KI_TRAIL_ZPOS;
+	#undef KI_TRAIL_ZPOS
+
 	//
 	// BFP - Aura 
 	//
@@ -2411,11 +2428,28 @@ void CG_Player( centity_t *cent ) {
 			} \
 		}
 
-	if ( cent->currentState.eFlags & EF_AURA ) {
-		// BFP - TODO: Create a new function "CG_KiTrail" only when moving to draw ki trail and add the cvar for the length
+	// Macro to remove ki trails
+	#define REMOVING_KI_TRAILS(clientNum, kiTrailOrigin, kiTrailShader, fastRemove) \
+		if ( cg.time > cent->pe.kiTrailTime ) { /* reset ki trail position avoid being zeroed */ \
+			CG_ResetKiTrail( clientNum, kiTrailOrigin ); \
+		} else { /* ki trails keep running in that moment, but their segments are being removed */ \
+			CG_KiTrail( clientNum, kiTrailOrigin, fastRemove, kiTrailShader ); \
+		}
 
+	if ( cent->currentState.eFlags & EF_AURA ) {
 		// BFP - Trace for bubble particles only when moving in the water and charging
 		int destContentType = CG_PointContents( legs.origin, -1 );
+
+		// BFP - Ki trail
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE 
+		&& cg_kiTrail.integer >= 10 ) {
+			// apply time for using ki trail
+			cent->pe.kiTrailTime = cg.time + cg_kiTrail.integer*5;
+
+			CG_KiTrail( clientNum, kiTrailOrigin, qfalse, kiTrailShader );
+		} else { // handle when the ki trail was being used previously
+			REMOVING_KI_TRAILS( clientNum, kiTrailOrigin, kiTrailShader, qtrue )
+		}
 
 		// spawning bubble particles
 		if ( destContentType & CONTENTS_WATER ) {
@@ -2509,6 +2543,11 @@ void CG_Player( centity_t *cent ) {
 				trap_R_AddRefEntityToScene( &aura2 );
 			}
 		}
+	} else {
+		// BFP - Ki trail being removed
+		if ( cg_kiTrail.integer >= 10 ) {
+			REMOVING_KI_TRAILS( clientNum, kiTrailOrigin, kiTrailShader, qtrue )
+		}
 	}
 
 	// BFP - Ki attack sounds
@@ -2542,6 +2581,7 @@ void CG_Player( centity_t *cent ) {
 #undef MODEL_SIZE
 #undef AURA_ANIMS
 #undef AURA_LIGHT
+#undef REMOVING_KI_TRAILS
 
 /*
 ===============
