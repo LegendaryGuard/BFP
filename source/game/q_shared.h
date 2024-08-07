@@ -656,6 +656,8 @@ typedef struct {
 #define VectorNegate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2])
 #define VectorSet(v, x, y, z)	((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
 #define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
+// BFP - Vector4Set helps to set the 4 values for a vec4_t variable, making the code shorter in a single line
+#define Vector4Set(v,w,x,y,z)	((v)[0]=(w), (v)[1]=(x), (v)[2]=(y), (v)[3]=(z))
 
 #define	SnapVector(v) {v[0]=((int)(v[0]));v[1]=((int)(v[1]));v[2]=((int)(v[2]));}
 // just in case you do't want to use the macros
