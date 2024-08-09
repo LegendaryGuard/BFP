@@ -103,23 +103,19 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 			VectorNormalize( right );
 
 			VectorMA( end, KI_TRAIL_WIDTH, right, verts[0].xyz );
-			verts[0].st[0] = 0;
-			verts[0].st[1] = 1;
+			VectorArray2Set( verts[0].st, 0, 1 );
 			Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
 
 			VectorMA( end, -KI_TRAIL_WIDTH, right, verts[1].xyz );
-			verts[1].st[0] = 1;
-			verts[1].st[1] = 0;
+			VectorArray2Set( verts[1].st, 1, 0 );
 			Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
 
 			VectorMA( start, -KI_TRAIL_WIDTH, right, verts[2].xyz );
-			verts[2].st[0] = 1;
-			verts[2].st[1] = 0;
+			VectorArray2Set( verts[2].st, 1, 0 );
 			Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
 
 			VectorMA( start, KI_TRAIL_WIDTH, right, verts[3].xyz );
-			verts[3].st[0] = 0;
-			verts[3].st[1] = 1;
+			VectorArray2Set( verts[3].st, 0, 1 );
 			Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
 
 			trap_R_AddPolyToScene( hShader, 4, verts );

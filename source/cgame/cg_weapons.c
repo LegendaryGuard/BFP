@@ -1953,36 +1953,20 @@ void CG_Tracer( vec3_t source, vec3_t dest ) {
 	VectorNormalize( right );
 
 	VectorMA( finish, cg_tracerWidth.value, right, verts[0].xyz );
-	verts[0].st[0] = 0;
-	verts[0].st[1] = 1;
-	verts[0].modulate[0] = 255;
-	verts[0].modulate[1] = 255;
-	verts[0].modulate[2] = 255;
-	verts[0].modulate[3] = 255;
+	VectorArray2Set( verts[0].st, 0, 1 );
+	Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
 
 	VectorMA( finish, -cg_tracerWidth.value, right, verts[1].xyz );
-	verts[1].st[0] = 1;
-	verts[1].st[1] = 0;
-	verts[1].modulate[0] = 255;
-	verts[1].modulate[1] = 255;
-	verts[1].modulate[2] = 255;
-	verts[1].modulate[3] = 255;
+	VectorArray2Set( verts[1].st, 1, 0 );
+	Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
 
 	VectorMA( start, -cg_tracerWidth.value, right, verts[2].xyz );
-	verts[2].st[0] = 1;
-	verts[2].st[1] = 1;
-	verts[2].modulate[0] = 255;
-	verts[2].modulate[1] = 255;
-	verts[2].modulate[2] = 255;
-	verts[2].modulate[3] = 255;
+	VectorArray2Set( verts[2].st, 1, 1 );
+	Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
 
 	VectorMA( start, cg_tracerWidth.value, right, verts[3].xyz );
-	verts[3].st[0] = 0;
-	verts[3].st[1] = 0;
-	verts[3].modulate[0] = 255;
-	verts[3].modulate[1] = 255;
-	verts[3].modulate[2] = 255;
-	verts[3].modulate[3] = 255;
+	VectorArray2Set( verts[3].st, 0, 0 );
+	Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
 
 	trap_R_AddPolyToScene( cgs.media.tracerShader, 4, verts );
 
