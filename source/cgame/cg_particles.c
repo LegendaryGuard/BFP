@@ -39,7 +39,6 @@ typedef struct particle_s
 	vec3_t		vel;
 	vec3_t		accel;
 	int			color;
-	float		colorvel;
 	float		alpha;
 	float		alphavel;
 	int			type;
@@ -73,9 +72,7 @@ typedef enum
 	P_NONE,
 	P_ANTIGRAV_ROCK, // BFP - Antigrav rock particles
 	P_SMOKE,
-	P_ROTATE,
 	P_ANIM,	// Ridah
-	P_BAT,
 	P_BLEED,
 	P_SMOKE_IMPACT,
 	P_BUBBLE,
@@ -788,7 +785,7 @@ void CG_AddParticles (void)
 			}
 		}
 
-		if ((p->type == P_BAT || p->type == P_SPRITE) && p->endtime < 0) {
+		if (p->type == P_SPRITE && p->endtime < 0) {
 			// temporary sprite
 			CG_AddParticleToScene (p, p->org, alpha);
 			p->next = free_particles;
