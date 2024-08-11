@@ -739,8 +739,6 @@ VIEW WEAPON
 ========================================================================================
 */
 
-// BFP - TODO: Change animations for BFP
-
 /*
 =================
 CG_MapTorsoToWeaponFrame
@@ -1013,6 +1011,8 @@ static void CG_SpawnRailTrail( centity_t *cent, vec3_t origin ) {
 }
 
 
+// BFP - TODO: Remove these functions, these won't be used nonetheless
+#if 0
 /*
 ======================
 CG_MachinegunSpinAngle
@@ -1046,7 +1046,6 @@ static float	CG_MachinegunSpinAngle( centity_t *cent ) {
 	return angle;
 }
 
-
 /*
 ========================
 CG_AddWeaponWithPowerups
@@ -1070,6 +1069,7 @@ static void CG_AddWeaponWithPowerups( refEntity_t *gun, int powerups ) {
 		}
 	}
 }
+#endif
 
 
 /*
@@ -1081,23 +1081,29 @@ The main player will have this called for BOTH cases, so effects like light and
 sound should only be done on the world model case.
 =============
 */
+// BFP - TODO: That needs some cleanup and managing correctly the weapons. 
+// Next time, unused code will be removed for clear and concise logic purposes. 
+// The same goes to CG_AddWeaponWithPowerups and CG_MachinegunSpinAngle
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team ) {
-	refEntity_t	gun;
-	refEntity_t	barrel;
-	refEntity_t	flash;
+#if 0
+	refEntity_t	gun, barrel;
 	vec3_t		angles;
+#endif
+	refEntity_t	flash;
 	weapon_t	weaponNum;
 	weaponInfo_t	*weapon;
 	centity_t	*nonPredictedCent;
-//	int	col;
 
 	weaponNum = cent->currentState.weapon;
 
 	CG_RegisterWeapon( weaponNum );
 	weapon = &cg_weapons[weaponNum];
 
+	// BFP - Hide gun model
+#if 0
 	// add the weapon
 	memset( &gun, 0, sizeof( gun ) );
+
 	VectorCopy( parent->lightingOrigin, gun.lightingOrigin );
 	gun.shadowPlane = parent->shadowPlane;
 	gun.renderfx = parent->renderfx;
@@ -1119,11 +1125,11 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			gun.shaderRGBA[3] = 255;
 		}
 	}
-
-	// gun.hModel = weapon->weaponModel; // BFP - Hide weapon model
+	gun.hModel = weapon->weaponModel;
 	if (!gun.hModel) {
 		return;
 	}
+#endif
 
 	if ( !ps ) {
 		// add weapon ready sound
@@ -1137,8 +1143,11 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 	}
 
-	CG_PositionEntityOnTag( &gun, parent, parent->hModel, "tag_weapon");
+	// BFP - Hide barrel model and unused position entity tag property
+#if 0
+	// CG_PositionEntityOnTag( &gun, parent, parent->hModel, "tag_weapon");
 
+	// BFP - TODO: Remove that function, it won't be used nonetheless
 	CG_AddWeaponWithPowerups( &gun, cent->currentState.powerups );
 
 	// add the spinning barrel
@@ -1158,6 +1167,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 
 		CG_AddWeaponWithPowerups( &barrel, cent->currentState.powerups );
 	}
+#endif
 
 	// make sure we aren't looking at cg.predictedPlayerEntity for LG
 	nonPredictedCent = &cg_entities[cent->currentState.clientNum];
@@ -1181,8 +1191,10 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 	}
 
-	memset( &flash, 0, sizeof( flash ) );
+	// memset( &flash, 0, sizeof( flash ) );
 	VectorCopy( parent->lightingOrigin, flash.lightingOrigin );
+	// BFP - Hide flash model
+#if 0
 	flash.shadowPlane = parent->shadowPlane;
 	flash.renderfx = parent->renderfx;
 
@@ -1204,9 +1216,11 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		flash.shaderRGBA[1] = 255 * ci->color1[1];
 		flash.shaderRGBA[2] = 255 * ci->color1[2];
 	}
+#endif
 
-	CG_PositionRotatedEntityOnTag( &flash, &gun, weapon->weaponModel, "tag_flash");
-	trap_R_AddRefEntityToScene( &flash );
+	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right...)
+	CG_PositionRotatedEntityOnTag( &flash, parent, parent->hModel, "tag_right");
+	// trap_R_AddRefEntityToScene( &flash );
 
 	if ( ps || cg.renderingThirdPerson ||
 		cent->currentState.number != cg.predictedPlayerState.clientNum ) {
