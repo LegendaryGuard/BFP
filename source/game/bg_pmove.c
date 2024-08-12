@@ -690,9 +690,8 @@ static void PM_FlyMove( void ) {
 		VectorClear( wishvel );
 	} else {
 		for ( i = 0; i < 3; i++ ) {
-			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove;
+			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove + scale * pml.up[i]*pm->cmd.upmove;
 		}
-		wishvel[2] += scale * pm->cmd.upmove;
 	}
 
 	VectorCopy (wishvel, wishdir);
@@ -1398,7 +1397,12 @@ static void PM_GroundTrace( void ) {
 	pm->ps->groundEntityNum = trace.entityNum;
 
 	// don't reset the z velocity for slopes
-	pm->ps->velocity[2] = 0; // BFP - Avoid jumping unintentionally when that happens
+	// pm->ps->velocity[2] = 0;
+
+	// BFP - Avoid jumping unintentionally when that happens
+	if ( trace.plane.normal[2] == 1.0 ) {
+		pm->ps->velocity[2] = 0;
+	}
 
 	PM_AddTouchEnt( trace.entityNum );
 }
@@ -1572,9 +1576,9 @@ static void PM_Footsteps( void ) {
 		// BFP - PM_CheckStuck has been moved here, Q3 and the rest of mods hadn't used this
 		PM_CheckStuck();
 
-		// BFP - Water animation handling, uses flying animation in that case
+		// BFP - Underwater animation handling, uses flying animation in that case
 		// also keep the torso
-		if ( pm->waterlevel > 1 ) {
+		if ( pm->waterlevel > 2 ) {
 			CONTINUEFLY_ANIM_HANDLING()
 		} else {
 			// BFP - Keep the torso when using a ki attack even after charged, avoid when melee is being used
@@ -1700,9 +1704,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 	if (pml.previous_waterlevel && !pm->waterlevel) {
 		PM_AddEvent( EV_WATER_LEAVE );
 		// BFP - Handle jumping animation when getting out of the water
-		if ( pm->ps->powerups[PW_FLIGHT] <= 0
-		&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
-			pm->ps->pm_flags &= ~PMF_FALLING;
+		if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 			FORCEJUMP_ANIM_HANDLING();
 		}
 	}
@@ -1794,7 +1796,7 @@ static void PM_TorsoAnimation( void ) {
 	}
 
 	VectorCopy( pm->ps->origin, point );
-	point[2] -= 64;
+	point[2] -= 128; // BFP - Put more down, obviously it was 64, but BFP does that
 
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
