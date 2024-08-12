@@ -1569,6 +1569,11 @@ static void CG_TrailItem( centity_t *cent, qhandle_t hModel ) {
 	vec3_t			angles;
 	vec3_t			axis[3];
 
+	// BFP - Don't show the model to the player itself
+	if ( cent->currentState.clientNum == cg.snap->ps.clientNum ) {
+		return;
+	}
+
 	VectorCopy( cent->lerpAngles, angles );
 	angles[PITCH] = 0;
 	angles[ROLL] = 0;
@@ -1821,7 +1826,7 @@ static void CG_PlayerFloatSprite( centity_t *cent, qhandle_t shader ) {
 
 	memset( &ent, 0, sizeof( ent ) );
 	VectorCopy( cent->lerpOrigin, ent.origin );
-	ent.origin[2] += 48;
+	ent.origin[2] += 70; // BFP - BFP puts the floating sprite a bit up. Q3 default: 48
 	ent.reType = RT_SPRITE;
 	ent.customShader = shader;
 	ent.radius = 10;
@@ -1866,9 +1871,11 @@ static void CG_PlayerSprites( centity_t *cent ) {
 		cent->currentState.number != cg.snap->ps.clientNum && // BFP - Don't show the friend team shader to the player itself
 		cg.snap->ps.persistant[PERS_TEAM] == team &&
 		cgs.gametype >= GT_TEAM) {
-		if (cg_drawFriend.integer) {
+		// BFP - BFP doesn't use cg_drawFriend to draw that floating friend sprite, keeps enabled always. 
+		// Just wonder if it was some kind of logic reason and looks like that cvar to be removed was also forgotten
+		// if (cg_drawFriend.integer) {
 			CG_PlayerFloatSprite( cent, cgs.media.friendShader );
-		}
+		// }
 		return;
 	}
 }
