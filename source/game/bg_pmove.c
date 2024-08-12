@@ -494,6 +494,11 @@ static qboolean PM_CheckJump( void ) {
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
+	// BFP - Double jump velocity when using ki boost
+	if ( pm->ps->powerups[PW_HASTE] > 0 ) {
+		pm->ps->velocity[2] *= 2;
+	}
+
 	PM_AddEvent( EV_JUMP );
 
 	// BFP - No PMF_BACKWARDS_JUMP handling (code removed)
@@ -510,9 +515,12 @@ PM_CheckWaterJump
 =============
 */
 static qboolean	PM_CheckWaterJump( void ) {
-	vec3_t	spot;
+	// BFP - Apply for backwards too, Q3 doesn't have that
+	vec3_t	spot, backwardSpot;
 	int		cont;
-	vec3_t	flatforward;
+	vec3_t	flatforward, flatbackward;
+#define WATER_JUMP_HORIZONTAL_VELOCITY		200
+#define WATER_JUMP_VERTICAL_VELOCITY		250
 
 	if (pm->ps->pm_time) {
 		return qfalse;
@@ -528,31 +536,44 @@ static qboolean	PM_CheckWaterJump( void ) {
 	flatforward[2] = 0;
 	VectorNormalize (flatforward);
 
-	VectorMA (pm->ps->origin, 30, flatforward, spot);
+	// backward direction
+	flatbackward[0] = -pml.forward[0];
+	flatbackward[1] = -pml.forward[1];
+	flatbackward[2] = 0;
+	VectorNormalize( flatbackward );
+
+	// check forward
+	VectorMA ( pm->ps->origin, 30, flatforward, spot );
 	spot[2] += 4;
-	cont = pm->pointcontents (spot, pm->ps->clientNum );
-	if ( !(cont & CONTENTS_SOLID) ) {
-		return qfalse;
+	cont = pm->pointcontents( spot, pm->ps->clientNum );
+	if ( cont & CONTENTS_SOLID ) {
+		spot[2] += 16;
+		cont = pm->pointcontents( spot, pm->ps->clientNum );
+		if ( !cont ) {
+			VectorScale( pml.forward, WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
+			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
+			return qtrue;
+		}
 	}
 
-	spot[2] += 16;
-	cont = pm->pointcontents (spot, pm->ps->clientNum );
-	if ( cont ) {
-		return qfalse;
+	// check backward
+	VectorMA( pm->ps->origin, 30, flatbackward, spot );
+	spot[2] += 4;
+	cont = pm->pointcontents( spot, pm->ps->clientNum );
+	if ( cont & CONTENTS_SOLID ) {
+		spot[2] += 16;
+		cont = pm->pointcontents( spot, pm->ps->clientNum );
+		if ( !cont ) {
+			VectorScale( pml.forward, -WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
+			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
+			return qtrue;
+		}
 	}
 
-	// jump out of water
-	VectorScale (pml.forward, 200, pm->ps->velocity);
-	pm->ps->velocity[2] = 250; // BFP - before 350
-
-	// BFP - No handling PMF_TIME_WATERJUMP
-#if 0
-	pm->ps->pm_flags |= PMF_TIME_WATERJUMP;
-	pm->ps->pm_time = 2000;
-#endif
-
-	return qtrue;
+	return qfalse;
 }
+#undef WATER_JUMP_HORIZONTAL_VELOCITY
+#undef WATER_JUMP_VERTICAL_VELOCITY
 
 //============================================================================
 
