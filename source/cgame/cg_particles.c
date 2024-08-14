@@ -750,7 +750,8 @@ void CG_AddParticles (void)
 	
 	oldtime = timenonscaled;
 
-	active = tail = NULL;
+	active = NULL;
+	tail = NULL;
 
 	for (p=active_particles ; p ; p=next)
 	{
@@ -909,7 +910,7 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 	int			i;
 
 	VectorCopy( org, end );
-	end[2] -= 15;
+	end[2] -= 1;
 
 	VectorCopy( org, start );
 	start[2] += 10;
@@ -932,10 +933,6 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 
 	// if the particle is touching something solid, it will skip instead stopping
 	contents = trap_CM_PointContents( trace.endpos, 0 );
-	if ( contents & (CONTENTS_WATER | CONTENTS_SOLID) ) {
-		return;
-	}
-
 	if ( !( contents & CONTENTS_WATER ) ) {
 		p->time = timenonscaled;
 		VectorCopy (trace.endpos, p->org);
@@ -947,6 +944,11 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 
 		// trace again if the bubble went outside, then set it near to the surface
 		contents = trap_CM_PointContents( p->org, 0 );
+		if ( contents & CONTENTS_SOLID ) { // remove when grazing something solid
+			p->next = NULL;
+			p->type = p->color = p->alpha = 0;
+			return;
+		}
 		if ( !( contents & CONTENTS_WATER ) ) {
 			VectorCopy (trace.endpos, p->org);
 		}
@@ -954,8 +956,8 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 			if ( p->vel[0] != 0 ) p->vel[0] *= 0.9;
 			if ( p->vel[1] != 0 ) p->vel[1] *= 0.9;
 		} else {
-			if ( p->vel[0] != 0 ) p->vel[0] *= 0.99;
-			if ( p->vel[1] != 0 ) p->vel[1] *= 0.99;
+			if ( p->vel[0] != 0 ) p->vel[0] *= 0.97;
+			if ( p->vel[1] != 0 ) p->vel[1] *= 0.97;
 		}
 	}
 }
