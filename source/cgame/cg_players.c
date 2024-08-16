@@ -1786,22 +1786,22 @@ CG_KiAttackSounds
 static void CG_KiAttackSounds( centity_t *cent ) { // BFP - Ki attack sounds
 	switch ( cg.predictedPlayerState.weaponstate ) {
 	case WEAPON_KIEXPLOSIONWAVE:
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+		trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
 			vec3_origin, cgs.media.defaultKiBeamExplosionWaveSound );
 		break;
 	case WEAPON_BEAMFIRING:
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+		trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
 			vec3_origin, cgs.media.defaultKiBeamExplosionWaveSound );
 		break;
 	case WEAPON_FIRING:
 		// ki attacks like eyebeam shouldn't use that kind of firing sound
 		if ( cg.predictedPlayerState.weapon != WP_LIGHTNING ) {
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
 				vec3_origin, cgs.media.defaultKiFiringAttackSound );
 		}
 		break;
 	case WEAPON_CHARGING:
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+		trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
 			vec3_origin, cgs.media.defaultKiChargingSound );
 	}
 }
@@ -1852,7 +1852,7 @@ static void CG_PlayerSprites( centity_t *cent ) {
 
 	// BFP - A macro to check if there's some eflag enabled, also don't show the float sprite to the player itself
 	#define FLOATSPRITE_CHECK(eflag, flspriteshader) \
-		if ( ( cent->currentState.eFlags & eflag ) && cent->currentState.number != cg.snap->ps.clientNum ) { \
+		if ( ( cent->currentState.eFlags & eflag ) && cent->currentState.clientNum != cg.snap->ps.clientNum ) { \
 			CG_PlayerFloatSprite( cent, flspriteshader ); \
 			return; \
 		}
@@ -1868,7 +1868,7 @@ static void CG_PlayerSprites( centity_t *cent ) {
 
 	team = cgs.clientinfo[ cent->currentState.clientNum ].team;
 	if ( !(cent->currentState.eFlags & EF_DEAD) && 
-		cent->currentState.number != cg.snap->ps.clientNum && // BFP - Don't show the friend team shader to the player itself
+		cent->currentState.clientNum != cg.snap->ps.clientNum && // BFP - Don't show the friend team shader to the player itself
 		cg.snap->ps.persistant[PERS_TEAM] == team &&
 		cgs.gametype >= GT_TEAM) {
 		// BFP - BFP doesn't use cg_drawFriend to draw that floating friend sprite, keeps enabled always. 
@@ -2351,9 +2351,14 @@ void CG_Player( centity_t *cent ) {
 
 	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team );
 
+	// BFP - If the entity is a corpse, avoid drawing ki trails to the dead
+	if ( cent->currentState.eFlags & EF_DEAD ) {
+		return;
+	}
+
 	// BFP - Origin setup for ki trails
 	#define KI_TRAIL_ZPOS 5
-	VectorCopy( cent->currentState.pos.trBase, kiTrailOrigin );
+	VectorCopy( cent->lerpOrigin, kiTrailOrigin );
 	kiTrailOrigin[2] += KI_TRAIL_ZPOS;
 	#undef KI_TRAIL_ZPOS
 
@@ -2508,10 +2513,10 @@ void CG_Player( centity_t *cent ) {
 
 		// Ki boost and ki charge sounds
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
 				vec3_origin, cgs.media.kiChargeSound );
 		} else {
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
 				vec3_origin, cgs.media.kiUseSound );
 		}
 
