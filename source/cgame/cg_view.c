@@ -952,7 +952,10 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	if ( !cg.hyperspace ) {
 		CG_AddPacketEntities();			// adter calcViewValues, so predicted player state is correct
 		CG_AddMarks();
-		CG_AddParticles ();
+		// BFP - Enable/disable particles
+		if ( cg_particles.integer > 0 ) {
+			CG_AddParticles ();
+		}
 		CG_AddLocalEntities();
 	}
 	CG_AddViewWeapon( &cg.predictedPlayerState );

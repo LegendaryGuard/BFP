@@ -40,6 +40,7 @@ CG_CVAR( cg_crosshairY, "cg_crosshairY", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE )
 CG_CVAR( cg_simpleItems, "cg_simpleItems", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE )
+CG_CVAR( cg_particles, "cg_particles", "1", CVAR_ARCHIVE ) // BFP - Particles
 CG_CVAR( cg_lagometer, "cg_lagometer", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_railTrailTime, "cg_railTrailTime", "400", CVAR_ARCHIVE )
 CG_CVAR( cg_gun_frame, "cg_gun_frame", "", CVAR_ROM )
