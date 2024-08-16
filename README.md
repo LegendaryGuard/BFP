@@ -45,6 +45,7 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Third person traceable crosshair~~
 - [x] ~~Breakable map entities ("func_breakable")~~
 - [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
+- [x] ~~Instant character model changing~~
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
 - [ ] Powerlevel and Power Tiers indicated on old docs
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~

@@ -334,10 +334,13 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		return;
 	}
 
-	// check for an almost capture
-	CheckAlmostCapture( self, attacker );
-	// check for a player that almost brought in cubes
-	CheckAlmostScored( self, attacker );
+	// BFP - For compilation safety from shared objects (.so) and dll
+	if ( attacker != NULL ) {
+		// check for an almost capture
+		CheckAlmostCapture( self, attacker );
+		// check for a player that almost brought in cubes
+		CheckAlmostScored( self, attacker );
+	}
 
 // BFP - no hook
 #if 0
@@ -425,8 +428,11 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		AddScore( self, self->r.currentOrigin, -1 );
 	}
 
-	// Add team bonuses
-	Team_FragBonuses(self, inflictor, attacker);
+	// BFP - For compilation safety from shared objects (.so) and dll
+	if ( attacker != NULL ) {
+		// Add team bonuses
+		Team_FragBonuses(self, inflictor, attacker);
+	}
 
 	// if I committed suicide, the flag does not fall, it returns.
 	if (meansOfDeath == MOD_SUICIDE) {

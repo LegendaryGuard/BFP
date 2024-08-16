@@ -92,6 +92,10 @@ struct gentity_s {
 	char		*model;
 	char		*model2;
 	int			freetime;			// level.time when the object was freed
+
+	// BFP - Model prefix handling
+	char		oldModel[MAX_QPATH];
+	char		oldModelPrefix[MAX_QPATH];
 	
 	int			eventTime;			// events will be cleared EVENT_VALID_MSEC after set
 	qboolean	freeAfterEvent;

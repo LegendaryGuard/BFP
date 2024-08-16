@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
 
-int forceModelModificationCount = -1;
+// int forceModelModificationCount = -1;
 
 void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum );
 void CG_Shutdown( void );
@@ -119,7 +119,7 @@ void CG_RegisterCvars( void ) {
 	trap_Cvar_VariableStringBuffer( "sv_running", var, sizeof( var ) );
 	cgs.localServer = atoi( var );
 
-	forceModelModificationCount = cg_forceModel.modificationCount;
+	// forceModelModificationCount = cg_forceModel.modificationCount;
 
 	trap_Cvar_Register(NULL, "model", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	trap_Cvar_Register(NULL, "headmodel", DEFAULT_MODEL, CVAR_USERINFO | CVAR_ARCHIVE );
@@ -127,7 +127,9 @@ void CG_RegisterCvars( void ) {
 	//trap_Cvar_Register(NULL, "team_headmodel", DEFAULT_TEAM_HEAD, CVAR_USERINFO | CVAR_ARCHIVE );
 }
 
-/*																																			
+// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
+#if 0
+/*
 ===================
 CG_ForceModelChange
 ===================
@@ -145,6 +147,7 @@ static void CG_ForceModelChange( void ) {
 		CG_NewClientInfo( i );
 	}
 }
+#endif
 
 /*
 =================
@@ -175,11 +178,14 @@ void CG_UpdateCvars( void ) {
 		trap_Cvar_Set( "teamoverlay", "1" );
 	}
 
+	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
+#if 0
 	// if force model changed
 	if ( forceModelModificationCount != cg_forceModel.modificationCount ) {
 		forceModelModificationCount = cg_forceModel.modificationCount;
 		CG_ForceModelChange();
 	}
+#endif
 }
 
 int CG_CrosshairPlayer( void ) {

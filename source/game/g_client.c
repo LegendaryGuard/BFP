@@ -704,6 +704,10 @@ void ClientUserinfoChanged( int clientNum ) {
 	char	blueTeam[MAX_INFO_STRING];
 	char	userinfo[MAX_INFO_STRING];
 
+	// BFP - Model prefix load
+	char newModelPrefix[MAX_QPATH];
+	char *oldModelDash, *newModelDash;
+
 	ent = g_entities + clientNum;
 	client = ent->client;
 
@@ -779,27 +783,6 @@ void ClientUserinfoChanged( int clientNum ) {
 		team = client->sess.sessionTeam;
 	}
 
-/*	NOTE: all client side now
-
-	// team
-	switch( team ) {
-	case TEAM_RED:
-		ForceClientSkin(client, model, "red");
-//		ForceClientSkin(client, headModel, "red");
-		break;
-	case TEAM_BLUE:
-		ForceClientSkin(client, model, "blue");
-//		ForceClientSkin(client, headModel, "blue");
-		break;
-	}
-	// don't ever use a default skin in teamplay, it would just waste memory
-	// however bots will always join a team but they spawn in as spectator
-	if ( g_gametype.integer >= GT_TEAM && team == TEAM_SPECTATOR) {
-		ForceClientSkin(client, model, "red");
-//		ForceClientSkin(client, headModel, "red");
-	}
-*/
-
 	// teamInfo
 	s = Info_ValueForKey( userinfo, "teamoverlay" );
 	if ( ! *s || atoi( s ) != 0 ) {
@@ -807,15 +790,6 @@ void ClientUserinfoChanged( int clientNum ) {
 	} else {
 		client->pers.teamInfo = qfalse;
 	}
-	/*
-	s = Info_ValueForKey( userinfo, "cg_pmove_fixed" );
-	if ( !*s || atoi( s ) == 0 ) {
-		client->pers.pmoveFixed = qfalse;
-	}
-	else {
-		client->pers.pmoveFixed = qtrue;
-	}
-	*/
 
 	// team task (0 = none, 1 = offence, 2 = defence)
 	teamTask = atoi(Info_ValueForKey(userinfo, "teamtask"));
@@ -843,6 +817,35 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
+
+	// BFP - Model prefix handling
+	{
+		// extract model prefixes safely
+		oldModelDash = strchr(ent->oldModel, '-');
+		if ( oldModelDash ) {
+			Q_strncpyz( ent->oldModelPrefix, ent->oldModel, oldModelDash - ent->oldModel + 1 );
+		} else {
+			Q_strncpyz( ent->oldModelPrefix, ent->oldModel, sizeof( ent->oldModelPrefix ) );
+		}
+
+		newModelDash = strchr(model, '-');
+		if ( newModelDash ) {
+			Q_strncpyz( newModelPrefix, model, newModelDash - model + 1 );
+		} else {
+			Q_strncpyz( newModelPrefix, model, sizeof( newModelPrefix ) );
+		}
+
+		// compare model prefixes
+		if ( Q_stricmp( ent->oldModelPrefix, newModelPrefix ) ) {
+			// prefixes differ, kill the player
+			ent->flags &= ~FL_GODMODE;
+			ent->client->ps.stats[STAT_HEALTH] = ent->health = 0;
+			player_die( ent, ent, NULL, 100000, MOD_UNKNOWN );
+		}
+
+		// save the new model as the old model for the next time this function runs
+		Q_strncpyz( ent->oldModel, model, sizeof( ent->oldModel ) );
+	}
 
 	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );

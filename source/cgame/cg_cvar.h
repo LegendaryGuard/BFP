@@ -86,9 +86,9 @@ CG_CVAR( cg_superdeformed, "cg_superdeformed", "0", CVAR_ARCHIVE ) // BFP - Supe
 CG_CVAR( cg_yrgolroxor, "cg_yrgolroxor", "0", 0 ) // BFP - Yrgol Roxor easter egg
 CG_CVAR( cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE )
 CG_CVAR( cg_teamChatHeight, "cg_teamChatHeight", "0", CVAR_ARCHIVE )
-CG_CVAR( cg_forceModel, "cg_forceModel", "0", CVAR_ARCHIVE )
+CG_CVAR( cg_forceModel, "cg_forceModel", "0", CVAR_ARCHIVE ) // BFP - TODO: In the future, remove cg_forceModel, which wasn't removed originally?
 CG_CVAR( cg_predictItems, "cg_predictItems", "1", CVAR_ARCHIVE )
-CG_CVAR( cg_deferPlayers, "cg_deferPlayers", "1", CVAR_ARCHIVE )
+CG_CVAR( cg_deferPlayers, "cg_deferPlayers", "1", CVAR_ARCHIVE ) // BFP - TODO: In the future, remove cg_deferPlayers, which wasn't removed originally?
 CG_CVAR( cg_drawTeamOverlay, "cg_drawTeamOverlay", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_teamOverlayUserinfo, "teamoverlay", "0", CVAR_ROM | CVAR_USERINFO )
 CG_CVAR( cg_stats, "cg_stats", "0", 0 )

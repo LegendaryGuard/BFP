@@ -737,6 +737,8 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	}
 }
 
+// BFP - Unused static functions, remove? I think so
+#if 0
 /*
 ======================
 CG_CopyClientInfoModel
@@ -870,6 +872,7 @@ static void CG_SetDeferredClientInfo( clientInfo_t *ci ) {
 
 	CG_LoadClientInfo( ci );
 }
+#endif
 
 
 /*
@@ -943,6 +946,8 @@ void CG_NewClientInfo( int clientNum ) {
 
 	// model
 	v = Info_ValueForKey( configstring, "model" );
+	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
+#if 0
 	if ( cg_forceModel.integer ) {
 		// forcemodel makes everyone use a single model
 		// to prevent load hitches
@@ -971,22 +976,24 @@ void CG_NewClientInfo( int clientNum ) {
 				Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
 			}
 		}
-	} else {
-		Q_strncpyz( newInfo.modelName, v, sizeof( newInfo.modelName ) );
+	} else 
+#endif
+	Q_strncpyz( newInfo.modelName, v, sizeof( newInfo.modelName ) );
 
-		slash = strchr( newInfo.modelName, '/' );
-		if ( !slash ) {
-			// modelName didn not include a skin name
-			Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
-		} else {
-			Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
-			// truncate modelName
-			*slash = 0;
-		}
+	slash = strchr( newInfo.modelName, '/' );
+	if ( !slash ) {
+		// modelName didn not include a skin name
+		Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
+	} else {
+		Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
+		// truncate modelName
+		*slash = 0;
 	}
 
 	// head model
 	v = Info_ValueForKey( configstring, "hmodel" );
+	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
+#if 0
 	if ( cg_forceModel.integer ) {
 		// forcemodel makes everyone use a single model
 		// to prevent load hitches
@@ -1015,23 +1022,27 @@ void CG_NewClientInfo( int clientNum ) {
 				Q_strncpyz( newInfo.headSkinName, slash + 1, sizeof( newInfo.headSkinName ) );
 			}
 		}
-	} else {
-		Q_strncpyz( newInfo.headModelName, v, sizeof( newInfo.headModelName ) );
+	} else 
+#endif
+	Q_strncpyz( newInfo.headModelName, v, sizeof( newInfo.headModelName ) );
 
-		slash = strchr( newInfo.headModelName, '/' );
-		if ( !slash ) {
-			// modelName didn not include a skin name
-			Q_strncpyz( newInfo.headSkinName, "default", sizeof( newInfo.headSkinName ) );
-		} else {
-			Q_strncpyz( newInfo.headSkinName, slash + 1, sizeof( newInfo.headSkinName ) );
-			// truncate modelName
-			*slash = 0;
-		}
+	slash = strchr( newInfo.headModelName, '/' );
+	if ( !slash ) {
+		// modelName didn not include a skin name
+		Q_strncpyz( newInfo.headSkinName, "default", sizeof( newInfo.headSkinName ) );
+	} else {
+		Q_strncpyz( newInfo.headSkinName, slash + 1, sizeof( newInfo.headSkinName ) );
+		// truncate modelName
+		*slash = 0;
 	}
 
+	// BFP - Change the model without impeding with defer
+	// BFP - TODO: Remove cg_deferPlayers cvar and its unnecessary code in the future
+#if 0
 	// scan for an existing clientinfo that matches this modelname
 	// so we can avoid loading checks if possible
-	if ( !CG_ScanForExistingClientInfo( &newInfo ) ) {
+	// if ( !CG_ScanForExistingClientInfo( &newInfo ) ) 
+	// {
 		qboolean	forceDefer;
 
 		forceDefer = trap_MemoryRemaining() < 4000000;
@@ -1046,9 +1057,10 @@ void CG_NewClientInfo( int clientNum ) {
 				newInfo.deferred = qfalse;
 			}
 		} else {
+#endif
 			CG_LoadClientInfo( &newInfo );
-		}
-	}
+		// }
+	// }
 
 	// replace whatever was there with the new one
 	newInfo.infoValid = qtrue;
