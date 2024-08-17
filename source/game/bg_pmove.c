@@ -2444,6 +2444,8 @@ static void PM_HitStun( void ) { // BFP - Hit stun
 	pm->ps->powerups[PW_FLIGHT] = 0;
 	pm->ps->powerups[PW_HASTE] = 0;
 	pm->ps->pm_flags &= ~PMF_KI_ATTACK;
+	// don't display shot effects on the stunned status
+	pm->ps->eFlags &= ~EF_FIRING;
 	pm->ps->eFlags &= ~EF_AURA;
 	pm->ps->weaponstate = WEAPON_READY;
 
