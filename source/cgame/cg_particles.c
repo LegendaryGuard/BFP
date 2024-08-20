@@ -412,8 +412,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			{
 				// BFP - To detect if there is something solid
 				trace_t		trace;
-				// contents should be MASK_DEADSOLID, so the particles don't touch any entity like the player
-				CG_Trace( &trace, p->org, vec3_origin, vec3_origin, org, -1, MASK_DEADSOLID );
+				// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
+				CG_Trace( &trace, p->org, vec3_origin, vec3_origin, org, -1, CONTENTS_SOLID );
 
 				p->time = timenonscaled;
 				p->snum = 1; // handle the p->snum when already entered in this phase for correction of client side visuals
