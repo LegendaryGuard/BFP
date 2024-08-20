@@ -1011,67 +1011,6 @@ static void CG_SpawnRailTrail( centity_t *cent, vec3_t origin ) {
 }
 
 
-// BFP - TODO: Remove these functions, these won't be used nonetheless
-#if 0
-/*
-======================
-CG_MachinegunSpinAngle
-======================
-*/
-#define		SPIN_SPEED	0.9
-#define		COAST_TIME	1000
-static float	CG_MachinegunSpinAngle( centity_t *cent ) {
-	int		delta;
-	float	angle;
-	float	speed;
-
-	delta = cg.time - cent->pe.barrelTime;
-	if ( cent->pe.barrelSpinning ) {
-		angle = cent->pe.barrelAngle + delta * SPIN_SPEED;
-	} else {
-		if ( delta > COAST_TIME ) {
-			delta = COAST_TIME;
-		}
-
-		speed = 0.5 * ( SPIN_SPEED + (float)( COAST_TIME - delta ) / COAST_TIME );
-		angle = cent->pe.barrelAngle + delta * speed;
-	}
-
-	if ( cent->pe.barrelSpinning == !(cent->currentState.eFlags & EF_FIRING) ) {
-		cent->pe.barrelTime = cg.time;
-		cent->pe.barrelAngle = AngleMod( angle );
-		cent->pe.barrelSpinning = !!(cent->currentState.eFlags & EF_FIRING);
-	}
-
-	return angle;
-}
-
-/*
-========================
-CG_AddWeaponWithPowerups
-========================
-*/
-static void CG_AddWeaponWithPowerups( refEntity_t *gun, int powerups ) {
-	// add powerup effects
-	if ( powerups & ( 1 << PW_INVIS ) ) {
-		gun->customShader = cgs.media.invisShader;
-		trap_R_AddRefEntityToScene( gun );
-	} else {
-		trap_R_AddRefEntityToScene( gun );
-
-		if ( powerups & ( 1 << PW_BATTLESUIT ) ) {
-			gun->customShader = cgs.media.battleWeaponShader;
-			trap_R_AddRefEntityToScene( gun );
-		}
-		if ( powerups & ( 1 << PW_QUAD ) ) {
-			gun->customShader = cgs.media.quadWeaponShader;
-			trap_R_AddRefEntityToScene( gun );
-		}
-	}
-}
-#endif
-
-
 /*
 =============
 CG_AddPlayerWeapon
@@ -1081,15 +1020,7 @@ The main player will have this called for BOTH cases, so effects like light and
 sound should only be done on the world model case.
 =============
 */
-// BFP - TODO: That needs some cleanup and managing correctly the weapons. 
-// Next time, unused code will be removed for clear and concise logic purposes. 
-// The same goes to CG_AddWeaponWithPowerups and CG_MachinegunSpinAngle
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team ) {
-#if 0
-	refEntity_t	gun, barrel;
-	vec3_t		angles;
-#endif
-	refEntity_t	flash;
 	weapon_t	weaponNum;
 	weaponInfo_t	*weapon;
 	centity_t	*nonPredictedCent;
@@ -1099,38 +1030,6 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	CG_RegisterWeapon( weaponNum );
 	weapon = &cg_weapons[weaponNum];
 
-	// BFP - Hide gun model
-#if 0
-	// add the weapon
-	memset( &gun, 0, sizeof( gun ) );
-
-	VectorCopy( parent->lightingOrigin, gun.lightingOrigin );
-	gun.shadowPlane = parent->shadowPlane;
-	gun.renderfx = parent->renderfx;
-
-	// set custom shading for railgun refire rate
-	if ( ps ) {
-		if ( cg.predictedPlayerState.weapon == WP_RAILGUN 
-			&& cg.predictedPlayerState.weaponstate == WEAPON_FIRING ) {
-			float	f;
-
-			f = (float)cg.predictedPlayerState.weaponTime / 1500;
-			gun.shaderRGBA[1] = 0;
-			gun.shaderRGBA[0] = 
-			gun.shaderRGBA[2] = 255 * ( 1.0 - f );
-		} else {
-			gun.shaderRGBA[0] = 255;
-			gun.shaderRGBA[1] = 255;
-			gun.shaderRGBA[2] = 255;
-			gun.shaderRGBA[3] = 255;
-		}
-	}
-	gun.hModel = weapon->weaponModel;
-	if (!gun.hModel) {
-		return;
-	}
-#endif
-
 	if ( !ps ) {
 		// add weapon ready sound
 		cent->pe.lightningFiring = qfalse;
@@ -1138,36 +1037,8 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			// lightning gun and guantlet make a different sound when fire is held down
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, weapon->firingSound );
 			cent->pe.lightningFiring = qtrue;
-		} else if ( weapon->readySound ) {
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, weapon->readySound );
 		}
 	}
-
-	// BFP - Hide barrel model and unused position entity tag property
-#if 0
-	// CG_PositionEntityOnTag( &gun, parent, parent->hModel, "tag_weapon");
-
-	// BFP - TODO: Remove that function, it won't be used nonetheless
-	CG_AddWeaponWithPowerups( &gun, cent->currentState.powerups );
-
-	// add the spinning barrel
-	if ( weapon->barrelModel ) {
-		memset( &barrel, 0, sizeof( barrel ) );
-		VectorCopy( parent->lightingOrigin, barrel.lightingOrigin );
-		barrel.shadowPlane = parent->shadowPlane;
-		barrel.renderfx = parent->renderfx;
-
-		barrel.hModel = weapon->barrelModel;
-		angles[YAW] = 0;
-		angles[PITCH] = 0;
-		angles[ROLL] = CG_MachinegunSpinAngle( cent );
-		AnglesToAxis( angles, barrel.axis );
-
-		CG_PositionRotatedEntityOnTag( &barrel, &gun, weapon->weaponModel, "tag_barrel" );
-
-		CG_AddWeaponWithPowerups( &barrel, cent->currentState.powerups );
-	}
-#endif
 
 	// make sure we aren't looking at cg.predictedPlayerEntity for LG
 	nonPredictedCent = &cg_entities[cent->currentState.clientNum];
@@ -1191,47 +1062,19 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 	}
 
-	// memset( &flash, 0, sizeof( flash ) );
-	VectorCopy( parent->lightingOrigin, flash.lightingOrigin );
-	// BFP - Hide flash model
-#if 0
-	flash.shadowPlane = parent->shadowPlane;
-	flash.renderfx = parent->renderfx;
-
-	flash.hModel = weapon->flashModel;
-	if (!flash.hModel) {
-		return;
-	}
-	angles[YAW] = 0;
-	angles[PITCH] = 0;
-	angles[ROLL] = crandom() * 10;
-	AnglesToAxis( angles, flash.axis );
-
-	// colorize the railgun blast
-	if ( weaponNum == WP_RAILGUN ) {
-		clientInfo_t	*ci;
-
-		ci = &cgs.clientinfo[ cent->currentState.clientNum ];
-		flash.shaderRGBA[0] = 255 * ci->color1[0];
-		flash.shaderRGBA[1] = 255 * ci->color1[1];
-		flash.shaderRGBA[2] = 255 * ci->color1[2];
-	}
-#endif
-
 	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right...)
-	CG_PositionRotatedEntityOnTag( &flash, parent, parent->hModel, "tag_right");
-	// trap_R_AddRefEntityToScene( &flash );
+	CG_PositionRotatedEntityOnTag( parent, parent, parent->hModel, "tag_right" );
 
 	if ( ps || cg.renderingThirdPerson ||
 		cent->currentState.number != cg.predictedPlayerState.clientNum ) {
 		// add lightning bolt
-		CG_LightningBolt( nonPredictedCent, flash.origin );
+		CG_LightningBolt( nonPredictedCent, parent->origin );
 
 		// add rail trail
-		CG_SpawnRailTrail( cent, flash.origin );
+		CG_SpawnRailTrail( cent, parent->origin );
 
 		if ( weapon->flashDlightColor[0] || weapon->flashDlightColor[1] || weapon->flashDlightColor[2] ) {
-			trap_R_AddLightToScene( flash.origin, 300 + (rand()&31), weapon->flashDlightColor[0],
+			trap_R_AddLightToScene( parent->origin, 300 + (rand()&31), weapon->flashDlightColor[0],
 				weapon->flashDlightColor[1], weapon->flashDlightColor[2] );
 		}
 	}
