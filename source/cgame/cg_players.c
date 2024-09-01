@@ -2081,6 +2081,16 @@ static void CG_PlayerSplash( centity_t *cent ) {
 
 
 
+// BFP - Macro for the size of a model
+#define MODEL_SIZE(model, model_size) { \
+	int m_i, m_j; \
+	for ( m_i = 0; m_i < 3; m_i++ ) { \
+		for ( m_j = 0; m_j < 3; m_j++ ) { \
+			(model).axis[m_i][m_j] *= (model_size); \
+		} \
+	} \
+}
+
 /*
 ===============
 CG_AddRefEntityWithPowerups
@@ -2089,60 +2099,298 @@ Adds a piece with modifications or duplications for powerups
 Also called by CG_Missile for quad rockets, but nobody can tell...
 ===============
 */
-void CG_AddRefEntityWithPowerups( refEntity_t *ent, entityState_t *state, int team ) {
-
+void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int team ) {
 	if ( state->powerups & ( 1 << PW_INVIS ) ) {
-		ent->customShader = cgs.media.invisShader;
-		trap_R_AddRefEntityToScene( ent );
-	} else {
-		/*
-		if ( state->eFlags & EF_KAMIKAZE ) {
-			if (team == TEAM_BLUE)
-				ent->customShader = cgs.media.blueKamikazeShader;
-			else
-				ent->customShader = cgs.media.redKamikazeShader;
-			trap_R_AddRefEntityToScene( ent );
-		}
-		else {*/
-			trap_R_AddRefEntityToScene( ent );
-		//}
+		ent.customShader = cgs.media.invisShader;
+		trap_R_AddRefEntityToScene( &ent );
+		return;
+	}
 
+	// render main model
+	trap_R_AddRefEntityToScene( &ent );
+
+	// BFP - TODO: If player is transformed:
+	// render perma-glow when already transformed
+	/* ent.customShader = cgs.media.auraYellowShader;
+	if ( ( state->powerups & ( 1 << PW_TRANSFORMED ) ) 
+	&& cg_permaglowUltimate.integer > 0 ) {
+		trap_R_AddRefEntityToScene( &ent );
+	}*/
+
+	ent.customShader = cgs.media.auraRedShader;
+	if ( team == TEAM_BLUE ) {
+		ent.customShader = cgs.media.auraBlueShader;
+	}
+
+	// BFP - TODO: If player is transformed:
+	// only on non-team gamemodes render when already transformed
+	/*if ( ( state->powerups & ( 1 << PW_TRANSFORMED ) )
+	&& cgs.gametype < GT_TEAM ) {
+		ent.customShader = cgs.media.auraYellowShader;
+	}*/
+
+	if ( state->eFlags & EF_AURA ) {
 		// BFP - If the player is using lightweight auras or their own small aura
-		if ( ( state->eFlags & EF_AURA )
-			&& ( cg_lightweightAuras.integer > 0
-			|| ( state->clientNum == cg.snap->ps.clientNum 
-				&& cg_smallOwnAura.integer > 0 ) ) ) {
-			// BFP - TODO: If player is transformed:
-			// ent->customShader = cgs.media.auraYellowShader;
-
-			if ( team == TEAM_BLUE) {
-				ent->customShader = cgs.media.auraBlueShader;
-			} else {
-				ent->customShader = cgs.media.auraRedShader;
-			}
-			trap_R_AddRefEntityToScene( ent );
+		if ( ( cg_lightweightAuras.integer > 0
+		|| ( state->clientNum == cg.snap->ps.clientNum 
+			&& cg_smallOwnAura.integer > 0 ) )
+		&& cg_spriteAura.integer <= 0 ) {
+			trap_R_AddRefEntityToScene( &ent );
 		}
 
-		if ( state->powerups & ( 1 << PW_QUAD ) )
-		{
-			if (team == TEAM_RED)
-				ent->customShader = cgs.media.redQuadShader;
-			else
-				ent->customShader = cgs.media.quadShader;
-			trap_R_AddRefEntityToScene( ent );
-		}
-		if ( state->powerups & ( 1 << PW_REGEN ) ) {
-			if ( ( ( cg.time / 100 ) % 10 ) == 1 ) {
-				ent->customShader = cgs.media.regenShader;
-				trap_R_AddRefEntityToScene( ent );
-			}
-		}
-		if ( state->powerups & ( 1 << PW_BATTLESUIT ) ) {
-			ent->customShader = cgs.media.battleSuitShader;
-			trap_R_AddRefEntityToScene( ent );
+		// BFP - TODO: Shader aura
+		if ( cg_lightweightAuras.integer <= 0
+		&& cg_polygonAura.integer <= 0
+		&& cg_highPolyAura.integer <= 0
+		&& cg_spriteAura.integer <= 0
+		&& ( state->clientNum == cg.snap->ps.clientNum 
+			&& cg_smallOwnAura.integer <= 0 ) ) {
+			MODEL_SIZE ( ent, 1.2f )
+			trap_R_AddRefEntityToScene( &ent );
 		}
 	}
 }
+
+
+/*
+============
+CG_Aura
+
+Adds aura and ki trails
+============
+*/
+static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int renderfx, refEntity_t legs, qhandle_t kiTrailShader ) { // BFP - Aura and ki trails
+	refEntity_t		aura;
+	refEntity_t		aura2; // secondary aura
+	vec3_t			auraInverseRotation; // for aura inverse rotation
+	vec3_t			kiTrailOrigin;
+
+	memset( &aura, 0, sizeof(aura) );
+	memset( &aura2, 0, sizeof(aura2) );
+
+	// origin setup for ki trails
+	#define KI_TRAIL_ZPOS 5
+	VectorCopy( cent->lerpOrigin, kiTrailOrigin );
+	kiTrailOrigin[2] += KI_TRAIL_ZPOS;
+	#undef KI_TRAIL_ZPOS
+
+	// Macro to handle the aura animations, when idling it sets the aura vertical rotation, so the aura rotates vertically
+	#define AURA_ANIMS(aura, reversed) \
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN \
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP ) { \
+			aura.hModel = cgs.media.runauraModel; \
+		} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK \
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB \
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) { \
+			aura.hModel = cgs.media.backauraModel; \
+		} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA ) { \
+			aura.hModel = cgs.media.flyauraModel; \
+		} else { \
+			aura.hModel = cgs.media.auraModel; \
+			if ( reversed ) { \
+				VectorNegate( cg.autoAngles, auraInverseRotation ); \
+				AnglesToAxis( auraInverseRotation, aura.axis ); \
+			} else { \
+				AnglesToAxis( cg.autoAngles, aura.axis ); \
+			} \
+		}
+
+	// Macro for the dynamic aura light, note: when charging it changes the shinning a bit
+	// Aura lights like cg_smallOwnAura only can be shown to itself and not the other clients, 
+	// the other clients only show small lights. 
+	// BFP - NOTE: Originally, if cg_spriteAura is on, the lights aren't displayed. 
+	// But that should be removed in the future and just keep cg_lightAuras conditional
+	#define AURA_LIGHT(r, g, b) \
+		if ( cg_lightAuras.integer > 0 && cg_spriteAura.integer <= 0 ) { \
+			if ( clientNum == cg.snap->ps.clientNum && cg_smallOwnAura.integer > 0 ) { \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
+				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+				} else { \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
+				} \
+			} else if ( clientNum != cg.snap->ps.clientNum || cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
+				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
+			} else { \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&63), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
+				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
+					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&150), r, g, b ); \
+				} \
+			} \
+		}
+
+	// Macro to remove ki trails
+	#define REMOVING_KI_TRAILS(clientNum, kiTrailOrigin, kiTrailShader, fastRemove) \
+		if ( cg.time > cent->pe.kiTrailTime ) { /* reset ki trail position avoid being zeroed */ \
+			CG_ResetKiTrail( clientNum, kiTrailOrigin ); \
+		} else { /* ki trails keep running in that moment, but their segments are being removed */ \
+			CG_KiTrail( clientNum, kiTrailOrigin, fastRemove, kiTrailShader ); \
+		}
+
+	if ( cent->currentState.eFlags & EF_AURA ) {
+		// trace for bubble particles only when moving in the water and charging
+		int destContentType = CG_PointContents( legs.origin, -1 );
+
+		// BFP - Ki trail
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE 
+		&& cg_kiTrail.integer >= 10 ) {
+			// apply time for using ki trail
+			cent->pe.kiTrailTime = cg.time + cg_kiTrail.integer*5;
+
+			CG_KiTrail( clientNum, kiTrailOrigin, qfalse, kiTrailShader );
+		} else { // handle when the ki trail was being used previously
+			REMOVING_KI_TRAILS( clientNum, kiTrailOrigin, kiTrailShader, qtrue )
+		}
+
+		// spawning bubble particles
+		if ( destContentType & CONTENTS_WATER ) {
+			trace_t trace;
+			vec3_t start, bubbleOrigin;
+
+			VectorCopy( legs.origin, bubbleOrigin );
+			trap_CM_BoxTrace( &trace, start, bubbleOrigin, NULL, NULL, 0, CONTENTS_WATER );
+
+			bubbleOrigin[2] += -15; // put the origin below the character's feet
+
+			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
+			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
+				bubbleOrigin[2] += -3; // put the origin a little below
+
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+			}
+		}
+
+		// apply the render type
+		aura.reType = aura2.reType = RT_MODEL;
+
+		// clear the axis to keep the position
+		AxisClear( aura.axis );
+		AxisClear( aura2.axis );
+
+		// if the player is moving like going forward and backwards, then use other aura model
+		AURA_ANIMS( aura, 0 )
+		AURA_ANIMS( aura2, 1 )
+
+		// resize the aura
+		MODEL_SIZE( aura, 1.3f )
+		MODEL_SIZE( aura2, 1.49f )
+
+		// set aura position to the player
+		VectorCopy( legs.origin, aura.origin );
+		VectorCopy( legs.lightingOrigin, aura.lightingOrigin );
+		VectorCopy( legs.origin, aura2.origin );
+		VectorCopy( legs.lightingOrigin, aura2.lightingOrigin );
+
+		// BFP - TODO: Add yellow aura only when the player is transformed, but don't override when playing a team gamemode
+		// aura.customShader = aura2.customShader = cgs.media.auraYellowShader;
+		// Don't put this line of code here if transformed, just put outside the check EF_AURA conditional
+		// trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), 1.0, 1.0, 0 );
+
+		// apply light blinking
+		if ( ci->team == TEAM_BLUE ) {
+			aura.customShader = aura2.customShader = cgs.media.auraBlueShader;
+			AURA_LIGHT( 0.2f, 0.2f, 1.0 )
+		} else {
+			aura.customShader = aura2.customShader = cgs.media.auraRedShader;
+			AURA_LIGHT( 1.0, 0.2f, 0.2f )
+		}
+
+		aura.renderfx = aura2.renderfx = renderfx;
+		VectorCopy( aura.origin, aura.oldorigin );	// don't positionally lerp at all
+		VectorCopy( aura2.origin, aura2.oldorigin );	// don't positionally lerp at all
+
+		// ki boost and ki charge sounds
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
+			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
+				vec3_origin, cgs.media.kiChargeSound );
+		} else {
+			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
+				vec3_origin, cgs.media.kiUseSound );
+		}
+
+		// keep the aura pivot tagged in tag_torso
+		CG_PositionRotatedEntityOnTag( &aura, &legs, ci->legsModel, "tag_torso" );
+		CG_PositionRotatedEntityOnTag( &aura2, &legs, ci->legsModel, "tag_torso" );
+
+		// BFP - Sprite aura
+		if ( ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) 
+		|| ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer > 0 && clientNum != cg.snap->ps.clientNum ) ) {
+			// BFP - NOTE: What shader was added?? Originally, BFP didn't finish the shader to attach or they forgot...
+			// That radius looks a bit big for an aura, maybe they thought to fit the texture that way or some circular aura?
+			// And... What the heck? This sprite view depends of pitch angle until some client connects?
+			// Also when cg_smallOwnAura cvar is enabled, it doesn't display any aura to the client itself. 
+			// Moreover, the lights are disabled as mentioned previously in AURA_LIGHT macro comments
+			// In the future, the shader should be added, not sure what kind of aura is this...
+			float pitchView = cg.refdefViewAngles[PITCH];
+			int i, connectedClients = 1;
+
+			for ( i = 0; i < MAX_CLIENTS; i++ ) {
+				if ( cg_entities[i].currentValid ) {
+					connectedClients++;
+				}
+			}
+			aura.reType = RT_SPRITE;
+			aura.customShader = 0;
+			aura.radius = 75;
+			if ( connectedClients > 1 ) {
+				pitchView = -15;
+			}
+			aura.rotation = pitchView;
+
+			aura.shaderRGBA[0] = 255;
+			aura.shaderRGBA[1] = 255;
+			aura.shaderRGBA[2] = 255;
+			aura.shaderRGBA[3] = 255;
+			trap_R_AddRefEntityToScene( &aura );
+			return;
+		}
+
+		// BFP - Small own aura only can be shown to the one who enables it for themself, not everyone
+		if ( clientNum != cg.snap->ps.clientNum || cg_smallOwnAura.integer <= 0 ) {
+			// add aura
+			if ( cg_spriteAura.integer <= 0 && cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
+				trap_R_AddRefEntityToScene( &aura );
+			}
+
+			// add secondary aura to make look cooler, a bit bigger than the other
+			if ( cg_spriteAura.integer <= 0 && cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
+				trap_R_AddRefEntityToScene( &aura2 );
+			}
+		}
+	} else {
+		// BFP - Ki trail being removed
+		if ( cg_kiTrail.integer >= 10 ) {
+			REMOVING_KI_TRAILS( clientNum, kiTrailOrigin, kiTrailShader, qtrue )
+		}
+	}
+}
+#undef AURA_ANIMS
+#undef AURA_LIGHT
+#undef REMOVING_KI_TRAILS
+
 
 /*
 =================
@@ -2198,25 +2446,11 @@ void CG_Player( centity_t *cent ) {
 	refEntity_t		legs;
 	refEntity_t		torso;
 	refEntity_t		head;
-	refEntity_t		aura; // BFP - Aura
-	refEntity_t		aura2; // BFP - Secondary aura
 	int				clientNum;
 	int				renderfx;
 	qboolean		shadow;
 	float			shadowPlane;
-	int				model_i, model_j; // BFP - For model sizes
-	vec3_t			auraInverseRotation; // BFP - For aura inverse rotation
-	// BFP - Ki trail setup
-	vec3_t			kiTrailOrigin;
 	qhandle_t		kiTrailShader;
-
-	// BFP - Macro for the size of a model
-	#define MODEL_SIZE(model, model_size) \
-		for ( model_i = 0; model_i < 3; model_i++ ) { \
-			for ( model_j = 0; model_j < 3; model_j++ ) { \
-				model.axis[model_i][model_j] *= model_size; \
-			} \
-		}
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2257,8 +2491,6 @@ void CG_Player( centity_t *cent ) {
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
-	memset( &aura, 0, sizeof(aura) ); // BFP - Aura
-	memset( &aura2, 0, sizeof(aura2) ); // BFP - Secondary aura
 
 	// get the rotation information
 	CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
@@ -2303,7 +2535,7 @@ void CG_Player( centity_t *cent ) {
 	legs.renderfx = renderfx;
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
 
-	CG_AddRefEntityWithPowerups( &legs, &cent->currentState, ci->team );
+	CG_AddRefEntityWithPowerups( legs, &cent->currentState, ci->team );
 
 	// if the model failed, allow the default nullmodel to be displayed
 	if (!legs.hModel) {
@@ -2327,7 +2559,7 @@ void CG_Player( centity_t *cent ) {
 	torso.shadowPlane = shadowPlane;
 	torso.renderfx = renderfx;
 
-	CG_AddRefEntityWithPowerups( &torso, &cent->currentState, ci->team );
+	CG_AddRefEntityWithPowerups( torso, &cent->currentState, ci->team );
 
 	//
 	// add the head
@@ -2361,199 +2593,17 @@ void CG_Player( centity_t *cent ) {
 		memset( &head, 0, sizeof(head) );
 	}
 
-	CG_AddRefEntityWithPowerups( &head, &cent->currentState, ci->team );
+	CG_AddRefEntityWithPowerups( head, &cent->currentState, ci->team );
 
 	// BFP - If the entity is a corpse, avoid drawing ki trails to the dead
 	if ( cent->currentState.eFlags & EF_DEAD ) {
 		return;
 	}
 
-	// BFP - Origin setup for ki trails
-	#define KI_TRAIL_ZPOS 5
-	VectorCopy( cent->lerpOrigin, kiTrailOrigin );
-	kiTrailOrigin[2] += KI_TRAIL_ZPOS;
-	#undef KI_TRAIL_ZPOS
-
 	//
-	// BFP - Aura 
+	// BFP - Aura and ki trails
 	//
-	// Macro to handle the aura animations, when idling it sets the aura vertical rotation, so the aura rotates vertically
-	#define AURA_ANIMS(aura, reversed) \
-		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN \
-		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP ) { \
-			aura.hModel = cgs.media.runauraModel; \
-		} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK \
-		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB \
-		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) { \
-			aura.hModel = cgs.media.backauraModel; \
-		} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA ) { \
-			aura.hModel = cgs.media.flyauraModel; \
-		} else { \
-			aura.hModel = cgs.media.auraModel; \
-			if ( reversed ) { \
-				VectorNegate( cg.autoAngles, auraInverseRotation ); \
-				AnglesToAxis( auraInverseRotation, aura.axis ); \
-			} else { \
-				AnglesToAxis( cg.autoAngles, aura.axis ); \
-			} \
-		}
-
-	// Macro for the dynamic aura light, note: when charging it changes the shinning a bit
-	// Aura lights like cg_smallOwnAura only can be shown to itself and not the other clients, 
-	// the other clients only show small lights
-	#define AURA_LIGHT(r, g, b) \
-		if ( cg_lightAuras.integer > 0 ) { \
-			if ( clientNum == cg.snap->ps.clientNum && cg_smallOwnAura.integer > 0 ) { \
-				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
-				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
-				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
-					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
-				} else { \
-					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
-					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b ); \
-				} \
-			} else if ( clientNum != cg.snap->ps.clientNum || cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) { \
-				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
-				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
-				trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b ); \
-			} else { \
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&63), r, g, b ); \
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b ); \
-				if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) { \
-					trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&150), r, g, b ); \
-				} \
-			} \
-		}
-
-	// Macro to remove ki trails
-	#define REMOVING_KI_TRAILS(clientNum, kiTrailOrigin, kiTrailShader, fastRemove) \
-		if ( cg.time > cent->pe.kiTrailTime ) { /* reset ki trail position avoid being zeroed */ \
-			CG_ResetKiTrail( clientNum, kiTrailOrigin ); \
-		} else { /* ki trails keep running in that moment, but their segments are being removed */ \
-			CG_KiTrail( clientNum, kiTrailOrigin, fastRemove, kiTrailShader ); \
-		}
-
-	if ( cent->currentState.eFlags & EF_AURA ) {
-		// BFP - Trace for bubble particles only when moving in the water and charging
-		int destContentType = CG_PointContents( legs.origin, -1 );
-
-		// BFP - Ki trail
-		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE 
-		&& cg_kiTrail.integer >= 10 ) {
-			// apply time for using ki trail
-			cent->pe.kiTrailTime = cg.time + cg_kiTrail.integer*5;
-
-			CG_KiTrail( clientNum, kiTrailOrigin, qfalse, kiTrailShader );
-		} else { // handle when the ki trail was being used previously
-			REMOVING_KI_TRAILS( clientNum, kiTrailOrigin, kiTrailShader, qtrue )
-		}
-
-		// spawning bubble particles
-		if ( destContentType & CONTENTS_WATER ) {
-			trace_t trace;
-			vec3_t start, bubbleOrigin;
-
-			VectorCopy( legs.origin, bubbleOrigin );
-			trap_CM_BoxTrace( &trace, start, bubbleOrigin, NULL, NULL, 0, CONTENTS_WATER );
-
-			bubbleOrigin[2] += -15; // put the origin below the character's feet
-
-			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
-			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
-				bubbleOrigin[2] += -3; // put the origin a little below
-
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-			}
-		}
-
-		// Apply the render type
-		aura.reType = aura2.reType = RT_MODEL;
-
-		// Clear the axis to keep the position
-		AxisClear( aura.axis );
-		AxisClear( aura2.axis );
-
-		// If the player is moving like going forward and backwards, then use other aura model
-		AURA_ANIMS( aura, 0 )
-		AURA_ANIMS( aura2, 1 )
-
-		// Resize the aura
-		MODEL_SIZE( aura, 1.3f )
-		MODEL_SIZE( aura2, 1.49f )
-
-		// Set aura position to the player
-		VectorCopy( legs.origin, aura.origin );
-		VectorCopy( legs.lightingOrigin, aura.lightingOrigin );
-		VectorCopy( legs.origin, aura2.origin );
-		VectorCopy( legs.lightingOrigin, aura2.lightingOrigin );
-
-		// BFP - TODO: Add yellow aura only when the player is transformed, but don't override when playing a team gamemode
-		// aura.customShader = aura2.customShader = cgs.media.auraYellowShader;
-		// Don't put this line of code here if transformed, just put outside the check EF_AURA conditional
-		// trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), 1.0, 1.0, 0 );
-
-		// Apply light blinking
-		if ( ci->team == TEAM_BLUE ) {
-			aura.customShader = aura2.customShader = cgs.media.auraBlueShader;
-			AURA_LIGHT( 0.2f, 0.2f, 1.0 )
-		} else {
-			aura.customShader = aura2.customShader = cgs.media.auraRedShader;
-			AURA_LIGHT( 1.0, 0.2f, 0.2f )
-		}
-
-		aura.renderfx = aura2.renderfx = renderfx;
-		VectorCopy( aura.origin, aura.oldorigin );	// don't positionally lerp at all
-		VectorCopy( aura2.origin, aura2.oldorigin );	// don't positionally lerp at all
-
-		// Ki boost and ki charge sounds
-		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
-			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-				vec3_origin, cgs.media.kiChargeSound );
-		} else {
-			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-				vec3_origin, cgs.media.kiUseSound );
-		}
-
-		// Keep the aura pivot tagged in tag_torso
-		CG_PositionRotatedEntityOnTag( &aura, &legs, ci->legsModel, "tag_torso" );
-		CG_PositionRotatedEntityOnTag( &aura2, &legs, ci->legsModel, "tag_torso" );
-
-		// BFP - Small own aura only can be shown to the one who enables it for themself, not everyone
-		if ( clientNum != cg.snap->ps.clientNum || cg_smallOwnAura.integer <= 0 ) {
-			// Add aura
-			if ( cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
-				trap_R_AddRefEntityToScene( &aura );
-			}
-
-			// Add secondary aura to make look cooler, a bit bigger than the other
-			if ( cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
-				trap_R_AddRefEntityToScene( &aura2 );
-			}
-		}
-	} else {
-		// BFP - Ki trail being removed
-		if ( cg_kiTrail.integer >= 10 ) {
-			REMOVING_KI_TRAILS( clientNum, kiTrailOrigin, kiTrailShader, qtrue )
-		}
-	}
+	CG_Aura( cent, clientNum, ci, renderfx, legs, kiTrailShader );
 
 	// BFP - Ki attack sounds
 	CG_KiAttackSounds( cent );
@@ -2584,9 +2634,6 @@ void CG_Player( centity_t *cent ) {
 	}
 }
 #undef MODEL_SIZE
-#undef AURA_ANIMS
-#undef AURA_LIGHT
-#undef REMOVING_KI_TRAILS
 
 /*
 ===============
