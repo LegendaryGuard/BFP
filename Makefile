@@ -115,7 +115,7 @@ ifeq ($(PLATFORM),linux)
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
 
-  OPTIMIZE = -O2 -fvisibility=hidden -fomit-frame-pointer -ffast-math
+  OPTIMIZE = -O3 -fvisibility=hidden -fomit-frame-pointer -ffast-math
 
   SHLIBEXT=so
   SHLIBCFLAGS=-fPIC -fvisibility=hidden
@@ -170,7 +170,7 @@ ifdef MINGW
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
 
-  OPTIMIZE = -O2 -fvisibility=hidden -fomit-frame-pointer -ffast-math
+  OPTIMIZE = -O3 -fvisibility=hidden -fomit-frame-pointer -ffast-math
 
   SHLIBEXT=dll
   SHLIBCFLAGS=-fPIC -fvisibility=hidden
@@ -221,7 +221,7 @@ ifeq ($(PLATFORM),windows)
 
   BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
 
-  OPTIMIZE = -O2 -fvisibility=hidden -fomit-frame-pointer -ffast-math
+  OPTIMIZE = -O3 -fvisibility=hidden -fomit-frame-pointer -ffast-math
 
   SHLIBEXT=dll
   SHLIBCFLAGS=-fPIC -fvisibility=hidden
