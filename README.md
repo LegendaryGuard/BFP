@@ -11,27 +11,27 @@ A legendary 90s era Quake 3 Arena mod.
 ## *WARNING!* UNDER CONSTRUCTION!
 
 ### Table of contents
-> > 1. [TODO list](#todo-list)
-> > 2. [History](#history)
-> > 3. [About the repository](#about-the-repository)
-> > 4. [References and clues to know how should be the game](#references-and-clues-to-know-how-should-be-the-game)
-> > 5. [How to build](#how-to-build)
-> > > 5.1. [Introduction](#introduction)<br/>
-> > > 5.2. [Windows](#windows)
-> > > > 5.1.1. [Building QVM (using .bat)](#building-qvm-using-bat)<br/>
-> > > > 5.1.2. [Building QVM (mingw)](#building-qvm-mingw)<br/>
-> > > > 5.1.3. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
-> > > > 5.1.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)
-> > >
-> > > 5.3. [Linux](#linux)
-> > > > 5.3.1. [Building QVM (make)](#building-qvm-make)<br/>
-> > > > 5.3.2. [Building QVM (using .bat)](#building-qvm-using-bat-1)<br/>
-> > > > 5.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
-> > >
-> > > 5.4. [Optional](#optional)
-> > 6. [Notes](#notes)
-> > 7. [Legal](#legal)
-> > 8. [Credits](#credits)
+> 1. [TODO list](#todo-list)
+> 2. [History](#history)
+> 3. [About the repository](#about-the-repository)
+> 4. [References and clues to know how should be the game](#references-and-clues-to-know-how-should-be-the-game)
+> 5. [How to build](#how-to-build)
+> > 5.1. [Introduction](#introduction)<br/>
+> > 5.2. [Windows](#windows)
+> > > 5.2.1. [Building QVM (using .bat)](#building-qvm-using-bat)<br/>
+> > > 5.2.2. [Building QVM (mingw)](#building-qvm-mingw)<br/>
+> > > 5.2.3. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
+> > > 5.2.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)
+> >
+> > 5.3. [Linux](#linux)
+> > > 5.3.1. [Building QVM (make)](#building-qvm-make)<br/>
+> > > 5.3.2. [Building QVM (using .bat)](#building-qvm-using-bat-1)<br/>
+> > > 5.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
+> >
+> > 5.4. [Optional](#optional)
+> 6. [Notes](#notes)
+> 7. [Legal](#legal)
+> 8. [Credits](#credits)
 
 # TODO list:
 
@@ -72,7 +72,10 @@ Ended: 2002
 
 Bid For Power is a total conversion for QuakeIII that plays nothing like the original game. Players take control of Ki-powered superheros and battle it out in a mostly aerial fight. The game is highlighted by the work of a great art team and an original style, and the gameplay is extremely fast paced. It can be difficult to keep up with until you get the hang of it.
 
-The source code was lost, but the assets and some docs are in any place.
+The source code is said to have started from SDK version 1.17 after the release of Quake 3 Arena (December 2, 1999). It continued to be updated, including the addition of `cg_particles.c` in version 1.29, until version 1.31. 
+More info can be found in [Quake 3 Arena changelog version history](https://discourse.ioquake.org/t/quake-3-changelog-version-history/375).
+
+The original source code appears to be lost, but the assets and some docs are available in various places. Nonetheless, not all sources are accessible.
 
 #### Old dev journals (1999 - 2002)
 
