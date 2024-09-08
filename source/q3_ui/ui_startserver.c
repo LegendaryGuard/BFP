@@ -173,23 +173,23 @@ static void StartServer_Update( void ) {
 
 		Com_sprintf( picname[i], sizeof(picname[i]), "levelshots/%s", s_startserver.maplist[top+i] );
 
-		s_startserver.mappics[i].generic.flags &= ~QMF_HIGHLIGHT;
+		s_startserver.mappics[i].generic.flags &= (unsigned int)~QMF_HIGHLIGHT;
 		s_startserver.mappics[i].generic.name   = picname[i];
 		s_startserver.mappics[i].shader         = 0;
 
 		// reset
 		s_startserver.mapbuttons[i].generic.flags |= QMF_PULSEIFFOCUS;
-		s_startserver.mapbuttons[i].generic.flags &= ~QMF_INACTIVE;
+		s_startserver.mapbuttons[i].generic.flags &= (unsigned int)~QMF_INACTIVE;
 	}
 
 	for (; i<MAX_MAPSPERPAGE; i++)
 	{
-		s_startserver.mappics[i].generic.flags &= ~QMF_HIGHLIGHT;
+		s_startserver.mappics[i].generic.flags &= (unsigned int)~QMF_HIGHLIGHT;
 		s_startserver.mappics[i].generic.name   = NULL;
 		s_startserver.mappics[i].shader         = 0;
 
 		// disable
-		s_startserver.mapbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_startserver.mapbuttons[i].generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 		s_startserver.mapbuttons[i].generic.flags |= QMF_INACTIVE;
 	}
 
@@ -203,12 +203,12 @@ static void StartServer_Update( void ) {
 	}
 	else {
 		// set the highlight
-		s_startserver.next.generic.flags &= ~QMF_INACTIVE;
+		s_startserver.next.generic.flags &= (unsigned int)~QMF_INACTIVE;
 		i = s_startserver.currentmap - top;
 		if ( i >=0 && i < MAX_MAPSPERPAGE ) 
 		{
 			s_startserver.mappics[i].generic.flags    |= QMF_HIGHLIGHT;
-			s_startserver.mapbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
+			s_startserver.mapbuttons[i].generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 		}
 
 		// set the map name
@@ -907,7 +907,7 @@ static void ServerOptions_SetPlayerItems( void ) {
 	// names
 	if( s_serveroptions.dedicated.curvalue == 0 ) {
 		s_serveroptions.player0.string = "Human";
-		s_serveroptions.playerName[0].generic.flags &= ~QMF_HIDDEN;
+		s_serveroptions.playerName[0].generic.flags &= (unsigned int)~QMF_HIDDEN;
 
 		start = 1;
 	}
@@ -917,7 +917,7 @@ static void ServerOptions_SetPlayerItems( void ) {
 	}
 	for( n = start; n < PLAYER_SLOTS; n++ ) {
 		if( s_serveroptions.playerType[n].curvalue == 1 ) {
-			s_serveroptions.playerName[n].generic.flags &= ~(QMF_INACTIVE|QMF_HIDDEN);
+			s_serveroptions.playerName[n].generic.flags &= (unsigned int)~(QMF_INACTIVE|QMF_HIDDEN);
 		}
 		else {
 			s_serveroptions.playerName[n].generic.flags |= (QMF_INACTIVE|QMF_HIDDEN);
@@ -933,7 +933,7 @@ static void ServerOptions_SetPlayerItems( void ) {
 			s_serveroptions.playerTeam[n].generic.flags |= (QMF_INACTIVE|QMF_HIDDEN);
 		}
 		else {
-			s_serveroptions.playerTeam[n].generic.flags &= ~(QMF_INACTIVE|QMF_HIDDEN);
+			s_serveroptions.playerTeam[n].generic.flags &= (unsigned int)~(QMF_INACTIVE|QMF_HIDDEN);
 		}
 	}
 }
@@ -1741,7 +1741,7 @@ static void UI_BotSelectMenu_UpdateGrid( void ) {
 			botSelectInfo.picnames[i].color = color_white;
 #endif
 
-			botSelectInfo.picbuttons[i].generic.flags &= ~QMF_INACTIVE;
+			botSelectInfo.picbuttons[i].generic.flags &= (unsigned int)~QMF_INACTIVE;
 		}
 		else {
 			// dead slot
@@ -1750,7 +1750,7 @@ static void UI_BotSelectMenu_UpdateGrid( void ) {
 			botSelectInfo.botnames[i][0] = 0;
 		}
 
- 		botSelectInfo.pics[i].generic.flags       &= ~QMF_HIGHLIGHT;
+ 		botSelectInfo.pics[i].generic.flags       &= (unsigned int)~QMF_HIGHLIGHT;
  		botSelectInfo.pics[i].shader               = 0;
  		botSelectInfo.picbuttons[i].generic.flags |= QMF_PULSEIFFOCUS;
 	}
@@ -1758,18 +1758,18 @@ static void UI_BotSelectMenu_UpdateGrid( void ) {
 	// set selected model
 	i = botSelectInfo.selectedmodel % MAX_MODELSPERPAGE;
 	botSelectInfo.pics[i].generic.flags |= QMF_HIGHLIGHT;
-	botSelectInfo.picbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
+	botSelectInfo.picbuttons[i].generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 
 	if( botSelectInfo.numpages > 1 ) {
 		if( botSelectInfo.modelpage > 0 ) {
-			botSelectInfo.left.generic.flags &= ~QMF_INACTIVE;
+			botSelectInfo.left.generic.flags &= (unsigned int)~QMF_INACTIVE;
 		}
 		else {
 			botSelectInfo.left.generic.flags |= QMF_INACTIVE;
 		}
 
 		if( botSelectInfo.modelpage < (botSelectInfo.numpages - 1) ) {
-			botSelectInfo.right.generic.flags &= ~QMF_INACTIVE;
+			botSelectInfo.right.generic.flags &= (unsigned int)~QMF_INACTIVE;
 		}
 		else {
 			botSelectInfo.right.generic.flags |= QMF_INACTIVE;
@@ -1867,14 +1867,14 @@ static void UI_BotSelectMenu_BotEvent( void* ptr, int event ) {
 	}
 
 	for( i = 0; i < (PLAYERGRID_ROWS * PLAYERGRID_COLS); i++ ) {
- 		botSelectInfo.pics[i].generic.flags &= ~QMF_HIGHLIGHT;
+ 		botSelectInfo.pics[i].generic.flags &= (unsigned int)~QMF_HIGHLIGHT;
  		botSelectInfo.picbuttons[i].generic.flags |= QMF_PULSEIFFOCUS;
 	}
 
 	// set selected
 	i = ((menucommon_s*)ptr)->id;
 	botSelectInfo.pics[i].generic.flags |= QMF_HIGHLIGHT;
-	botSelectInfo.picbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
+	botSelectInfo.picbuttons[i].generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 	botSelectInfo.selectedmodel = botSelectInfo.modelpage * MAX_MODELSPERPAGE + i;
 }
 

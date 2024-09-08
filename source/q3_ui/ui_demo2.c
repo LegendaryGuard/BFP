@@ -170,18 +170,21 @@ static void Demos_MenuInit( void ) {
 	s_demos.banner.color			= color_white;
 	s_demos.banner.style			= UI_CENTER | UI_BIGFONT; // BFP - modified DEMOS style
 
+	// BFP - Arrow position macros
+#define ART_ARROWS_X	(320-ARROWS_WIDTH/2)
+#define ART_ARROWS_Y	400
 	s_demos.arrows.generic.type		= MTYPE_BITMAP;
 	s_demos.arrows.generic.name		= ART_ARROWS;
 	s_demos.arrows.generic.flags	= QMF_INACTIVE;
-	s_demos.arrows.generic.x		= 320-ARROWS_WIDTH/2;
-	s_demos.arrows.generic.y		= 400;
+	s_demos.arrows.generic.x		= ART_ARROWS_X;
+	s_demos.arrows.generic.y		= ART_ARROWS_Y;
 	s_demos.arrows.width			= ARROWS_WIDTH;
 	s_demos.arrows.height			= ARROWS_HEIGHT;
 
 	s_demos.left.generic.type		= MTYPE_BITMAP;
 	s_demos.left.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_MOUSEONLY;
-	s_demos.left.generic.x			= 320-ARROWS_WIDTH/2;
-	s_demos.left.generic.y			= 400;
+	s_demos.left.generic.x			= ART_ARROWS_X;
+	s_demos.left.generic.y			= ART_ARROWS_Y;
 	s_demos.left.generic.id			= ID_LEFT;
 	s_demos.left.generic.callback	= Demos_MenuEvent;
 	s_demos.left.width				= ARROWS_WIDTH/2;
@@ -190,13 +193,15 @@ static void Demos_MenuInit( void ) {
 
 	s_demos.right.generic.type		= MTYPE_BITMAP;
 	s_demos.right.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_MOUSEONLY;
-	s_demos.right.generic.x			= 320;
-	s_demos.right.generic.y			= 400;
+	s_demos.right.generic.x			= ART_ARROWS_X+61;
+	s_demos.right.generic.y			= ART_ARROWS_Y;
 	s_demos.right.generic.id		= ID_RIGHT;
 	s_demos.right.generic.callback	= Demos_MenuEvent;
 	s_demos.right.width				= ARROWS_WIDTH/2;
 	s_demos.right.height			= ARROWS_HEIGHT;
 	s_demos.right.focuspic			= ART_ARROWRIGHT;
+#undef ART_ARROWS_X
+#undef ART_ARROWS_Y
 
 	s_demos.back.generic.type		= MTYPE_BITMAP;
 	s_demos.back.generic.name		= ART_BACK0;

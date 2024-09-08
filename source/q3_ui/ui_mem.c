@@ -37,7 +37,7 @@ void *UI_AllocMem( int size )
   char *endptr;
   int *ptr;
 
-  allocsize = ( size + sizeof(int) + ROUNDBITS ) & ~ROUNDBITS;    // Round to 32-byte boundary
+  allocsize = ( size + sizeof(int) + ROUNDBITS ) & (unsigned long)~ROUNDBITS;    // Round to 32-byte boundary
   ptr = NULL;
 
   smallest = NULL;

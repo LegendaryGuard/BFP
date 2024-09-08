@@ -1273,7 +1273,7 @@ void Menu_AddItem( menuframework_s *menu, void *item )
 	menu->items[menu->nitems] = item;
 	((menucommon_s*)menu->items[menu->nitems])->parent        = menu;
 	((menucommon_s*)menu->items[menu->nitems])->menuPosition  = menu->nitems;
-	((menucommon_s*)menu->items[menu->nitems])->flags        &= ~QMF_HASMOUSEFOCUS;
+	((menucommon_s*)menu->items[menu->nitems])->flags        &= (unsigned int)~QMF_HASMOUSEFOCUS;
 
 	// perform any item specific initializations
 	itemptr = (menucommon_s*)item;

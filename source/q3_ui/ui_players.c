@@ -218,8 +218,6 @@ static void UI_TorsoSequencing( playerInfo_t *pi ) {
 
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
 
-	// BFP doesn't use TORSO_DROP animation
-	
 	if ( pi->weapon != pi->currentWeapon ) {
 		if ( currentAnim != TORSO_ATTACK0_PREPARE ) { // BFP - before TORSO_DROP
 			pi->torsoAnimationTimer = UI_TIMER_WEAPON_SWITCH;
@@ -235,26 +233,6 @@ static void UI_TorsoSequencing( playerInfo_t *pi ) {
 		UI_SetTorsoAnim( pi, TORSO_STAND );
 		return;
 	}
-
-	if( currentAnim == TORSO_ATTACK0_PREPARE || currentAnim == TORSO_ATTACK0_STRIKE ) {
-		UI_SetTorsoAnim( pi, TORSO_STAND );
-		return;
-	}
-
-	// BFP doesn't use these animations
-	/*
-	if ( currentAnim == TORSO_DROP ) {
-		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
-		pi->torsoAnimationTimer = UI_TIMER_WEAPON_SWITCH;
-		UI_ForceTorsoAnim( pi, TORSO_RAISE );
-		return;
-	}
-
-	if ( currentAnim == TORSO_RAISE ) {
-		UI_SetTorsoAnim( pi, TORSO_STAND );
-		return;
-	}
-	*/
 }
 
 

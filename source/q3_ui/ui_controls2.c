@@ -161,18 +161,19 @@ typedef struct
 #define ANIM_WEAPON9	20
 #define ANIM_WEAPON10	21
 #endif
-#define ANIM_KIATTACK1	12 // BFP - (before ANIM_ATTACK)
-#define ANIM_KIATTACK2	13 // BFP
-#define ANIM_KIATTACK3	14 // BFP
-#define ANIM_KIATTACK4	15 // BFP
-#define ANIM_KIATTACK5	16 // BFP
-#define ANIM_GESTURE	17
-#define ANIM_DIE		18
-#define ANIM_CHAT		19
-#define ANIM_FLY		20 // BFP
-#define ANIM_KICHARGE	21 // BFP
-#define ANIM_MELEE		22 // BFP
-#define ANIM_BLOCK		23 // BFP
+#define ANIM_ATTACK		12
+#define ANIM_KIATTACK1	13 // BFP
+#define ANIM_KIATTACK2	14 // BFP
+#define ANIM_KIATTACK3	15 // BFP
+#define ANIM_KIATTACK4	16 // BFP
+#define ANIM_KIATTACK5	17 // BFP
+#define ANIM_GESTURE	18
+#define ANIM_DIE		19
+#define ANIM_CHAT		20
+#define ANIM_FLY		21 // BFP
+#define ANIM_KICHARGE	22 // BFP
+#define ANIM_MELEE		23 // BFP
+#define ANIM_BLOCK		24 // BFP
 
 typedef struct
 {
@@ -296,11 +297,14 @@ static bind_t g_bindings[] =
 	G_BINDING_KEY( "weapon 3",			"ki attack 3",		ID_KIATTACK3,	ANIM_KIATTACK3,	'3' ) // BFP - ki attack 3 (before shotgun)
 	G_BINDING_KEY( "weapon 4",			"ki attack 4",		ID_KIATTACK4,	ANIM_KIATTACK4,	'4' ) // BFP - ki attack 4 (before grenade launcher)
 	G_BINDING_KEY( "weapon 5",			"ki attack 5",		ID_KIATTACK5,	ANIM_KIATTACK5,	'5' ) // BFP - ki attack 5 (before rocket launcher)
-	//G_BINDING_KEY( "weapon 6",		"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6' ) // BFP - unused
-	//G_BINDING_KEY( "weapon 7",		"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7' ) // BFP - unused
-	//G_BINDING_KEY( "weapon 8",		"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8' ) // BFP - unused
-	//G_BINDING_KEY( "weapon 9",		"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9' ) // BFP - unused
-	G_BINDING_KEY( "+attack", 			"attack",			ID_ATTACK,		ANIM_KIATTACK1,	K_CTRL )
+	// BFP - unused
+#if 0
+	G_BINDING_KEY( "weapon 6",			"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6' )
+	G_BINDING_KEY( "weapon 7",			"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7' )
+	G_BINDING_KEY( "weapon 8",			"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8' )
+	G_BINDING_KEY( "weapon 9",			"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9' )
+#endif
+	G_BINDING_KEY( "+attack", 			"attack",			ID_ATTACK,		ANIM_ATTACK,	K_CTRL )
 	G_BINDING_KEY( "+button7",			"Melee Combat",		ID_MELEE,		ANIM_MELEE,		K_ALT ) // BFP - melee
 	G_BINDING_KEY( "+button10",			"Block",			ID_BLOCK,		ANIM_BLOCK,		K_CTRL ) // BFP - block
 	G_BINDING_KEY( "weapprev",			"prev weapon",		ID_WEAPPREV,	ANIM_IDLE,		'[' )
@@ -313,7 +317,7 @@ static bind_t g_bindings[] =
 	G_BINDING_KEY( "+button9",			"Charge Ki",		ID_KICHARGE,	ANIM_KICHARGE,	K_MOUSE2 ) // BFP - charge ki control
 	G_BINDING_KEY( "kiusetoggle",		"Use Ki (toggle)",	ID_KIUSETOGGLE,	ANIM_IDLE,		'e' ) // BFP - use ki toggle control
 	G_BINDING_KEY( "+button8",			"Use Ki",			ID_KIUSE,		ANIM_IDLE,		K_SHIFT ) // BFP - use ki control
-	G_BINDING_KEY( (char*)NULL,		(char*)NULL,		0,				0,				-1 )
+	G_BINDING_KEY( (char*)NULL,			(char*)NULL,		0,				0,				-1 )
 };
 #undef G_BINDING_KEY
 
@@ -536,6 +540,10 @@ static void Controls_UpdateModel( int anim ) {
 		s_controls.playerTorso = TORSO_CHARGE;
 		break;
 
+	case ANIM_ATTACK:
+		s_controls.playerTorso = TORSO_ATTACK0_STRIKE;
+		break;
+
 	// BFP - Melee
 	case ANIM_MELEE:
 		s_controls.playerLegs = LEGS_MELEE_STRIKE; 
@@ -682,7 +690,7 @@ static void Controls_Update( void ) {
 	// enable controls in active group (and count number of items for vertical centering)
 	// bk001204 - parentheses
 	for( j = 0;  (control = controls[j]) != NULL ; j++ ) {
-		control->flags &= ~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
+		control->flags &= (unsigned int)~(QMF_GRAYED|QMF_HIDDEN|QMF_INACTIVE);
 	}
 
 	// position controls
@@ -704,24 +712,24 @@ static void Controls_Update( void ) {
 		}
 
 		// enable action item
-		((menucommon_s*)(s_controls.menu.items[s_controls.menu.cursor]))->flags &= ~QMF_GRAYED;
+		((menucommon_s*)(s_controls.menu.items[s_controls.menu.cursor]))->flags &= (unsigned int)~QMF_GRAYED;
 
 		// don't gray out player's name
-		s_controls.name.generic.flags &= ~QMF_GRAYED;
+		s_controls.name.generic.flags &= (unsigned int)~QMF_GRAYED;
 
 		return;
 	}
 
 	// enable everybody
 	for( i = 0; i < s_controls.menu.nitems; i++ ) {
-		((menucommon_s*)(s_controls.menu.items[i]))->flags &= ~QMF_GRAYED;
+		((menucommon_s*)(s_controls.menu.items[i]))->flags &= (unsigned int)~QMF_GRAYED;
 	}
 
 	// makes sure flags are right on the group selection controls
-	s_controls.looking.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-	s_controls.movement.generic.flags &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-	s_controls.weapons.generic.flags  &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
-	s_controls.misc.generic.flags     &= ~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	s_controls.looking.generic.flags  &= (unsigned int)~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	s_controls.movement.generic.flags &= (unsigned int)~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	s_controls.weapons.generic.flags  &= (unsigned int)~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
+	s_controls.misc.generic.flags     &= (unsigned int)~(QMF_GRAYED|QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 
 	s_controls.looking.generic.flags  |= QMF_PULSEIFFOCUS;
 	s_controls.movement.generic.flags |= QMF_PULSEIFFOCUS;
@@ -731,22 +739,22 @@ static void Controls_Update( void ) {
 	// set buttons
 	switch( s_controls.section ) {
 	case C_MOVEMENT:
-		s_controls.movement.generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_controls.movement.generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 		s_controls.movement.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 		break;
 	
 	case C_LOOKING:
-		s_controls.looking.generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_controls.looking.generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 		s_controls.looking.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 		break;
 	
 	case C_WEAPONS:
-		s_controls.weapons.generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_controls.weapons.generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 		s_controls.weapons.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 		break;		
 
 	case C_MISC:
-		s_controls.misc.generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_controls.misc.generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 		s_controls.misc.generic.flags |= (QMF_HIGHLIGHT|QMF_HIGHLIGHT_IF_FOCUS);
 		break;
 	}
@@ -805,13 +813,13 @@ static void Controls_DrawKeyBinding( void *self )
 		if (s_controls.waitingforkey)
 		{
 			UI_DrawChar( x, y, '=', UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Waiting for new key ... ESCAPE to cancel", UI_SMALLFONT|UI_CENTER|UI_PULSE, colorWhite );
+			UI_DrawString( SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Waiting for new key ... ESCAPE to cancel", UI_SMALLFONT|UI_CENTER|UI_PULSE, colorWhite );
 		}
 		else
 		{
 			UI_DrawChar( x, y, 13, UI_CENTER|UI_BLINK|UI_SMALLFONT, text_color_highlight);
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.78, "Press ENTER or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
-			UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "Press BACKSPACE to clear", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString( SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.78, "Press ENTER or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
+			UI_DrawString( SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.82, "Press BACKSPACE to clear", UI_SMALLFONT|UI_CENTER, colorWhite );
 		}
 	}
 	else
@@ -836,7 +844,7 @@ Controls_StatusBar
 */
 static void Controls_StatusBar( void *self )
 {
-	UI_DrawString(SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Use Arrow Keys or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
+	UI_DrawString( SCREEN_WIDTH * 0.50, SCREEN_HEIGHT * 0.80, "Use Arrow Keys or CLICK to change", UI_SMALLFONT|UI_CENTER, colorWhite );
 }
 
 

@@ -188,7 +188,7 @@ static void PlayerModel_UpdateGrid( void )
 		{ 
 			// model/skin portrait
  			s_playermodel.pics[i].generic.name         = s_playermodel.modelnames[j];
-			s_playermodel.picbuttons[i].generic.flags &= ~QMF_INACTIVE;
+			s_playermodel.picbuttons[i].generic.flags &= (unsigned int)~QMF_INACTIVE;
 		}
 		else
 		{
@@ -197,7 +197,7 @@ static void PlayerModel_UpdateGrid( void )
 			s_playermodel.picbuttons[i].generic.flags |= QMF_INACTIVE;
 		}
 
- 		s_playermodel.pics[i].generic.flags       &= ~QMF_HIGHLIGHT;
+ 		s_playermodel.pics[i].generic.flags       &= (unsigned int)~QMF_HIGHLIGHT;
  		s_playermodel.pics[i].shader               = 0;
  		s_playermodel.picbuttons[i].generic.flags |= QMF_PULSEIFFOCUS;
 	}
@@ -208,18 +208,18 @@ static void PlayerModel_UpdateGrid( void )
 		i = s_playermodel.selectedmodel % MAX_MODELSPERPAGE;
 
 		s_playermodel.pics[i].generic.flags       |= QMF_HIGHLIGHT;
-		s_playermodel.picbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
+		s_playermodel.picbuttons[i].generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 	}
 
 	if (s_playermodel.numpages > 1)
 	{
 		if (s_playermodel.modelpage > 0)
-			s_playermodel.left.generic.flags &= ~QMF_INACTIVE;
+			s_playermodel.left.generic.flags &= (unsigned int)~QMF_INACTIVE;
 		else
 			s_playermodel.left.generic.flags |= QMF_INACTIVE;
 
 		if (s_playermodel.modelpage < s_playermodel.numpages-1)
-			s_playermodel.right.generic.flags &= ~QMF_INACTIVE;
+			s_playermodel.right.generic.flags &= (unsigned int)~QMF_INACTIVE;
 		else
 			s_playermodel.right.generic.flags |= QMF_INACTIVE;
 	}
@@ -514,14 +514,14 @@ static void PlayerModel_PicEvent( void* ptr, int event )
 	for (i=0; i<PLAYERGRID_ROWS*PLAYERGRID_COLS; i++)
 	{
 		// reset
- 		s_playermodel.pics[i].generic.flags       &= ~QMF_HIGHLIGHT;
+ 		s_playermodel.pics[i].generic.flags       &= (unsigned int)~QMF_HIGHLIGHT;
  		s_playermodel.picbuttons[i].generic.flags |= QMF_PULSEIFFOCUS;
 	}
 
 	// set selected
 	i = ((menucommon_s*)ptr)->id - ID_PLAYERPIC0;
 	s_playermodel.pics[i].generic.flags       |= QMF_HIGHLIGHT;
-	s_playermodel.picbuttons[i].generic.flags &= ~QMF_PULSEIFFOCUS;
+	s_playermodel.picbuttons[i].generic.flags &= (unsigned int)~QMF_PULSEIFFOCUS;
 
 	// get model and strip icon_
 	modelnum = s_playermodel.modelpage*MAX_MODELSPERPAGE + i;

@@ -401,14 +401,14 @@ static void ArenaServers_UpdateMenu( void ) {
 		}
 		else {
 			// all servers pinged - enable controls
-			g_arenaservers.master.generic.flags		&= ~QMF_GRAYED;
-			g_arenaservers.gametype.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.sortkey.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.showempty.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.showfull.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.list.generic.flags		&= ~QMF_GRAYED;
-			g_arenaservers.refresh.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.go.generic.flags			&= ~QMF_GRAYED;
+			g_arenaservers.master.generic.flags		&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.gametype.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.sortkey.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.showempty.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.showfull.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.list.generic.flags		&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.refresh.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.go.generic.flags			&= (unsigned int)~QMF_GRAYED;
 
 			// update status bar
 			if( g_servertype == AS_GLOBAL || g_servertype == AS_MPLAYER ) {
@@ -453,13 +453,13 @@ static void ArenaServers_UpdateMenu( void ) {
 			}
 
 			// end of refresh - set control state
-			g_arenaservers.master.generic.flags		&= ~QMF_GRAYED;
-			g_arenaservers.gametype.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.sortkey.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.showempty.generic.flags	&= ~QMF_GRAYED;
-			g_arenaservers.showfull.generic.flags	&= ~QMF_GRAYED;
+			g_arenaservers.master.generic.flags		&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.gametype.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.sortkey.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.showempty.generic.flags	&= (unsigned int)~QMF_GRAYED;
+			g_arenaservers.showfull.generic.flags	&= (unsigned int)~QMF_GRAYED;
 			g_arenaservers.list.generic.flags		|= QMF_GRAYED;
-			g_arenaservers.refresh.generic.flags	&= ~QMF_GRAYED;
+			g_arenaservers.refresh.generic.flags	&= (unsigned int)~QMF_GRAYED;
 			g_arenaservers.go.generic.flags			|= QMF_GRAYED;
 		}
 
@@ -1152,7 +1152,7 @@ int ArenaServers_SetType( int type ) // BFP - Hacky way to get the correct serve
 		break;
 
 	case AS_FAVORITES:
-		g_arenaservers.remove.generic.flags &= ~(QMF_INACTIVE|QMF_HIDDEN);
+		g_arenaservers.remove.generic.flags &= (unsigned int)~(QMF_INACTIVE|QMF_HIDDEN);
 		g_arenaservers.serverlist = g_favoriteserverlist;
 		g_arenaservers.numservers = &g_numfavoriteservers;
 		g_arenaservers.maxservers = MAX_FAVORITESERVERS;
@@ -1496,8 +1496,8 @@ static void ArenaServers_MenuInit( void ) {
 	g_arenaservers.remove.generic.id		= ID_REMOVE;
 	g_arenaservers.remove.generic.x			= 450;
 	g_arenaservers.remove.generic.y			= 86;
-	g_arenaservers.remove.width				= 96; // BFP - NOTE: Originally, DELETE button uses this value. It should be 80
-	g_arenaservers.remove.height			= 48; // BFP - NOTE: Originally, DELETE button uses this value. It should be 80
+	g_arenaservers.remove.width				= 80;
+	g_arenaservers.remove.height			= 80;
 	g_arenaservers.remove.focuspic			= ART_REMOVE1;
 
 	g_arenaservers.back.generic.type		= MTYPE_BITMAP;

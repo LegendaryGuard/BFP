@@ -919,7 +919,7 @@ void UI_MouseEvent( int dx, int dy )
 		if (uis.activemenu->cursor != i)
 		{
 			Menu_SetCursor( uis.activemenu, i );
-			((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor_prev]))->flags &= ~QMF_HASMOUSEFOCUS;
+			((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor_prev]))->flags &= (unsigned int)~QMF_HASMOUSEFOCUS;
 
 			if ( !(((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor]))->flags & QMF_SILENT ) ) {
 				trap_S_StartLocalSound( menu_move_sound, CHAN_LOCAL_SOUND );
@@ -932,7 +932,7 @@ void UI_MouseEvent( int dx, int dy )
 
 	if (uis.activemenu->nitems > 0) {
 		// out of any region
-		((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor]))->flags &= ~QMF_HASMOUSEFOCUS;
+		((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor]))->flags &= (unsigned int)~QMF_HASMOUSEFOCUS;
 	}
 }
 
