@@ -1,4 +1,35 @@
 
+# BFP MAKES YOU TALK IN CAPS - Yrgol - 05/12/2002	
+
+For those that were wondering who these guys are, the about section has been updated to include character descriptions and a little backstory for all the fighters.
+
+
+
+# 1.2 100,000 - Yrgol - 05/10/2002	
+
+Version 1.2 of Bid For Power has now been downloaded over 100,000 times. I'd like to give a big thanks out to everyone who stayed with us.
+
+ 
+
+# 1.2 Tourney - Yrgol - 05/08/2002	
+
+With the demise of the XSL there's another BFP tournament forming. They are having a 1v1, 2v2, and 3v3 tournament with signups going on now.
+Visit their page at https://web.archive.org/web/20020810122128/http://bfp-allstars.us4n6.org/
+
+ 
+
+# Its True, Its True! - Yrgol - 05/06/2002	
+
+1.2 is now ready for download. The files section of this page has been updated. I will be adding more links as the night goes on.
+
+ 
+
+# 28 hours until 1.2 - Yrgol - 05/05/2002	
+
+1.2 will be released tomorrow at around 9pm eastern. I added a few images to the action section. When the big fuzzy focus on planetquake gets updated they'll have another 8 screenshots which combined with the new images on this page will cover all the new attacks.
+
+
+
 # BFP 1.1 Update Information - 02/04/2002 by Yrgol	
 
 The grand list of my updates to the latest build of Bid For Power. Enjoy.
