@@ -95,6 +95,7 @@ Click here to see the [Old PyroFragger dev journal (Markdown edition)](docs/pyro
 
 We're making a replica of the lost source code. <br/>
 The highest priority goal is to copy and recreate the complete logical structure of the BFP game. It would be a game SDK that'll provide a structured and standardized way to modify the mod.<br/>
+You'll notice some differences that the original Bid For Power didn't have, such as some adjusted UI buttons, sprite aura type option in BFP options menu, server info menu has pagination and displays info, ...<br/>
 Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
 
 ### References and clues to know how should be the game
@@ -129,18 +130,6 @@ _**Click on some image to see it complete**._
 - How should the HUD be:
 
 <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147737-248ca7d6-d7db-430e-933d-a3a41cd82ddf.png" alt="hud_display" width=340 />
-
-<br/>
-
-- When player receives a hit stun (`g_hitStun 1`):
-
-<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267148585-9518930d-61d3-4844-8c5b-06d079dcf2b2.png" alt="hit_stun_received" width=340 />
-
-<br/>
-
-- When player is being ready to shot (holding a key):
-
-<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147877-ccf8373c-885c-44d2-b143-30c3b02df80f.png" alt="ready_to_attack" width=340 />
 
 <br/>
 
