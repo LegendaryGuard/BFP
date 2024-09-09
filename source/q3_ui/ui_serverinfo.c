@@ -29,15 +29,32 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SERVERINFO_BACK0	"menu/art/back_0"
 #define SERVERINFO_BACK1	"menu/art/back_1"
 
+// BFP - Arrows
+#define ART_ARROWS			"menu/art/gs_arrows_0"
+#define ART_ARROWSL			"menu/art/gs_arrows_l"
+#define ART_ARROWSR			"menu/art/gs_arrows_r"
+
 static char* serverinfo_artlist[] =
 {
 	SERVERINFO_BACK0,
 	SERVERINFO_BACK1,
+
+	// BFP - Add arrows inside that
+	ART_ARROWS,
+	ART_ARROWSL,
+	ART_ARROWSR,
 	NULL
 };
 
 #define ID_ADD	 100
 #define ID_BACK	 101
+
+// BFP - ID for arrows
+#define ID_NEXT	 102
+#define ID_PREV	 103
+
+// BFP - Lines per page
+#define LINES_PER_PAGE	15
 
 typedef struct
 {
@@ -49,6 +66,11 @@ typedef struct
 	menutext_s		add;
 	char			info[MAX_INFO_STRING];
 	int				numlines;
+	int				currentPage;
+	int				totalPages;
+	menubitmap_s	arrows;
+	menubitmap_s	next;
+	menubitmap_s	prev;
 } serverinfo_t;
 
 static serverinfo_t	s_serverinfo;
@@ -115,6 +137,27 @@ static void ServerInfo_Event( void* ptr, int event )
 
 			UI_PopMenu();
 			break;
+		
+		// BFP - Prev and next events
+		case ID_PREV:
+			if (event != QM_ACTIVATED)
+				break;
+
+			if (s_serverinfo.currentPage > 0) {
+				s_serverinfo.currentPage--;
+				Menu_Draw( &s_serverinfo.menu );
+			}
+			break;
+
+		case ID_NEXT:
+			if (event != QM_ACTIVATED)
+				break;
+
+			if (s_serverinfo.currentPage < s_serverinfo.totalPages - 1) {
+				s_serverinfo.currentPage++;
+				Menu_Draw( &s_serverinfo.menu );
+			}
+			break;
 	}
 }
 
@@ -129,25 +172,78 @@ static void ServerInfo_MenuDraw( void )
 	char			key[MAX_INFO_KEY];
 	char			value[MAX_INFO_VALUE];
 	int				y;
+	// BFP - For pagination
+	char			pageIndicator[64];
+	int				startLine, endLine;
+	int				lineIndex;
+	int				len, wrappedLen, i, j;
+	char			wrappedValue[MAX_INFO_VALUE];
+#define LIMIT_CHARACTERS		39
 
-	y = SCREEN_HEIGHT/2 - s_serverinfo.numlines*(SMALLCHAR_HEIGHT)/2 - 20;
+	// BFP - NOTE: On original BFP, Menu_Draw is used at the end of the function, so hides completely the server info (·_·)
+	// To avoid the hidden info issue, the function needs to be called at the beginning, just here:
+	Menu_Draw( &s_serverinfo.menu );
+
+	// BFP - NOTE: Pagination is implemented here, also looks better when the user needs to see all info avoiding letters going off the screen
+
+	startLine = s_serverinfo.currentPage * LINES_PER_PAGE;
+	endLine = startLine + LINES_PER_PAGE;
+	if ( endLine > s_serverinfo.numlines )
+		endLine = s_serverinfo.numlines;
+
+	y = SCREEN_HEIGHT/2 - ( endLine - startLine ) * ( SMALLCHAR_HEIGHT )/2 - 20;
 	s = s_serverinfo.info;
+	lineIndex = 0;
+
 	while ( s ) {
 		Info_NextPair( &s, key, value );
 		if ( !key[0] ) {
 			break;
 		}
 
-		Q_strcat( key, MAX_INFO_KEY, ":" ); 
+		// show only these lines in the page
+		if ( lineIndex >= startLine && lineIndex < endLine ) {
+			Q_strcat( key, MAX_INFO_KEY, ":" ); 
 
-		UI_DrawString(SCREEN_WIDTH*0.50 - 8,y,key,UI_RIGHT|UI_SMALLFONT,color_white); // BFP - modified color
-		UI_DrawString(SCREEN_WIDTH*0.50 + 8,y,value,UI_LEFT|UI_SMALLFONT,text_color_normal);
+			UI_DrawString( SCREEN_WIDTH*0.50 - 2, y, key, UI_RIGHT|UI_SMALLFONT, color_white );
 
-		y += SMALLCHAR_HEIGHT;
+			// wrap the value if it exceeds the limit of characters
+			len = strlen( value );
+			wrappedLen = 0;
+			while ( len > 0 ) {
+				if ( len > LIMIT_CHARACTERS ) {
+					// find the last occurrence of ".", ",", "-", "_", or " " within the limit
+					for ( i = LIMIT_CHARACTERS; i > 0; i-- ) {
+						if ( value[wrappedLen + i] == '.' || value[wrappedLen + i] == ',' 
+						|| value[wrappedLen + i] == '-' || value[wrappedLen + i] == '_' 
+						|| value[wrappedLen + i] == ' ' ) {
+							break;
+						}
+					}
+					if ( i == 0 ) {
+						i = LIMIT_CHARACTERS; // no delimiter found, use the limit
+					}
+					// include the delimiter in the first part
+					strncpy( wrappedValue, value + wrappedLen, i + 1 );
+					wrappedValue[i + 1] = '\0';
+					wrappedLen += i + 1;
+					len -= i + 1;
+				} else {
+					strcpy( wrappedValue, value + wrappedLen );
+					len = 0;
+				}
+				UI_DrawString( SCREEN_WIDTH*0.50 + 2, y, wrappedValue, UI_LEFT|UI_SMALLFONT, text_color_normal );
+				y += SMALLCHAR_HEIGHT;
+			}
+		}
+
+		lineIndex++;
 	}
-
-	Menu_Draw( &s_serverinfo.menu );
+	Com_sprintf( pageIndicator, sizeof(pageIndicator), "Page %d of %d", s_serverinfo.currentPage + 1, s_serverinfo.totalPages );
+	UI_DrawString( 320, 420, pageIndicator, UI_CENTER|UI_SMALLFONT, color_white );
 }
+
+
 
 /*
 =================
@@ -229,7 +325,7 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.add.generic.callback = ServerInfo_Event;
 	s_serverinfo.add.generic.id	      = ID_ADD;
 	s_serverinfo.add.generic.x		  = 320;
-	s_serverinfo.add.generic.y		  = 400; // BFP - modified ADD TO FAVORITES button y position
+	s_serverinfo.add.generic.y		  = 450; // BFP - (originally 400 on BFP) modified ADD TO FAVORITES button y position
 	s_serverinfo.add.string  		  = "ADD TO FAVORITES";
 	s_serverinfo.add.style  		  = UI_CENTER|UI_SMALLFONT;
 	s_serverinfo.add.color			  =	color_white; // BFP - modified ADD TO FAVORITES button color
@@ -248,6 +344,40 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.back.height  		   = 80; // BFP - modified BACK button height
 	s_serverinfo.back.focuspic         = SERVERINFO_BACK1;
 
+	// BFP - Arrows to go prev or next
+#define ART_ARROWS_X	260
+#define ART_ARROWS_Y	375
+	s_serverinfo.arrows.generic.type		= MTYPE_BITMAP;
+	s_serverinfo.arrows.generic.name		= ART_ARROWS;
+	s_serverinfo.arrows.generic.flags		= QMF_INACTIVE;
+	s_serverinfo.arrows.generic.x			= ART_ARROWS_X;
+	s_serverinfo.arrows.generic.y			= ART_ARROWS_Y;
+	s_serverinfo.arrows.width				= 128;
+	s_serverinfo.arrows.height				= 32;
+
+	s_serverinfo.prev.generic.type			= MTYPE_BITMAP;
+	s_serverinfo.prev.generic.flags			= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_serverinfo.prev.generic.callback		= ServerInfo_Event;
+	s_serverinfo.prev.generic.id			= ID_PREV;
+	s_serverinfo.prev.generic.x				= ART_ARROWS_X;
+	s_serverinfo.prev.generic.y				= ART_ARROWS_Y;
+	s_serverinfo.prev.width  				= 64;
+	s_serverinfo.prev.height  				= 32;
+	s_serverinfo.prev.focuspic				= ART_ARROWSL;
+
+	s_serverinfo.next.generic.type	    = MTYPE_BITMAP;
+	s_serverinfo.next.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_serverinfo.next.generic.callback	= ServerInfo_Event;
+	s_serverinfo.next.generic.id		= ID_NEXT;
+	s_serverinfo.next.generic.x			= ART_ARROWS_X+61;
+	s_serverinfo.next.generic.y			= ART_ARROWS_Y;
+	s_serverinfo.next.width  			= 64;
+	s_serverinfo.next.height  		    = 32;
+	s_serverinfo.next.focuspic			= ART_ARROWSR;
+#undef ART_ARROWS_X
+#undef ART_ARROWS_Y
+	// BFP - End of arrows to go prev or next ^
+
 	trap_GetConfigString( CS_SERVERINFO, s_serverinfo.info, MAX_INFO_STRING );
 
 	s_serverinfo.numlines = 0;
@@ -260,15 +390,23 @@ void UI_ServerInfoMenu( void )
 		s_serverinfo.numlines++;
 	}
 
-	if (s_serverinfo.numlines > 16)
-		s_serverinfo.numlines = 16;
+	// BFP - Handle total pages
+	s_serverinfo.totalPages = (s_serverinfo.numlines + LINES_PER_PAGE - 1) / LINES_PER_PAGE;
 
-	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.barlog ); // BFP - barlog
-	// BFP - NOTE: That also happens in original BFP. Adding the background, hides completely the server info, it would be advisable to find an alternative or... remove that background hidding info issue (·_·)
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.menubg ); // BFP - Menu background
+	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.barlog ); // BFP - barlog
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.banner );
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.add );
 	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.back );
+	// BFP - Arrows to handle the pages
+	Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.arrows );
+	if ( s_serverinfo.totalPages > 1 ) {
+		Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.next );
+		Menu_AddItem( &s_serverinfo.menu, (void*) &s_serverinfo.prev );
+	}
+
+	// BFP - Initialize the current page to zero
+	s_serverinfo.currentPage = 0;
 
 	UI_PushMenu( &s_serverinfo.menu );
 }
