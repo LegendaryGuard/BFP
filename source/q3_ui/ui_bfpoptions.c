@@ -26,7 +26,7 @@ BFP OPTIONS MENU
 #define ID_DYNEXPLOLIGHT    144
 #define ID_KITRAILENGTH     145
 #define ID_BEAMCMPXY        146
-#define ID_TRANSAURA        147
+#define ID_TRANSFORMATIONAURA        147
 #define ID_SMALLAURA        148
 #define ID_SSJGLOW          149
 #define ID_ACCUCROSSHAIR    150
@@ -41,10 +41,11 @@ BFP OPTIONS MENU
 #define ID_BACK				159
 
 // Macros to handle the cases in that order
-#define SHADER_AURA         0
-#define LIGHTWEIGHT_AURA    1
-#define POLYGON_AURA        2
-#define HIGHPOLYCOUNT_AURA  3
+#define SPRITE_AURA         0
+#define SHADER_AURA         1
+#define LIGHTWEIGHT_AURA    2
+#define POLYGON_AURA        3
+#define HIGHPOLYCOUNT_AURA  4
 
 #define WIMPY_EXPLO         0
 #define WEAK_EXPLO          1
@@ -52,6 +53,7 @@ BFP OPTIONS MENU
 #define HARDCORE_EXPLO      3
 
 static const char *auratype_items[] = {
+	"Sprite Aura",
 	"Shader Aura",
 	"Lightweight Aura",
 	"Polygonal Aura",
@@ -133,7 +135,8 @@ static void BFPOptions_SetMenuItems( void ) {
 #undef BFPOPTIONS_MENUITEM
 
 // Macros to look better the code
-#define AURATYPE_SETUP(highpoly, poly, light) \
+#define AURATYPE_SETUP(sprite, highpoly, poly, light) \
+		trap_Cvar_SetValue( "cg_spriteAura", sprite ); \
 		trap_Cvar_SetValue( "cg_highPolyAura", highpoly ); \
 		trap_Cvar_SetValue( "cg_polygonAura", poly ); \
 		trap_Cvar_SetValue( "cg_lightweightAuras", light );
@@ -160,20 +163,24 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 
 	case ID_AURATYPE:
 		switch ( s_bfpoptions.auratype.curvalue ) {
-		case SHADER_AURA: // Shader Aura
-			AURATYPE_SETUP( 0, 0, 0 )
+		case SPRITE_AURA:
+			AURATYPE_SETUP( 1, 0, 0, 0 )
 			break;
 
-		case LIGHTWEIGHT_AURA: // Lightweight Aura
-			AURATYPE_SETUP( 0, 0, 1 )
+		case SHADER_AURA:
+			AURATYPE_SETUP( 0, 0, 0, 0 )
 			break;
 
-		case POLYGON_AURA: // Polygonal Aura
-			AURATYPE_SETUP( 0, 1, 0 )
+		case LIGHTWEIGHT_AURA:
+			AURATYPE_SETUP( 0, 0, 0, 1 )
 			break;
 
-		case HIGHPOLYCOUNT_AURA: // High Polycount Aura
-			AURATYPE_SETUP( 1, 1, 0 )
+		case POLYGON_AURA:
+			AURATYPE_SETUP( 0, 0, 1, 0 )
+			break;
+
+		case HIGHPOLYCOUNT_AURA:
+			AURATYPE_SETUP( 0, 1, 1, 0 )
 			break;
 		}
 		break;
@@ -251,7 +258,7 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 		//-----------------------------------------------------------------------//
 
 
-	case ID_TRANSAURA:
+	case ID_TRANSFORMATIONAURA:
 		trap_Cvar_SetValue( "cg_transformationAura", s_bfpoptions.transaura.curvalue );
 		break;
 	
@@ -311,7 +318,7 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 
 static void BFPOptions_MenuInit( void ) {
 	int		y;
-	int		highpolyaura, polygonalaura, lightweightaura;
+	int		highpolyaura, polygonalaura, lightweightaura, spriteaura;
 	int 	thirdperson, firstpersonvis;
 	int 	explosionShell, explosionSmoke;
 	int		explosionring;
@@ -441,7 +448,7 @@ static void BFPOptions_MenuInit( void ) {
 	s_bfpoptions.transaura.generic.name		   = "Transformation Aura:";
 	s_bfpoptions.transaura.generic.flags	   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_bfpoptions.transaura.generic.callback    = BFPOptions_Event;
-	s_bfpoptions.transaura.generic.id          = ID_TRANSAURA;
+	s_bfpoptions.transaura.generic.id          = ID_TRANSFORMATIONAURA;
 	s_bfpoptions.transaura.generic.x	       = BFPOPTIONS_X_POS;
 	s_bfpoptions.transaura.generic.y	       = y;
 
@@ -586,6 +593,7 @@ static void BFPOptions_MenuInit( void ) {
 	highpolyaura = trap_Cvar_VariableValue( "cg_highPolyAura" );
 	polygonalaura = trap_Cvar_VariableValue( "cg_polygonAura" );
 	lightweightaura = trap_Cvar_VariableValue( "cg_lightweightAuras" );
+	spriteaura = trap_Cvar_VariableValue( "cg_spriteAura" );
 
 	if ( highpolyaura >= 1 ) {
 		s_bfpoptions.auratype.curvalue = HIGHPOLYCOUNT_AURA;
@@ -593,6 +601,8 @@ static void BFPOptions_MenuInit( void ) {
 		s_bfpoptions.auratype.curvalue = POLYGON_AURA;
 	} else if ( lightweightaura >= 1 ) {
 		s_bfpoptions.auratype.curvalue = LIGHTWEIGHT_AURA;
+	} else if ( spriteaura >= 1 ) {
+		s_bfpoptions.auratype.curvalue = SPRITE_AURA;
 	} else {
 		s_bfpoptions.auratype.curvalue = SHADER_AURA;
 	}
@@ -637,6 +647,7 @@ static void BFPOptions_MenuInit( void ) {
 
 	BFPOptions_SetMenuItems();
 }
+#undef SPRITE_AURA
 #undef SHADER_AURA
 #undef LIGHTWEIGHT_AURA
 #undef POLYGON_AURA
