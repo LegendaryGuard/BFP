@@ -42,10 +42,11 @@ BFP OPTIONS MENU
 
 // Macros to handle the cases in that order
 #define SPRITE_AURA         0
-#define SHADER_AURA         1
-#define LIGHTWEIGHT_AURA    2
-#define POLYGON_AURA        3
-#define HIGHPOLYCOUNT_AURA  4
+#define LIGHTWEIGHT_AURA    1
+#define POLYGON_AURA        2
+#define HIGHPOLYCOUNT_AURA  3
+#define PARTICLE_AURA       4
+#define SHADER_AURA         5
 
 #define WIMPY_EXPLO         0
 #define WEAK_EXPLO          1
@@ -54,10 +55,11 @@ BFP OPTIONS MENU
 
 static const char *auratype_items[] = {
 	"Sprite Aura",
-	"Shader Aura",
 	"Lightweight Aura",
 	"Polygonal Aura",
 	"High Polycount Aura",
+	"Particle Aura (Particle Effects only)",
+	"Shader Aura",
 	NULL
 };
 
@@ -135,11 +137,12 @@ static void BFPOptions_SetMenuItems( void ) {
 #undef BFPOPTIONS_MENUITEM
 
 // Macros to look better the code
-#define AURATYPE_SETUP(sprite, highpoly, poly, light) \
+#define AURATYPE_SETUP(sprite, highpoly, poly, light, particle) \
 		trap_Cvar_SetValue( "cg_spriteAura", sprite ); \
 		trap_Cvar_SetValue( "cg_highPolyAura", highpoly ); \
 		trap_Cvar_SetValue( "cg_polygonAura", poly ); \
-		trap_Cvar_SetValue( "cg_lightweightAuras", light );
+		trap_Cvar_SetValue( "cg_lightweightAuras", light );\
+		trap_Cvar_SetValue( "cg_particleAura", particle );
 
 #define VIEWPOINT_SETUP(tp, ownmodel) \
 		trap_Cvar_SetValue( "cg_thirdPerson", tp ); \
@@ -164,23 +167,27 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 	case ID_AURATYPE:
 		switch ( s_bfpoptions.auratype.curvalue ) {
 		case SPRITE_AURA:
-			AURATYPE_SETUP( 1, 0, 0, 0 )
-			break;
-
-		case SHADER_AURA:
-			AURATYPE_SETUP( 0, 0, 0, 0 )
+			AURATYPE_SETUP( 1, 0, 0, 0, 0 )
 			break;
 
 		case LIGHTWEIGHT_AURA:
-			AURATYPE_SETUP( 0, 0, 0, 1 )
+			AURATYPE_SETUP( 0, 0, 0, 1, 0 )
 			break;
 
 		case POLYGON_AURA:
-			AURATYPE_SETUP( 0, 0, 1, 0 )
+			AURATYPE_SETUP( 0, 0, 1, 0, 0 )
 			break;
 
 		case HIGHPOLYCOUNT_AURA:
-			AURATYPE_SETUP( 0, 1, 1, 0 )
+			AURATYPE_SETUP( 0, 1, 1, 0, 0 )
+			break;
+
+		case PARTICLE_AURA:
+			AURATYPE_SETUP( 0, 0, 0, 0, 1 )
+			break;
+
+		case SHADER_AURA:
+			AURATYPE_SETUP( 0, 0, 0, 0, 0 )
 			break;
 		}
 		break;
@@ -318,7 +325,7 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 
 static void BFPOptions_MenuInit( void ) {
 	int		y;
-	int		highpolyaura, polygonalaura, lightweightaura, spriteaura;
+	int		highpolyaura, polygonalaura, lightweightaura, spriteaura, particleaura;
 	int 	thirdperson, firstpersonvis;
 	int 	explosionShell, explosionSmoke;
 	int		explosionring;
@@ -594,6 +601,7 @@ static void BFPOptions_MenuInit( void ) {
 	polygonalaura = trap_Cvar_VariableValue( "cg_polygonAura" );
 	lightweightaura = trap_Cvar_VariableValue( "cg_lightweightAuras" );
 	spriteaura = trap_Cvar_VariableValue( "cg_spriteAura" );
+	particleaura = trap_Cvar_VariableValue( "cg_particleAura" );
 
 	if ( highpolyaura >= 1 ) {
 		s_bfpoptions.auratype.curvalue = HIGHPOLYCOUNT_AURA;
@@ -603,6 +611,8 @@ static void BFPOptions_MenuInit( void ) {
 		s_bfpoptions.auratype.curvalue = LIGHTWEIGHT_AURA;
 	} else if ( spriteaura >= 1 ) {
 		s_bfpoptions.auratype.curvalue = SPRITE_AURA;
+	} else if ( particleaura >= 1 ) {
+		s_bfpoptions.auratype.curvalue = PARTICLE_AURA;
 	} else {
 		s_bfpoptions.auratype.curvalue = SHADER_AURA;
 	}
