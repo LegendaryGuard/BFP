@@ -2134,21 +2134,59 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 		if ( ( cg_lightweightAuras.integer > 0
 		|| ( state->clientNum == cg.snap->ps.clientNum 
 			&& cg_smallOwnAura.integer > 0 ) )
-		&& cg_spriteAura.integer <= 0 ) {
+		&& cg_spriteAura.integer <= 0
+		&& cg_particleAura.integer <= 0 ) {
 			trap_R_AddRefEntityToScene( &ent );
 		}
 
 		// BFP - TODO: Shader aura
 		if ( cg_lightweightAuras.integer <= 0
 		&& cg_polygonAura.integer <= 0
-		&& cg_highPolyAura.integer <= 0
 		&& cg_spriteAura.integer <= 0
+		&& cg_particleAura.integer <= 0
 		&& ( state->clientNum == cg.snap->ps.clientNum 
 			&& cg_smallOwnAura.integer <= 0 ) ) {
 			MODEL_SIZE ( ent, 1.2f )
 			trap_R_AddRefEntityToScene( &ent );
 		}
 	}
+}
+
+/*
+============
+CG_SpriteAura
+
+Adds sprite aura, just one quad
+============
+*/
+static void CG_SpriteAura( refEntity_t aura ) { // BFP - Sprite aura
+	// BFP - NOTE: What shader was added?? Originally, BFP didn't finish the shader to attach or they forgot...
+	// That radius looks a bit big for an aura, maybe they thought to fit the texture that way or some circular aura?
+	// And... What the heck? This sprite view depends of pitch angle until some client connects?
+	// Also when cg_smallOwnAura cvar is enabled, it doesn't display any aura to the client itself. 
+	// Moreover, the lights are disabled as mentioned previously in AURA_LIGHT macro comments
+	// In the future, the shader should be added, not sure what kind of aura is this...
+	float pitchView = cg.refdefViewAngles[PITCH];
+	int i, connectedClients = 1;
+
+	for ( i = 0; i < MAX_CLIENTS; i++ ) {
+		if ( cg_entities[i].currentValid ) {
+			connectedClients++;
+		}
+	}
+	aura.reType = RT_SPRITE;
+	aura.customShader = 0;
+	aura.radius = 75;
+	if ( connectedClients > 1 ) {
+		pitchView = -15;
+	}
+	aura.rotation = pitchView;
+
+	aura.shaderRGBA[0] = 255;
+	aura.shaderRGBA[1] = 255;
+	aura.shaderRGBA[2] = 255;
+	aura.shaderRGBA[3] = 255;
+	trap_R_AddRefEntityToScene( &aura );
 }
 
 
@@ -2201,7 +2239,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 	// BFP - NOTE: Originally, if cg_spriteAura is on, the lights aren't displayed. 
 	// But that should be removed in the future and just keep cg_lightAuras conditional
 	#define AURA_LIGHT(r, g, b) \
-		if ( cg_lightAuras.integer > 0 && cg_spriteAura.integer <= 0 ) { \
+		if ( cg_lightAuras.integer > 0 && cg_spriteAura.integer <= 0 && cg_particleAura.integer <= 0 ) { \
 			if ( clientNum == cg.snap->ps.clientNum && cg_smallOwnAura.integer > 0 ) { \
 				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
 				trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b ); \
@@ -2338,45 +2376,42 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		// BFP - Sprite aura
 		if ( ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) 
 		|| ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer > 0 && clientNum != cg.snap->ps.clientNum ) ) {
-			// BFP - NOTE: What shader was added?? Originally, BFP didn't finish the shader to attach or they forgot...
-			// That radius looks a bit big for an aura, maybe they thought to fit the texture that way or some circular aura?
-			// And... What the heck? This sprite view depends of pitch angle until some client connects?
-			// Also when cg_smallOwnAura cvar is enabled, it doesn't display any aura to the client itself. 
-			// Moreover, the lights are disabled as mentioned previously in AURA_LIGHT macro comments
-			// In the future, the shader should be added, not sure what kind of aura is this...
-			float pitchView = cg.refdefViewAngles[PITCH];
-			int i, connectedClients = 1;
+			CG_SpriteAura( aura );
+			return;
+		}
 
-			for ( i = 0; i < MAX_CLIENTS; i++ ) {
-				if ( cg_entities[i].currentValid ) {
-					connectedClients++;
-				}
-			}
-			aura.reType = RT_SPRITE;
-			aura.customShader = 0;
-			aura.radius = 75;
-			if ( connectedClients > 1 ) {
-				pitchView = -15;
-			}
-			aura.rotation = pitchView;
+		// BFP - Particle aura
+		if ( ( cg_particleAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) 
+		|| ( cg_particleAura.integer > 0 && cg_smallOwnAura.integer > 0 && clientNum != cg.snap->ps.clientNum ) ) {
+			// BFP - NOTE: Particle aura wasn't fully implemented on original BFP.
+			// Originally, particle aura wasn't correctly placed on player's origin, it was zeroed and 
+			// when the player moves up, the aura was moving to right, and when moves down, it was moving to left; 
+			// moreover, spawns too many particles; also the shader uses bubble ones and the particle size is a bit big. 
+			// It's unknown what they planned in their future.
+			// But this time, it's placed to player's origin like when being underwater, more fading is added, 
+			// also it doesn't spawn too many particles.
+			// In the future, that should be tweaked, bubble shader doesn't seem to fit well.
+			vec3_t pAuraOrigin;
+			VectorCopy( legs.origin, pAuraOrigin );
 
-			aura.shaderRGBA[0] = 255;
-			aura.shaderRGBA[1] = 255;
-			aura.shaderRGBA[2] = 255;
-			aura.shaderRGBA[3] = 255;
-			trap_R_AddRefEntityToScene( &aura );
+			pAuraOrigin[2] += -18; // put the origin a little below
+
+			CG_ParticleAura( cent, clientNum, cgs.media.waterBubbleShader, pAuraOrigin, NULL, 20 );
+			CG_ParticleAura( cent, clientNum, cgs.media.waterBubbleShader, pAuraOrigin, NULL, 20 );
 			return;
 		}
 
 		// BFP - Small own aura only can be shown to the one who enables it for themself, not everyone
 		if ( clientNum != cg.snap->ps.clientNum || cg_smallOwnAura.integer <= 0 ) {
 			// add aura
-			if ( cg_spriteAura.integer <= 0 && cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
+			if ( cg_spriteAura.integer <= 0 && cg_particleAura.integer <= 0 
+			&& cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
 				trap_R_AddRefEntityToScene( &aura );
 			}
 
 			// add secondary aura to make look cooler, a bit bigger than the other
-			if ( cg_spriteAura.integer <= 0 && cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
+			if ( cg_spriteAura.integer <= 0 && cg_particleAura.integer <= 0 
+			&& cg_polygonAura.integer > 0 && cg_highPolyAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
 				trap_R_AddRefEntityToScene( &aura2 );
 			}
 		}
@@ -2507,6 +2542,9 @@ void CG_Player( centity_t *cent ) {
 
 	// BFP - Handle the antigrav rock particles when the player is charging
 	CG_AntigravRockHandling( cent );
+
+	// BFP - Handle particle aura
+	CG_ParticleAuraHandling( cent );
 
 	// add a water splash if partially in and out of water
 	CG_PlayerSplash( cent );

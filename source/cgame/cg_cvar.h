@@ -77,6 +77,7 @@ CG_CVAR( cg_drawOwnModel, "cg_drawOwnModel", "1", CVAR_ARCHIVE ) // BFP - toggle
 CG_CVAR( cg_drawKiWarning, "cg_drawKiWarning", "1", CVAR_ARCHIVE ) // BFP - Ki warning
 CG_CVAR( cg_stableCrosshair, "cg_stableCrosshair", "0", CVAR_ARCHIVE ) // BFP - Accurate crosshair
 CG_CVAR( cg_spriteAura, "cg_spriteAura", "0", CVAR_ARCHIVE ) // BFP - Sprite aura
+CG_CVAR( cg_particleAura, "cg_particleAura", "0", CVAR_ARCHIVE ) // BFP - Particle aura
 CG_CVAR( cg_lightAuras, "cg_lightAuras", "1", CVAR_ARCHIVE ) // BFP - Light auras
 CG_CVAR( cg_smallOwnAura, "cg_smallOwnAura", "0", CVAR_ARCHIVE ) // BFP - Small own aura
 CG_CVAR( cg_lightweightAuras, "cg_lightweightAuras", "0", CVAR_ARCHIVE ) // BFP - Lightweight auras

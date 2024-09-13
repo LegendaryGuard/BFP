@@ -65,6 +65,9 @@ typedef struct particle_s
 
 	int			accumroll;
 
+	// BFP - Entity num
+	int			entityNum;
+
 } cparticle_t;
 
 typedef enum
@@ -77,6 +80,7 @@ typedef enum
 	P_SMOKE_IMPACT,
 	P_BUBBLE,
 	P_BUBBLE_TURBULENT,
+	P_AURA, // BFP - Particle aura
 	P_SPRITE
 // BFP - Unused particle types, saved for later :P
 #if 0
@@ -315,7 +319,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	}
 	else if (p->type == P_SMOKE || p->type == P_SMOKE_IMPACT
 	|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Bubble types moved here for better management
-	|| p->type == P_ANTIGRAV_ROCK) // BFP - Added antigrav rock type
+	|| p->type == P_ANTIGRAV_ROCK // BFP - Added antigrav rock type
+	|| p->type == P_AURA) // BFP - Particle aura
 	{// create a front rotating facing polygon
 
 // BFP - No smoke distance
@@ -373,7 +378,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		width = p->width + ( ratio * ( p->endwidth - p->width) );
 		height = p->height + ( ratio * ( p->endheight - p->height) );
 
-		if (p->type != P_SMOKE_IMPACT)
+		if (p->type != P_SMOKE_IMPACT 
+		&& p->type != P_AURA) // BFP - Don't apply for P_AURA particle position
 		{
 			vec3_t temp;
 
@@ -775,7 +781,8 @@ void CG_AddParticles (void)
 		|| p->type == P_WEATHER_FLURRY || p->type == P_FLAT_SCALEUP_FADE
 #endif
 		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Add P_BUBBLE types to remove particles
-		|| p->type == P_ANTIGRAV_ROCK) // BFP - Add P_ANTIGRAV_ROCK to remove particles
+		|| p->type == P_ANTIGRAV_ROCK // BFP - Add P_ANTIGRAV_ROCK to remove particles
+		|| p->type == P_AURA) // BFP - Add P_AURA to remove particles
 		{
 			if (timenonscaled > p->endtime)
 			{
@@ -1113,6 +1120,87 @@ void CG_AntigravRockHandling (centity_t *cent)
 			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE
 			&& !p->snum ) { // use p->snum to handle the client side visual of the other player
 				p->link = qfalse; // keep this way, otherwise the rocks fall
+			}
+		}
+	}
+}
+
+// BFP - Particle aura
+void CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t origin, vec3_t origin2, float range)
+{
+	cparticle_t	*p;
+
+	// if (!pshader) CG_Printf ("CG_ParticleAura pshader == ZERO!\n");
+
+	if (!free_particles)
+		return;
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+	p->time = timenonscaled;
+
+	// BFP - Keep entity number to identify who is using
+	p->entityNum = entityNum;
+
+	// BFP - Add end time to remove particles, if there's no end time the particles will remain there
+	p->endtime = timenonscaled + 400;
+	p->startfade = timenonscaled + 200;
+
+	p->color = 0;
+	p->alpha = 0.5;
+	p->alphavel = -0.075;
+
+	// BFP - Apply to player's origin
+	p->start = cent->currentState.origin[2];
+	p->end = cent->currentState.origin2[2];
+	p->pshader = pshader;
+	p->height = p->width = 40;
+
+	VectorCopy(origin, p->org);
+
+	p->type = P_AURA;
+
+	p->org[0] += (crandom() * range);
+	p->org[1] += (crandom() * range);
+	p->org[2] += (crandom() * 5);
+
+	VectorSet( p->vel, 
+			(rand() % 621) - 250,
+			(rand() % 621) - 250,
+			100 );
+
+	// dispersion
+	VectorSet( p->accel, 
+			crandom() * 20, 
+			crandom() * 20, 
+			1200 );
+
+	p->link = qfalse;
+}
+
+// BFP - To handle the client side visuals of aura particle
+void CG_ParticleAuraHandling (centity_t *cent)
+{
+	cparticle_t		*p, *next;
+
+	for (p=active_particles ; p ; p=next)
+	{
+		next = p->next;
+		if ( p->type != P_AURA ) continue;
+
+		if ( p->entityNum == cent->currentState.clientNum
+		&& !( cent->currentState.eFlags & EF_DEAD )
+		&& !( cent->currentState.eFlags & EF_AURA ) )
+		{
+			// BFP - Make each particle fall when there's no aura at this moment
+			if (!p->link)
+			{
+				p->alphavel = -0.03;
+				p->accel[0] = 0;
+				p->accel[1] = 0;
+				p->endtime = timenonscaled + 600;
+				p->link = qtrue;
 			}
 		}
 	}
