@@ -1922,11 +1922,10 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	// BFP - Dash smoke and bubble particles when using ki boost on the ground or above the water
 	contents = CG_PointContents( trace.endpos, -1 );
 	if ( cent->currentState.eFlags & EF_AURA ) {
-		if ( !( cent->currentState.powerups & ( 1 << PW_HASTE ) )
-		&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) ) {
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
 			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
 			&& ( trace.fraction <= 0.70f
 			// If the player is stepping a mover:
@@ -1958,15 +1957,15 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 				int shaderIndex = rand() % 3;
 				switch ( shaderIndex ) {
 					case 0: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, trace.endpos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, trace.endpos );
 						break;
 					}
 					case 1: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, trace.endpos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, trace.endpos );
 						break;
 					}
 					default: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, trace.endpos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, trace.endpos );
 					}
 				}
 			}

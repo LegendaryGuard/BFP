@@ -418,8 +418,9 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			{
 				// BFP - To detect if there is something solid
 				trace_t		trace;
+				vec3_t		rockPos = {0, 0, -1}; // place a bit above
 				// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
-				CG_Trace( &trace, p->org, vec3_origin, vec3_origin, org, -1, CONTENTS_SOLID );
+				CG_Trace( &trace, p->org, rockPos, rockPos, org, -1, CONTENTS_SOLID );
 
 				p->time = timenonscaled;
 				p->snum = 1; // handle the p->snum when already entered in this phase for correction of client side visuals
@@ -428,7 +429,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				p->accel[0] = 0;
 				p->accel[1] = 0;
 				// not hit anything or not a collider
-				if ( trace.fraction == 1.0f && p->roll > 0 )
+				if ( trace.fraction == 1.0f )
 				{
 					VectorCopy (org, p->org);
 					p->vel[2] -= 50;
@@ -436,14 +437,16 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				}
 				else // bouncing
 				{
-					// BFP - TODO: Temporary solution... Make bouncing more interactive when there's a mover moving
 					// if the particle is touching a mover and moves down, so keep bouncing
 					if ( trace.fraction <= 0 ) {
-						p->roll = 16;
+						p->roll = 6;
 					} else {
 						p->vel[2] = p->accel[2] = (p->roll > 0) ? 50 * p->roll : 0;
 						p->roll--; // that decreases bounces 
 					}
+				}
+				if ( p->roll <= 0 ) { // keep detecting the position
+					VectorCopy (trace.endpos, p->org);
 				}
 			}
 
@@ -1027,7 +1030,7 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 }
 
 // BFP - Antigrav rock particles for ki charging status
-void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin)
+void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin)
 {
 	cparticle_t	*p;
 
@@ -1051,6 +1054,9 @@ void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin)
 	p->next = active_particles;
 	active_particles = p;
 	p->time = timenonscaled;
+
+	// BFP - Keep entity number to identify who is using
+	p->entityNum = entityNum;
 
 	p->endtime = timenonscaled + 450 + (crandom() * 20);
 
@@ -1099,27 +1105,17 @@ void CG_AntigravRockHandling (centity_t *cent)
 	for (p=active_particles ; p ; p=next)
 	{
 		next = p->next;
-		if (p->type == P_ANTIGRAV_ROCK)
+		if ( p->type != P_ANTIGRAV_ROCK ) continue;
+
+		if ( p->entityNum == cent->currentState.clientNum
+		&& !( cent->currentState.eFlags & EF_DEAD )
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE )
 		{
-			if ( cent->currentState.clientNum == cg.snap->ps.clientNum
-			&& !( cent->currentState.eFlags & EF_DEAD )
-			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE )
+			// BFP - Make each particle fall when they aren't on ki charging status
+			if (!p->link)
 			{
-				// BFP - Make each particle fall when they aren't on ki charging status
-				if (!p->link && !p->snum) // to handle the client side visuals
-				{
-					p->endtime = timenonscaled + 1650;
-					p->link = qtrue;
-				}
-			}
-			// if the player sees the other player doing that, the handling is different from itself,
-			// to correct the client side visuals in this case
-			if ( cent->currentState.clientNum != cg.snap->ps.clientNum
-			&& ( cent->currentState.eFlags & EF_AURA )
-			&& !( cent->currentState.eFlags & EF_DEAD )
-			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE
-			&& !p->snum ) { // use p->snum to handle the client side visual of the other player
-				p->link = qfalse; // keep this way, otherwise the rocks fall
+				p->endtime = timenonscaled + 1650;
+				p->link = qtrue;
 			}
 		}
 	}

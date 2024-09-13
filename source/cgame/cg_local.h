@@ -1517,7 +1517,7 @@ void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 // BFP - Dash smoke particle for ki boost when moving in the ground
 void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
 // BFP - Antigrav rock particles for charging
-void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, vec3_t origin);
+void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin);
 void	CG_AntigravRockHandling (centity_t *cent);
 // BFP - Particle aura
 void CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t origin, vec3_t origin2, float range);
