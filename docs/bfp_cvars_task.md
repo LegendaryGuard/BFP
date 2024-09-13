@@ -35,12 +35,11 @@
 
 - cg_stfu [0/1]: disable character voices when firing attacks.
 - cg_lowpolysphere [0/1]: force the use of a lower polycount sphere.
-- cg_lightexplosions [0/1]: turn on or off the explosion dynamic lights.
+- cg_lightExplosions [0/1]: turn on or off the explosion dynamic lights.
 - cg_chargeupAlert [0/1]: turn on or off the "ready" message when charging attacks.
 - cg_explosionShell [0/1]: turn on or off the explosion shell.
 - cg_explosionSmoke [0/1]: turn on or off the explosion smoke.
 - cg_explosionRing [0/1]: turn on or off the explosion ring.
-- cg_particles [0/1]: turn on or off particle effects.
 
 
 ## COMPLETED:
@@ -57,11 +56,14 @@
 - [x] ~~cg_crosshairHealth~~
 - [x] ~~cg_flytilt~~
 - [x] ~~cg_drawKiWarning~~
+- [x] ~~cg_particles~~
 - [x] ~~cg_lightAuras~~
 - [x] ~~cg_smallOwnAura~~
 - [x] ~~cg_lightweightAuras~~
 - [x] ~~cg_polygonAura~~
 - [x] ~~cg_highPolyAura~~
+- [x] ~~cg_spriteAura~~
+- [x] ~~cg_particleAura~~
 - [x] ~~cg_playHitSound~~
 - [x] ~~g_noFlight (disables "fly" bind too, original BFP has a leak though)~~
 - [x] ~~g_blockLength~~
