@@ -77,6 +77,7 @@ typedef enum
 	P_SMOKE,
 	P_ANIM,	// Ridah
 	P_BLEED,
+	P_DEBRIS, // BFP - Debris
 	P_SMOKE_IMPACT,
 	P_BUBBLE,
 	P_BUBBLE_TURBULENT,
@@ -320,7 +321,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	else if (p->type == P_SMOKE || p->type == P_SMOKE_IMPACT
 	|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Bubble types moved here for better management
 	|| p->type == P_ANTIGRAV_ROCK // BFP - Added antigrav rock type
-	|| p->type == P_AURA) // BFP - Particle aura
+	|| p->type == P_AURA // BFP - Particle aura
+	|| p->type == P_DEBRIS) // BFP - Debris type
 	{// create a front rotating facing polygon
 
 // BFP - No smoke distance
@@ -372,7 +374,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		else 
 			invratio = 1 * p->alpha;
 
-		if (invratio > 1 || p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT) // BFP - Don't disappear opaquely the bubbles
+		if (invratio > 1 || p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT || p->type == P_DEBRIS) // BFP - Don't disappear opaquely the bubbles even the debris
 			invratio = 1;
 	
 		width = p->width + ( ratio * ( p->endwidth - p->width) );
@@ -455,6 +457,47 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			{
 				p->next = NULL;
 				p->type = p->color = p->alpha = p->snum = 0;
+			}
+		}
+		else if (p->type == P_DEBRIS) // BFP - Debris type
+		{
+			// BFP - To detect if there is something solid
+			trace_t		trace;
+			vec3_t		debrisPos = {0, 0, -1}; // place a bit above
+			int 		contents;
+			// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
+			CG_Trace( &trace, p->org, debrisPos, debrisPos, org, -1, CONTENTS_SOLID );
+
+			p->time = timenonscaled;
+			// not hit anything or not a collider
+			if ( trace.fraction == 1.0f )
+			{
+				VectorCopy (org, p->org);
+				p->vel[2] -= 100;
+				p->accel[0] -= 1;
+				p->accel[1] -= 1;
+				p->accel[2] -= 10;
+			}
+			else // bouncing
+			{
+				if ( trace.fraction <= 0 ) {
+					p->roll = 6;
+				} else {
+					p->vel[2] = p->accel[2] = (p->roll > 0) ? 50 * p->roll : 0;
+					p->roll--; // that decreases bounces 
+				}
+			}
+			if ( p->roll <= 0 ) { // keep detecting the position
+				VectorCopy (trace.endpos, p->org);
+			}
+
+			// if it's assigned to water, then detect when going underwater and changing to P_BUBBLE type
+			contents = trap_CM_PointContents( trace.endpos, 0 );
+			if ( p->snum > 0 && ( contents & CONTENTS_WATER ) ) {
+				p->type = P_BUBBLE_TURBULENT;
+				p->endtime = timenonscaled + 600;
+				VectorCopy (trace.endpos, p->org);
+				p->vel[2] = p->accel[2] = 0;
 			}
 		}
 
@@ -785,7 +828,8 @@ void CG_AddParticles (void)
 #endif
 		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Add P_BUBBLE types to remove particles
 		|| p->type == P_ANTIGRAV_ROCK // BFP - Add P_ANTIGRAV_ROCK to remove particles
-		|| p->type == P_AURA) // BFP - Add P_AURA to remove particles
+		|| p->type == P_AURA // BFP - Add P_AURA to remove particles
+		|| p->type == P_DEBRIS) // BFP - Add P_DEBRIS to remove particles
 		{
 			if (timenonscaled > p->endtime)
 			{
@@ -1109,14 +1153,10 @@ void CG_AntigravRockHandling (centity_t *cent)
 
 		if ( p->entityNum == cent->currentState.clientNum
 		&& !( cent->currentState.eFlags & EF_DEAD )
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE )
-		{
-			// BFP - Make each particle fall when they aren't on ki charging status
-			if (!p->link)
-			{
-				p->endtime = timenonscaled + 1650;
-				p->link = qtrue;
-			}
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE 
+		&& !p->link ) { // BFP - Make each particle fall when they aren't on ki charging status
+			p->endtime = timenonscaled + 1650;
+			p->link = qtrue;
 		}
 	}
 }
@@ -1187,21 +1227,64 @@ void CG_ParticleAuraHandling (centity_t *cent)
 
 		if ( p->entityNum == cent->currentState.clientNum
 		&& !( cent->currentState.eFlags & EF_DEAD )
-		&& !( cent->currentState.eFlags & EF_AURA ) )
-		{
-			// BFP - Make each particle fall when there's no aura at this moment
-			if (!p->link)
-			{
-				p->alphavel = -0.03;
-				p->accel[0] = 0;
-				p->accel[1] = 0;
-				p->endtime = timenonscaled + 600;
-				p->link = qtrue;
-			}
+		&& !( cent->currentState.eFlags & EF_AURA ) 
+		&& !p->link ) { // BFP - Make each particle fall when there's no aura at this moment
+			p->alphavel = -0.03;
+			p->accel[0] = 0;
+			p->accel[1] = 0;
+			p->endtime = timenonscaled + 600;
+			p->link = qtrue;
 		}
 	}
 }
 
+// BFP - Debris particles for ki explosions and water splash
+void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, qboolean water)
+{
+	cparticle_t	*p;
+
+	// if (!pshader) CG_Printf ("CG_ParticleDebris == ZERO!\n");
+
+	if (!free_particles)
+		return;
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+	p->time = timenonscaled;
+
+	p->startfade = timenonscaled + 200;
+	p->endtime = timenonscaled + 2450 + (crandom() * 20);
+
+	p->color = 0;
+	p->alpha = 1;
+	p->alphavel = 0;
+	p->pshader = pshader;
+	p->height = p->width = (water) 
+		? (rand() % 3) + 1 
+		: (rand() % 2) + 2;
+
+	p->type = P_DEBRIS;
+
+	VectorCopy( origin, p->org );
+
+	p->org[0] += (crandom() * 15);
+	p->org[1] += (crandom() * 15);
+
+	p->start = origin[2];
+
+	p->vel[0] = (crandom() * 150);
+	p->vel[1] = (crandom() * 150);
+	p->vel[2] = 1050;
+
+	p->accel[0] = (crandom() * 100);
+	p->accel[1] = (crandom() * 100);
+	p->accel[2] = 220;
+
+	p->roll = 5; // used as bounce counter
+	p->link = qfalse;
+	p->snum = water; // if it's water, it'll stop above water
+}
 
 void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)
 {

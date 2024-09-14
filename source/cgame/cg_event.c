@@ -595,15 +595,28 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrUnSound );
 		// BFP - Bubble and splash particles when entering under water
 		{
-			// BFP - TODO: Splash particles (that appears bubbles outside water but bouncing once)
 			vec3_t end = {0, 0, 1};
+			vec3_t splashOrigin;
+
+			VectorCopy( cent->lerpOrigin, splashOrigin );
+			splashOrigin[2] += 20; // place a bit above
+
+			// Splash!
+			// BFP - NOTE: These are not debris :P
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
+
+			splashOrigin[2] -= 25; // place a bit below
 
 			// Blub, blub, blub...
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cent->lerpOrigin, end, 700, 20 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
 		}
 		break;
 	case EV_WATER_CLEAR:
