@@ -781,9 +781,15 @@ typedef struct {
 	qhandle_t	flyauraModel; // BFP - Fly aura model
 	qhandle_t	runauraModel; // BFP - Run aura model
 	// BFP - Aura shaders
-	qhandle_t	auraRedShader;
-	qhandle_t	auraBlueShader;
-	qhandle_t	auraYellowShader;
+	qhandle_t	auraRedTinyShader;
+	qhandle_t	auraRedChargeShader;
+	qhandle_t	auraRedUseShader;
+	qhandle_t	auraBlueTinyShader;
+	qhandle_t	auraBlueChargeShader;
+	qhandle_t	auraBlueUseShader;
+	qhandle_t	auraYellowTinyShader;
+	qhandle_t	auraYellowChargeShader;
+	qhandle_t	auraYellowUseShader;
 
 	// BFP - Ki trail shaders
 	qhandle_t	kiTrailRedShader;

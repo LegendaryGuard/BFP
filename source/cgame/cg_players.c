@@ -2108,24 +2108,24 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 	// render main model
 	trap_R_AddRefEntityToScene( &ent );
 
-	// BFP - TODO: If player is transformed:
+	// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil:
 	// render perma-glow when already transformed
-	/* ent.customShader = cgs.media.auraYellowShader;
+	/* ent.customShader = cgs.media.auraYellowTinyShader;
 	if ( ( state->powerups & ( 1 << PW_TRANSFORMED ) ) 
 	&& cg_permaglowUltimate.integer > 0 ) {
 		trap_R_AddRefEntityToScene( &ent );
 	}*/
 
-	ent.customShader = cgs.media.auraRedShader;
+	ent.customShader = cgs.media.auraRedTinyShader;
 	if ( team == TEAM_BLUE ) {
-		ent.customShader = cgs.media.auraBlueShader;
+		ent.customShader = cgs.media.auraBlueTinyShader;
 	}
 
-	// BFP - TODO: If player is transformed:
+	// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil:
 	// only on non-team gamemodes render when already transformed
 	/*if ( ( state->powerups & ( 1 << PW_TRANSFORMED ) )
 	&& cgs.gametype < GT_TEAM ) {
-		ent.customShader = cgs.media.auraYellowShader;
+		ent.customShader = cgs.media.auraYellowTinyShader;
 	}*/
 
 	if ( state->eFlags & EF_AURA ) {
@@ -2138,14 +2138,25 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 			trap_R_AddRefEntityToScene( &ent );
 		}
 
-		// BFP - TODO: Shader aura
+		// BFP - Shader aura
 		if ( cg_lightweightAuras.integer <= 0
 		&& cg_polygonAura.integer <= 0
 		&& cg_spriteAura.integer <= 0
 		&& cg_particleAura.integer <= 0
 		&& ( state->clientNum == cg.snap->ps.clientNum 
 			&& cg_smallOwnAura.integer <= 0 ) ) {
-			MODEL_SIZE ( ent, 1.2f )
+			ent.customShader = cgs.media.auraRedChargeShader;
+			// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil (same as the previous TODO notes)
+			if ( team == TEAM_BLUE ) {
+				ent.customShader = cgs.media.auraBlueChargeShader;
+			}
+			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
+				ent.customShader = cgs.media.auraRedUseShader;
+				// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil (same as the previous TODO notes)
+				if ( team == TEAM_BLUE ) {
+					ent.customShader = cgs.media.auraBlueUseShader;
+				}
+			}
 			trap_R_AddRefEntityToScene( &ent );
 		}
 	}
@@ -2342,16 +2353,16 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		VectorCopy( legs.lightingOrigin, aura2.lightingOrigin );
 
 		// BFP - TODO: Add yellow aura only when the player is transformed, but don't override when playing a team gamemode
-		// aura.customShader = aura2.customShader = cgs.media.auraYellowShader;
+		// aura.customShader = aura2.customShader = cgs.media.auraYellowTinyShader;
 		// Don't put this line of code here if transformed, just put outside the check EF_AURA conditional
 		// trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), 1.0, 1.0, 0 );
 
 		// apply light blinking
 		if ( ci->team == TEAM_BLUE ) {
-			aura.customShader = aura2.customShader = cgs.media.auraBlueShader;
+			aura.customShader = aura2.customShader = cgs.media.auraBlueTinyShader;
 			AURA_LIGHT( 0.2f, 0.2f, 1.0 )
 		} else {
-			aura.customShader = aura2.customShader = cgs.media.auraRedShader;
+			aura.customShader = aura2.customShader = cgs.media.auraRedTinyShader;
 			AURA_LIGHT( 1.0, 0.2f, 0.2f )
 		}
 

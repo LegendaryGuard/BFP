@@ -639,9 +639,15 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.runauraModel = trap_R_RegisterModel( "models/effects/runaura.md3" ); // BFP - Run aura model
 
 	// BFP - Aura shaders
-	cgs.media.auraBlueShader = trap_R_RegisterShader( "powerups/bluetiny" );
-	cgs.media.auraRedShader = trap_R_RegisterShader( "powerups/redtiny" );
-	cgs.media.auraYellowShader = trap_R_RegisterShader( "powerups/yellowtiny" );
+	cgs.media.auraBlueTinyShader = trap_R_RegisterShader( "powerups/bluetiny" );
+	cgs.media.auraBlueChargeShader = trap_R_RegisterShader( "powerups/bluecharge" );
+	cgs.media.auraBlueUseShader = trap_R_RegisterShader( "powerups/blueuse" );
+	cgs.media.auraRedTinyShader = trap_R_RegisterShader( "powerups/redtiny" );
+	cgs.media.auraRedChargeShader = trap_R_RegisterShader( "powerups/redcharge" );
+	cgs.media.auraRedUseShader = trap_R_RegisterShader( "powerups/reduse" );
+	cgs.media.auraYellowTinyShader = trap_R_RegisterShader( "powerups/yellowtiny" );
+	cgs.media.auraYellowChargeShader = trap_R_RegisterShader( "powerups/yellowcharge" );
+	cgs.media.auraYellowUseShader = trap_R_RegisterShader( "powerups/yellowuse" );
 
 	// BFP - Ki trail shaders
 	cgs.media.kiTrailBlueShader = trap_R_RegisterShader( "powerups/bluekitrail" );
