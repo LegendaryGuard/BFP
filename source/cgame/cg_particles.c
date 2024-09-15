@@ -403,7 +403,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 
 			// BFP - Apply more end time to remove particles if the player stops charging
 			if (p->type == P_BUBBLE) {
-				if ( ( cg.snap->ps.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+				if ( p->entityNum == cg.snap->ps.clientNum 
+				&& ( cg.snap->ps.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
 				&& !p->link )
 				{
 					p->endtime = timenonscaled + 2500 + (crandom() * 150);
@@ -891,6 +892,9 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	active_particles = p;
 	p->time = timenonscaled;
 
+	// BFP - Keep entity number to identify who is using
+	p->entityNum = cent->currentState.number;
+
 	// BFP - Add end time to remove particles, if there's no end time the particles will remain there
 	p->endtime = timenonscaled + 600;
 	p->startfade = timenonscaled + 200;
@@ -898,7 +902,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->color = 0;
 	p->alpha = 1;
 	p->alphavel = 0;
-	// BFP - Apply to player's origin
+	// BFP - Apply to entity's origin
 	p->start = cent->currentState.origin[2];
 	p->end = cent->currentState.origin2[2];
 	p->pshader = pshader;
@@ -953,7 +957,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	}
 
 	p->snum = 3 - (crandom() * 6); // used to randomize where the bubbles stop when these touches the surface
-	p->link = qfalse;
+	p->link = qfalse; // used to handle the bubbles when touching the surface
 }
 
 // BFP - Handle bubble particles when reaching to the top
@@ -971,14 +975,20 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 
 	// decelerate
 	for (i = 0; i < 2; ++i) {
-		if (fabs(p->vel[i]) > 0) {
-			p->vel[i] *= 0.99;
+		p->vel[i] *= 0.99;
+
+		// if the velocity is very small, clamp it to zero
+		if (fabs(p->vel[i]) < 1) {
+			p->vel[i] = 0;
 		}
 	}
 
 	for (i = 0; i < 2; ++i) {
-		if (fabs(p->accel[i]) > 0) {
-			p->accel[i] *= 0.99;
+		p->accel[i] *= 0.99;
+
+		// if the acceleration is very small, clamp it to zero
+		if (fabs(p->accel[i]) < 1) {
+			p->accel[i] = 0;
 		}
 	}
 
@@ -987,6 +997,11 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 
 	// if the particle is touching something solid, it will skip instead stopping
 	contents = trap_CM_PointContents( trace.endpos, 0 );
+	if ( contents & CONTENTS_SOLID ) { // remove when grazing something solid
+		p->next = NULL;
+		p->type = p->color = p->alpha = 0;
+		return;
+	}
 	if ( !( contents & CONTENTS_WATER ) ) {
 		p->time = timenonscaled;
 		VectorCopy (trace.endpos, p->org);
@@ -1009,6 +1024,11 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 		if ( p->type == P_BUBBLE ) {
 			if ( p->vel[0] != 0 ) p->vel[0] *= 0.9;
 			if ( p->vel[1] != 0 ) p->vel[1] *= 0.9;
+			// stop after few milliseconds
+			if ( p->link && p->time > p->endtime - 2250 ) {
+				p->vel[0] = 0;
+				p->vel[1] = 0;
+			}
 		} else {
 			if ( p->vel[0] != 0 ) p->vel[0] *= 0.97;
 			if ( p->vel[1] != 0 ) p->vel[1] *= 0.97;
