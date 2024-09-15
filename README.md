@@ -47,6 +47,8 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
 - [x] ~~Instant character model changing~~
 - [x] ~~Auras~~
+- [ ] Player physics movements
+- [ ] Remove some items like powerups and health pickups
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
 - [ ] Powerlevel and Power Tiers indicated on old docs
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
@@ -55,7 +57,7 @@ A legendary 90s era Quake 3 Arena mod.
 - [x] ~~Short-Range Teleport - Zanzoken (when pressing 2 times left or right)~~
 - [ ] Transformations (related to Power Tiers)
 - [ ] Attacksets (configurable for cfgs)
-- [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. "Custom plugin models")
+- [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. ["Custom plugin models"](docs/Create_Custom_Models.md#the-skin-config-file))
 - [x] ~~Playable third person mode and first person vis mode (add the options in the UI Setup menu)~~
 - [ ] Cvars as described on old docs
 - [ ] Survival gametype (`g_gametype 3`)
@@ -96,7 +98,7 @@ Click here to see the [Old PyroFragger dev journal (Markdown edition)](docs/pyro
 
 We're making a replica of the lost source code. <br/>
 The highest priority goal is to copy and recreate the complete logical structure of the BFP game. It would be a game SDK that'll provide a structured and standardized way to modify the mod.<br/>
-You'll notice some differences that the original Bid For Power didn't have, such as some adjusted UI buttons, sprite and particle aura type options in BFP options menu, server info menu has pagination and displays info, particle aura is almost implemented, ...<br/>
+You'll notice some differences that the original Bid For Power didn't have, such as some adjusted UI buttons, sprite and particle aura type options in BFP options menu, server info menu has pagination and displays info, how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance), particle aura is almost implemented, ...<br/>
 Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
 
 ### References and clues to know how should be the game
