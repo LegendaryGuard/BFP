@@ -38,6 +38,11 @@ DRIVER INFORMATION MENU
 #define DRIVERINFO_BACK0	"menu/art/back_0"
 #define DRIVERINFO_BACK1	"menu/art/back_1"
 
+// BFP - Arrows
+#define ART_ARROWS			"menu/art/gs_arrows_0"
+#define ART_ARROWSL			"menu/art/gs_arrows_l"
+#define ART_ARROWSR			"menu/art/gs_arrows_r"
+
 static char* driverinfo_artlist[] = 
 {
 	DRIVERINFO_BACK0,
@@ -47,6 +52,16 @@ static char* driverinfo_artlist[] =
 
 #define ID_DRIVERINFOBACK	100
 
+// BFP - ID for arrows
+#define ID_DRIVERINFOPREV	101
+#define ID_DRIVERINFONEXT	102
+
+// BFP - Limit of extensions length and UI extension strings
+// uis.glconfig.extensions_string length is 8192
+#define MAX_EXTENSIONS_STRING_LENGTH		2048
+// when surpassing 64 extension strings, UI starts to break crazily the next strings after 64
+#define MAX_UI_EXTENSION_STRINGS			64
+
 typedef struct
 {
 	menuframework_s	menu;
@@ -54,9 +69,14 @@ typedef struct
 	menubitmap_s	menubg; // BFP - Menu background
 	menubitmap_s	barlog; // BFP - barlog
 	menubitmap_s	back;
-	char			stringbuff[1024];
+	char			stringbuff[MAX_EXTENSIONS_STRING_LENGTH];
 	char*			strings[64];
 	int				numstrings;
+	// BFP - For pagination
+	int				currentPage, totalPages, totalLines;
+	menubitmap_s	arrows;
+	menubitmap_s	next;
+	menubitmap_s	prev;
 } driverinfo_t;
 
 static driverinfo_t	s_driverinfo;
@@ -71,11 +91,25 @@ static void DriverInfo_Event( void* ptr, int event )
 	if (event != QM_ACTIVATED)
 		return;
 
-	switch (((menucommon_s*)ptr)->id)
-	{
-		case ID_DRIVERINFOBACK:
-			UI_PopMenu();
-			break;
+	switch ( ((menucommon_s*)ptr)->id ) {
+	// BFP - Prev and next events
+	case ID_DRIVERINFOPREV:
+		if ( s_driverinfo.currentPage > 0 ) {
+			s_driverinfo.currentPage--;
+			Menu_Draw( &s_driverinfo.menu );
+		}
+		break;
+
+	case ID_DRIVERINFONEXT:
+		if ( s_driverinfo.currentPage < s_driverinfo.totalPages - 1 ) {
+			s_driverinfo.currentPage++;
+			Menu_Draw( &s_driverinfo.menu );
+		}
+		break;
+
+	case ID_DRIVERINFOBACK:
+		UI_PopMenu();
+		break;
 	}
 }
 
@@ -88,28 +122,73 @@ static void DriverInfo_MenuDraw( void )
 {
 	int	i;
 	int	y;
+	// BFP - For pagination
+	char pageIndicator[64];
+	int startLine, endLine;
+	int lineIndex, len, wrappedLen, j;
+	char wrappedExtension[40]; // 39 characters + 1 null terminator
+#define DRIVERINFO_LINES_PER_PAGE	20
+#define LIMIT_CHARACTERS			39
 
 	Menu_Draw( &s_driverinfo.menu );
 
-	UI_DrawString( 320, 80, "VENDOR", UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified VENDOR title color
-	UI_DrawString( 320, 152, "PIXELFORMAT", UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified PIXELFORMAT title color
-	UI_DrawString( 320, 192, "EXTENSIONS", UI_CENTER|UI_SMALLFONT, color_white ); // BFP - modified EXTENSIONS title color
+	// draw VENDOR and PIXELFORMAT sections
+	UI_DrawString( 320, 80, "VENDOR", UI_CENTER | UI_SMALLFONT, color_white );
+	UI_DrawString( 320, 80 + 16, uis.glconfig.vendor_string, UI_CENTER | UI_SMALLFONT, text_color_normal );
+	UI_DrawString( 320, 96 + 16, uis.glconfig.version_string, UI_CENTER | UI_SMALLFONT, text_color_normal );
+	UI_DrawString( 320, 112 + 16, uis.glconfig.renderer_string, UI_CENTER | UI_SMALLFONT, text_color_normal );
 
-	UI_DrawString( 320, 80+16, uis.glconfig.vendor_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 96+16, uis.glconfig.version_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 112+16, uis.glconfig.renderer_string, UI_CENTER|UI_SMALLFONT, text_color_normal );
-	UI_DrawString( 320, 152+16, va ("color(%d-bits) Z(%d-bits) stencil(%d-bits)", uis.glconfig.colorBits, uis.glconfig.depthBits, uis.glconfig.stencilBits), UI_CENTER|UI_SMALLFONT, text_color_normal );
+	UI_DrawString( 320, 152, "PIXELFORMAT", UI_CENTER | UI_SMALLFONT, color_white );
+	UI_DrawString( 320, 152 + 16, va("color(%d-bits) Z(%d-bits) stencil(%d-bits)", uis.glconfig.colorBits, uis.glconfig.depthBits, uis.glconfig.stencilBits), UI_CENTER | UI_SMALLFONT, text_color_normal );
 
-	// double column
-	y = 192+16;
-	for (i=0; i<s_driverinfo.numstrings/2; i++) {
-		UI_DrawString( 320-4, y, s_driverinfo.strings[i*2], UI_RIGHT|UI_SMALLFONT, text_color_normal );
-		UI_DrawString( 320+4, y, s_driverinfo.strings[i*2+1], UI_LEFT|UI_SMALLFONT, text_color_normal );
-		y += SMALLCHAR_HEIGHT;
+	// begin paginating the EXTENSIONS section
+	UI_DrawString( 320, 192, "EXTENSIONS", UI_CENTER | UI_SMALLFONT, color_white );
+
+	startLine = s_driverinfo.currentPage * DRIVERINFO_LINES_PER_PAGE;
+	endLine = startLine + DRIVERINFO_LINES_PER_PAGE;
+	if ( endLine > s_driverinfo.numstrings ) {
+		endLine = s_driverinfo.numstrings;
 	}
 
-	if (s_driverinfo.numstrings & 1)
-		UI_DrawString( 320, y, s_driverinfo.strings[s_driverinfo.numstrings-1], UI_CENTER|UI_SMALLFONT, text_color_normal );
+	// display paginated EXTENSIONS strings
+	y = 192 + 16;  // start after the EXTENSIONS title
+	for ( i = startLine; i < endLine; i++ ) {
+		len = (int)strlen( s_driverinfo.strings[i] );
+		wrappedLen = 0;
+
+		while ( len > 0 ) {
+			if ( len > LIMIT_CHARACTERS ) {
+				if ( j == 0 ) {
+					j = LIMIT_CHARACTERS; // no delimiter found, use the limit
+				}
+
+				// copy the first part of the string and wrap it
+				strncpy( wrappedExtension, s_driverinfo.strings[i] + wrappedLen, j + 1 );
+				wrappedExtension[j + 1] = '\0';
+				wrappedLen += j + 1;
+				len -= j + 1;
+			} else {
+				strcpy( wrappedExtension, s_driverinfo.strings[i] + wrappedLen );
+				len = 0;
+			}
+
+			// display strings in double columns
+			if ( i % 2 == 0 ) {
+				UI_DrawString( 320 - 4, y, wrappedExtension, UI_RIGHT | UI_SMALLFONT, text_color_normal );
+			} else {
+				UI_DrawString( 320 + 4, y, wrappedExtension, UI_LEFT | UI_SMALLFONT, text_color_normal );
+				y += SMALLCHAR_HEIGHT;
+			}
+		}
+	}
+
+	// if odd number of strings, draw the last one centered
+	if ( s_driverinfo.numstrings & 1 && i == s_driverinfo.numstrings ) {
+		UI_DrawString( 320, y, s_driverinfo.strings[s_driverinfo.numstrings - 1], UI_CENTER | UI_SMALLFONT, text_color_normal );
+	}
+
+	Com_sprintf( pageIndicator, sizeof(pageIndicator), "EXTENSIONS - Page %d of %d", s_driverinfo.currentPage + 1, s_driverinfo.totalPages );
+	UI_DrawString( 320, 445, pageIndicator, UI_CENTER | UI_SMALLFONT, color_white );
 }
 
 /*
@@ -138,7 +217,6 @@ UI_DriverInfo_Menu
 static void UI_DriverInfo_Menu( void )
 {
 	char*	eptr;
-	int		i;
 	int		len;
 
 	// zero set all our globals
@@ -185,40 +263,94 @@ static void UI_DriverInfo_Menu( void )
 	s_driverinfo.back.height  		   = 80; // BFP - modified BACK button height
 	s_driverinfo.back.focuspic         = DRIVERINFO_BACK1;
 
+	// BFP - Arrows to go prev or next
+#define ART_ARROWS_X	260
+#define ART_ARROWS_Y	400
+	s_driverinfo.arrows.generic.type		= MTYPE_BITMAP;
+	s_driverinfo.arrows.generic.name		= ART_ARROWS;
+	s_driverinfo.arrows.generic.flags		= QMF_INACTIVE;
+	s_driverinfo.arrows.generic.x			= ART_ARROWS_X;
+	s_driverinfo.arrows.generic.y			= ART_ARROWS_Y;
+	s_driverinfo.arrows.width				= 128;
+	s_driverinfo.arrows.height				= 32;
+
+	s_driverinfo.prev.generic.type			= MTYPE_BITMAP;
+	s_driverinfo.prev.generic.flags			= QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+	s_driverinfo.prev.generic.callback		= DriverInfo_Event;
+	s_driverinfo.prev.generic.id			= ID_DRIVERINFOPREV;
+	s_driverinfo.prev.generic.x				= ART_ARROWS_X;
+	s_driverinfo.prev.generic.y				= ART_ARROWS_Y;
+	s_driverinfo.prev.width					= 64;
+	s_driverinfo.prev.height				= 32;
+	s_driverinfo.prev.focuspic				= ART_ARROWSL;
+
+	s_driverinfo.next.generic.type			= MTYPE_BITMAP;
+	s_driverinfo.next.generic.flags			= QMF_LEFT_JUSTIFY | QMF_PULSEIFFOCUS;
+	s_driverinfo.next.generic.callback		= DriverInfo_Event;
+	s_driverinfo.next.generic.id			= ID_DRIVERINFONEXT;
+	s_driverinfo.next.generic.x				= ART_ARROWS_X+61;
+	s_driverinfo.next.generic.y				= ART_ARROWS_Y;
+	s_driverinfo.next.width					= 64;
+	s_driverinfo.next.height				= 32;
+	s_driverinfo.next.focuspic				= ART_ARROWSR;
+#undef ART_ARROWS_X
+#undef ART_ARROWS_Y
+	// BFP - End of arrows to go prev or next ^
+
+
+	// BFP - The following stuff has been modified for pagination
+
   // TTimo: overflow with particularly long GL extensions (such as the gf3)
   // https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=399
   // NOTE: could have pushed the size of stringbuff, but the list is already out of the screen
   // (no matter what your resolution)
-  Q_strncpyz(s_driverinfo.stringbuff, uis.glconfig.extensions_string, 1024);
+  Q_strncpyz(s_driverinfo.stringbuff, uis.glconfig.extensions_string, MAX_EXTENSIONS_STRING_LENGTH);
 
 	// build null terminated extension strings
 	eptr = s_driverinfo.stringbuff;
-	while ( s_driverinfo.numstrings<40 && *eptr )
+	while ( s_driverinfo.numstrings < MAX_UI_EXTENSION_STRINGS && *eptr )
 	{
-		while ( *eptr && *eptr == ' ' )
-			*eptr++ = '\0';
+		// skip leading spaces
+		while ( *eptr == ' ' ) {
+			eptr++;
+		}
+
+		// if we reach the end of the string, break
+		if ( *eptr == '\0' ) {
+			break;
+		}
 
 		// track start of valid string
-		if (*eptr && *eptr != ' ')
-			s_driverinfo.strings[s_driverinfo.numstrings++] = eptr;
+		s_driverinfo.strings[s_driverinfo.numstrings] = eptr;
 
-		while ( *eptr && *eptr != ' ' )
+		// find the end of the current extension string
+		while ( *eptr && *eptr != ' ' ) {
 			eptr++;
+		}
+
+		// null-terminate the string
+		if ( *eptr != '\0' ) {
+			*eptr = '\0';  // null-terminate the current extension string
+			eptr++;        // move past the null terminator
+		}
+
+		s_driverinfo.numstrings++;
 	}
 
-	// safety length strings for display
-	for (i=0; i<s_driverinfo.numstrings; i++) {
-		len = (int)strlen(s_driverinfo.strings[i]);
-		if (len > 32) {
-			s_driverinfo.strings[i][len-1] = '>';
-			s_driverinfo.strings[i][len]   = '\0';
-		}
-	}
+	// BFP - Calculate total pages
+	s_driverinfo.totalLines = s_driverinfo.numstrings;
+	s_driverinfo.totalPages = (s_driverinfo.totalLines + DRIVERINFO_LINES_PER_PAGE - 1) / DRIVERINFO_LINES_PER_PAGE;
 
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.menubg ); // BFP - Menu background
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.barlog ); // BFP - barlog
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.banner );
 	Menu_AddItem( &s_driverinfo.menu, &s_driverinfo.back );
+	// BFP - Arrows to handle the pages
+	Menu_AddItem( &s_driverinfo.menu, (void*) &s_driverinfo.arrows );
+	if ( s_driverinfo.totalPages > 1 ) {
+		Menu_AddItem( &s_driverinfo.menu, (void*) &s_driverinfo.next );
+		Menu_AddItem( &s_driverinfo.menu, (void*) &s_driverinfo.prev );
+	}
 
 	UI_PushMenu( &s_driverinfo.menu );
 }
