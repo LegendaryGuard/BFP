@@ -421,9 +421,9 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			{
 				// BFP - To detect if there is something solid
 				trace_t		trace;
-				vec3_t		rockPos = {0, 0, -1}; // place a bit above
+				vec3_t		rockMins = {0, 0, -1}; // place a bit above
 				// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
-				CG_Trace( &trace, p->org, rockPos, rockPos, org, -1, CONTENTS_SOLID );
+				CG_Trace( &trace, p->org, rockMins, rockMins, org, -1, CONTENTS_SOLID );
 
 				p->time = timenonscaled;
 				p->snum = 1; // handle the p->snum when already entered in this phase for correction of client side visuals
@@ -464,41 +464,65 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		{
 			// BFP - To detect if there is something solid
 			trace_t		trace;
-			vec3_t		debrisPos = {0, 0, -1}; // place a bit above
+			vec3_t		debrisMins = {0, 0, -1}; // place a bit above
+			vec3_t		up = {0, 0, 1};
 			int 		contents;
 			// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
-			CG_Trace( &trace, p->org, debrisPos, debrisPos, org, -1, CONTENTS_SOLID );
+			CG_Trace( &trace, p->org, debrisMins, debrisMins, org, -1, CONTENTS_SOLID );
+
+			// keep detecting the position, also helps to pass through map bounds
+			VectorCopy ( org, p->org );
 
 			p->time = timenonscaled;
 			// not hit anything or not a collider
+			contents = trap_CM_PointContents( trace.endpos, 0 );
+			if ( p->roll <= 0 && !p->link ) { // stop
+				VectorClear( p->accel );
+				VectorClear( p->vel );
+			}
 			if ( trace.fraction == 1.0f )
 			{
-				VectorCopy (org, p->org);
-				p->vel[2] -= 100;
-				p->accel[0] -= 1;
-				p->accel[1] -= 1;
-				p->accel[2] -= 10;
+				p->vel[2] -= (p->link) ? 100 : 80;
+				p->accel[2] -= (p->link) ? 10 : 100;
 			}
 			else // bouncing
 			{
-				if ( trace.fraction <= 0 ) {
-					p->roll = 6;
+				// if it's on a slope
+				if ( DotProduct( trace.plane.normal, up ) < 0.7 ) {
+					if ( fabs( p->vel[2] ) < 1 ) {
+						VectorClear( p->accel );
+						VectorClear( p->vel );
+						p->height = p->width *= 0.9; // make it tinier when that happens
+					} else {
+						p->vel[2] -= (p->link) ? 100 : 80;
+						p->accel[2] -= (p->link) ? 10 : 100;
+					}
 				} else {
-					p->vel[2] = p->accel[2] = (p->roll > 0) ? 50 * p->roll : 0;
-					p->roll--; // that decreases bounces 
+					if ( trace.fraction <= 0 ) {
+						p->roll = 4;
+					} else {
+						p->vel[2] = (p->roll > 0) ? 500 * p->roll : 0;
+						p->accel[2] = (p->roll > 0) ? 500 * p->roll : 0;
+						p->roll--; // decreases bounces
+					}
 				}
-			}
-			if ( p->roll <= 0 ) { // keep detecting the position
-				VectorCopy (trace.endpos, p->org);
 			}
 
 			// if it's assigned to water, then detect when going underwater and changing to P_BUBBLE type
-			contents = trap_CM_PointContents( trace.endpos, 0 );
-			if ( p->snum > 0 && ( contents & CONTENTS_WATER ) ) {
+			if ( p->link && ( contents & CONTENTS_WATER ) ) {
 				p->type = P_BUBBLE_TURBULENT;
 				p->endtime = timenonscaled + 600;
 				VectorCopy (trace.endpos, p->org);
 				p->vel[2] = p->accel[2] = 0;
+			}
+
+			// for a short time, the debris begin to get tinier
+			if ( p->time > p->endtime - 500 ) {
+				p->height = p->width *= 0.9;
+			}
+			if ( p->height <= 0.1 ) {
+				p->next = NULL;
+				p->type = p->color = p->alpha = 0;
 			}
 		}
 
@@ -1013,11 +1037,6 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 
 		// trace again if the bubble went outside, then set it near to the surface
 		contents = trap_CM_PointContents( p->org, 0 );
-		if ( contents & CONTENTS_SOLID ) { // remove when grazing something solid
-			p->next = NULL;
-			p->type = p->color = p->alpha = 0;
-			return;
-		}
 		if ( !( contents & CONTENTS_WATER ) ) {
 			VectorCopy (trace.endpos, p->org);
 		}
@@ -1259,7 +1278,7 @@ void CG_ParticleAuraHandling (centity_t *cent)
 }
 
 // BFP - Debris particles for ki explosions and water splash
-void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, qboolean water)
+void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water)
 {
 	cparticle_t	*p;
 
@@ -1274,7 +1293,9 @@ void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, qboolean water)
 	p->time = timenonscaled;
 
 	p->startfade = timenonscaled + 200;
-	p->endtime = timenonscaled + 2450 + (crandom() * 20);
+	p->endtime = (water) 
+		? timenonscaled + 2450 + (crandom() * 20)
+		: timenonscaled + 1200;
 
 	p->color = 0;
 	p->alpha = 1;
@@ -1282,28 +1303,35 @@ void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, qboolean water)
 	p->pshader = pshader;
 	p->height = p->width = (water) 
 		? (rand() % 3) + 1 
-		: (rand() % 2) + 2;
+		: (rand() % 6) + 3;
 
 	p->type = P_DEBRIS;
 
 	VectorCopy( origin, p->org );
 
-	p->org[0] += (crandom() * 15);
-	p->org[1] += (crandom() * 15);
+	if ( water ) {
+		p->org[0] += (crandom() * 15);
+		p->org[1] += (crandom() * 15);
+	}
 
 	p->start = origin[2];
 
-	p->vel[0] = (crandom() * 150);
-	p->vel[1] = (crandom() * 150);
-	p->vel[2] = 1050;
+	VectorCopy( vel, p->vel );
 
-	p->accel[0] = (crandom() * 100);
-	p->accel[1] = (crandom() * 100);
-	p->accel[2] = 220;
+	if ( water ) {
+		p->vel[0] = (crandom() * 150);
+		p->vel[1] = (crandom() * 150);
+		p->vel[2] = 1050;
+	}
 
-	p->roll = 5; // used as bounce counter
-	p->link = qfalse;
-	p->snum = water; // if it's water, it'll stop above water
+	p->accel[0] = (crandom() * 250);
+	p->accel[1] = (crandom() * 250);
+	p->accel[2] = 250 + (crandom() * 50);
+
+	p->roll = (water) // used as bounce counter
+		? 0
+		: 5;
+	p->link = water; // if it's water, it'll stop above water
 }
 
 void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)

@@ -601,13 +601,17 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			VectorCopy( cent->lerpOrigin, splashOrigin );
 			splashOrigin[2] += 20; // place a bit above
 
+			// that would be the range
+			splashOrigin[0] += (crandom() * 15);
+			splashOrigin[1] += (crandom() * 15);
+
 			// Splash!
 			// BFP - NOTE: These are not debris :P
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, NULL, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, NULL, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, NULL, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, NULL, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, NULL, qtrue );
 
 			splashOrigin[2] -= 25; // place a bit below
 

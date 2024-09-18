@@ -1529,7 +1529,7 @@ void	CG_AntigravRockHandling (centity_t *cent);
 void CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t origin, vec3_t origin2, float range);
 void CG_ParticleAuraHandling (centity_t *cent);
 // BFP - Debris particle
-void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, qboolean water);
+void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water);
 
 // BFP - Unused particle stuff, saved for later :P
 #if 0

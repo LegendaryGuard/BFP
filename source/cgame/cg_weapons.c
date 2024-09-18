@@ -1539,12 +1539,39 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		lightColor[0] = 1;
 		lightColor[1] = 0.75;
 		lightColor[2] = 0.0;
-		if (cg_oldRocket.integer == 0) {
-			// explosion sprite animation
-			VectorMA( origin, 24, dir, sprOrg );
-			VectorScale( dir, 64, sprVel );
+		// BFP - cg_oldRocket is unused on BFP, they forgot to remove
+		//if (cg_oldRocket.integer == 0) 
+		{
+			int		i;
+			for ( i = 0; i < 26; ++i ) {
+				// BFP - Spawn randomly the debris shaders with the particles
+				int shaderIndex = rand() % 3;
 
-			CG_ParticleExplosion( "explode1", sprOrg, sprVel, 1400, 20, 30 );
+				// BFP - That would be the range for debris particles
+				VectorMA( origin, 24, dir, sprOrg );
+				sprOrg[0] += (rand() % 24);
+				sprOrg[1] += (rand() % 24);
+				sprOrg[2] += (rand() % 24);
+
+				VectorScale( dir, 1500 + (rand() % 1000), sprVel );
+				sprVel[0] += (rand() % 2800) - 1500;
+				sprVel[1] += (rand() % 2800) - 1500;
+				sprVel[2] += (rand() % 2200) - 1000;
+
+				switch ( shaderIndex ) {
+					case 0: {
+						CG_ParticleDebris( cgs.media.pebbleShader1, sprOrg, sprVel, qfalse );
+						break;
+					}
+					case 1: {
+						CG_ParticleDebris( cgs.media.pebbleShader2, sprOrg, sprVel, qfalse );
+						break;
+					}
+					default: {
+						CG_ParticleDebris( cgs.media.pebbleShader3, sprOrg, sprVel, qfalse );
+					}
+				}
+			}
 		}
 		break;
 	case WP_RAILGUN:
