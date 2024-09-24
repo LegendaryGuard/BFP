@@ -1465,6 +1465,87 @@ void CG_FireWeapon( centity_t *cent ) {
 	}
 }
 
+/*
+=================
+CG_DebrisExplosion
+=================
+*/
+void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles explosion
+	int				i;
+	// spawn randomly the shaders with the particles
+	int				shaderIndex;
+	vec3_t			sprOrg, sprVel;
+
+	// BFP - NOTE: Debris particles shouldn't be used for bullet and disk weapon types
+
+	for ( i = 0; i < 26; ++i ) {
+		shaderIndex = rand() % 3;
+
+		// that would be the range for debris particles
+		VectorMA( origin, 24, dir, sprOrg );
+		sprOrg[0] += (rand() % 24);
+		sprOrg[1] += (rand() % 24);
+		sprOrg[2] += (rand() % 24);
+
+		VectorScale( dir, 1500 + (rand() % 1000), sprVel );
+		sprVel[0] += (rand() % 2800) - 1500;
+		sprVel[1] += (rand() % 2800) - 1500;
+		sprVel[2] += (rand() % 2200) - 1000;
+
+		switch ( shaderIndex ) {
+			case 0: {
+				CG_ParticleDebris( cgs.media.pebbleShader1, sprOrg, sprVel, qfalse );
+				break;
+			}
+			case 1: {
+				CG_ParticleDebris( cgs.media.pebbleShader2, sprOrg, sprVel, qfalse );
+				break;
+			}
+			default: {
+				CG_ParticleDebris( cgs.media.pebbleShader3, sprOrg, sprVel, qfalse );
+			}
+		}
+	}
+}
+
+/*
+=================
+CG_SparksExplosion
+=================
+*/
+void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles explosion
+	int				i;
+	// spawn randomly the shaders with the particles
+	int				shaderIndex;
+	vec3_t			sparkOrg, sparkVel;
+
+	// BFP - NOTE: Spark particles shouldn't be used on bullet and disk weapon types
+
+	// BFP - TODO: Apply calling this function for finger blast and these rail gun weapon types when hitting a player
+
+	for ( i = 0; i < 26; ++i ) {
+		shaderIndex = (rand() % 100) < 50 ? 0 : 1; // if the random range was rand() % 2, it would repeat the pattern without randomize correctly
+
+		VectorMA( origin, 10, dir, sparkOrg );
+
+		// move faster
+		VectorScale( dir, 1500 + (rand() % 1000), sparkVel );
+		sparkVel[0] += 1.5 * (rand() % 3500) - 1500;
+		sparkVel[1] += 1.5 * (rand() % 3500) - 1500;
+		sparkVel[2] += 1.5 * (rand() % 2100) - 1000;
+
+		switch ( shaderIndex ) {
+			case 0: {
+				CG_ParticleSparks( cgs.media.sparkShader1, sparkOrg, sparkVel );
+				break;
+			}
+			default: {
+				CG_ParticleSparks( cgs.media.sparkShader2, sparkOrg, sparkVel );
+			}
+		}
+	}
+}
+
 
 /*
 =================
@@ -1484,8 +1565,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	int				r;
 	qboolean		isSprite;
 	int				duration;
-	vec3_t			sprOrg;
-	vec3_t			sprVel;
 
 	// BFP - NOTE: Crack mark shader replaces all other mark shaders, the radius is the same (64), there's no alpha fade
 
@@ -1533,64 +1612,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		lightColor[1] = 0.75;
 		lightColor[2] = 0.0;
 		// BFP - cg_oldRocket is unused on BFP, they forgot to remove
-		//if (cg_oldRocket.integer == 0) 
-		{
-			int		i, j;
-			// BFP - Spawn randomly the shaders with the particles
-			int		shaderIndex;
-			vec3_t	sparkOrg, sparkVel;
-
-			for ( i = 0; i < 26; ++i ) {
-				shaderIndex = (rand() % 100) < 50 ? 0 : 1; // if the random range was rand() % 2, it would repeat the pattern without randomize correctly
-
-				VectorMA( origin, 10, dir, sparkOrg );
-
-				// move faster
-				VectorScale( dir, 1500 + (rand() % 1000), sparkVel );
-				sparkVel[0] += 1.5 * (rand() % 3500) - 1500;
-				sparkVel[1] += 1.5 * (rand() % 3500) - 1500;
-				sparkVel[2] += 1.5 * (rand() % 2100) - 1000;
-
-				switch ( shaderIndex ) {
-					case 0: {
-						CG_ParticleSparks( cgs.media.sparkShader1, sparkOrg, sparkVel );
-						break;
-					}
-					default: {
-						CG_ParticleSparks( cgs.media.sparkShader2, sparkOrg, sparkVel );
-					}
-				}
-			}
-
-			for ( j = 0; j < 26; ++j ) {
-				shaderIndex = rand() % 3;
-
-				// BFP - That would be the range for debris particles
-				VectorMA( origin, 24, dir, sprOrg );
-				sprOrg[0] += (rand() % 24);
-				sprOrg[1] += (rand() % 24);
-				sprOrg[2] += (rand() % 24);
-
-				VectorScale( dir, 1500 + (rand() % 1000), sprVel );
-				sprVel[0] += (rand() % 2800) - 1500;
-				sprVel[1] += (rand() % 2800) - 1500;
-				sprVel[2] += (rand() % 2200) - 1000;
-
-				switch ( shaderIndex ) {
-					case 0: {
-						CG_ParticleDebris( cgs.media.pebbleShader1, sprOrg, sprVel, qfalse );
-						break;
-					}
-					case 1: {
-						CG_ParticleDebris( cgs.media.pebbleShader2, sprOrg, sprVel, qfalse );
-						break;
-					}
-					default: {
-						CG_ParticleDebris( cgs.media.pebbleShader3, sprOrg, sprVel, qfalse );
-					}
-				}
-			}
-		}
+		//if (cg_oldRocket.integer == 0) {}
 		break;
 	case WP_RAILGUN:
 		mod = cgs.media.ringFlashModel;
@@ -1651,6 +1673,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	//
 	// impact mark
 	//
+	// BFP - TODO: Disk type weapons don't leave a mark, apply it
 	CG_ImpactMark( cgs.media.crackMarkShader, origin, dir, random()*360, 1,1,1,1, 0, radius, qfalse );
 }
 

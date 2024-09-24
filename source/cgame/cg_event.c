@@ -871,18 +871,28 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_MISSILE_HIT");
 		ByteToDir( es->eventParm, dir );
 		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
+		// BFP - Spark particles explosion
+		CG_SparksExplosion( position, dir );
 		break;
 
 	case EV_MISSILE_MISS:
 		DEBUGNAME("EV_MISSILE_MISS");
 		ByteToDir( es->eventParm, dir );
 		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
+		// BFP - Debris particles explosion
+		CG_DebrisExplosion( position, dir );
+		// BFP - Spark particles explosion
+		CG_SparksExplosion( position, dir );
 		break;
 
 	case EV_MISSILE_MISS_METAL:
 		DEBUGNAME("EV_MISSILE_MISS_METAL");
 		ByteToDir( es->eventParm, dir );
 		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
+		// BFP - Debris particles explosion
+		CG_DebrisExplosion( position, dir );
+		// BFP - Spark particles explosion
+		CG_SparksExplosion( position, dir );
 		break;
 
 	// BFP - TODO: Implement EV_MISSILE_DETONATE (it has been used on ki grenade bounces and ki disc, that happens when these explode after some time)
@@ -898,6 +908,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		if ( es->eventParm != 255 ) {
 			ByteToDir( es->eventParm, dir );
 			CG_MissileHitWall( es->weapon, es->clientNum, position, dir, IMPACTSOUND_DEFAULT );
+			// BFP - Debris particles explosion
+			CG_DebrisExplosion( position, dir );
+			// BFP - Spark particles explosion
+			CG_SparksExplosion( position, dir );
 		}
 		break;
 
