@@ -676,6 +676,9 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.wakeMarkShader = trap_R_RegisterShader( "wake" );
 	cgs.media.bloodMarkShader = trap_R_RegisterShader( "bloodMark" );
 
+	// BFP - Crack mark shader
+	cgs.media.crackMarkShader = trap_R_RegisterShader( "crackMarkShader" );
+
 	// BFP - Particle shaders
 	cgs.media.pebbleShader1 = trap_R_RegisterShader( "pebbleShader1" ); // BFP - Rock particles for charging and explosion
 	cgs.media.pebbleShader2 = trap_R_RegisterShader( "pebbleShader2" ); // BFP - Rock particles for charging and explosion

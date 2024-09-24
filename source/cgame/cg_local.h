@@ -728,6 +728,8 @@ typedef struct {
 
 	qhandle_t	botSkillShaders[5];
 
+	// BFP - NOTE: These mark shaders are unused, they didn't remove. Remove them in the future?
+
 	// wall mark shaders
 	qhandle_t	wakeMarkShader;
 	qhandle_t	bloodMarkShader;
@@ -735,6 +737,9 @@ typedef struct {
 	qhandle_t	burnMarkShader;
 	qhandle_t	holeMarkShader;
 	qhandle_t	energyMarkShader;
+
+	// BFP - Crack mark shader
+	qhandle_t	crackMarkShader;
 
 	// powerup shaders
 	qhandle_t	quadShader;
