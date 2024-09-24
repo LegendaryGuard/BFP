@@ -476,34 +476,39 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			p->time = timenonscaled;
 			// not hit anything or not a collider
 			contents = trap_CM_PointContents( trace.endpos, 0 );
-			if ( p->roll <= 0 && !p->link ) { // stop
+			if ( p->roll <= 0 && !p->link && p->snum <= 0 ) { // stop
 				VectorClear( p->accel );
 				VectorClear( p->vel );
 			}
-			if ( trace.fraction == 1.0f )
-			{
-				p->vel[2] -= (p->link) ? 100 : 80;
-				p->accel[2] -= (p->link) ? 10 : 100;
-			}
-			else // bouncing
-			{
-				// if it's on a slope
-				if ( DotProduct( trace.plane.normal, up ) < 0.7 ) {
-					if ( fabs( p->vel[2] ) < 1 ) {
-						VectorClear( p->accel );
-						VectorClear( p->vel );
-						p->height = p->width *= 0.9; // make it tinier when that happens
+
+			if ( p->snum > 0 ) { // for sparks
+				p->vel[2] -= 110;
+				p->accel[2] -= 150;
+			} else {
+				if ( trace.fraction == 1.0f ) {
+					p->vel[2] -= (p->link) ? 100 : 80;
+					p->accel[2] -= (p->link) ? 10 : 100;
+				}
+				else // bouncing
+				{
+					// if it's on a slope
+					if ( DotProduct( trace.plane.normal, up ) < 0.7 ) {
+						if ( fabs( p->vel[2] ) < 1 ) {
+							VectorClear( p->accel );
+							VectorClear( p->vel );
+							p->height = p->width *= 0.9; // make it tinier when that happens
+						} else {
+							p->vel[2] -= (p->link) ? 100 : 80;
+							p->accel[2] -= (p->link) ? 10 : 100;
+						}
 					} else {
-						p->vel[2] -= (p->link) ? 100 : 80;
-						p->accel[2] -= (p->link) ? 10 : 100;
-					}
-				} else {
-					if ( trace.fraction <= 0 ) {
-						p->roll = 4;
-					} else {
-						p->vel[2] = (p->roll > 0) ? 500 * p->roll : 0;
-						p->accel[2] = (p->roll > 0) ? 500 * p->roll : 0;
-						p->roll--; // decreases bounces
+						if ( trace.fraction <= 0 ) {
+							p->roll = 4;
+						} else {
+							p->vel[2] = (p->roll > 0) ? 500 * p->roll : 0;
+							p->accel[2] = (p->roll > 0) ? 500 * p->roll : 0;
+							p->roll--; // decreases bounces
+						}
 					}
 				}
 			}
@@ -520,11 +525,47 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			if ( p->time > p->endtime - 500 ) {
 				p->height = p->width *= 0.9;
 			}
-			if ( p->height <= 0.1 ) {
+			if ( p->width <= 0.1 ) {
 				p->next = NULL;
 				p->type = p->color = p->alpha = 0;
 			}
 		}
+
+		if (p->type == P_DEBRIS && p->snum > 0) { // render spark particles
+			vec3_t	forward, right, endPoint;
+			float	length;
+
+			// direction of the particle
+			VectorNormalize2( p->vel, forward );
+
+			length = VectorLength( p->vel ) * 0.015f; // multiplier to tweak trail length
+			VectorMA( org, length, forward, endPoint );
+			PerpendicularVector( right, forward );
+
+			// bottom-left
+			VectorMA( org, -p->width, right, verts[0].xyz );
+			VectorArray2Set( verts[0].st, 0, 0 );
+			Vector4Set( verts[0].modulate, 255, 255, 255, 255 * alpha );
+
+			// top-left
+			VectorMA( org, p->width, right, verts[1].xyz );
+			VectorArray2Set( verts[1].st, 0, 1 );
+			Vector4Set( verts[1].modulate, 255, 255, 255, 255 * alpha );
+
+			// top-right
+			VectorMA( endPoint, p->width * 0.2f, right, verts[2].xyz ); // make the tip narrower
+			VectorArray2Set( verts[2].st, 1, 1 );
+			Vector4Set( verts[2].modulate, 255, 255, 255, 255 * alpha );
+
+			// bottom-right, but copied to top-right, making it similar to a triangle
+			VectorCopy( verts[2].xyz, verts[3].xyz );
+			VectorArray2Set( verts[3].st, 1, 0 );
+			Vector4Set( verts[3].modulate, 255, 255, 255, 255 * alpha );
+
+			trap_R_AddPolyToScene( p->pshader, 4, verts );
+			return;
+		}
+
 
 		if (p->rotate)
 		{
@@ -1332,6 +1373,7 @@ void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean w
 		? 0
 		: 5;
 	p->link = water; // if it's water, it'll stop above water
+	p->snum = 0;
 }
 
 void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)
@@ -1480,7 +1522,7 @@ void CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 
 }
 
-void CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, float speed)
+void CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel)
 {
 	cparticle_t	*p;
 
@@ -1491,41 +1533,29 @@ void CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, 
 	p->next = active_particles;
 	active_particles = p;
 	p->time = timenonscaled;
-	
-	p->endtime = timenonscaled + duration;
-	p->startfade = timenonscaled + duration/2;
-	
-	p->color = EMISIVEFADE;
-	p->alpha = 0.4f;
+	p->endtime = timenonscaled + 400;
+
+	p->color = 0;
+	p->alpha = 1;
 	p->alphavel = 0;
+	p->pshader = pshader;
+	p->height = p->width = (rand() % 10) + 5;
 
-	p->height = 0.5;
-	p->width = 0.5;
-	p->endheight = 0.5;
-	p->endwidth = 0.5;
+	p->type = P_DEBRIS;
 
-	p->pshader = cgs.media.tracerShader;
+	VectorCopy( origin, p->org );
 
-	p->type = P_SMOKE;
-	
-	VectorCopy(org, p->org);
+	p->start = origin[2];
 
-	p->org[0] += (crandom() * x);
-	p->org[1] += (crandom() * y);
+	VectorCopy( vel, p->vel );
 
-	p->vel[0] = vel[0];
-	p->vel[1] = vel[1];
-	p->vel[2] = vel[2];
+	p->accel[0] = (crandom() * 450);
+	p->accel[1] = (crandom() * 450);
+	p->accel[2] = 250 + (crandom() * 50);
 
-	p->accel[0] = p->accel[1] = p->accel[2] = 0;
-
-	p->vel[0] += (crandom() * 4);
-	p->vel[1] += (crandom() * 4);
-	p->vel[2] += (20 + (crandom() * 10)) * speed;	
-
-	p->accel[0] = crandom () * 4;
-	p->accel[1] = crandom () * 4;
-	
+	p->roll = 0; // no bounce
+	p->link = qfalse;
+	p->snum = 1; // treat it as non-solid
 }
 
 void CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir)

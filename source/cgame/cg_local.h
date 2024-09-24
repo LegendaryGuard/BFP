@@ -774,6 +774,8 @@ typedef struct {
 	qhandle_t	pebbleShader2;
 	qhandle_t	pebbleShader3;
 	qhandle_t	particleSmokeShader;
+	qhandle_t	sparkShader1;
+	qhandle_t	sparkShader2;
 
 	// BFP - Aura models
 	qhandle_t	auraModel; // BFP - Normal aura model
@@ -1514,7 +1516,6 @@ void	CG_ClearParticles (void);
 void	CG_AddParticles (void);
 void	CG_ParticleSmoke (qhandle_t pshader, centity_t *cent);
 void	CG_ParticleBulletDebris (vec3_t	org, vec3_t vel, int duration);
-void	CG_ParticleSparks (vec3_t org, vec3_t vel, int duration, float x, float y, float speed);
 void	CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir);
 void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, float alpha);
 void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
@@ -1526,10 +1527,12 @@ void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
 void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin);
 void	CG_AntigravRockHandling (centity_t *cent);
 // BFP - Particle aura
-void CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t origin, vec3_t origin2, float range);
-void CG_ParticleAuraHandling (centity_t *cent);
+void	CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t origin, vec3_t origin2, float range);
+void	CG_ParticleAuraHandling (centity_t *cent);
 // BFP - Debris particle
-void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water);
+void	CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water);
+// BFP - Spark particle
+void	CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel);
 
 // BFP - Unused particle stuff, saved for later :P
 #if 0

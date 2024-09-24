@@ -681,6 +681,8 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.pebbleShader2 = trap_R_RegisterShader( "pebbleShader2" ); // BFP - Rock particles for charging and explosion
 	cgs.media.pebbleShader3 = trap_R_RegisterShader( "pebbleShader3" ); // BFP - Rock particles for charging and explosion
 	cgs.media.particleSmokeShader = trap_R_RegisterShader( "particleSmokeShader" ); // BFP - Smoke particle when using ki boost in the ground and for the explosion
+	cgs.media.sparkShader1 = trap_R_RegisterShader( "sparkShader1" ); // BFP - Spark particle for explosion
+	cgs.media.sparkShader2 = trap_R_RegisterShader( "sparkShader2" ); // BFP - Spark particle for explosion
 
 	// register the inline models
 	cgs.numInlineModels = trap_CM_NumInlineModels();

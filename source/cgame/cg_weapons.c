@@ -1542,10 +1542,35 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		// BFP - cg_oldRocket is unused on BFP, they forgot to remove
 		//if (cg_oldRocket.integer == 0) 
 		{
-			int		i;
+			int		i, j;
+			// BFP - Spawn randomly the shaders with the particles
+			int		shaderIndex;
+			vec3_t	sparkOrg, sparkVel;
+
 			for ( i = 0; i < 26; ++i ) {
-				// BFP - Spawn randomly the debris shaders with the particles
-				int shaderIndex = rand() % 3;
+				shaderIndex = (rand() % 100) < 50 ? 0 : 1; // if the random range was rand() % 2, it would repeat the pattern without randomize correctly
+
+				VectorMA( origin, 10, dir, sparkOrg );
+
+				// move faster
+				VectorScale( dir, 1500 + (rand() % 1000), sparkVel );
+				sparkVel[0] += 1.5 * (rand() % 3500) - 1500;
+				sparkVel[1] += 1.5 * (rand() % 3500) - 1500;
+				sparkVel[2] += 1.5 * (rand() % 2100) - 1000;
+
+				switch ( shaderIndex ) {
+					case 0: {
+						CG_ParticleSparks( cgs.media.sparkShader1, sparkOrg, sparkVel );
+						break;
+					}
+					default: {
+						CG_ParticleSparks( cgs.media.sparkShader2, sparkOrg, sparkVel );
+					}
+				}
+			}
+
+			for ( j = 0; j < 26; ++j ) {
+				shaderIndex = rand() % 3;
 
 				// BFP - That would be the range for debris particles
 				VectorMA( origin, 24, dir, sprOrg );
