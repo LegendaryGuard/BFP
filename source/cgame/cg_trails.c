@@ -1,25 +1,34 @@
+/*
+===========================================================================
+
+BFP TRAILS
+
+===========================================================================
+*/
+
+
 #include "cg_local.h"
 
-#define KI_TRAIL_SEGMENTS		99
-#define KI_TRAIL_WIDTH			15
+#define TRAIL_SEGMENTS		99
+#define TRAIL_WIDTH			15
 
 typedef struct {
-	vec3_t segments[KI_TRAIL_SEGMENTS];
+	vec3_t segments[TRAIL_SEGMENTS];
 	int numSegments;
-} kiTrail_t;
+} trail_t;
 
-static kiTrail_t cg_kiTrails[MAX_GENTITIES];
+static trail_t cg_trails[MAX_GENTITIES];
 
 /*
 ===============
-CG_InitKiTrails
+CG_InitTrails
 
 Initializes the array of trails for all centities.
 Should be called from CG_Init in cg_main.c
 ===============
 */
-void CG_InitKiTrails( void ) {
-	memset( &cg_kiTrails, 0, sizeof(cg_kiTrails) );
+void CG_InitTrails( void ) {
+	memset( &cg_trails, 0, sizeof(cg_trails) );
 }
 
 /*
@@ -36,10 +45,10 @@ origin:    Point from where the trail should start.
 void CG_ResetKiTrail( int entityNum, vec3_t origin ) {
 	int i;
 
-	for ( i = 0; i < KI_TRAIL_SEGMENTS; i++ ) {
-		VectorCopy( origin, cg_kiTrails[entityNum].segments[i] );
+	for ( i = 0; i < TRAIL_SEGMENTS; ++i ) {
+		VectorCopy( origin, cg_trails[entityNum].segments[i] );
 	}
-	cg_kiTrails[entityNum].numSegments = 0;
+	cg_trails[entityNum].numSegments = 0;
 }
 
 /*
@@ -58,63 +67,59 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 	}
 
 	if ( remove ) { // removes every segment
-		cg_kiTrails[entityNum].numSegments--;
+		cg_trails[entityNum].numSegments--;
 	} else {
-		if ( cg_kiTrails[entityNum].numSegments < KI_TRAIL_SEGMENTS ) {
-			cg_kiTrails[entityNum].numSegments++;
+		if ( cg_trails[entityNum].numSegments < TRAIL_SEGMENTS ) {
+			cg_trails[entityNum].numSegments++;
 		}
 	}
 
 	// shift points down the buffer
-	for ( i = cg_kiTrails[entityNum].numSegments - 1; i > 0; i-- ) {
-		VectorCopy( cg_kiTrails[entityNum].segments[i - 1], cg_kiTrails[entityNum].segments[i] );
+	for ( i = cg_trails[entityNum].numSegments - 1; i > 0; --i ) {
+		VectorCopy( cg_trails[entityNum].segments[i - 1], cg_trails[entityNum].segments[i] );
 	}
 
 	// add the current position at the start
-	VectorCopy( origin, cg_kiTrails[entityNum].segments[0] );
+	VectorCopy( origin, cg_trails[entityNum].segments[0] );
 
-	for ( i = 0; i < cg_kiTrails[entityNum].numSegments - 1; i++ ) {
+	for ( i = 0; i < cg_trails[entityNum].numSegments - 1; ++i ) {
 		// loop to render the segment 3 times
-		for ( j = 0; j < 3; j++ ) {
+		for ( j = 0; j < 3; ++j ) {
 			vec3_t start, end, forward, right;
-			vec3_t viewAxis[3];
+			vec3_t viewAxis;
 			int kiTrailLength = cg_kiTrail.integer;
 
-			if ( kiTrailLength > KI_TRAIL_SEGMENTS ) {
-				kiTrailLength = KI_TRAIL_SEGMENTS;
+			if ( kiTrailLength > TRAIL_SEGMENTS ) {
+				kiTrailLength = TRAIL_SEGMENTS;
 			}
 
-			if ( i > kiTrailLength ) {
+			if ( i + j >= cg_trails[entityNum].numSegments - 1 ) {
 				return;
 			}
 
-			if ( i + j >= cg_kiTrails[entityNum].numSegments - 1 ) {
-				return;
-			}
-
-			VectorCopy( cg_kiTrails[entityNum].segments[i + j], start );
-			VectorCopy( cg_kiTrails[entityNum].segments[i + j + 1], end );
+			VectorCopy( cg_trails[entityNum].segments[i + j], start );
+			VectorCopy( cg_trails[entityNum].segments[i + j + 1], end );
 
 			VectorSubtract( end, start, forward );
 			VectorNormalize( forward );
 
-			VectorSubtract( cg.refdef.vieworg, start, viewAxis[0] );
-			CrossProduct( viewAxis[0], forward, right );
+			VectorSubtract( cg.refdef.vieworg, start, viewAxis );
+			CrossProduct( viewAxis, forward, right );
 			VectorNormalize( right );
 
-			VectorMA( end, KI_TRAIL_WIDTH, right, verts[0].xyz );
+			VectorMA( end, TRAIL_WIDTH, right, verts[0].xyz );
 			VectorArray2Set( verts[0].st, 0, 1 );
 			Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
 
-			VectorMA( end, -KI_TRAIL_WIDTH, right, verts[1].xyz );
+			VectorMA( end, -TRAIL_WIDTH, right, verts[1].xyz );
 			VectorArray2Set( verts[1].st, 1, 0 );
 			Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
 
-			VectorMA( start, -KI_TRAIL_WIDTH, right, verts[2].xyz );
+			VectorMA( start, -TRAIL_WIDTH, right, verts[2].xyz );
 			VectorArray2Set( verts[2].st, 1, 0 );
 			Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
 
-			VectorMA( start, KI_TRAIL_WIDTH, right, verts[3].xyz );
+			VectorMA( start, TRAIL_WIDTH, right, verts[3].xyz );
 			VectorArray2Set( verts[3].st, 0, 1 );
 			Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
 

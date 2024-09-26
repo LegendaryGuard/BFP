@@ -1274,7 +1274,7 @@ void CG_ScorePlum( int client, vec3_t org, int score );
 //
 // cg_trails.c
 //
-void CG_InitKiTrails( void );
+void CG_InitTrails( void );
 void CG_ResetKiTrail( int entityNum, vec3_t origin );
 void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader );
 
