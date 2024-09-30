@@ -33,9 +33,7 @@ CREDITS
 
 #define ART_BFPLOGO			"menu/art/bfp_logol"	// BFP - Logo
 #define SCROLLSPEED			6.50	// The scrolling speed in pixels per second. Modify as appropriate for our credits
-// uncomment this to use a background shader:
-// #define BACKGROUND_SHADER 
-#define ART_MENUBG			"menu/art/menubg"		// BFP - Menu background
+#define ART_MENUBG			""	// "menu/art/menubg"		// BFP - Menu background
 
 typedef struct {
 	menuframework_s	menu;
@@ -47,13 +45,12 @@ static creditsmenu_t	s_credits;
 int starttime; // game time at which credits are started
 float mvolume; // records the original music volume level, as we will. Modify it for the credits
 
-qhandle_t	BackgroundShader; // definition of the background shader pointer
+qhandle_t	backgroundShader; // definition of the background shader pointer
 
-typedef struct
-{
-	char *string;
-	int style;
-	vec4_t *colour;
+typedef struct {
+	char	*string;
+	int		style;
+	vec4_t	*colour;
 } cr_line;
 
 // BFP - Macros for credits. This way is easier to add in the array
@@ -206,9 +203,9 @@ Draws header.
 */
 static void Credits_DrawHeader( void ) // BFP - Header
 {
-	// BFP - NOTE: It would be cool using a fading box or not. 
-	// BFP vanilla uses a black box on it and pop ups when text alpha color is near to 0.90f
-#define BLACK_BOX_FADE 0
+	// BFP - NOTE: BFP vanilla uses a black box on it and pop ups when text alpha color is near to 0.90f
+	// But in that case, to make it better, black box fades initially
+#define BLACK_BOX_FADE 1
 	float fadetime;
 	vec4_t fadeBluecolour = { 0.00f, 0.00f, 1.00f, 0.00f };
 #if BLACK_BOX_FADE
@@ -275,9 +272,9 @@ static void ScrollingCredits_Draw( void )
 
 	// first, fill the background with the specified colour/shader
 	// we are drawing a shader
-#ifdef BACKGROUND_SHADER 
-	UI_DrawHandlePic(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BackgroundShader);
-#endif
+	if ( backgroundShader ) {
+		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, backgroundShader );
+	}
 
 	// let's draw the stuff
 	// set initial y location
@@ -353,9 +350,5 @@ void UI_CreditMenu( void ) {
 #endif
 
 	// load the background shader
-#ifdef BACKGROUND_SHADER
-	BackgroundShader = 
-		trap_R_RegisterShaderNoMip( ART_MENUBG );
-#undef BACKGROUND_SHADER
-#endif
+	backgroundShader = trap_R_RegisterShaderNoMip( ART_MENUBG );
 }
