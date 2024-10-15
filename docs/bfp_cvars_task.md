@@ -34,12 +34,7 @@
 ## DONE BUT NOT IN CGAME:
 
 - cg_stfu [0/1]: disable character voices when firing attacks.
-- cg_lowpolysphere [0/1]: force the use of a lower polycount sphere.
-- cg_lightExplosions [0/1]: turn on or off the explosion dynamic lights.
 - cg_chargeupAlert [0/1]: turn on or off the "ready" message when charging attacks.
-- cg_explosionShell [0/1]: turn on or off the explosion shell.
-- cg_explosionSmoke [0/1]: turn on or off the explosion smoke.
-- cg_explosionRing [0/1]: turn on or off the explosion ring.
 
 
 ## COMPLETED:
@@ -75,6 +70,12 @@
 - [x] ~~g_meleeRange~~
 - [x] ~~g_meleeDiveRange~~
 - [x] ~~g_meleeDamage~~
+- [x] ~~cg_lowpolysphere~~
+- [x] ~~cg_bigExplosions~~
+- [x] ~~cg_lightExplosions~~
+- [x] ~~cg_explosionShell~~
+- [x] ~~cg_explosionSmoke~~
+- [x] ~~cg_explosionRing~~
 
 #### Cvar Gametypes:
 

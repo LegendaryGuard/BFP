@@ -66,6 +66,12 @@ CG_CVAR( cg_footsteps, "cg_footsteps", "1", CVAR_CHEAT )
 CG_CVAR( cg_tracerChance, "cg_tracerchance", "0.4", CVAR_CHEAT )
 CG_CVAR( cg_tracerWidth, "cg_tracerwidth", "1", CVAR_CHEAT )
 CG_CVAR( cg_tracerLength, "cg_tracerlength", "100", CVAR_CHEAT )
+CG_CVAR( cg_lowpolysphere, "cg_lowpolysphere", "0", CVAR_ARCHIVE ) // BFP - Low poly sphere
+CG_CVAR( cg_bigExplosions, "cg_bigExplosions", "1", CVAR_ARCHIVE ) // BFP - Big explosions
+CG_CVAR( cg_explosionRing, "cg_explosionRing", "1", CVAR_ARCHIVE ) // BFP - Explosion ring
+CG_CVAR( cg_explosionShell, "cg_explosionShell", "1", CVAR_ARCHIVE ) // BFP - Explosion shell
+CG_CVAR( cg_explosionSmoke, "cg_explosionSmoke", "1", CVAR_ARCHIVE ) // BFP - Explosion smoke
+CG_CVAR( cg_lightExplosions, "cg_lightExplosions", "1", CVAR_ARCHIVE ) // BFP - Dynamic explosion lights
 CG_CVAR( cg_flytilt, "cg_flytilt", "1", CVAR_ARCHIVE ) // BFP - Fly tilt
 CG_CVAR( cg_kiTrail, "cg_kiTrail", "50", CVAR_ARCHIVE ) // BFP - Ki trail length
 CG_CVAR( cg_playHitSound, "cg_playHitSound", "0", CVAR_ARCHIVE ) // BFP - Play hit sound
@@ -120,10 +126,15 @@ CG_CVAR( cg_noTaunt, "cg_noTaunt", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_noProjectileTrail, "cg_noProjectileTrail", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_smallFont, "ui_smallFont", "0.25", CVAR_ARCHIVE )
 CG_CVAR( cg_bigFont, "ui_bigFont", "0.4", CVAR_ARCHIVE )
+
+/*
+// BFP - Remove these unused cvars from the code in the future
 CG_CVAR( cg_oldRail, "cg_oldRail", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_oldRocket, "cg_oldRocket", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_oldPlasma, "cg_oldPlasma", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_trueLightning, "cg_trueLightning", "0.0", CVAR_ARCHIVE )
+*/
+
 //CG_CVAR( cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE )
 
 #undef CG_CVAR

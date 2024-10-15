@@ -211,6 +211,8 @@ typedef struct markPoly_s {
 typedef enum {
 	LE_MARK,
 	LE_EXPLOSION,
+	LE_EXPLOSION_RING, // BFP - Explosion ring
+	LE_EXPLOSION_SHELL, // BFP - Explosion shell
 	LE_SPRITE_EXPLOSION,
 	LE_FRAGMENT,
 	LE_MOVE_SCALE_FADE,
@@ -759,6 +761,15 @@ typedef struct {
 	qhandle_t	dishFlashModel;
 	qhandle_t	lightningExplosionModel;
 
+	// BFP - Explosion, projectile and beam models
+	qhandle_t	nukeModel;
+	qhandle_t	lowPolySphereModel;
+	qhandle_t	highPolySphereModel;
+	qhandle_t	beamModel;
+
+	// BFP - Explosion shell shader
+	qhandle_t	explosionShellShader;
+
 	// weapon effect shaders
 	qhandle_t	railExplosionShader;
 	qhandle_t	plasmaExplosionShader;
@@ -1270,14 +1281,6 @@ void CG_BubbleTrail( vec3_t start, vec3_t end, float spacing );
 void CG_SpawnEffect( vec3_t org );
 void CG_ScorePlum( int client, vec3_t org, int score );
 
-// BFP - Ki trail
-//
-// cg_trails.c
-//
-void CG_InitTrails( void );
-void CG_ResetKiTrail( int entityNum, vec3_t origin );
-void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader );
-
 void CG_GibPlayer( vec3_t playerOrigin );
 void CG_BigExplode( vec3_t playerOrigin );
 
@@ -1286,6 +1289,16 @@ void CG_Bleed( vec3_t origin, int entityNum );
 localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, qhandle_t shader, int msec,
 								qboolean isSprite );
+// BFP - Explosion effect
+localEntity_t *CG_SpawnExplosion( vec3_t origin, vec3_t dir, leType_t type, qhandle_t hModel, qhandle_t shader, float duration );
+
+// BFP - Ki trail
+//
+// cg_trails.c
+//
+void CG_InitTrails( void );
+void CG_ResetKiTrail( int entityNum, vec3_t origin );
+void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader );
 
 //
 // cg_snapshot.c
@@ -1532,6 +1545,8 @@ void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range);
 // BFP - Dash smoke particle for ki boost when moving in the ground
 void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
+// BFP - Explosion smoke particle
+void CG_ParticleExplosionSmoke (int radius, int lifetime, int speed, qhandle_t pshader, vec3_t origin);
 // BFP - Antigrav rock particles for charging
 void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin);
 void	CG_AntigravRockHandling (centity_t *cent);

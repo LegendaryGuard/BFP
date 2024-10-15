@@ -294,6 +294,48 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 	return ex;
 }
 
+/*
+====================
+CG_SpawnExplosion
+====================
+*/
+localEntity_t *CG_SpawnExplosion( vec3_t origin, vec3_t dir, leType_t type, qhandle_t hModel, qhandle_t shader, float duration ) { // BFP - Explosion sphere, shell and ring effect
+	localEntity_t	*le;
+	vec3_t			newOrigin;
+
+	le = CG_AllocLocalEntity();
+
+	le->leType = type;
+	
+	le->refEntity.hModel = hModel;
+	le->refEntity.customShader = shader;
+
+	VectorCopy( origin, newOrigin );
+
+	if ( !dir ) {
+		AxisClear( le->refEntity.axis );
+	} else {
+		VectorCopy( dir, le->refEntity.axis[0] );
+		RotateAroundDirection( le->refEntity.axis, 0 );
+	}
+
+	VectorCopy( origin, le->refEntity.origin );
+	VectorCopy( newOrigin, le->refEntity.oldorigin );
+
+	le->refEntity.reType = RT_MODEL;
+
+	le->color[0] = le->color[1] = le->color[2] = 1.0;
+
+	le->startTime = cg.time - (rand() & 63);
+	le->lifeRate = duration;
+	le->endTime = le->startTime + le->lifeRate;
+
+	// bias the time so all shader effects start correctly
+	le->refEntity.shaderTime = cg.time / 1000.0f;
+
+	return le;
+}
+
 
 /*
 =================

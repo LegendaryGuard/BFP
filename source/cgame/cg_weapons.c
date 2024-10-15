@@ -328,7 +328,7 @@ static void CG_PlasmaTrail( centity_t *cent, const weaponInfo_t *wi ) {
 
 	float	waterScale = 1.0f;
 
-	if ( cg_noProjectileTrail.integer || cg_oldPlasma.integer ) {
+	if ( cg_noProjectileTrail.integer ) {
 		return;
 	}
 
@@ -806,6 +806,8 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 
 	memset( &beam, 0, sizeof( beam ) );
 
+	// BFP - Unused true lightning logic effect, remove in the future
+#if 0
 	// CPMA  "true" lightning
 	if ((cent->currentState.number == cg.predictedPlayerState.clientNum) && (cg_trueLightning.value != 0)) {
 		vec3_t angle;
@@ -832,7 +834,9 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 		AngleVectors(angle, forward, NULL, NULL );
 		VectorCopy(cent->lerpOrigin, muzzlePoint );
 //		VectorCopy(cg.refdef.vieworg, muzzlePoint );
-	} else {
+	} else 
+#endif
+	{
 		// !CPMA
 		AngleVectors( cent->lerpAngles, forward, NULL, NULL );
 		VectorCopy(cent->lerpOrigin, muzzlePoint );
@@ -1433,10 +1437,13 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 	// spawn randomly the shaders with the particles
 	int				shaderIndex;
 	vec3_t			sprOrg, sprVel;
+	int				numRocks = 26;
 
 	// BFP - NOTE: Debris particles shouldn't be used for bullet and disk weapon types
 
-	for ( i = 0; i < 26; ++i ) {
+	// BFP - TODO: Apply number of rocks as indicated on default.cfg file of some character: explosionRocks <weaponNum> <numRocks>
+
+	for ( i = 0; i < numRocks; ++i ) {
 		shaderIndex = rand() % 3;
 
 		// that would be the range for debris particles
@@ -1476,15 +1483,18 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles 
 	// spawn randomly the shaders with the particles
 	int				shaderIndex;
 	vec3_t			sparkOrg, sparkVel;
+	int				numSparks = 26;
 
 	// BFP - NOTE: Spark particles shouldn't be used on bullet and disk weapon types
 
 	// BFP - TODO: Apply calling this function for finger blast and these rail gun weapon types when hitting a player
 
-	for ( i = 0; i < 26; ++i ) {
+	// BFP - TODO: Apply number of sparks as indicated on default.cfg file of some character: explosionSparks <weaponNum> <numSparks>
+
+	for ( i = 0; i < numSparks; ++i ) {
 		shaderIndex = (rand() % 100) < 50 ? 0 : 1; // if the random range was rand() % 2, it would repeat the pattern without randomize correctly
 
-		VectorMA( origin, 10, dir, sparkOrg );
+		VectorMA( origin, 0, dir, sparkOrg );
 
 		// move faster
 		VectorScale( dir, 1500 + (rand() % 1000), sparkVel );
@@ -1517,8 +1527,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	qhandle_t		shader;
 	sfxHandle_t		sfx;
 	float			radius;
-	float			light;
-	vec3_t			lightColor;
 	localEntity_t	*le;
 	int				r;
 	qboolean		isSprite;
@@ -1530,10 +1538,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	sfx = 0;
 	mod = 0;
 	shader = 0;
-	light = 0;
-	lightColor[0] = 1;
-	lightColor[1] = 1;
-	lightColor[2] = 0;
 
 	// set defaults
 	isSprite = qfalse;
@@ -1556,21 +1560,14 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		mod = cgs.media.dishFlashModel;
 		shader = cgs.media.grenadeExplosionShader;
 		sfx = cgs.media.sfx_rockexp;
-		light = 300;
 		isSprite = qtrue;
 		break;
 	case WP_ROCKET_LAUNCHER:
 		mod = cgs.media.dishFlashModel;
 		shader = cgs.media.rocketExplosionShader;
 		sfx = cgs.media.sfx_rockexp;
-		light = 300;
 		isSprite = qtrue;
 		duration = 1000;
-		lightColor[0] = 1;
-		lightColor[1] = 0.75;
-		lightColor[2] = 0.0;
-		// BFP - cg_oldRocket is unused on BFP, they forgot to remove
-		//if (cg_oldRocket.integer == 0) {}
 		break;
 	case WP_RAILGUN:
 		mod = cgs.media.ringFlashModel;
@@ -1616,16 +1613,81 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	//
 	// create the explosion
 	//
-	if ( mod ) {
-		le = CG_MakeExplosion( origin, dir, 
-							   mod,	shader,
-							   duration, isSprite );
-		le->light = light;
-		VectorCopy( lightColor, le->lightColor );
-		if ( weapon == WP_RAILGUN ) {
-			// colorize with client color
-			VectorCopy( cgs.clientinfo[clientNum].color1, le->color );
+	{
+		// BFP - Low poly sphere
+		// BFP - TODO: Apply explosionModel from bfp attack config, bfgExplosionShader is just a test
+		qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
+		localEntity_t *leRing, *leShell;
+
+		VectorMA( origin, 10, dir, origin );
+
+		// BFP - Explosion effects
+		// BFP - TODO: Apply explosionShader from bfp attack config, bfgExplosionShader is just a test
+		le = CG_SpawnExplosion( origin, dir, LE_EXPLOSION, sphereModel, cgs.media.bfgExplosionShader, 1000 );
+		if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
+			leShell = CG_SpawnExplosion( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
 		}
+		if ( cg_explosionRing.integer > 0 ) { // BFP - Explosion ring
+			leRing = CG_SpawnExplosion( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
+		}
+		if ( cg_explosionSmoke.integer > 0 ) { // BFP - Explosion smoke
+			// BFP - TODO: Apply explosionSmoke as indicated on default.cfg file from some character: explosionSmoke <weaponNum> <numSmokes(int)>
+			int	i, numSmokes = 3;
+			int	explosionSmokeRadius = 200;
+			int	explosionSmokeLife = 1500;
+			int	explosionSmokeSpeed = 10;
+			for ( i = 0; i < numSmokes; i++ ) {
+				// BFP - TODO: Apply explosionSmokeRadius as indicated on default.cfg file from some character: explosionSmokeRadius <weaponNum> <radius(int)>
+				// BFP - TODO: Apply explosionSmokeLife as indicated on default.cfg file from some character: explosionSmokeLife <weaponNum> <lifetime(int)>
+				// BFP - TODO: Apply explosionSmokeSpeed as indicated on default.cfg file from some character: explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
+				CG_ParticleExplosionSmoke( explosionSmokeRadius, explosionSmokeLife, explosionSmokeSpeed, cgs.media.particleSmokeShader, origin );
+			}
+		}
+
+		if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
+			const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
+			float	scale = 1;
+			int		numPointsChargedOverMin = 1; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
+			// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
+			// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
+			float	explosionScaleFactor = 0.95, explosionScaleFactorChargeMult = 0;
+			// BFP - TODO: Apply explosionRingScaleFactor from default.cfg file from some character: explosionRingScaleFactor <weaponNum> <scaleFactor>
+			// BFP - TODO: Apply explosionRingScaleFactorChargeMult from default.cfg file from some character: explosionRingScaleFactorChargeMult <weaponNum> <scaleFactor>
+			float	explosionRingScaleFactor = 0.95, explosionRingScaleFactorChargeMult = 0;
+			// BFP - TODO: Apply explosionShellScaleFactor from default.cfg file from some character: explosionShellScaleFactor <weaponNum> <scaleFactor>
+			// BFP - TODO: Apply explosionShellScaleFactorChargeMult from default.cfg file from some character: explosionShellScaleFactorChargeMult <weaponNum> <scaleFactor>
+			float	explosionShellScaleFactor = 0.95, explosionShellScaleFactorChargeMult = 0;
+
+			if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
+			if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
+			scale = explosionScaleFactor + explosionScaleFactorChargeMult * numPointsChargedOverMin;
+			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+			VectorScale( le->refEntity.axis[0], scale, le->refEntity.axis[0] );
+			VectorScale( le->refEntity.axis[1], scale, le->refEntity.axis[1] );
+			VectorScale( le->refEntity.axis[2], scale, le->refEntity.axis[2] );
+
+			if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
+			if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
+			scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
+			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+			VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
+			VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
+			VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
+
+			if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
+			if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
+			scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
+			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+			VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
+			VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
+			VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
+		}
+
+		// BFP - Apply dynamic explosion light values
+		le->light = 700;
+		le->lightColor[0] = 1;
+		le->lightColor[1] = 0.75;
+		le->lightColor[2] = 0.0;
 	}
 
 	//

@@ -503,7 +503,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 						}
 					} else {
 						if ( trace.fraction <= 0 ) {
-							p->roll = 4;
+							p->roll = 3;
 						} else {
 							p->vel[2] = (p->roll > 0) ? 500 * p->roll : 0;
 							p->accel[2] = (p->roll > 0) ? 500 * p->roll : 0;
@@ -566,6 +566,28 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			return;
 		}
 
+		if (p->type == P_SMOKE_IMPACT && p->link // BFP - Explosion smoke particle
+		&& timenonscaled > p->endtime - p->end) {
+			int	i;
+			// decelerate
+			for (i = 0; i < 2; ++i) {
+				p->vel[i] *= 0.99;
+
+				// if the velocity is very small, clamp it to zero
+				if (fabs(p->vel[i]) < 1) {
+					p->vel[i] = 0;
+				}
+			}
+
+			for (i = 0; i < 2; ++i) {
+				p->accel[i] *= 0.99;
+
+				// if the acceleration is very small, clamp it to zero
+				if (fabs(p->accel[i]) < 1) {
+					p->accel[i] = 0;
+				}
+			}
+		}
 
 		if (p->rotate)
 		{
@@ -934,6 +956,9 @@ void CG_AddParticles (void)
 		org[0] = p->org[0] + p->vel[0]*time + p->accel[0]*time2;
 		org[1] = p->org[1] + p->vel[1]*time + p->accel[1]*time2;
 		org[2] = p->org[2] + p->vel[2]*time + p->accel[2]*time2;
+		if ( p->type == P_SMOKE_IMPACT && p->link ) { // BFP - Explosion smoke particle moving in a static way
+			org[2] = p->org[2] + p->vel[2]*time + p->accel[2]*time;
+		}
 
 		type = p->type;
 
@@ -1151,6 +1176,56 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 			crandom() * 10, 
 			crandom() * 10, 
 			1400 );
+
+	p->link = qfalse; // to distinguish the type of smoke
+}
+
+// BFP - Particle for explosion smoke
+void CG_ParticleExplosionSmoke (int radius, int lifetime, int speed, qhandle_t pshader, vec3_t origin)
+{
+	cparticle_t	*p;
+
+	// if (!pshader) CG_Printf ("CG_ParticleExplosionSmoke pshader == ZERO!\n");
+
+	if (!free_particles)
+		return;
+
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+
+	p->time = timenonscaled;
+
+	p->alpha = 0.4;
+	p->alphavel = -0.01;
+
+	p->pshader = pshader;
+
+	p->endtime = timenonscaled + lifetime;
+	p->end = lifetime - 350;
+
+	p->startfade = timenonscaled + lifetime;
+
+	p->height = p->width = radius;
+
+	p->endheight = p->height * 2;
+	p->endwidth = p->width * 2;
+
+	p->type = P_SMOKE_IMPACT;
+
+	VectorCopy( origin, p->org );
+	p->org[2] += (crandom() * 25);
+
+	VectorSet( p->vel, 
+				(rand() % 701) - 200,
+				(rand() % 701) - 200,
+				speed );
+
+	p->accel[0] = p->accel[1] = 0;
+	p->accel[2] = 500;
+
+	p->link = qtrue; // to distinguish the type of smoke
 }
 
 // BFP - Antigrav rock particles for ki charging status
@@ -1371,7 +1446,7 @@ void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean w
 
 	p->roll = (water) // used as bounce counter
 		? 0
-		: 5;
+		: 3;
 	p->link = water; // if it's water, it'll stop above water
 	p->snum = 0;
 }

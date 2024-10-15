@@ -621,6 +621,17 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.bulletFlashModel = trap_R_RegisterModel("models/weaphits/bullet.md3");
 	cgs.media.ringFlashModel = trap_R_RegisterModel("models/weaphits/ring02.md3");
 	cgs.media.dishFlashModel = trap_R_RegisterModel("models/weaphits/boom01.md3");
+	// BFP - Explosion, projectile and beam models
+	cgs.media.nukeModel = trap_R_RegisterModel( "models/weaphits/nuke.md3" );
+	cgs.media.lowPolySphereModel = trap_R_RegisterModel( "models/weaphits/sphere.md3" );
+	cgs.media.highPolySphereModel = trap_R_RegisterModel( "models/weaphits/sphere_hi.md3" );
+	cgs.media.beamModel = trap_R_RegisterModel( "models/weaphits/beam.md3" );
+
+	// BFP - Explosion shell shader
+	cgs.media.explosionShellShader = trap_R_RegisterShader( "explosionShellShader" );
+	// BFP - Explosion ring shader (reused rail gun explosion)
+	cgs.media.railExplosionShader = trap_R_RegisterShader( "railExplosion" );
+
 	cgs.media.teleportEffectModel = trap_R_RegisterModel( "models/misc/telep.md3" );
 	cgs.media.teleportEffectShader = trap_R_RegisterShader( "teleportEffect" );
 

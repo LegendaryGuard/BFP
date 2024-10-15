@@ -476,11 +476,32 @@ static void CG_AddExplosion( localEntity_t *ex ) {
 
 	ent = &ex->refEntity;
 
+	if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
+		float	scale = 1.04f;
+		float	endTime = (float)( ex->endTime ) - (float)( ex->lifeRate * 0.5 );
+		float	endScale = (float)( ex->endTime - cg.time ) / (float)( ex->endTime - ex->startTime );
+
+		switch( ex->leType ) {
+		case LE_EXPLOSION:
+			if ( cg.time > endTime ) {
+				scale = 0.9f * ( endScale + 0.5f ); // decrease size
+			}
+			break;
+		case LE_EXPLOSION_SHELL:
+			scale = 1.12f; // scale faster than the explosion sphere
+			break;
+		}
+
+		VectorScale( ent->axis[0], scale, ent->axis[0] );
+		VectorScale( ent->axis[1], scale, ent->axis[1] );
+		VectorScale( ent->axis[2], scale, ent->axis[2] );
+	}
+
 	// add the entity
 	trap_R_AddRefEntityToScene(ent);
 
 	// add the dlight
-	if ( ex->light ) {
+	if ( cg_lightExplosions.integer > 0 ) { // BFP - Dynamic explosion lights
 		float		light;
 
 		light = (float)( cg.time - ex->startTime ) / ( ex->endTime - ex->startTime );
@@ -661,6 +682,8 @@ void CG_AddLocalEntities( void ) {
 			break;
 
 		case LE_EXPLOSION:
+		case LE_EXPLOSION_RING: // BFP - Explosion ring
+		case LE_EXPLOSION_SHELL: // BFP - Explosion shell
 			CG_AddExplosion( le );
 			break;
 
