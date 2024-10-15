@@ -177,46 +177,31 @@ static void CG_ShotgunEjectBrass( centity_t *cent ) {
 CG_RailTrail
 ==========================
 */
-void CG_RailTrail (clientInfo_t *ci, vec3_t start, vec3_t end) {
-	vec3_t axis[36], move, move2, next_move, vec, temp;
-	float  len;
-	int    i, j, skip;
- 
+void CG_RailTrail ( clientInfo_t *ci, vec3_t start, vec3_t end ) { // BFP - BFP uses an old version of rail trail on Quake 3 Arena 1st version release
 	localEntity_t *le;
 	refEntity_t   *re;
- 
-#define RADIUS   4
-#define ROTATION 1
-#define SPACING  5
- 
-	start[2] -= 4;
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-	PerpendicularVector(temp, vec);
-	for (i = 0 ; i < 36; i++) {
-		RotatePointAroundVector(axis[i], vec, temp, i * 10);//banshee 2.4 was 10
-	}
- 
+
+	//
+	// rings
+	//
 	le = CG_AllocLocalEntity();
 	re = &le->refEntity;
- 
+
 	le->leType = LE_FADE_RGB;
 	le->startTime = cg.time;
 	le->endTime = cg.time + cg_railTrailTime.value;
-	le->lifeRate = 1.0 / (le->endTime - le->startTime);
- 
+	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
+
 	re->shaderTime = cg.time / 1000.0f;
-	re->reType = RT_RAIL_CORE;
-	re->customShader = cgs.media.railCoreShader;
- 
-	VectorCopy(start, re->origin);
-	VectorCopy(end, re->oldorigin);
- 
-	re->shaderRGBA[0] = ci->color1[0] * 255;
-    re->shaderRGBA[1] = ci->color1[1] * 255;
-    re->shaderRGBA[2] = ci->color1[2] * 255;
-    re->shaderRGBA[3] = 255;
+	re->reType = RT_RAIL_RINGS;
+	re->customShader = cgs.media.railRingsShader;
+
+	VectorCopy( start, re->origin );
+	VectorCopy( end, re->oldorigin );
+
+	// nudge down a bit so it isn't exactly in center
+	re->origin[2] -= 8;
+	re->oldorigin[2] -= 8;
 
 	le->color[0] = ci->color1[0] * 0.75;
 	le->color[1] = ci->color1[1] * 0.75;
@@ -224,62 +209,35 @@ void CG_RailTrail (clientInfo_t *ci, vec3_t start, vec3_t end) {
 	le->color[3] = 1.0f;
 
 	AxisClear( re->axis );
- 
-	VectorMA(move, 20, vec, move);
-	VectorCopy(move, next_move);
-	VectorScale (vec, SPACING, vec);
 
-	if (cg_oldRail.integer != 0) {
-		// nudge down a bit so it isn't exactly in center
-		re->origin[2] -= 8;
-		re->oldorigin[2] -= 8;
-		return;
-	}
-	skip = -1;
- 
-	j = 18;
-    for (i = 0; i < len; i += SPACING) {
-		if (i != skip) {
-			skip = i + SPACING;
-			le = CG_AllocLocalEntity();
-            re = &le->refEntity;
-            le->leFlags = LEF_PUFF_DONT_SCALE;
-			le->leType = LE_MOVE_SCALE_FADE;
-            le->startTime = cg.time;
-            le->endTime = cg.time + (i>>1) + 600;
-            le->lifeRate = 1.0 / (le->endTime - le->startTime);
+	//
+	// core
+	//
+	le = CG_AllocLocalEntity();
+	re = &le->refEntity;
 
-            re->shaderTime = cg.time / 1000.0f;
-            re->reType = RT_SPRITE;
-            re->radius = 1.1f;
-			re->customShader = cgs.media.railRingsShader;
+	le->leType = LE_FADE_RGB;
+	le->startTime = cg.time;
+	le->endTime = cg.time + cg_railTrailTime.value;
+	le->lifeRate = 1.0 / ( le->endTime - le->startTime );
 
-            re->shaderRGBA[0] = ci->color2[0] * 255;
-            re->shaderRGBA[1] = ci->color2[1] * 255;
-            re->shaderRGBA[2] = ci->color2[2] * 255;
-            re->shaderRGBA[3] = 255;
+	re->shaderTime = cg.time / 1000.0f;
+	re->reType = RT_RAIL_CORE;
+	re->customShader = cgs.media.railCoreShader;
 
-            le->color[0] = ci->color2[0] * 0.75;
-            le->color[1] = ci->color2[1] * 0.75;
-            le->color[2] = ci->color2[2] * 0.75;
-            le->color[3] = 1.0f;
+	VectorCopy( start, re->origin );
+	VectorCopy( end, re->oldorigin );
 
-            le->pos.trType = TR_LINEAR;
-            le->pos.trTime = cg.time;
+	// nudge down a bit so it isn't exactly in center
+	re->origin[2] -= 8;
+	re->oldorigin[2] -= 8;
 
-			VectorCopy( move, move2);
-            VectorMA(move2, RADIUS , axis[j], move2);
-            VectorCopy(move2, le->pos.trBase);
+	le->color[0] = ci->color1[0] * 0.75;
+	le->color[1] = ci->color1[1] * 0.75;
+	le->color[2] = ci->color1[2] * 0.75;
+	le->color[3] = 1.0f;
 
-            le->pos.trDelta[0] = axis[j][0]*6;
-            le->pos.trDelta[1] = axis[j][1]*6;
-            le->pos.trDelta[2] = axis[j][2]*6;
-		}
-
-        VectorAdd (move, vec, move);
-
-        j = j + ROTATION < 36 ? j + ROTATION : (j + ROTATION) % 36;
-	}
+	AxisClear( re->axis );
 }
 
 /*
