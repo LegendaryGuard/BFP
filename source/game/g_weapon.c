@@ -550,7 +550,6 @@ RAILGUN
 weapon_railgun_fire
 =================
 */
-#define	MAX_RAIL_HITS	4
 void weapon_railgun_fire (gentity_t *ent) {
 	vec3_t		end;
 	trace_t		trace;
@@ -559,42 +558,27 @@ void weapon_railgun_fire (gentity_t *ent) {
 	int			damage;
 	int			i;
 	int			hits;
-	int			unlinked;
 	int			passent;
-	gentity_t	*unlinkedEntities[MAX_RAIL_HITS];
 
 	damage = 100 * s_quadFactor;
 
 	VectorMA (muzzle, 8192, forward, end);
 
 	// trace only against the solids, so the railgun will go through people
-	unlinked = 0;
 	hits = 0;
 	passent = ent->s.number;
-	do {
-		trap_Trace (&trace, muzzle, NULL, NULL, end, passent, MASK_SHOT );
-		if ( trace.entityNum >= ENTITYNUM_MAX_NORMAL ) {
-			break;
-		}
+	trap_Trace( &trace, muzzle, NULL, NULL, end, passent, MASK_SHOT );
+	if ( trace.entityNum < ENTITYNUM_MAX_NORMAL ) {
 		traceEnt = &g_entities[ trace.entityNum ];
 		if ( traceEnt->takedamage ) {
-				if( LogAccuracyHit( traceEnt, ent ) ) {
-					hits++;
-				}
-				G_Damage (traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN);
-		}
-		if ( trace.contents & CONTENTS_SOLID ) {
-			break;		// we hit something solid enough to stop the beam
-		}
-		// unlink this entity, so the next trace will go past it
-		trap_UnlinkEntity( traceEnt );
-		unlinkedEntities[unlinked] = traceEnt;
-		unlinked++;
-	} while ( unlinked < MAX_RAIL_HITS );
+			// BFP - Railgun events are also treated as a missile
+			tent = G_TempEntity( trace.endpos, EV_MISSILE_HIT );
 
-	// link back in any entities we unlinked
-	for ( i = 0 ; i < unlinked ; i++ ) {
-		trap_LinkEntity( unlinkedEntities[i] );
+			if ( LogAccuracyHit( traceEnt, ent ) ) {
+				hits++;
+			}
+			G_Damage( traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN );
+		}
 	}
 
 	// the final trace endpos will be the terminal point of the rail trail
@@ -614,9 +598,12 @@ void weapon_railgun_fire (gentity_t *ent) {
 	VectorMA( tent->s.origin2, -1, up, tent->s.origin2 );
 
 	// no explosion at end if SURF_NOIMPACT, but still make the trail
-	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
-		tent->s.eventParm = 255;	// don't make the explosion at the end
-	} else {
+	if ( !( trace.surfaceFlags & SURF_NOIMPACT ) ) {
+		// BFP - Railgun events are also treated as a missile
+		if ( traceEnt->s.eType != ET_PLAYER || traceEnt->physicsObject ) {
+			tent = G_TempEntity( trace.endpos, EV_MISSILE_MISS );
+		}
+		// BFP - Sends dir vector variable to the event
 		tent->s.eventParm = DirToByte( trace.plane.normal );
 	}
 	tent->s.clientNum = ent->s.clientNum;
