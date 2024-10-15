@@ -390,6 +390,43 @@ static void CG_AddMoveScaleFade( localEntity_t *le ) {
 
 
 /*
+==================
+CG_AddMoveDontScaleFade
+==================
+*/
+static void CG_AddMoveDontScaleFade( localEntity_t *le ) { // BFP - For LE_MOVE_DONT_SCALE_FADE type, attention: it's a non-timescaled effect
+	refEntity_t	*re;
+	float		c;
+	// BFP - NOTE: Explosion effect use non-timescaled, to be timescaled by game, use cg.time
+	static int	timenonscaled;
+
+	timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
+
+	re = &le->refEntity;
+
+	if ( le->fadeInTime > le->startTime && timenonscaled < le->fadeInTime ) {
+		// fade / grow time
+		c = 1.0 - (float) ( le->fadeInTime - timenonscaled ) / ( le->fadeInTime - le->startTime );
+	} else {
+		// fade / grow time
+		c = ( le->endTime - timenonscaled ) * le->lifeRate;
+	}
+
+	re->shaderRGBA[3] = 0xff * c * le->color[3];
+	if ( re->shaderRGBA[3] <= 0 ) { // no alpha, disappear then
+		CG_FreeLocalEntity( le );
+		return;
+	}
+
+	re->radius = le->radius;
+
+	BG_EvaluateTrajectory( &le->pos, timenonscaled, re->origin );
+
+	trap_R_AddRefEntityToScene( re );
+}
+
+
+/*
 ===================
 CG_AddScaleFade
 
@@ -693,6 +730,10 @@ void CG_AddLocalEntities( void ) {
 
 		case LE_MOVE_SCALE_FADE:		// water bubbles
 			CG_AddMoveScaleFade( le );
+			break;
+
+		case LE_MOVE_DONT_SCALE_FADE: // BFP - Effect for explosion smoke
+			CG_AddMoveDontScaleFade( le );
 			break;
 
 		case LE_FADE_RGB:				// teleporters, railtrails

@@ -216,6 +216,7 @@ typedef enum {
 	LE_SPRITE_EXPLOSION,
 	LE_FRAGMENT,
 	LE_MOVE_SCALE_FADE,
+	LE_MOVE_DONT_SCALE_FADE, // BFP - Effect for explosion smoke
 	LE_FALL_SCALE_FADE,
 	LE_FADE_RGB,
 	LE_SCALE_FADE,
@@ -1233,10 +1234,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum );
 void CG_ShotgunFire( entityState_t *es );
 void CG_Bullet( vec3_t origin, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum );
-// BFP - Debris particles explosion
-void CG_DebrisExplosion( vec3_t origin, vec3_t dir );
-// BFP - Spark particles explosion
-void CG_SparksExplosion( vec3_t origin, vec3_t dir );
 
 void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
 void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi );
@@ -1289,8 +1286,14 @@ void CG_Bleed( vec3_t origin, int entityNum );
 localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, qhandle_t shader, int msec,
 								qboolean isSprite );
-// BFP - Explosion effect
-localEntity_t *CG_SpawnExplosion( vec3_t origin, vec3_t dir, leType_t type, qhandle_t hModel, qhandle_t shader, float duration );
+// BFP - Explosion models
+localEntity_t *CG_SpawnExplosionModel( vec3_t origin, vec3_t dir, leType_t type, qhandle_t hModel, qhandle_t shader, float duration );
+// BFP - Debris particles explosion
+void CG_DebrisExplosion( vec3_t origin, vec3_t dir );
+// BFP - Spark particles explosion
+void CG_SparksExplosion( vec3_t origin, vec3_t dir );
+// BFP - Explosion effects
+void CG_ExplosionEffect( vec3_t origin, vec3_t dir );
 
 // BFP - Ki trail
 //
@@ -1545,8 +1548,6 @@ void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range);
 // BFP - Dash smoke particle for ki boost when moving in the ground
 void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
-// BFP - Explosion smoke particle
-void CG_ParticleExplosionSmoke (int radius, int lifetime, int speed, qhandle_t pshader, vec3_t origin);
 // BFP - Antigrav rock particles for charging
 void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin);
 void	CG_AntigravRockHandling (centity_t *cent);

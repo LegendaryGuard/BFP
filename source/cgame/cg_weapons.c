@@ -1429,94 +1429,6 @@ void CG_FireWeapon( centity_t *cent ) {
 
 /*
 =================
-CG_DebrisExplosion
-=================
-*/
-void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles explosion
-	int				i;
-	// spawn randomly the shaders with the particles
-	int				shaderIndex;
-	vec3_t			sprOrg, sprVel;
-	int				numRocks = 26;
-
-	// BFP - NOTE: Debris particles shouldn't be used for bullet and disk weapon types
-
-	// BFP - TODO: Apply number of rocks as indicated on default.cfg file of some character: explosionRocks <weaponNum> <numRocks>
-
-	for ( i = 0; i < numRocks; ++i ) {
-		shaderIndex = rand() % 3;
-
-		// that would be the range for debris particles
-		VectorMA( origin, 24, dir, sprOrg );
-		sprOrg[0] += (rand() % 24);
-		sprOrg[1] += (rand() % 24);
-		sprOrg[2] += (rand() % 24);
-
-		VectorScale( dir, 1500 + (rand() % 1000), sprVel );
-		sprVel[0] += (rand() % 2800) - 1500;
-		sprVel[1] += (rand() % 2800) - 1500;
-		sprVel[2] += (rand() % 2200) - 1000;
-
-		switch ( shaderIndex ) {
-			case 0: {
-				CG_ParticleDebris( cgs.media.pebbleShader1, sprOrg, sprVel, qfalse );
-				break;
-			}
-			case 1: {
-				CG_ParticleDebris( cgs.media.pebbleShader2, sprOrg, sprVel, qfalse );
-				break;
-			}
-			default: {
-				CG_ParticleDebris( cgs.media.pebbleShader3, sprOrg, sprVel, qfalse );
-			}
-		}
-	}
-}
-
-/*
-=================
-CG_SparksExplosion
-=================
-*/
-void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles explosion
-	int				i;
-	// spawn randomly the shaders with the particles
-	int				shaderIndex;
-	vec3_t			sparkOrg, sparkVel;
-	int				numSparks = 26;
-
-	// BFP - NOTE: Spark particles shouldn't be used on bullet and disk weapon types
-
-	// BFP - TODO: Apply calling this function for finger blast and these rail gun weapon types when hitting a player
-
-	// BFP - TODO: Apply number of sparks as indicated on default.cfg file of some character: explosionSparks <weaponNum> <numSparks>
-
-	for ( i = 0; i < numSparks; ++i ) {
-		shaderIndex = (rand() % 100) < 50 ? 0 : 1; // if the random range was rand() % 2, it would repeat the pattern without randomize correctly
-
-		VectorMA( origin, 0, dir, sparkOrg );
-
-		// move faster
-		VectorScale( dir, 1500 + (rand() % 1000), sparkVel );
-		sparkVel[0] += 1.5 * (rand() % 3500) - 1500;
-		sparkVel[1] += 1.5 * (rand() % 3500) - 1500;
-		sparkVel[2] += 1.5 * (rand() % 2100) - 1000;
-
-		switch ( shaderIndex ) {
-			case 0: {
-				CG_ParticleSparks( cgs.media.sparkShader1, sparkOrg, sparkVel );
-				break;
-			}
-			default: {
-				CG_ParticleSparks( cgs.media.sparkShader2, sparkOrg, sparkVel );
-			}
-		}
-	}
-}
-
-
-/*
-=================
 CG_MissileHitWall
 
 Caused by an EV_MISSILE_MISS event, or directly by local bullet tracing
@@ -1527,7 +1439,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	qhandle_t		shader;
 	sfxHandle_t		sfx;
 	float			radius;
-	localEntity_t	*le;
 	int				r;
 	qboolean		isSprite;
 	int				duration;
@@ -1613,82 +1524,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	//
 	// create the explosion
 	//
-	{
-		// BFP - Low poly sphere
-		// BFP - TODO: Apply explosionModel from bfp attack config, bfgExplosionShader is just a test
-		qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
-		localEntity_t *leRing, *leShell;
-
-		VectorMA( origin, 10, dir, origin );
-
-		// BFP - Explosion effects
-		// BFP - TODO: Apply explosionShader from bfp attack config, bfgExplosionShader is just a test
-		le = CG_SpawnExplosion( origin, dir, LE_EXPLOSION, sphereModel, cgs.media.bfgExplosionShader, 1000 );
-		if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
-			leShell = CG_SpawnExplosion( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
-		}
-		if ( cg_explosionRing.integer > 0 ) { // BFP - Explosion ring
-			leRing = CG_SpawnExplosion( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
-		}
-		if ( cg_explosionSmoke.integer > 0 ) { // BFP - Explosion smoke
-			// BFP - TODO: Apply explosionSmoke as indicated on default.cfg file from some character: explosionSmoke <weaponNum> <numSmokes(int)>
-			int	i, numSmokes = 3;
-			int	explosionSmokeRadius = 200;
-			int	explosionSmokeLife = 1500;
-			int	explosionSmokeSpeed = 10;
-			for ( i = 0; i < numSmokes; i++ ) {
-				// BFP - TODO: Apply explosionSmokeRadius as indicated on default.cfg file from some character: explosionSmokeRadius <weaponNum> <radius(int)>
-				// BFP - TODO: Apply explosionSmokeLife as indicated on default.cfg file from some character: explosionSmokeLife <weaponNum> <lifetime(int)>
-				// BFP - TODO: Apply explosionSmokeSpeed as indicated on default.cfg file from some character: explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
-				CG_ParticleExplosionSmoke( explosionSmokeRadius, explosionSmokeLife, explosionSmokeSpeed, cgs.media.particleSmokeShader, origin );
-			}
-		}
-
-		if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
-			const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
-			float	scale = 1;
-			int		numPointsChargedOverMin = 1; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
-			// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
-			// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
-			float	explosionScaleFactor = 0.95, explosionScaleFactorChargeMult = 0;
-			// BFP - TODO: Apply explosionRingScaleFactor from default.cfg file from some character: explosionRingScaleFactor <weaponNum> <scaleFactor>
-			// BFP - TODO: Apply explosionRingScaleFactorChargeMult from default.cfg file from some character: explosionRingScaleFactorChargeMult <weaponNum> <scaleFactor>
-			float	explosionRingScaleFactor = 0.95, explosionRingScaleFactorChargeMult = 0;
-			// BFP - TODO: Apply explosionShellScaleFactor from default.cfg file from some character: explosionShellScaleFactor <weaponNum> <scaleFactor>
-			// BFP - TODO: Apply explosionShellScaleFactorChargeMult from default.cfg file from some character: explosionShellScaleFactorChargeMult <weaponNum> <scaleFactor>
-			float	explosionShellScaleFactor = 0.95, explosionShellScaleFactorChargeMult = 0;
-
-			if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
-			if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
-			scale = explosionScaleFactor + explosionScaleFactorChargeMult * numPointsChargedOverMin;
-			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-			VectorScale( le->refEntity.axis[0], scale, le->refEntity.axis[0] );
-			VectorScale( le->refEntity.axis[1], scale, le->refEntity.axis[1] );
-			VectorScale( le->refEntity.axis[2], scale, le->refEntity.axis[2] );
-
-			if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
-			if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
-			scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
-			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-			VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
-			VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
-			VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
-
-			if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
-			if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
-			scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
-			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-			VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
-			VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
-			VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
-		}
-
-		// BFP - Apply dynamic explosion light values
-		le->light = 700;
-		le->lightColor[0] = 1;
-		le->lightColor[1] = 0.75;
-		le->lightColor[2] = 0.0;
-	}
+	CG_ExplosionEffect( origin, dir ); // BFP - Explosion effects
 
 	//
 	// impact mark
