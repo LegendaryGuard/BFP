@@ -472,6 +472,14 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.hgrenb1aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb1a.wav", qfalse);
 	cgs.media.hgrenb2aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb2a.wav", qfalse);
 
+	// BFP - Explosion sounds
+	cgs.media.explosion1Sound = trap_S_RegisterSound("sound/bfp/explosion1.wav", qfalse);
+	cgs.media.explosion2Sound = trap_S_RegisterSound("sound/bfp/explosion2.wav", qfalse);
+	cgs.media.explosion3Sound = trap_S_RegisterSound("sound/bfp/explosion3.wav", qfalse);
+	cgs.media.explosion4Sound = trap_S_RegisterSound("sound/bfp/explosion4.wav", qfalse);
+	cgs.media.explosion5Sound = trap_S_RegisterSound("sound/bfp/explosion5.wav", qfalse);
+	cgs.media.explosion6Sound = trap_S_RegisterSound("sound/bfp/explosion6.wav", qfalse);
+
 	cgs.media.kiChargeSound = trap_S_RegisterSound("sound/bfp/kicharge1.wav", qfalse); // BFP - Ki charge sound
 	cgs.media.kiUseSound = trap_S_RegisterSound("sound/bfp/kiuse1.wav", qfalse); // BFP - Ki use sound
 	cgs.media.defaultKiChargingSound = trap_S_RegisterSound("sound/bfp/attackcharge1.wav", qfalse); // BFP - Default ki charging attack sound
@@ -597,9 +605,6 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.armorModel = trap_R_RegisterModel( "models/powerups/armor/armor_yel.md3" );
 	cgs.media.armorIcon  = trap_R_RegisterShaderNoMip( "icons/iconr_yellow" );
-
-	cgs.media.machinegunBrassModel = trap_R_RegisterModel( "models/weapons2/shells/m_shell.md3" );
-	cgs.media.shotgunBrassModel = trap_R_RegisterModel( "models/weapons2/shells/s_shell.md3" );
 
 	cgs.media.gibAbdomen = trap_R_RegisterModel( "models/gibs/abdomen.md3" );
 	cgs.media.gibArm = trap_R_RegisterModel( "models/gibs/arm.md3" );

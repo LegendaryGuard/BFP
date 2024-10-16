@@ -457,7 +457,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			if (org[2] > p->end)
 			{
 				p->next = NULL;
-				p->type = p->color = p->alpha = p->snum = 0;
+				p->color = p->alpha = 0;
 			}
 		}
 		else if (p->type == P_DEBRIS) // BFP - Debris type
@@ -524,10 +524,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			// for a short time, the debris begin to get tinier
 			if ( p->time > p->endtime - 500 ) {
 				p->height = p->width *= 0.9;
-			}
-			if ( p->width <= 0.1 ) {
-				p->next = NULL;
-				p->type = p->color = p->alpha = 0;
 			}
 		}
 
@@ -900,7 +896,7 @@ void CG_AddParticles (void)
 			{
 				p->next = free_particles;
 				free_particles = p;
-				p->type = p->color = p->alpha = p->snum = 0;
+				p->color = p->alpha = 0;
 				p->height = p->width = p->endheight = p->endwidth = 0;
 				continue;
 			}
@@ -911,7 +907,7 @@ void CG_AddParticles (void)
 			CG_AddParticleToScene (p, p->org, alpha);
 			p->next = free_particles;
 			free_particles = p;
-			p->type = p->color = p->alpha = 0;
+			p->color = p->alpha = 0;
 			continue;
 		}
 
@@ -1064,7 +1060,7 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 	contents = trap_CM_PointContents( trace.endpos, 0 );
 	if ( contents & CONTENTS_SOLID ) { // remove when grazing something solid
 		p->next = NULL;
-		p->type = p->color = p->alpha = 0;
+		p->color = p->alpha = 0;
 		return;
 	}
 	if ( !( contents & CONTENTS_WATER ) ) {

@@ -575,8 +575,6 @@ CG_DebrisExplosion
 */
 void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles explosion
 	int				i;
-	// spawn randomly the shaders with the particles
-	int				shaderIndex;
 	vec3_t			sprOrg, sprVel;
 	int				numRocks = 26;
 
@@ -585,7 +583,8 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 	// BFP - TODO: Apply number of rocks as indicated on default.cfg file of some character: explosionRocks <weaponNum> <numRocks>
 
 	for ( i = 0; i < numRocks; ++i ) {
-		shaderIndex = rand() % 3;
+		// spawn randomly the shaders with the particles
+		int shaderIndex = rand() % 3;
 
 		// that would be the range for debris particles
 		VectorMA( origin, 24, dir, sprOrg );
@@ -655,29 +654,13 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles 
 	}
 }
 
-
 /*
 =================
-CG_ExplosionEffect
+CG_SmokeExplosion
 =================
 */
-void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effects
-	// BFP - Low poly sphere
-	// BFP - TODO: Apply explosionModel from bfp attack config, bfgExplosionShader is just a test
-	qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
-	localEntity_t *leSphere, *leRing, *leShell;
-
-	VectorMA( origin, 10, dir, origin );
-
-	// BFP - TODO: Apply explosionShader from bfp attack config, bfgExplosionShader is just a test
-	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION, sphereModel, cgs.media.bfgExplosionShader, 1000 );
-	if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
-		leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
-	}
-	if ( cg_explosionRing.integer > 0 ) { // BFP - Explosion ring
-		leRing = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
-	}
-	if ( cg_explosionSmoke.integer > 0 ) { // BFP - Explosion smoke
+void CG_SmokeExplosion( vec3_t origin ) { // BFP - Explosion smoke
+	if ( cg_explosionSmoke.integer > 0 ) {
 		// BFP - TODO: Apply explosionSmoke as indicated on default.cfg file from some character: explosionSmoke <weaponNum> <numSmokes(int)>
 		int	i, numSmokes = 3;
 		// BFP - TODO: Apply explosionSmokeRadius as indicated on default.cfg file from some character: explosionSmokeRadius <weaponNum> <radius(int)>
@@ -686,7 +669,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 		int	explosionSmokeLife = 1500;
 		// BFP - TODO: Apply explosionSmokeSpeed as indicated on default.cfg file from some character: explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
 		int	explosionSmokeSpeed = 10;
-		for ( i = 0; i < numSmokes; i++ ) {
+		for ( i = 0; i < numSmokes; ++i ) {
 			localEntity_t	*leSmoke;
 			vec3_t	vel, smokeOrg;
 			static int	timenonscaled;
@@ -712,6 +695,50 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 			leSmoke->leType = LE_MOVE_DONT_SCALE_FADE;
 		}
 	}
+}
+
+
+/*
+=================
+CG_ExplosionSound
+=================
+*/
+void CG_ExplosionSound( vec3_t origin ) { // BFP - Explosion sounds
+	int	i = rand() % 6;
+
+	switch ( i ) {
+	case 0:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion1Sound ); break;
+	case 1:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion2Sound ); break;
+	case 2:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion3Sound ); break;
+	case 3:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion4Sound ); break;
+	case 4:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion5Sound ); break;
+	default: trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion6Sound ); break;
+	}
+}
+
+
+/*
+=================
+CG_ExplosionEffect
+=================
+*/
+void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effects
+	// BFP - Low poly sphere
+	// BFP - TODO: Apply explosionModel from bfp attack config, highPolySphereModel is just a test
+	qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
+	localEntity_t *leSphere, *leRing, *leShell;
+
+	VectorMA( origin, 10, dir, origin );
+
+	// BFP - TODO: Apply explosionShader from bfp attack config, bfgExplosionShader is just a test
+	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, sphereModel, cgs.media.bfgExplosionShader, 1000 );
+	if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
+		leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
+	}
+	if ( cg_explosionRing.integer > 0 ) { // BFP - Explosion ring
+		leRing = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
+	}
+	CG_SmokeExplosion( origin ); // BFP - Explosion smoke
 
 	if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
 		const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
