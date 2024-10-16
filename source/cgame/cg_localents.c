@@ -520,6 +520,9 @@ static void CG_AddExplosion( localEntity_t *ex ) {
 
 		switch( ex->leType ) {
 		case LE_EXPLOSION:
+			scale = 1.05f; // scale a bit faster to adjust
+			break;
+		case LE_EXPLOSION_SPHERE:
 			if ( cg.time > endTime ) {
 				scale = 0.9f * ( endScale + 0.5f ); // decrease size
 			}
@@ -719,6 +722,7 @@ void CG_AddLocalEntities( void ) {
 			break;
 
 		case LE_EXPLOSION:
+		case LE_EXPLOSION_SPHERE: // BFP - Explosion sphere
 		case LE_EXPLOSION_RING: // BFP - Explosion ring
 		case LE_EXPLOSION_SHELL: // BFP - Explosion shell
 			CG_AddExplosion( le );

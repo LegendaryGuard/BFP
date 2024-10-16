@@ -211,6 +211,7 @@ typedef struct markPoly_s {
 typedef enum {
 	LE_MARK,
 	LE_EXPLOSION,
+	LE_EXPLOSION_SPHERE, // BFP - Explosion sphere
 	LE_EXPLOSION_RING, // BFP - Explosion ring
 	LE_EXPLOSION_SHELL, // BFP - Explosion shell
 	LE_SPRITE_EXPLOSION,
@@ -694,9 +695,6 @@ typedef struct {
 
 	qhandle_t	smoke2;
 
-	qhandle_t	machinegunBrassModel;
-	qhandle_t	shotgunBrassModel;
-
 	qhandle_t	railRingsShader;
 	qhandle_t	railCoreShader;
 
@@ -944,6 +942,14 @@ typedef struct {
 	sfxHandle_t	wstbimpmSound;
 	sfxHandle_t	wstbimpdSound;
 	sfxHandle_t	wstbactvSound;
+
+	// BFP - Explosion sounds
+	sfxHandle_t	explosion1Sound;
+	sfxHandle_t	explosion2Sound;
+	sfxHandle_t	explosion3Sound;
+	sfxHandle_t	explosion4Sound;
+	sfxHandle_t	explosion5Sound;
+	sfxHandle_t	explosion6Sound;
 
 	sfxHandle_t kiChargeSound; 	// BFP - Ki charge sound
 	sfxHandle_t kiUseSound;		// BFP - Ki use sound
@@ -1292,6 +1298,8 @@ localEntity_t *CG_SpawnExplosionModel( vec3_t origin, vec3_t dir, leType_t type,
 void CG_DebrisExplosion( vec3_t origin, vec3_t dir );
 // BFP - Spark particles explosion
 void CG_SparksExplosion( vec3_t origin, vec3_t dir );
+// BFP - Explosion sounds
+void CG_ExplosionSound( vec3_t origin );
 // BFP - Explosion effects
 void CG_ExplosionEffect( vec3_t origin, vec3_t dir );
 

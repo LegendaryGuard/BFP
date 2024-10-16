@@ -25,155 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ==========================
-CG_MachineGunEjectBrass
-==========================
-*/
-static void CG_MachineGunEjectBrass( centity_t *cent ) {
-	localEntity_t	*le;
-	refEntity_t		*re;
-	vec3_t			velocity, xvelocity;
-	vec3_t			offset, xoffset;
-	float			waterScale = 1.0f;
-	vec3_t			v[3];
-
-	if ( cg_brassTime.integer <= 0 ) {
-		return;
-	}
-
-	le = CG_AllocLocalEntity();
-	re = &le->refEntity;
-
-	velocity[0] = 0;
-	velocity[1] = -50 + 40 * crandom();
-	velocity[2] = 100 + 50 * crandom();
-
-	le->leType = LE_FRAGMENT;
-	le->startTime = cg.time;
-	le->endTime = le->startTime + cg_brassTime.integer + ( cg_brassTime.integer / 4 ) * random();
-
-	le->pos.trType = TR_GRAVITY;
-	le->pos.trTime = cg.time - (rand()&15);
-
-	AnglesToAxis( cent->lerpAngles, v );
-
-	offset[0] = 8;
-	offset[1] = -4;
-	offset[2] = 24;
-
-	xoffset[0] = offset[0] * v[0][0] + offset[1] * v[1][0] + offset[2] * v[2][0];
-	xoffset[1] = offset[0] * v[0][1] + offset[1] * v[1][1] + offset[2] * v[2][1];
-	xoffset[2] = offset[0] * v[0][2] + offset[1] * v[1][2] + offset[2] * v[2][2];
-	VectorAdd( cent->lerpOrigin, xoffset, re->origin );
-
-	VectorCopy( re->origin, le->pos.trBase );
-
-	if ( CG_PointContents( re->origin, -1 ) & CONTENTS_WATER ) {
-		waterScale = 0.10f;
-	}
-
-	xvelocity[0] = velocity[0] * v[0][0] + velocity[1] * v[1][0] + velocity[2] * v[2][0];
-	xvelocity[1] = velocity[0] * v[0][1] + velocity[1] * v[1][1] + velocity[2] * v[2][1];
-	xvelocity[2] = velocity[0] * v[0][2] + velocity[1] * v[1][2] + velocity[2] * v[2][2];
-	VectorScale( xvelocity, waterScale, le->pos.trDelta );
-
-	AxisCopy( axisDefault, re->axis );
-	re->hModel = cgs.media.machinegunBrassModel;
-
-	le->bounceFactor = 0.4 * waterScale;
-
-	le->angles.trType = TR_LINEAR;
-	le->angles.trTime = cg.time;
-	le->angles.trBase[0] = rand()&31;
-	le->angles.trBase[1] = rand()&31;
-	le->angles.trBase[2] = rand()&31;
-	le->angles.trDelta[0] = 2;
-	le->angles.trDelta[1] = 1;
-	le->angles.trDelta[2] = 0;
-
-	le->leFlags = LEF_TUMBLE;
-	le->leBounceSoundType = LEBS_BRASS;
-	le->leMarkType = LEMT_NONE;
-}
-
-/*
-==========================
-CG_ShotgunEjectBrass
-==========================
-*/
-static void CG_ShotgunEjectBrass( centity_t *cent ) {
-	localEntity_t	*le;
-	refEntity_t		*re;
-	vec3_t			velocity, xvelocity;
-	vec3_t			offset, xoffset;
-	vec3_t			v[3];
-	int				i;
-
-	if ( cg_brassTime.integer <= 0 ) {
-		return;
-	}
-
-	for ( i = 0; i < 2; i++ ) {
-		float	waterScale = 1.0f;
-
-		le = CG_AllocLocalEntity();
-		re = &le->refEntity;
-
-		velocity[0] = 60 + 60 * crandom();
-		if ( i == 0 ) {
-			velocity[1] = 40 + 10 * crandom();
-		} else {
-			velocity[1] = -40 + 10 * crandom();
-		}
-		velocity[2] = 100 + 50 * crandom();
-
-		le->leType = LE_FRAGMENT;
-		le->startTime = cg.time;
-		le->endTime = le->startTime + cg_brassTime.integer*3 + cg_brassTime.integer * random();
-
-		le->pos.trType = TR_GRAVITY;
-		le->pos.trTime = cg.time;
-
-		AnglesToAxis( cent->lerpAngles, v );
-
-		offset[0] = 8;
-		offset[1] = 0;
-		offset[2] = 24;
-
-		xoffset[0] = offset[0] * v[0][0] + offset[1] * v[1][0] + offset[2] * v[2][0];
-		xoffset[1] = offset[0] * v[0][1] + offset[1] * v[1][1] + offset[2] * v[2][1];
-		xoffset[2] = offset[0] * v[0][2] + offset[1] * v[1][2] + offset[2] * v[2][2];
-		VectorAdd( cent->lerpOrigin, xoffset, re->origin );
-		VectorCopy( re->origin, le->pos.trBase );
-		if ( CG_PointContents( re->origin, -1 ) & CONTENTS_WATER ) {
-			waterScale = 0.10f;
-		}
-
-		xvelocity[0] = velocity[0] * v[0][0] + velocity[1] * v[1][0] + velocity[2] * v[2][0];
-		xvelocity[1] = velocity[0] * v[0][1] + velocity[1] * v[1][1] + velocity[2] * v[2][1];
-		xvelocity[2] = velocity[0] * v[0][2] + velocity[1] * v[1][2] + velocity[2] * v[2][2];
-		VectorScale( xvelocity, waterScale, le->pos.trDelta );
-
-		AxisCopy( axisDefault, re->axis );
-		re->hModel = cgs.media.shotgunBrassModel;
-		le->bounceFactor = 0.3f;
-
-		le->angles.trType = TR_LINEAR;
-		le->angles.trTime = cg.time;
-		le->angles.trBase[0] = rand()&31;
-		le->angles.trBase[1] = rand()&31;
-		le->angles.trBase[2] = rand()&31;
-		le->angles.trDelta[0] = 1;
-		le->angles.trDelta[1] = 0.5;
-		le->angles.trDelta[2] = 0;
-
-		le->leFlags = LEF_TUMBLE;
-		le->leBounceSoundType = LEBS_BRASS;
-		le->leMarkType = LEMT_NONE;
-	}
-}
-
-/*
-==========================
 CG_RailTrail
 ==========================
 */
@@ -574,14 +425,12 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->flashSound[1] = trap_S_RegisterSound( "sound/weapons/machinegun/machgf2b.wav", qfalse );
 		weaponInfo->flashSound[2] = trap_S_RegisterSound( "sound/weapons/machinegun/machgf3b.wav", qfalse );
 		weaponInfo->flashSound[3] = trap_S_RegisterSound( "sound/weapons/machinegun/machgf4b.wav", qfalse );
-		weaponInfo->ejectBrassFunc = CG_MachineGunEjectBrass;
 		cgs.media.bulletExplosionShader = trap_R_RegisterShader( "bulletExplosion" );
 		break;
 
 	case WP_SHOTGUN:
 		MAKERGB( weaponInfo->flashDlightColor, 1, 1, 0 );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/shotgun/sshotf1b.wav", qfalse );
-		weaponInfo->ejectBrassFunc = CG_ShotgunEjectBrass;
 		break;
 
 	case WP_ROCKET_LAUNCHER:
@@ -1440,8 +1289,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	sfxHandle_t		sfx;
 	float			radius;
 	int				r;
-	qboolean		isSprite;
-	int				duration;
 
 	// BFP - NOTE: Crack mark shader replaces all other mark shaders, the radius is the same (64), there's no alpha fade
 
@@ -1449,10 +1296,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	sfx = 0;
 	mod = 0;
 	shader = 0;
-
-	// set defaults
-	isSprite = qfalse;
-	duration = 600;
 
 	switch ( weapon ) {
 	default:
@@ -1471,14 +1314,11 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		mod = cgs.media.dishFlashModel;
 		shader = cgs.media.grenadeExplosionShader;
 		sfx = cgs.media.sfx_rockexp;
-		isSprite = qtrue;
 		break;
 	case WP_ROCKET_LAUNCHER:
 		mod = cgs.media.dishFlashModel;
 		shader = cgs.media.rocketExplosionShader;
 		sfx = cgs.media.sfx_rockexp;
-		isSprite = qtrue;
-		duration = 1000;
 		break;
 	case WP_RAILGUN:
 		mod = cgs.media.ringFlashModel;
@@ -1494,7 +1334,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		mod = cgs.media.dishFlashModel;
 		shader = cgs.media.bfgExplosionShader;
 		sfx = cgs.media.sfx_rockexp;
-		isSprite = qtrue;
 		break;
 	case WP_SHOTGUN:
 		mod = cgs.media.bulletFlashModel;
@@ -1517,14 +1356,23 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		break;
 	}
 
-	if ( sfx ) {
+	if ( sfx 
+	&& ( weapon == WP_MACHINEGUN || weapon == WP_SHOTGUN ) ) { // BFP - TODO: Apply these weapon types into this sound
 		trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, sfx );
+	} else { // BFP - Explosion sounds
+		CG_ExplosionSound( origin );
 	}
 
 	//
 	// create the explosion
 	//
-	CG_ExplosionEffect( origin, dir ); // BFP - Explosion effects
+	if ( weapon == WP_MACHINEGUN || weapon == WP_SHOTGUN ) { // BFP - TODO: Apply muzzle effects only to these weapon types (from default.cfg file from some character)
+		CG_MakeExplosion( origin, dir, 
+						mod, shader,
+						600, qfalse );
+	} else {
+		CG_ExplosionEffect( origin, dir ); // BFP - Explosion effects
+	}
 
 	//
 	// impact mark
@@ -1540,16 +1388,34 @@ CG_MissileHitPlayer
 =================
 */
 void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum ) {
-	CG_Bleed( origin, entityNum );
+	// BFP - Seems like a small redo from CG_MissileHitWall to adjust the needed effects
+	sfxHandle_t	sfx = 0;
+
+	// BFP - NOTE: Originally on BFP, players don't bleed, that's a friendly mod :P
+	// CG_Bleed( origin, entityNum );
 
 	// some weapons will make an explosion with the blood, while
 	// others will just make the blood
 	switch ( weapon ) {
-	case WP_GRENADE_LAUNCHER:
-	case WP_ROCKET_LAUNCHER:
-		CG_MissileHitWall( weapon, 0, origin, dir, IMPACTSOUND_FLESH );
+	case WP_MACHINEGUN:
+	case WP_SHOTGUN: // BFP - TODO: Apply muzzle effects only to these weapon types (from default.cfg file from some character)
+		if ( weapon == WP_MACHINEGUN ) {
+			int r = rand() & 3;
+			switch ( r ) {
+			case 0:  sfx = cgs.media.sfx_ric1; break;
+			case 1:  sfx = cgs.media.sfx_ric2; break;
+			default: sfx = cgs.media.sfx_ric3; break;
+			}
+		}
+		trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, sfx );
+		CG_MakeExplosion( origin, dir, 
+						cgs.media.bulletFlashModel, cgs.media.bulletExplosionShader,
+						600, qfalse );
 		break;
 	default:
+		CG_ExplosionSound( origin ); // BFP - Explosion sounds
+		CG_SparksExplosion( origin, dir ); // BFP - Spark particles explosion
+		CG_ExplosionEffect( origin, dir ); // BFP - Explosion effects
 		break;
 	}
 }
@@ -1826,10 +1692,5 @@ void CG_Bullet( vec3_t end, int sourceEntityNum, vec3_t normal, qboolean flesh, 
 #endif
 
 	// impact splash and mark
-	if ( flesh ) {
-		CG_Bleed( end, fleshEntityNum );
-	} else {
-		CG_MissileHitWall( WP_MACHINEGUN, 0, end, normal, IMPACTSOUND_DEFAULT );
-	}
-
+	CG_MissileHitWall( WP_MACHINEGUN, 0, end, normal, IMPACTSOUND_DEFAULT );
 }

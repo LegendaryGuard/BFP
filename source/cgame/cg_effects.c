@@ -575,8 +575,6 @@ CG_DebrisExplosion
 */
 void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles explosion
 	int				i;
-	// spawn randomly the shaders with the particles
-	int				shaderIndex;
 	vec3_t			sprOrg, sprVel;
 	int				numRocks = 26;
 
@@ -585,7 +583,8 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 	// BFP - TODO: Apply number of rocks as indicated on default.cfg file of some character: explosionRocks <weaponNum> <numRocks>
 
 	for ( i = 0; i < numRocks; ++i ) {
-		shaderIndex = rand() % 3;
+		// spawn randomly the shaders with the particles
+		int shaderIndex = rand() % 3;
 
 		// that would be the range for debris particles
 		VectorMA( origin, 24, dir, sprOrg );
@@ -655,6 +654,24 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles 
 	}
 }
 
+/*
+=================
+CG_ExplosionSound
+=================
+*/
+void CG_ExplosionSound( vec3_t origin ) { // BFP - Explosion sounds
+	int	i = rand() % 6;
+
+	switch ( i ) {
+	case 0:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion1Sound ); break;
+	case 1:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion2Sound ); break;
+	case 2:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion3Sound ); break;
+	case 3:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion4Sound ); break;
+	case 4:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion5Sound ); break;
+	default: trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion6Sound ); break;
+	}
+}
+
 
 /*
 =================
@@ -670,7 +687,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	VectorMA( origin, 10, dir, origin );
 
 	// BFP - TODO: Apply explosionShader from bfp attack config, bfgExplosionShader is just a test
-	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION, sphereModel, cgs.media.bfgExplosionShader, 1000 );
+	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, sphereModel, cgs.media.bfgExplosionShader, 1000 );
 	if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
 		leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
 	}
