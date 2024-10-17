@@ -715,6 +715,7 @@ void Weapon_LightningFire( gentity_t *ent ) {
 		} else if ( !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
 			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
 			tent->s.eventParm = DirToByte( tr.plane.normal );
+			tent->s.weapon = ent->s.weapon; // BFP - Sends weapon info to the event
 		}
 
 		break;
