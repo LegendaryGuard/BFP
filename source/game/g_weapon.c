@@ -559,6 +559,8 @@ void weapon_railgun_fire (gentity_t *ent) {
 	int			i;
 	int			hits;
 	int			passent;
+	// BFP - For splash damage
+	int			splashRadius = 120;
 
 	damage = 100 * s_quadFactor;
 
@@ -573,11 +575,6 @@ void weapon_railgun_fire (gentity_t *ent) {
 		if ( traceEnt->takedamage ) {
 			// BFP - Railgun events are also treated as a missile
 			tent = G_TempEntity( trace.endpos, EV_MISSILE_HIT );
-
-			if ( LogAccuracyHit( traceEnt, ent ) ) {
-				hits++;
-			}
-			G_Damage( traceEnt, ent, ent, forward, trace.endpos, damage, 0, MOD_RAILGUN );
 		}
 	}
 
@@ -585,6 +582,17 @@ void weapon_railgun_fire (gentity_t *ent) {
 
 	// snap the endpos to integers to save net bandwidth, but nudged towards the line
 	SnapVectorTowards( trace.endpos, muzzle );
+
+	// BFP - Moved EV_MISSILE_MISS there
+	// no explosion at end if SURF_NOIMPACT, but still make the trail
+	if ( !( trace.surfaceFlags & SURF_NOIMPACT ) ) {
+		// BFP - Railgun events are also treated as a missile
+		if ( traceEnt->s.eType != ET_PLAYER || traceEnt->physicsObject ) {
+			tent = G_TempEntity( trace.endpos, EV_MISSILE_MISS );
+		}
+		// BFP - Sends dir vector variable to the event
+		tent->s.eventParm = DirToByte( trace.plane.normal );
+	}
 
 	// send railgun beam effect
 	tent = G_TempEntity( trace.endpos, EV_RAILTRAIL );
@@ -597,16 +605,10 @@ void weapon_railgun_fire (gentity_t *ent) {
 	VectorMA( tent->s.origin2, 4, right, tent->s.origin2 );
 	VectorMA( tent->s.origin2, -1, up, tent->s.origin2 );
 
-	// no explosion at end if SURF_NOIMPACT, but still make the trail
-	if ( !( trace.surfaceFlags & SURF_NOIMPACT ) ) {
-		// BFP - Railgun events are also treated as a missile
-		if ( traceEnt->s.eType != ET_PLAYER || traceEnt->physicsObject ) {
-			tent = G_TempEntity( trace.endpos, EV_MISSILE_MISS );
-		}
-		// BFP - Sends dir vector variable to the event
-		tent->s.eventParm = DirToByte( trace.plane.normal );
+	// BFP - Finger blast splash damage
+	if ( G_RadiusDamage( trace.endpos, ent, damage, splashRadius, 0, MOD_RAILGUN ) ) {
+		hits++;
 	}
-	tent->s.clientNum = ent->s.clientNum;
 
 	// give the shooter a reward sound if they have made two railgun hits in a row
 	if ( hits == 0 ) {
