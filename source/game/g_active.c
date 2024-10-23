@@ -1049,7 +1049,9 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 				break;
 			}
 
-			client->ps.weaponTime += addTime;
+			if ( client->ps.weaponTime <= 0 ) {
+				client->ps.weaponTime += addTime;
+			}
 		}
 		break;
 	// BFP - NOTE: The beam is triggering until pressing the attack key again after holded, using ki charge or blocking
@@ -1082,6 +1084,23 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 	case WEAPON_STUN:
 		break;
 	}
+
+	// debug print about weapon states and weapon time
+#if 0
+	switch( client->ps.weaponstate ) {
+	case WEAPON_FIRING: Com_Printf( "WEAPON_FIRING\n" ); break;
+	case WEAPON_BEAMFIRING: Com_Printf( "WEAPON_BEAMFIRING\n" ); break;
+	case WEAPON_CHARGING: Com_Printf( "WEAPON_CHARGING\n" ); break;
+	case WEAPON_DIVIDINGKIBALLFIRING: Com_Printf( "WEAPON_DIVIDINGKIBALLFIRING\n" ); break;
+	case WEAPON_READY: Com_Printf( "WEAPON_READY\n" ); break;
+	case WEAPON_EXPLODING_KIBALLFIRING: Com_Printf( "WEAPON_EXPLODING_KIBALLFIRING\n" ); break;
+	case WEAPON_RAISING: Com_Printf( "WEAPON_RAISING\n" ); break;
+	case WEAPON_KIEXPLOSIONWAVE: Com_Printf( "WEAPON_KIEXPLOSIONWAVE\n" ); break;
+	case WEAPON_DROPPING: Com_Printf( "WEAPON_DROPPING\n" ); break;
+	case WEAPON_STUN: Com_Printf( "WEAPON_STUN\n" ); break;
+	}
+	Com_Printf( "weaponTime: %d\n", client->ps.weaponTime );
+#endif	
 }
 #undef KI_CONSUME
 #undef CHARGE_KI_ATTACK_STATE
@@ -1255,7 +1274,6 @@ void ClientThink_real( gentity_t *ent ) {
 		if ( client->ps.powerups[PW_FLIGHT] > 0 ) { // BFP - Flight speed
 			client->ps.speed *= 2;
 		}
-		// BFP - TODO: When charging a ki attack like beam wave, consult FlyingThink and SpectatorThink if that's the case
 
 		// BFP - Enable flight
 		FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
