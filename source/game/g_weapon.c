@@ -61,6 +61,9 @@ void Weapon_Gauntlet( gentity_t *ent ) {
 
 }
 
+// BFP - TODO: There's a ki attack that acts like a shockwave to push opponents, 
+// maybe gauntlet attack can be modified adding punch attack distance and pushing opponents
+
 // BFP - No check gauntlet attack
 #if 0
 /*
@@ -605,7 +608,7 @@ void weapon_railgun_fire (gentity_t *ent) {
 	VectorMA( tent->s.origin2, 4, right, tent->s.origin2 );
 	VectorMA( tent->s.origin2, -1, up, tent->s.origin2 );
 
-	// BFP - Finger blast splash damage
+	// BFP - Finger beam splash damage
 	if ( G_RadiusDamage( trace.endpos, ent, damage, splashRadius, 0, MOD_RAILGUN ) ) {
 		hits++;
 	}
