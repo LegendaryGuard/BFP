@@ -1,72 +1,82 @@
 Bid For Power (BFP) source code
 ===============================
+[![Stars](https://img.shields.io/github/stars/LegendaryGuard/BFP?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/stargazers)
+[![Issues](https://img.shields.io/github/issues/LegendaryGuard/BFP?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/issues)
+[![Forks](https://img.shields.io/github/forks/LegendaryGuard/BFP?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/forks)
+[![License](https://img.shields.io/github/license/LegendaryGuard/BFP?style=for-the-badge)](#legal)
+[![Build actions](https://img.shields.io/github/actions/workflow/status/LegendaryGuard/BFP/build.yml?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/actions)
+<br/>
+![Visits](https://badges.pufler.dev/visits/LegendaryGuard/BFP?style=for-the-badge)
 
-A legendary 90s era Quake 3 Arena mod.
+
+A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 <p align="center">
-<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147041-b5a8fb8c-575b-4b48-b6fe-513000717559.png" alt="bfpq3logo" width=350 />
+	<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147041-b5a8fb8c-575b-4b48-b6fe-513000717559.png" alt="bfpq3logo" width=350 />
 </p>
 
+# TODO list
 
-## *WARNING!* UNDER CONSTRUCTION!
+### Pending:
 
-### Table of contents
-> 1. [TODO list](#todo-list)
-> 2. [History](#history)
-> 3. [About the repository](#about-the-repository)
-> 4. [References and clues to know how should be the game](#references-and-clues-to-know-how-should-be-the-game)
-> 5. [How to build](#how-to-build)
-> > 5.1. [Introduction](#introduction)<br/>
-> > 5.2. [Windows](#windows)
-> > > 5.2.1. [Building QVM (using .bat)](#building-qvm-using-bat)<br/>
-> > > 5.2.2. [Building QVM (mingw)](#building-qvm-mingw)<br/>
-> > > 5.2.3. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
-> > > 5.2.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)
-> >
-> > 5.3. [Linux](#linux)
-> > > 5.3.1. [Building QVM (make)](#building-qvm-make)<br/>
-> > > 5.3.2. [Building QVM (using .bat)](#building-qvm-using-bat-1)<br/>
-> > > 5.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
-> >
-> > 5.4. [Optional](#optional)
-> 6. [Notes](#notes)
-> 7. [Legal](#legal)
-> 8. [Credits](#credits)
+- [ ] Attacksets (configurable for cfgs)
+- [ ] Cvars as described on old docs
+- [ ] Gametype: Survival (`g_gametype 3`)
+- [ ] Gametype: Oozaru (`g_gametype 4`)
+- [ ] Gametype: Last Man Standing (`g_gametype 6`)
+- [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
+- [ ] Player physics movements
+- [ ] Power Struggles (when two beam attacks collide)
+- [ ] Powerlevel and Power Tiers indicated on old docs
+- [ ] Remove some items like powerups and health pickups
+- [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
+- [ ] Transformations (related to Power Tiers)
+- [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
+- [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
 
-# TODO list:
+### Done:
 
-- [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
-- [x] ~~Melee feature~~
-- [x] ~~Remove weapon visuals (models and stuff)~~
 - [x] ~~Animations as listed on the old docs~~
+- [x] ~~Auras~~
 - [x] ~~Bind key to recover ki energy~~
 - [x] ~~Bind key to toggle speed (ki boost). HINT: HASTE POWERUP~~
-- [x] ~~Replace ammo to ki energy stamina~~
-- [x] ~~Third person traceable crosshair~~
-- [x] ~~Breakable map entities ("func_breakable")~~
-- [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
-- [x] ~~Instant character model changing~~
-- [x] ~~Auras~~
-- [ ] Player physics movements
-- [ ] Remove some items like powerups and health pickups
-- [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
-- [ ] Powerlevel and Power Tiers indicated on old docs
-- [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
-- [ ] Power Struggles (when two beam attacks collide)
 - [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
+- [x] ~~Breakable map entities ("func_breakable")~~
+- [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
+- [x] ~~Instant character model changing~~
+- [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
+- [x] ~~Melee feature~~
+- [x] ~~Playable third person mode and first person vis mode~~
+- [x] ~~Remove weapon visuals (models and stuff)~~
+- [x] ~~Replace ammo to ki energy stamina~~
 - [x] ~~Short-Range Teleport - Zanzoken (when pressing 2 times left or right)~~
-- [ ] Transformations (related to Power Tiers)
-- [ ] Attacksets (configurable for cfgs)
-- [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs about that. ["Custom plugin models"](docs/Create_Custom_Models.md#the-skin-config-file))
-- [x] ~~Playable third person mode and first person vis mode (add the options in the UI Setup menu)~~
-- [ ] Cvars as described on old docs
-- [ ] Survival gametype (`g_gametype 3`)
-- [ ] Oozaru gametype (`g_gametype 4`)
-- [ ] Last Man Standing gametype (`g_gametype 6`)
-- [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
-- [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
+- [x] ~~Third person traceable crosshair~~
+- [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
 
-### History
+
+## Table of contents
+> 1. [History](#history)
+> 2. [About the repository](#about-the-repository)
+> 3. [References and clues to know how should be the game](#references-and-clues-to-know-how-should-be-the-game)
+> 4. [How to build](#how-to-build)
+> > 4.1. [Introduction](#introduction)<br/>
+> > 4.2. [Windows](#windows)
+> > > 4.2.1. [Building QVM (using .bat)](#building-qvm-using-bat)<br/>
+> > > 4.2.2. [Building QVM (mingw)](#building-qvm-mingw)<br/>
+> > > 4.2.3. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
+> > > 4.2.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)
+> >
+> > 4.3. [Linux](#linux)
+> > > 4.3.1. [Building QVM (make)](#building-qvm-make)<br/>
+> > > 4.3.2. [Building QVM (using .bat)](#building-qvm-using-bat-1)<br/>
+> > > 4.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
+> >
+> > 4.4. [Optional](#optional)
+> 5. [Notes](#notes)
+> 6. [Legal](#legal)
+> 7. [Credits](#credits)
+
+# History
 
 ![BFP_ZEQ2_history](https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147557-7954d397-3df4-4cf7-b9c3-d62e393658ab.png)
 
@@ -75,33 +85,71 @@ Ended: 2002
 
 Bid For Power is a total conversion for QuakeIII that plays nothing like the original game. Players take control of Ki-powered superheros and battle it out in a mostly aerial fight. The game is highlighted by the work of a great art team and an original style, and the gameplay is extremely fast paced. It can be difficult to keep up with until you get the hang of it.
 
-The source code is said to have started from SDK version 1.17 after the release of Quake 3 Arena (December 2, 1999). It continued to be updated, including the addition of `cg_particles.c` in version 1.29, until version 1.31. 
+The source code is said to have started from SDK 1.17 point release after the release of Quake 3 Arena (December 2, 1999). It continued to be updated, including the addition of `cg_particles.c` in 1.29, until 1.31. 
 More info can be found in [Quake 3 Arena changelog version history](https://discourse.ioquake.org/t/quake-3-changelog-version-history/375).
 
 The original source code appears to be lost, but the assets and some docs are available in various places. Nonetheless, not all sources are accessible.
 
-#### Old dev journals (1999 - 2002)
+### Old dev journals (1999 - 2002)
 
-- Old Yrgol dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
+The original URLs can be slower to load, so it's recommended to use markdown edition ones.
 
-Click here to see the [Old Yrgol dev journal (Markdown edition)](docs/yrgol_dev_journal.md)
+NOTE: Some URLs and images within these contents may be broken or partially recovered. The final parts of Chris and Yrgol dev journals were found here:<br/> 
+Chris: https://web.archive.org/web/20011202065630/http://bidforpower.com/ <br/>
+Yrgol: https://web.archive.org/web/20020520060044/http://www.planetquake.com/Bidforpower/ <br/>
+On markdown editions, the data log is complete.
 
-- Old Rodney Olmos dev journal: https://web.archive.org/web/20011218204129/http://bidforpower.com/journals/rodney.php
+- Chris dev journal: https://web.archive.org/web/20020210145200/http://bidforpower.com/journals/chris.php
 
-Click here to see the [Old Rodney Olmos dev journal (Markdown edition)](docs/rodney_dev_journal.md)
+    * [Chris dev journal (Markdown edition)](docs/old_dev_journals/chris_dev_journal.md)
 
-- Old PyroFragger dev journal: https://web.archive.org/web/20011218203246/http://bidforpower.com/journals/pyrofragger.php
+- Yrgol dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
 
-Click here to see the [Old PyroFragger dev journal (Markdown edition)](docs/pyrofragger_dev_journal.md)
+    * [Yrgol dev journal (Markdown edition)](docs/old_dev_journals/yrgol_dev_journal.md)
 
-### About the repository
+- Ansel dev journal: https://web.archive.org/web/20011203063814/http://bidforpower.com/journals/ansel.php
+
+    * [Ansel dev journal (Markdown edition)](docs/old_dev_journals/ansel_dev_journal.md)
+
+- Anthony dev journal: https://web.archive.org/web/20020210151755/http://bidforpower.com/journals/anthony.php
+
+    * [Anthony dev journal (Markdown edition)](docs/old_dev_journals/anthony_dev_journal.md)
+
+- Dash dev journal: https://web.archive.org/web/20020223210411/http://www.bidforpower.com/journals/dash.php
+
+    * [Dash dev journal (Markdown edition)](docs/old_dev_journals/dash_dev_journal.md)
+
+- Rodney Olmos dev journal: https://web.archive.org/web/20011218204129/http://bidforpower.com/journals/rodney.php
+
+    * [Rodney Olmos dev journal (Markdown edition)](docs/old_dev_journals/rodney_dev_journal.md)
+
+- PyroFragger dev journal: https://web.archive.org/web/20011218203246/http://bidforpower.com/journals/pyrofragger.php
+
+    * [PyroFragger dev journal (Markdown edition)](docs/old_dev_journals/pyrofragger_dev_journal.md)
+
+- Remisser dev journal: https://web.archive.org/web/20020210152114/http://bidforpower.com/journals/remisser.php
+
+    * [Remisser dev journal (Markdown edition)](docs/old_dev_journals/remisser_dev_journal.md)
+
+... And more dev journals can be found [here](https://web.archive.org/web/20011202135731/http://bidforpower.com/journals/).
+
+# About the repository
 
 We're making a replica of the lost source code. <br/>
 The highest priority goal is to copy and recreate the complete logical structure of the BFP game. It would be a game SDK that'll provide a structured and standardized way to modify the mod.<br/>
-You'll notice some differences that the original Bid For Power didn't have, such as some adjusted UI buttons, sprite and particle aura type options in BFP options menu, server info menu has pagination and displays info, how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance), particle aura is almost implemented, ...<br/>
+You'll notice some differences and things that the original Bid For Power didn't have/were forgotten, incomplete or poorly made such as:
+- some adjusted UI buttons
+- removed unused cvars
+- sprite and particle aura type options in BFP options menu
+- server info menu has pagination and displays info
+- how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
+- particle aura is almost implemented
+- some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
+- ...
+
 Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
 
-### References and clues to know how should be the game
+# References and clues to know how should be the game
 
 Documentations, references and extracted stuff will give us clues to reach the goals. <br/>
 
@@ -164,11 +212,11 @@ Other q3 config:
    * [q3config.cfg](cfgs/q3config.cfg)
 
 
-### How to build
+# How to build
 
-#### Introduction
+### Introduction
 
-*IMPORTANT NOTE TO THE DEVELOPMENT*: all source code files should be **UTF-8 without BOM** and **Unix (LF)**, otherwise, it will cause compiler errors when using MakefileQVM (most likely, syntax error will be displayed).
+*IMPORTANT NOTE TO THE DEVELOPMENT*: all source code files must be **UTF-8 without BOM** and **Unix (LF)**, otherwise, it will cause compiler errors when using MakefileQVM (most likely, syntax error will be displayed).
 
 - `.map` file is a linker map file, which is generated by the linker when it links together multiple object files into an executable or shared library. It contains information about the symbols (such as functions and variables) defined in each object file, as well as their addresses in the final executable or library.
 The information in the map file can be useful for debugging and performance analysis. For example, it can help you identify which functions are taking the most time to execute, or which functions are being called from which parts of the code.
@@ -362,7 +410,7 @@ The information in the map file can be useful for debugging and performance anal
 
 <br/>
 
-### Notes
+# Notes
 
 **IMPORTANT NOTE**: This repository was initialized from https://github.com/marconett/q3a.
 
@@ -394,9 +442,9 @@ The information in the map file can be useful for debugging and performance anal
 - ui_specifyleague.c
 - ui_spreset.c
 
-### Legal
+# Legal
 
-The mod source code is GPLv3 licensed, the source code contents are based on Quake III Arena which is GPLv2 licensed.
+The mod source code is [GPLv3 licensed](./COPYING), the source code contents are based on Quake III Arena which is [GPLv2 licensed](./GPL-2).
 
 The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and `ui_mp3decoder.h`) is based on code from various contributors:
 - Copyright (C) 1993 Sun Microsystems
@@ -404,22 +452,25 @@ The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and
 - Copyright (C) 1999 Aaron Holtzman
 - Copyright (C) 2000-2001 Tim Angus
 
-#### Bid For Power name
+The images, screenshots, and URLs, even in the docs, included in this repository are used for reference purposes only and are not covered by the GPL license. They're sourced from various locations and are subject to their respective copyrights and terms of use.
+
+### Bid For Power name
 
 Nobody owns the "Bid For Power" name. Bid For Power was founded by Chris James and likely ended up in the palm of Yrgol's hand (although Yrgol doesn't own the assets). The owner, the maintainer and the contributors of the repository don't own this name. <br/>
 This does not give any single person or a group of people to sell the name, basically it belongs to the original community. <br/>
 The Bid For Power team may provide sufficient security against any claims or improper use of the name.
 
-## Credits
+# Credits
 
 Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their assets.
 
 <div align="center">
 
-#### Bid For Power Staff Members	
+### Bid For Power Staff Members
 
+<h4>
 Ansel<br/>
-Skin Artist<br/>
+Skin Artist<br/><br/>
 
 Anthony<br/>
 2D Artist<br/>
@@ -462,4 +513,5 @@ Project Lead, Lead Programmer<br/>
 
 ::Additional Assistance::<br/>
 Mooky, Perfect Chaos, Dakota, Bardock, DethAyngel, Ebola, Badhead, $onik, Gigatron, Timex & Nat.
+</h4>
 </div>
