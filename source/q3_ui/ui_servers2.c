@@ -1124,14 +1124,11 @@ ArenaServers_SetType
 int ArenaServers_SetType( int type ) // BFP - Hacky way to get the correct server type :P
 {
 	int value; // BFP - Return the correct value in order to select server type
-#if ENABLE_MPLAYER
-	g_servertype = value = type; // BFP - Let's go! value, you too!
-#else // Q3 default
+#if ( !ENABLE_MPLAYER ) /* Q3 default */
 	if (g_servertype == type)
 		return type;
-
-	g_servertype = value = type; // BFP - Let's go! value, you too!
 #endif
+	g_servertype = value = type; // BFP - Let's go! value, you too!
 
 	switch( type ) {
 	default:
