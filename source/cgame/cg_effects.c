@@ -762,21 +762,25 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 		VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
 		VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
 
-		if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
-		if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
-		scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
-		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-		VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
-		VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
-		VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
+		if ( cg_explosionRing.integer > 0 ) {
+			if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
+			if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
+			scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
+			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+			VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
+			VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
+			VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
+		}
 
-		if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
-		if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
-		scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
-		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-		VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
-		VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
-		VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
+		if ( cg_explosionShell.integer > 0 ) {
+			if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
+			if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
+			scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
+			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+			VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
+			VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
+			VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
+		}
 	}
 
 	// BFP - Apply dynamic explosion light values
