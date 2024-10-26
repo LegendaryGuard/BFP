@@ -15,7 +15,8 @@ BFP OPTIONS MENU
 #define ART_MENUBG				"menu/art/menubg"
 #define ART_BARLOG				"menu/art/cap_barlog"
 
-#define BFPOPTIONS_X_POS		360
+#define BFPOPTIONS_X_POS		450
+#define	BFPOPTIONS_SECTION_Y	(BIGCHAR_HEIGHT * 2)
 
 #define ID_AURATYPE			138
 #define ID_EXPLOTYPE		139
@@ -38,7 +39,14 @@ BFP OPTIONS MENU
 #define ID_DEFAULTSKINS    	156
 #define ID_STFU             157
 #define ID_LOWPOLYSPHERE 	158
-#define ID_BACK				159
+#define ID_BIGEXPLOSIONS    159
+#define ID_EXPLOSIONSHELL   160
+#define ID_EXPLOSIONSMOKE   161
+#define ID_EXPLOSIONRING    162
+#define ID_BACK				163
+#define ID_AURASCONFIG		164
+#define ID_EXPLOSIONSCONFIG	165
+#define ID_VIEWEFFSNDCONFIG	166
 
 // Macros to handle the cases in that order
 #define SPRITE_AURA         0
@@ -84,6 +92,10 @@ typedef struct {
 	menubitmap_s		barlog;
 	menutext_s			banner;
 
+	menutext_s			aurasButton;
+	menutext_s			explosionsButton;
+	menutext_s			viewEffectsSoundsButton;
+
 	menulist_s			auratype;
 	menulist_s			explotype;
 	menulist_s			viewpoint;
@@ -92,6 +104,10 @@ typedef struct {
 	menuradiobutton_s	dynauralight;
 	menuradiobutton_s	dynamiclights;
 	menuradiobutton_s	dynexplolights;
+	menuradiobutton_s	bigexplosions;
+	menuradiobutton_s	explosionshell;
+	menuradiobutton_s	explosionsmoke;
+	menuradiobutton_s	explosionring;
 	menuslider_s		kitrailength;
 	menuslider_s		beamcmpxy;
 	menuradiobutton_s	transaura;
@@ -107,10 +123,15 @@ typedef struct {
 	menuradiobutton_s	stfu;
 	menuradiobutton_s	lowpolysphere;
 	menubitmap_s		back;
-
 } bfpoptions_t;
 
 static bfpoptions_t s_bfpoptions;
+
+static int menuBarOption = ID_AURASCONFIG;
+
+void BFPAuraOptions_MenuInit( void );
+void BFPExplosionsOptions_MenuInit( void );
+void BFPViewEffSndsOptions_MenuInit( void );
 
 // A macro to look better the code
 #define BFPOPTIONS_MENUITEM( menu_item_curvalue, cvar ) \
@@ -121,6 +142,10 @@ static void BFPOptions_SetMenuItems( void ) {
 	BFPOPTIONS_MENUITEM( s_bfpoptions.particlesfx.curvalue,    "cg_particles" )
 	BFPOPTIONS_MENUITEM( s_bfpoptions.dynauralight.curvalue,   "cg_lightAuras" )
 	BFPOPTIONS_MENUITEM( s_bfpoptions.dynexplolights.curvalue, "cg_lightExplosions" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.bigexplosions.curvalue,  "cg_bigExplosions" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.explosionshell.curvalue, "cg_explosionShell" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.explosionsmoke.curvalue, "cg_explosionSmoke" )
+	BFPOPTIONS_MENUITEM( s_bfpoptions.explosionring.curvalue,  "cg_explosionRing" )
 	BFPOPTIONS_MENUITEM( s_bfpoptions.transaura.curvalue,      "cg_transformationAura" )
 	BFPOPTIONS_MENUITEM( s_bfpoptions.smallaura.curvalue,      "cg_smallOwnAura" )
 	BFPOPTIONS_MENUITEM( s_bfpoptions.ssjglow.curvalue,        "cg_permaglowUltimate" )
@@ -151,9 +176,32 @@ static void BFPOptions_SetMenuItems( void ) {
 #define EXPLOTYPE_SETUP(expShell, expSmoke, particles, expRing ) \
 		trap_Cvar_SetValue( "cg_explosionShell", expShell ); \
 		trap_Cvar_SetValue( "cg_explosionSmoke", expSmoke ); \
-		trap_Cvar_SetValue( "cg_particles", particles ); \
 		trap_Cvar_SetValue( "cg_explosionRing", expRing ); \
+		trap_Cvar_SetValue( "cg_particles", particles ); \
+		s_bfpoptions.explosionshell.curvalue = expShell; \
+		s_bfpoptions.explosionsmoke.curvalue = expSmoke; \
+		s_bfpoptions.explosionring.curvalue = expRing; \
 		s_bfpoptions.particlesfx.curvalue = particles;
+
+static void BFPOptions_ExplosionsTypeCheck( void ) {
+	int particles = s_bfpoptions.particlesfx.curvalue;
+	int explosionSmoke = s_bfpoptions.explosionsmoke.curvalue;
+	int explosionShell = s_bfpoptions.explosionshell.curvalue;
+	int explosionRing = s_bfpoptions.explosionring.curvalue;
+
+	if ( particles <= 0 && explosionSmoke <= 0 && explosionShell <= 0 && explosionRing <= 0 ) {
+		s_bfpoptions.explotype.curvalue = WIMPY_EXPLO;
+	}
+	if ( particles <= 0 && explosionSmoke <= 0 && explosionShell >= 1 && explosionRing >= 1 ) {
+		s_bfpoptions.explotype.curvalue = WEAK_EXPLO;
+	}
+	if ( particles >= 1 && explosionSmoke <= 0 && explosionShell >= 1 && explosionRing >= 1 ) {
+		s_bfpoptions.explotype.curvalue = SO_SO_EXPLO;
+	}
+	if ( particles >= 1 && explosionSmoke >= 1 && explosionShell >= 1 && explosionRing >= 1 ) {
+		s_bfpoptions.explotype.curvalue = HARDCORE_EXPLO;
+	}
+}
 
 static void BFPOptions_Event( void* ptr, int notification ) {
 	if ( notification != QM_ACTIVATED ) {
@@ -161,6 +209,27 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 	}
 
 	switch ( ((menucommon_s*)ptr)->id ) {
+		//---------------------------Show options---------------------------------//
+	case ID_AURASCONFIG:
+		if ( menuBarOption != ID_AURASCONFIG ) {
+			menuBarOption = ID_AURASCONFIG;
+			BFPAuraOptions_MenuInit();
+		}
+		break;
+
+	case ID_EXPLOSIONSCONFIG:
+		if ( menuBarOption != ID_EXPLOSIONSCONFIG ) {
+			menuBarOption = ID_EXPLOSIONSCONFIG;
+			BFPExplosionsOptions_MenuInit();
+		}
+		break;
+
+	case ID_VIEWEFFSNDCONFIG:
+		if ( menuBarOption != ID_VIEWEFFSNDCONFIG ) {
+			menuBarOption = ID_VIEWEFFSNDCONFIG;
+			BFPViewEffSndsOptions_MenuInit();
+		}
+		break;
 
 		//-----------------------------Aura list---------------------------------//
 
@@ -240,6 +309,7 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 
 	case ID_PARTICLESFX:
 		trap_Cvar_SetValue( "cg_particles", s_bfpoptions.particlesfx.curvalue );
+		BFPOptions_ExplosionsTypeCheck();
 		break;
 	
 	case ID_DYNAURALIGHT:
@@ -248,6 +318,25 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 	
 	case ID_DYNEXPLOLIGHT:
 		trap_Cvar_SetValue( "cg_lightExplosions", s_bfpoptions.dynexplolights.curvalue );
+		break;
+
+	case ID_BIGEXPLOSIONS:
+		trap_Cvar_SetValue( "cg_bigExplosions", s_bfpoptions.bigexplosions.curvalue );
+		break;
+	
+	case ID_EXPLOSIONSHELL:
+		trap_Cvar_SetValue( "cg_explosionShell", s_bfpoptions.explosionshell.curvalue );
+		BFPOptions_ExplosionsTypeCheck();
+		break;
+	
+	case ID_EXPLOSIONSMOKE:
+		trap_Cvar_SetValue( "cg_explosionSmoke", s_bfpoptions.explosionsmoke.curvalue );
+		BFPOptions_ExplosionsTypeCheck();
+		break;
+	
+	case ID_EXPLOSIONRING:
+		trap_Cvar_SetValue( "cg_explosionRing", s_bfpoptions.explosionring.curvalue );
+		BFPOptions_ExplosionsTypeCheck();
 		break;
 
 
@@ -318,26 +407,9 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 		break;
 	}
 }
-#undef AURATYPE_SETUP
-#undef VIEWPOINT_SETUP
-#undef EXPLOTYPE_SETUP
 
 
-static void BFPOptions_MenuInit( void ) {
-	int		y;
-	int		highpolyaura, polygonalaura, lightweightaura, spriteaura, particleaura;
-	int 	thirdperson, firstpersonvis;
-	int 	explosionShell, explosionSmoke;
-	int		explosionring;
-	int 	particles;
-
-	memset( &s_bfpoptions, 0, sizeof(bfpoptions_t) );
-
-	BFPOptions_Cache();
-
-	s_bfpoptions.menu.wrapAround = qtrue;
-	s_bfpoptions.menu.fullscreen = qtrue;
-
+static void BFPBarBackground_MenuSet( void ) {
 	s_bfpoptions.menubg.generic.type		= MTYPE_BITMAP;
 	s_bfpoptions.menubg.generic.name		= ART_MENUBG;
 	s_bfpoptions.menubg.generic.flags		= QMF_LEFT_JUSTIFY|QMF_INACTIVE;
@@ -362,53 +434,70 @@ static void BFPOptions_MenuInit( void ) {
 	s_bfpoptions.banner.color				= color_white;
 	s_bfpoptions.banner.style				= UI_CENTER|UI_BIGFONT;
 
-	y = 90;
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.menubg );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.barlog );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.banner );
+}
+
+static void BFPButtonOptions_MenuSet( void ) {
+	BFPBarBackground_MenuSet();
+
+	s_bfpoptions.aurasButton.generic.type		= MTYPE_PTEXT;
+	s_bfpoptions.aurasButton.generic.flags		= ( menuBarOption == ID_AURASCONFIG ) ? QMF_RIGHT_JUSTIFY : (QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS);
+	s_bfpoptions.aurasButton.generic.id			= ID_AURASCONFIG;
+	s_bfpoptions.aurasButton.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.aurasButton.generic.x			= 216;
+	s_bfpoptions.aurasButton.generic.y			= 240 - 2 * PROP_HEIGHT;
+	s_bfpoptions.aurasButton.string				= "AURAS";
+	s_bfpoptions.aurasButton.style				= UI_RIGHT;
+	s_bfpoptions.aurasButton.color				= color_white;
+	
+	s_bfpoptions.explosionsButton.generic.type		= MTYPE_PTEXT;
+	s_bfpoptions.explosionsButton.generic.flags		= ( menuBarOption == ID_EXPLOSIONSCONFIG ) ? QMF_RIGHT_JUSTIFY : (QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS);
+	s_bfpoptions.explosionsButton.generic.id		= ID_EXPLOSIONSCONFIG;
+	s_bfpoptions.explosionsButton.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.explosionsButton.generic.x			= 216;
+	s_bfpoptions.explosionsButton.generic.y			= 240 - PROP_HEIGHT;
+	s_bfpoptions.explosionsButton.string			= "EXPLOSIONS";
+	s_bfpoptions.explosionsButton.style				= UI_RIGHT;
+	s_bfpoptions.explosionsButton.color				= color_white;
+
+	s_bfpoptions.viewEffectsSoundsButton.generic.type			= MTYPE_PTEXT;
+	s_bfpoptions.viewEffectsSoundsButton.generic.flags			= ( menuBarOption == ID_VIEWEFFSNDCONFIG ) ? QMF_RIGHT_JUSTIFY : (QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS);
+	s_bfpoptions.viewEffectsSoundsButton.generic.id				= ID_VIEWEFFSNDCONFIG;
+	s_bfpoptions.viewEffectsSoundsButton.generic.callback		= BFPOptions_Event;
+	s_bfpoptions.viewEffectsSoundsButton.generic.x				= 216;
+	s_bfpoptions.viewEffectsSoundsButton.generic.y				= 240;
+	s_bfpoptions.viewEffectsSoundsButton.string					= "VIEW & FX";
+	s_bfpoptions.viewEffectsSoundsButton.style					= UI_RIGHT;
+	s_bfpoptions.viewEffectsSoundsButton.color					= color_white;
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.aurasButton );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.explosionsButton );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.viewEffectsSoundsButton );
+}
+
+
+void BFPAuraOptions_MenuInit( void ) {
+	int		y;
+	int		highpolyaura, polygonalaura, lightweightaura, spriteaura, particleaura;
+
+	memset( &s_bfpoptions, 0, sizeof(bfpoptions_t) );
+
+	BFPOptions_Cache();
+
+	s_bfpoptions.menu.wrapAround = qtrue;
+	s_bfpoptions.menu.fullscreen = qtrue;
+
+	y = 240 - 3 * (BIGCHAR_HEIGHT+2);
 	s_bfpoptions.auratype.generic.type		= MTYPE_SPINCONTROL;
 	s_bfpoptions.auratype.generic.name		= "Aura Type:";
 	s_bfpoptions.auratype.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_bfpoptions.auratype.generic.callback	= BFPOptions_Event;
 	s_bfpoptions.auratype.generic.id		= ID_AURATYPE;
-	s_bfpoptions.auratype.generic.x			= 320;
+	s_bfpoptions.auratype.generic.x			= BFPOPTIONS_X_POS-130;
 	s_bfpoptions.auratype.generic.y			= y;
 	s_bfpoptions.auratype.itemnames			= auratype_items;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.explotype.generic.type		= MTYPE_SPINCONTROL;
-	s_bfpoptions.explotype.generic.name		= "Explosion Type:";
-	s_bfpoptions.explotype.generic.flags	= QMF_PULSEIFFOCUS | QMF_SMALLFONT;
-	s_bfpoptions.explotype.generic.callback = BFPOptions_Event;
-	s_bfpoptions.explotype.generic.id		= ID_EXPLOTYPE;
-	s_bfpoptions.explotype.generic.x		= 320;
-	s_bfpoptions.explotype.generic.y		= y;
-	s_bfpoptions.explotype.itemnames		= explotype_items;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.viewpoint.generic.type		= MTYPE_SPINCONTROL;
-	s_bfpoptions.viewpoint.generic.name		= "Viewpoint:";
-	s_bfpoptions.viewpoint.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.viewpoint.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.viewpoint.generic.id		= ID_VIEWPOINT;
-	s_bfpoptions.viewpoint.generic.x		= 320;
-	s_bfpoptions.viewpoint.generic.y		= y;
-	s_bfpoptions.viewpoint.itemnames		= viewpoint_items;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.fix3person.generic.type        = MTYPE_RADIOBUTTON;
-	s_bfpoptions.fix3person.generic.name	    = "Fixed Third Person:";
-	s_bfpoptions.fix3person.generic.flags	    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.fix3person.generic.callback    = BFPOptions_Event;
-	s_bfpoptions.fix3person.generic.id          = ID_FIX3PERSON;
-	s_bfpoptions.fix3person.generic.x	        = BFPOPTIONS_X_POS;
-	s_bfpoptions.fix3person.generic.y	        = y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.particlesfx.generic.type		= MTYPE_RADIOBUTTON;
-	s_bfpoptions.particlesfx.generic.name		= "Particle Effects:";
-	s_bfpoptions.particlesfx.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.particlesfx.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.particlesfx.generic.id			= ID_PARTICLESFX;
-	s_bfpoptions.particlesfx.generic.x			= BFPOPTIONS_X_POS;
-	s_bfpoptions.particlesfx.generic.y			= y;
 
 	y += BIGCHAR_HEIGHT + 2;
 	s_bfpoptions.dynauralight.generic.type        = MTYPE_RADIOBUTTON;
@@ -418,37 +507,6 @@ static void BFPOptions_MenuInit( void ) {
 	s_bfpoptions.dynauralight.generic.id          = ID_DYNAURALIGHT;
 	s_bfpoptions.dynauralight.generic.x	          = BFPOPTIONS_X_POS;
 	s_bfpoptions.dynauralight.generic.y	          = y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.dynexplolights.generic.type        = MTYPE_RADIOBUTTON;
-	s_bfpoptions.dynexplolights.generic.name	    = "Dynamic Explosion Lights:";
-	s_bfpoptions.dynexplolights.generic.flags	    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.dynexplolights.generic.callback    = BFPOptions_Event;
-	s_bfpoptions.dynexplolights.generic.id          = ID_DYNEXPLOLIGHT;
-	s_bfpoptions.dynexplolights.generic.x	        = BFPOPTIONS_X_POS;
-	s_bfpoptions.dynexplolights.generic.y	        = y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.kitrailength.generic.type		= MTYPE_SLIDER;
-	s_bfpoptions.kitrailength.generic.name		= "Ki Trail Length:";
-	s_bfpoptions.kitrailength.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.kitrailength.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.kitrailength.generic.id		= ID_KITRAILENGTH;
-	s_bfpoptions.kitrailength.generic.x	        = BFPOPTIONS_X_POS;
-	s_bfpoptions.kitrailength.generic.y	        = y;
-	s_bfpoptions.kitrailength.minvalue			= 0;
-	s_bfpoptions.kitrailength.maxvalue			= 100;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.beamcmpxy.generic.type		= MTYPE_SLIDER;
-	s_bfpoptions.beamcmpxy.generic.name		= "Beam Complexity:";
-	s_bfpoptions.beamcmpxy.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.beamcmpxy.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.beamcmpxy.generic.id		= ID_BEAMCMPXY;
-	s_bfpoptions.beamcmpxy.generic.x	    = BFPOPTIONS_X_POS;
-	s_bfpoptions.beamcmpxy.generic.y	    = y;
-	s_bfpoptions.beamcmpxy.minvalue			= 0;
-	s_bfpoptions.beamcmpxy.maxvalue			= 100;
 
 	y += BIGCHAR_HEIGHT + 2;
 	s_bfpoptions.transaura.generic.type        = MTYPE_RADIOBUTTON;
@@ -477,87 +535,6 @@ static void BFPOptions_MenuInit( void ) {
 	s_bfpoptions.ssjglow.generic.x	      = BFPOPTIONS_X_POS;
 	s_bfpoptions.ssjglow.generic.y	      = y;
 
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.accucrosshair.generic.type		= MTYPE_RADIOBUTTON;
-	s_bfpoptions.accucrosshair.generic.name		= "Accurate Crosshair:";
-	s_bfpoptions.accucrosshair.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.accucrosshair.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.accucrosshair.generic.id		= ID_ACCUCROSSHAIR;
-	s_bfpoptions.accucrosshair.generic.x		= BFPOPTIONS_X_POS;
-	s_bfpoptions.accucrosshair.generic.y		= y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.simplehud.generic.type			= MTYPE_RADIOBUTTON;
-	s_bfpoptions.simplehud.generic.name			= "Simple HUD:";
-	s_bfpoptions.simplehud.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.simplehud.generic.callback		= BFPOptions_Event;
-	s_bfpoptions.simplehud.generic.id			= ID_SIMPLEHUD;
-	s_bfpoptions.simplehud.generic.x			= BFPOPTIONS_X_POS;
-	s_bfpoptions.simplehud.generic.y			= y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.chargealert.generic.type     = MTYPE_RADIOBUTTON;
-	s_bfpoptions.chargealert.generic.name	  = "Chargeup Alerts:";
-	s_bfpoptions.chargealert.generic.flags	  = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.chargealert.generic.callback = BFPOptions_Event;
-	s_bfpoptions.chargealert.generic.id       = ID_CHARGEALERT;
-	s_bfpoptions.chargealert.generic.x	      = BFPOPTIONS_X_POS;
-	s_bfpoptions.chargealert.generic.y	      = y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.q3hitsfx.generic.type    	= MTYPE_RADIOBUTTON;
-	s_bfpoptions.q3hitsfx.generic.name	  	= "Q3 Hit Sound:";
-	s_bfpoptions.q3hitsfx.generic.flags	  	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.q3hitsfx.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.q3hitsfx.generic.id      	= ID_Q3HITSFX;
-	s_bfpoptions.q3hitsfx.generic.x	     	= BFPOPTIONS_X_POS;
-	s_bfpoptions.q3hitsfx.generic.y	    	= y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.flightilt.generic.type     = MTYPE_RADIOBUTTON;
-	s_bfpoptions.flightilt.generic.name		= "Flight Tilt:";
-	s_bfpoptions.flightilt.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.flightilt.generic.callback = BFPOptions_Event;
-	s_bfpoptions.flightilt.generic.id       = ID_FLIGHTILT;
-	s_bfpoptions.flightilt.generic.x	    = BFPOPTIONS_X_POS;
-	s_bfpoptions.flightilt.generic.y	    = y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.bigheads.generic.type     = MTYPE_RADIOBUTTON;
-	s_bfpoptions.bigheads.generic.name	   = "Superdeformed Heads:";
-	s_bfpoptions.bigheads.generic.flags	   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.bigheads.generic.callback = BFPOptions_Event;
-	s_bfpoptions.bigheads.generic.id       = ID_BIGHEADS;
-	s_bfpoptions.bigheads.generic.x  	   = BFPOPTIONS_X_POS;
-	s_bfpoptions.bigheads.generic.y	 	   = y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.defaultskins.generic.type		= MTYPE_RADIOBUTTON;
-	s_bfpoptions.defaultskins.generic.name		= "Force Default Skins:";
-	s_bfpoptions.defaultskins.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.defaultskins.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.defaultskins.generic.id		= ID_DEFAULTSKINS;
-	s_bfpoptions.defaultskins.generic.x			= BFPOPTIONS_X_POS;
-	s_bfpoptions.defaultskins.generic.y			= y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.stfu.generic.type		= MTYPE_RADIOBUTTON;
-	s_bfpoptions.stfu.generic.name		= "Disable Voices:";
-	s_bfpoptions.stfu.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.stfu.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.stfu.generic.id		= ID_STFU;
-	s_bfpoptions.stfu.generic.x			= BFPOPTIONS_X_POS;
-	s_bfpoptions.stfu.generic.y			= y;
-
-	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.lowpolysphere.generic.type		= MTYPE_RADIOBUTTON;
-	s_bfpoptions.lowpolysphere.generic.name		= "Low Polycount Sphere:";
-	s_bfpoptions.lowpolysphere.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.lowpolysphere.generic.callback	= BFPOptions_Event;
-	s_bfpoptions.lowpolysphere.generic.id		= ID_LOWPOLYSPHERE;
-	s_bfpoptions.lowpolysphere.generic.x		= BFPOPTIONS_X_POS;
-	s_bfpoptions.lowpolysphere.generic.y		= y;
-
 	s_bfpoptions.back.generic.type		= MTYPE_BITMAP;
 	s_bfpoptions.back.generic.name		= ART_BACK0;
 	s_bfpoptions.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
@@ -569,33 +546,13 @@ static void BFPOptions_MenuInit( void ) {
 	s_bfpoptions.back.height  		    = 80;
 	s_bfpoptions.back.focuspic			= ART_BACK1;
 
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.menubg );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.barlog );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.banner );
+	BFPButtonOptions_MenuSet();
 
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.auratype );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.explotype);
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.viewpoint );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.fix3person );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.particlesfx );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.dynauralight );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.dynexplolights);
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.kitrailength);
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.beamcmpxy);
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.transaura );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.smallaura );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.ssjglow );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.accucrosshair );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.simplehud );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.chargealert );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.q3hitsfx );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.flightilt );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.bigheads );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.defaultskins );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.stfu );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.lowpolysphere );
-
-//----------------------------Auras-------------------------------------//
 
 	highpolyaura = trap_Cvar_VariableValue( "cg_highPolyAura" );
 	polygonalaura = trap_Cvar_VariableValue( "cg_polygonAura" );
@@ -617,26 +574,296 @@ static void BFPOptions_MenuInit( void ) {
 		s_bfpoptions.auratype.curvalue = SHADER_AURA;
 	}
 
-//----------------------------Explosions-------------------------------------//
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.back );
+
+	BFPOptions_SetMenuItems();
+}
+
+
+void BFPExplosionsOptions_MenuInit( void ) {
+	int		y;
+	int		explosionRing, explosionShell, explosionSmoke;
+	int		particles;
+
+	memset( &s_bfpoptions, 0, sizeof(bfpoptions_t) );
+
+	BFPOptions_Cache();
+
+	s_bfpoptions.menu.wrapAround = qtrue;
+	s_bfpoptions.menu.fullscreen = qtrue;
+
+	y = 240 - 4 * (BIGCHAR_HEIGHT+2);
+	s_bfpoptions.explotype.generic.type		= MTYPE_SPINCONTROL;
+	s_bfpoptions.explotype.generic.name		= "Explosion Type:";
+	s_bfpoptions.explotype.generic.flags	= QMF_PULSEIFFOCUS | QMF_SMALLFONT;
+	s_bfpoptions.explotype.generic.callback = BFPOptions_Event;
+	s_bfpoptions.explotype.generic.id		= ID_EXPLOTYPE;
+	s_bfpoptions.explotype.generic.x		= BFPOPTIONS_X_POS;
+	s_bfpoptions.explotype.generic.y		= y;
+	s_bfpoptions.explotype.itemnames		= explotype_items;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.bigexplosions.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.bigexplosions.generic.name		= "Big Explosions:";
+	s_bfpoptions.bigexplosions.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.bigexplosions.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.bigexplosions.generic.id		= ID_BIGEXPLOSIONS;
+	s_bfpoptions.bigexplosions.generic.x		= BFPOPTIONS_X_POS;
+	s_bfpoptions.bigexplosions.generic.y		= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.dynexplolights.generic.type        = MTYPE_RADIOBUTTON;
+	s_bfpoptions.dynexplolights.generic.name	    = "Dynamic Explosion Lights:";
+	s_bfpoptions.dynexplolights.generic.flags	    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.dynexplolights.generic.callback    = BFPOptions_Event;
+	s_bfpoptions.dynexplolights.generic.id          = ID_DYNEXPLOLIGHT;
+	s_bfpoptions.dynexplolights.generic.x	        = BFPOPTIONS_X_POS;
+	s_bfpoptions.dynexplolights.generic.y	        = y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.lowpolysphere.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.lowpolysphere.generic.name		= "Low Polycount Sphere:";
+	s_bfpoptions.lowpolysphere.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.lowpolysphere.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.lowpolysphere.generic.id		= ID_LOWPOLYSPHERE;
+	s_bfpoptions.lowpolysphere.generic.x		= BFPOPTIONS_X_POS;
+	s_bfpoptions.lowpolysphere.generic.y		= y;
+
+	y += BFPOPTIONS_SECTION_Y;
+	s_bfpoptions.explosionsmoke.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.explosionsmoke.generic.name		= "Smoke:";
+	s_bfpoptions.explosionsmoke.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.explosionsmoke.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.explosionsmoke.generic.id			= ID_EXPLOSIONSMOKE;
+	s_bfpoptions.explosionsmoke.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.explosionsmoke.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.explosionshell.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.explosionshell.generic.name		= "Shell:";
+	s_bfpoptions.explosionshell.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.explosionshell.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.explosionshell.generic.id			= ID_EXPLOSIONSHELL;
+	s_bfpoptions.explosionshell.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.explosionshell.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.explosionring.generic.type			= MTYPE_RADIOBUTTON;
+	s_bfpoptions.explosionring.generic.name			= "Ring:";
+	s_bfpoptions.explosionring.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.explosionring.generic.callback		= BFPOptions_Event;
+	s_bfpoptions.explosionring.generic.id			= ID_EXPLOSIONRING;
+	s_bfpoptions.explosionring.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.explosionring.generic.y			= y;
+
+	s_bfpoptions.back.generic.type		= MTYPE_BITMAP;
+	s_bfpoptions.back.generic.name		= ART_BACK0;
+	s_bfpoptions.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_bfpoptions.back.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.back.generic.id	    = ID_BACK;
+	s_bfpoptions.back.generic.x			= 0;
+	s_bfpoptions.back.generic.y			= 480-80;
+	s_bfpoptions.back.width  		    = 80;
+	s_bfpoptions.back.height  		    = 80;
+	s_bfpoptions.back.focuspic			= ART_BACK1;
+
+	BFPButtonOptions_MenuSet();
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.explotype );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.bigexplosions );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.dynexplolights );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.lowpolysphere );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.explosionsmoke );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.explosionshell );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.explosionring );
 
 	explosionSmoke = trap_Cvar_VariableValue( "cg_explosionSmoke" );
 	explosionShell = trap_Cvar_VariableValue( "cg_explosionShell" );
+	explosionRing = trap_Cvar_VariableValue( "cg_explosionRing" );
 	particles = trap_Cvar_VariableValue( "cg_particles" );
-	explosionring = trap_Cvar_VariableValue( "cg_explosionRing" );
 
-	if ( explosionSmoke <= 0 && explosionShell <= 0 && explosionring <= 0 ) {
-		s_bfpoptions.explotype.curvalue = WIMPY_EXPLO;
-	} else if ( explosionSmoke >= 1 && explosionring >= 1 ) {
-		s_bfpoptions.explotype.curvalue = WEAK_EXPLO;
-	} else if ( explosionSmoke >= 1 && particles >= 1 && explosionring >= 1 ) {
-		s_bfpoptions.explotype.curvalue = SO_SO_EXPLO;
-	} else if ( explosionSmoke >= 1 && explosionShell >= 1 && particles >= 1 && explosionring >= 1 ) {
-		s_bfpoptions.explotype.curvalue = HARDCORE_EXPLO;
-	} else {
-		s_bfpoptions.explotype.curvalue = WIMPY_EXPLO;
-	}
+	s_bfpoptions.bigexplosions.curvalue = trap_Cvar_VariableValue( "cg_bigExplosions" );
+	s_bfpoptions.explosionsmoke.curvalue = explosionSmoke;
+	s_bfpoptions.explosionshell.curvalue = explosionShell;
+	s_bfpoptions.explosionring.curvalue = explosionRing;
 
-//----------------------------Camera-------------------------------------//
+	s_bfpoptions.particlesfx.curvalue = particles;
+
+	BFPOptions_ExplosionsTypeCheck();
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.back );
+
+	BFPOptions_SetMenuItems();
+}
+
+
+void BFPViewEffSndsOptions_MenuInit( void ) {
+	int		y;
+	int		thirdperson, firstpersonvis;
+	int 	particles;
+
+	memset( &s_bfpoptions, 0, sizeof(bfpoptions_t) );
+
+	BFPOptions_Cache();
+
+	s_bfpoptions.menu.wrapAround = qtrue;
+	s_bfpoptions.menu.fullscreen = qtrue;
+
+	// -------------------------------View & HUD---------------------------------
+	y = 240 - 7 * (BIGCHAR_HEIGHT+2);
+	s_bfpoptions.viewpoint.generic.type		= MTYPE_SPINCONTROL;
+	s_bfpoptions.viewpoint.generic.name		= "Viewpoint:";
+	s_bfpoptions.viewpoint.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.viewpoint.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.viewpoint.generic.id		= ID_VIEWPOINT;
+	s_bfpoptions.viewpoint.generic.x		= BFPOPTIONS_X_POS;
+	s_bfpoptions.viewpoint.generic.y		= y;
+	s_bfpoptions.viewpoint.itemnames		= viewpoint_items;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.fix3person.generic.type        = MTYPE_RADIOBUTTON;
+	s_bfpoptions.fix3person.generic.name	    = "Fixed Third Person:";
+	s_bfpoptions.fix3person.generic.flags	    = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.fix3person.generic.callback    = BFPOptions_Event;
+	s_bfpoptions.fix3person.generic.id          = ID_FIX3PERSON;
+	s_bfpoptions.fix3person.generic.x	        = BFPOPTIONS_X_POS;
+	s_bfpoptions.fix3person.generic.y	        = y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.simplehud.generic.type			= MTYPE_RADIOBUTTON;
+	s_bfpoptions.simplehud.generic.name			= "Simple HUD:";
+	s_bfpoptions.simplehud.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.simplehud.generic.callback		= BFPOptions_Event;
+	s_bfpoptions.simplehud.generic.id			= ID_SIMPLEHUD;
+	s_bfpoptions.simplehud.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.simplehud.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.flightilt.generic.type     = MTYPE_RADIOBUTTON;
+	s_bfpoptions.flightilt.generic.name		= "Flight Tilt:";
+	s_bfpoptions.flightilt.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.flightilt.generic.callback = BFPOptions_Event;
+	s_bfpoptions.flightilt.generic.id       = ID_FLIGHTILT;
+	s_bfpoptions.flightilt.generic.x	    = BFPOPTIONS_X_POS;
+	s_bfpoptions.flightilt.generic.y	    = y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.accucrosshair.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.accucrosshair.generic.name		= "Accurate Crosshair:";
+	s_bfpoptions.accucrosshair.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.accucrosshair.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.accucrosshair.generic.id		= ID_ACCUCROSSHAIR;
+	s_bfpoptions.accucrosshair.generic.x		= BFPOPTIONS_X_POS;
+	s_bfpoptions.accucrosshair.generic.y		= y;
+
+
+	// -------------------------------Effects---------------------------------
+	y += BFPOPTIONS_SECTION_Y;
+	s_bfpoptions.particlesfx.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.particlesfx.generic.name		= "Particle Effects:";
+	s_bfpoptions.particlesfx.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.particlesfx.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.particlesfx.generic.id			= ID_PARTICLESFX;
+	s_bfpoptions.particlesfx.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.particlesfx.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.kitrailength.generic.type		= MTYPE_SLIDER;
+	s_bfpoptions.kitrailength.generic.name		= "Ki Trail Length:";
+	s_bfpoptions.kitrailength.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.kitrailength.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.kitrailength.generic.id		= ID_KITRAILENGTH;
+	s_bfpoptions.kitrailength.generic.x	        = BFPOPTIONS_X_POS;
+	s_bfpoptions.kitrailength.generic.y	        = y;
+	s_bfpoptions.kitrailength.minvalue			= 0;
+	s_bfpoptions.kitrailength.maxvalue			= 100;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.beamcmpxy.generic.type		= MTYPE_SLIDER;
+	s_bfpoptions.beamcmpxy.generic.name		= "Beam Complexity:";
+	s_bfpoptions.beamcmpxy.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.beamcmpxy.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.beamcmpxy.generic.id		= ID_BEAMCMPXY;
+	s_bfpoptions.beamcmpxy.generic.x	    = BFPOPTIONS_X_POS;
+	s_bfpoptions.beamcmpxy.generic.y	    = y;
+	s_bfpoptions.beamcmpxy.minvalue			= 0;
+	s_bfpoptions.beamcmpxy.maxvalue			= 100;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.bigheads.generic.type     = MTYPE_RADIOBUTTON;
+	s_bfpoptions.bigheads.generic.name	   = "Superdeformed Heads:";
+	s_bfpoptions.bigheads.generic.flags	   = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.bigheads.generic.callback = BFPOptions_Event;
+	s_bfpoptions.bigheads.generic.id       = ID_BIGHEADS;
+	s_bfpoptions.bigheads.generic.x  	   = BFPOPTIONS_X_POS;
+	s_bfpoptions.bigheads.generic.y	 	   = y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.defaultskins.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.defaultskins.generic.name		= "Force Default Skins:";
+	s_bfpoptions.defaultskins.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.defaultskins.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.defaultskins.generic.id		= ID_DEFAULTSKINS;
+	s_bfpoptions.defaultskins.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.defaultskins.generic.y			= y;
+
+
+	// -------------------------------Sounds---------------------------------
+	y += BFPOPTIONS_SECTION_Y;
+	s_bfpoptions.stfu.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.stfu.generic.name		= "Disable Voices:";
+	s_bfpoptions.stfu.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.stfu.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.stfu.generic.id		= ID_STFU;
+	s_bfpoptions.stfu.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.stfu.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.chargealert.generic.type     = MTYPE_RADIOBUTTON;
+	s_bfpoptions.chargealert.generic.name	  = "Chargeup Alerts:";
+	s_bfpoptions.chargealert.generic.flags	  = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.chargealert.generic.callback = BFPOptions_Event;
+	s_bfpoptions.chargealert.generic.id       = ID_CHARGEALERT;
+	s_bfpoptions.chargealert.generic.x	      = BFPOPTIONS_X_POS;
+	s_bfpoptions.chargealert.generic.y	      = y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.q3hitsfx.generic.type    	= MTYPE_RADIOBUTTON;
+	s_bfpoptions.q3hitsfx.generic.name	  	= "Q3 Hit Sound:";
+	s_bfpoptions.q3hitsfx.generic.flags	  	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.q3hitsfx.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.q3hitsfx.generic.id      	= ID_Q3HITSFX;
+	s_bfpoptions.q3hitsfx.generic.x	     	= BFPOPTIONS_X_POS;
+	s_bfpoptions.q3hitsfx.generic.y	    	= y;
+
+	s_bfpoptions.back.generic.type		= MTYPE_BITMAP;
+	s_bfpoptions.back.generic.name		= ART_BACK0;
+	s_bfpoptions.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_bfpoptions.back.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.back.generic.id	    = ID_BACK;
+	s_bfpoptions.back.generic.x			= 0;
+	s_bfpoptions.back.generic.y			= 480-80;
+	s_bfpoptions.back.width  		    = 80;
+	s_bfpoptions.back.height  		    = 80;
+	s_bfpoptions.back.focuspic			= ART_BACK1;
+
+	BFPButtonOptions_MenuSet();
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.viewpoint );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.fix3person );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.simplehud );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.flightilt );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.accucrosshair );
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.particlesfx );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.kitrailength );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.beamcmpxy );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.bigheads );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.defaultskins );
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.chargealert );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.q3hitsfx );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.stfu );
 
 	thirdperson = trap_Cvar_VariableValue( "cg_thirdPerson" );
 	firstpersonvis = trap_Cvar_VariableValue( "cg_drawOwnModel" );
@@ -649,23 +876,12 @@ static void BFPOptions_MenuInit( void ) {
 		s_bfpoptions.viewpoint.curvalue = 1;
 	}
 
-//-----------------------------------------------------------------------//
-
 	s_bfpoptions.kitrailength.curvalue  = trap_Cvar_VariableValue( "cg_kiTrail" );
 	s_bfpoptions.beamcmpxy.curvalue  = trap_Cvar_VariableValue( "cg_beamTrail" );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.back );
 
 	BFPOptions_SetMenuItems();
 }
-#undef SPRITE_AURA
-#undef SHADER_AURA
-#undef LIGHTWEIGHT_AURA
-#undef POLYGON_AURA
-#undef HIGHPOLYCOUNT_AURA
-#undef WIMPY_EXPLO
-#undef WEAK_EXPLO
-#undef SO_SO_EXPLO
-#undef HARDCORE_EXPLO
 
 
 /*
@@ -687,6 +903,7 @@ UI_BFPOptionsMenu
 ===============
 */
 void UI_BFPOptionsMenu( void ) {
-	BFPOptions_MenuInit();
+	menuBarOption = ID_AURASCONFIG;
+	BFPAuraOptions_MenuInit();
 	UI_PushMenu( &s_bfpoptions.menu );
 }
