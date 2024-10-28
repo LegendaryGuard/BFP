@@ -1472,6 +1472,9 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 	// --------- roll -------------
 
+	// BFP - Prevent the player's head from tilting
+	headAngles[ROLL] = 0;
+
 	// lean towards the direction of travel
 	VectorCopy( cent->currentState.pos.trDelta, velocity );
 	speed = VectorNormalize( velocity );
