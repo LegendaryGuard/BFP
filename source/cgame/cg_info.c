@@ -233,6 +233,22 @@ void CG_DrawInformation( void ) {
 		y += PROP_HEIGHT;
 	}
 
+	// BFP - Melee only
+	trap_Cvar_VariableStringBuffer( "g_meleeOnly", buf, sizeof( buf ) );
+	if ( atoi( buf ) ) {
+		UI_DrawProportionalString( 320, y, "MELEE ONLY",
+			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
+		y += PROP_HEIGHT;
+	}
+
+	// BFP - No flight
+	trap_Cvar_VariableStringBuffer( "g_noFlight", buf, sizeof( buf ) );
+	if ( atoi( buf ) ) {
+		UI_DrawProportionalString( 320, y, "NO FLIGHT",
+			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
+		y += PROP_HEIGHT;
+	}
+
 	// game type
 	switch ( cgs.gametype ) {
 	case GT_FFA:

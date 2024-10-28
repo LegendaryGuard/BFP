@@ -79,4 +79,5 @@ void PM_AddEvent( int newEvent );
 qboolean	PM_SlideMove( qboolean gravity );
 void		PM_StepSlideMove( qboolean gravity );
 
+void	trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 

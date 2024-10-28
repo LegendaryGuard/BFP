@@ -1927,6 +1927,8 @@ PM_FlightStart
 static void PM_FlightStart( void ) { // BFP - Start flight handling 
 	vec3_t		point;
 	trace_t		trace;
+	// BFP - For no flight
+	char		buf[1024];
 
 	point[0] = pm->ps->origin[0];
 	point[1] = pm->ps->origin[1];
@@ -1937,6 +1939,12 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 
 	// must wait for flight key to be released
 	if ( pm->ps->pm_flags & PMF_JUMP_HELD ) { // avoid when the flight key is being pressed all time
+		return;
+	}
+
+	// BFP - No flight
+	trap_Cvar_VariableStringBuffer( "g_noFlight", buf, sizeof( buf ) );
+	if ( atoi( buf ) ) {
 		return;
 	}
 
@@ -2600,6 +2608,17 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->cmd.buttons &= ~BUTTON_ATTACK;
+	}
+
+	// BFP - Melee only
+	{
+		char	buf[1024];
+		trap_Cvar_VariableStringBuffer( "g_meleeOnly", buf, sizeof( buf ) );
+		if ( atoi( buf ) ) {
+			pm->cmd.buttons &= ~BUTTON_ATTACK;
+			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
+			pm->ps->eFlags &= ~EF_FIRING;
+		}
 	}
 
 	// set the firing flag for continuous beam weapons

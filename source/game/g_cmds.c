@@ -1253,9 +1253,14 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 	} else if ( !Q_stricmp( arg1, "g_doWarmup" ) ) {
 	} else if ( !Q_stricmp( arg1, "timelimit" ) ) {
 	} else if ( !Q_stricmp( arg1, "fraglimit" ) ) {
+	// } else if ( !Q_stricmp( arg1, "g_basePL" ) ) { // BFP - TODO: Base powerlevel
+	} else if ( !Q_stricmp( arg1, "g_hitStun" ) ) { // BFP - Hit stun
+	// } else if ( !Q_stricmp( arg1, "g_allowSpectatorChat" ) ) { // BFP - TODO: Allow spectator chat
+	} else if ( !Q_stricmp( arg1, "g_meleeOnly" ) ) { // BFP - Melee only
+	} else if ( !Q_stricmp( arg1, "g_noFlight" ) ) { // BFP - No flight
 	} else {
 		trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string.\n\"" );
-		trap_SendServerCommand( ent-g_entities, "print \"Vote commands are: map_restart, nextmap, map <mapname>, g_gametype <n>, kick <player>, clientkick <clientnum>, g_doWarmup, timelimit <time>, fraglimit <frags>.\n\"" );
+		trap_SendServerCommand( ent-g_entities, "print \"Vote commands are: map_restart, nextmap, map <mapname>, g_gametype <n>, kick <player>, clientkick <clientnum>, g_doWarmup, timelimit <time>, fraglimit <frags>, g_hitStun <0/1>, g_meleeOnly <0/1>, g_noFlight <0/1>.\n\"" );
 		return;
 	}
 
