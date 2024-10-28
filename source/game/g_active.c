@@ -1050,7 +1050,7 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 			}
 
 			if ( client->ps.weaponTime <= 0 ) {
-				client->ps.weaponTime += addTime;
+				client->ps.weaponTime = addTime;
 			}
 		}
 		break;
@@ -1241,9 +1241,6 @@ void ClientThink_real( gentity_t *ent ) {
 			|| client->ps.powerups[PW_HASTE] > 0 ) // BFP - When "kiusetoggle" is binded, enables/disables
 		&& ( client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
 			&& client->ps.weaponstate != WEAPON_STUN ) ) {
-			if ( client->ps.powerups[PW_FLIGHT] <= 0 ) {
-				client->ps.speed *= 2.5;
-			}
 			client->ps.powerups[PW_HASTE] = 1; // Handle ki boost status
 			client->ps.eFlags |= EF_AURA;
 		} else {
@@ -1269,10 +1266,6 @@ void ClientThink_real( gentity_t *ent ) {
 		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
 		&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
 			client->ps.eFlags |= EF_AURA;
-		}
-
-		if ( client->ps.powerups[PW_FLIGHT] > 0 ) { // BFP - Flight speed
-			client->ps.speed *= 2;
 		}
 
 		// BFP - Enable flight

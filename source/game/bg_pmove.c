@@ -298,6 +298,11 @@ static void PM_Friction( void ) {
 		vel[0] = 0;
 		vel[1] = 0;		// allow sinking underwater
 		// FIXME: still have z friction underwater?
+
+		// BFP - Brake when flying at that speed rate, otherwise the friction continues
+		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+			vel[2] = 0;
+		}
 		return;
 	}
 
@@ -495,8 +500,9 @@ static qboolean PM_CheckJump( void ) {
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
 	// BFP - Double jump velocity when using ki boost
-	if ( pm->ps->powerups[PW_HASTE] > 0 ) {
-		pm->ps->velocity[2] *= 2;
+	if ( pm->ps->powerups[PW_HASTE] > 0
+	|| ( pm->cmd.buttons & BUTTON_KI_USE ) ) { // BFP - Handle the ki boost button if it's being pressed, that avoids jittering movements
+		pm->ps->velocity[2] = 1100;
 	}
 
 	PM_AddEvent( EV_JUMP );
@@ -515,12 +521,11 @@ PM_CheckWaterJump
 =============
 */
 static qboolean	PM_CheckWaterJump( void ) {
-	// BFP - Apply for backwards too, Q3 doesn't have that
-	vec3_t	spot, backwardSpot;
+	vec3_t	spot;
 	int		cont;
-	vec3_t	flatforward, flatbackward;
-#define WATER_JUMP_HORIZONTAL_VELOCITY		200
-#define WATER_JUMP_VERTICAL_VELOCITY		250
+	// BFP - Apply for backwards, left and right too, Q3 doesn't have that
+	vec3_t	flatforward, flatbackward, flatleft, flatright;
+	const int WATER_JUMP_HORIZONTAL_VELOCITY = 200, WATER_JUMP_VERTICAL_VELOCITY = 250;
 
 	if (pm->ps->pm_time) {
 		return qfalse;
@@ -541,6 +546,18 @@ static qboolean	PM_CheckWaterJump( void ) {
 	flatbackward[1] = -pml.forward[1];
 	flatbackward[2] = 0;
 	VectorNormalize( flatbackward );
+
+	// left direction
+	flatleft[0] = -pml.right[0];
+	flatleft[1] = -pml.right[1];
+	flatleft[2] = 0;
+	VectorNormalize( flatleft );
+
+	// right direction
+	flatright[0] = pml.right[0];
+	flatright[1] = pml.right[1];
+	flatright[2] = 0;
+	VectorNormalize( flatright );
 
 	// check forward
 	VectorMA ( pm->ps->origin, 30, flatforward, spot );
@@ -570,10 +587,36 @@ static qboolean	PM_CheckWaterJump( void ) {
 		}
 	}
 
+	// check left
+	VectorMA( pm->ps->origin, 30, flatleft, spot );
+	spot[2] += 4;
+	cont = pm->pointcontents( spot, pm->ps->clientNum );
+	if ( cont & CONTENTS_SOLID ) {
+		spot[2] += 16;
+		cont = pm->pointcontents( spot, pm->ps->clientNum );
+		if ( !cont ) {
+			VectorScale( pml.right, -WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
+			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
+			return qtrue;
+		}
+	}
+
+	// check right
+	VectorMA( pm->ps->origin, 30, flatright, spot );
+	spot[2] += 4;
+	cont = pm->pointcontents( spot, pm->ps->clientNum );
+	if ( cont & CONTENTS_SOLID ) {
+		spot[2] += 16;
+		cont = pm->pointcontents( spot, pm->ps->clientNum );
+		if ( !cont ) {
+			VectorScale( pml.right, WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
+			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
+			return qtrue;
+		}
+	}
+
 	return qfalse;
 }
-#undef WATER_JUMP_HORIZONTAL_VELOCITY
-#undef WATER_JUMP_VERTICAL_VELOCITY
 
 //============================================================================
 
@@ -626,13 +669,20 @@ static void PM_WaterMove( void ) {
 		PM_WaterJumpMove();
 		return;
 	}
+
+	// BFP - Water animation handling, uses flying animation in that case
+	CONTINUEFLY_ANIM_HANDLING()
+
+	// BFP - Melee strike legs animation
+	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
+
 #if 0
 	// jump = head for surface
 	if ( pm->cmd.upmove >= 10 ) {
 		if (pm->ps->velocity[2] > -300) {
-			if ( pm->watertype == CONTENTS_WATER ) {
+			if ( pm->watertype & CONTENTS_WATER ) {
 				pm->ps->velocity[2] = 100;
-			} else if (pm->watertype == CONTENTS_SLIME) {
+			} else if ( pm->watertype & CONTENTS_SLIME ) {
 				pm->ps->velocity[2] = 80;
 			} else {
 				pm->ps->velocity[2] = 50;
@@ -677,12 +727,6 @@ static void PM_WaterMove( void ) {
 		VectorScale(pm->ps->velocity, vel, pm->ps->velocity);
 	}
 
-	// BFP - Water animation handling, uses flying animation in that case
-	CONTINUEFLY_ANIM_HANDLING()
-
-	// BFP - Melee strike legs animation
-	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
-
 	PM_SlideMove( qfalse );
 }
 
@@ -699,6 +743,11 @@ static void PM_FlyMove( void ) {
 	float	wishspeed;
 	vec3_t	wishdir;
 	float	scale;
+
+	// BFP - Fly tilt variables
+	static float currentRollAngle = 0;
+	short	targetRollAngle = 0;
+	float	lerpSpeed = 2.5;
 
 	// normal slowdown
 	PM_Friction ();
@@ -717,10 +766,27 @@ static void PM_FlyMove( void ) {
 
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
+	wishspeed *= scale; // add speed
+
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		wishspeed *= scale;
+		wishspeed *= (scale + 2); // increase the speed a bit
+
+		// determine the target roll angle based on rightmove
+		targetRollAngle = 0;
+		if ( pm->cmd.rightmove > 0 ) {
+			targetRollAngle = 20;
+			pm->ps->velocity[2] -= 5; // move a bit down
+		} else if ( pm->cmd.rightmove < 0 ) {
+			targetRollAngle = -20;
+			pm->ps->velocity[2] -= 5; // move a bit down
+		}
 	}
+
+	// lerp the current roll angle towards the target roll angle
+	currentRollAngle += ( targetRollAngle - currentRollAngle ) * lerpSpeed * pml.frametime;
+
+	pm->ps->viewangles[ROLL] = currentRollAngle;
 
 	PM_Accelerate (wishdir, wishspeed, pm_flyaccelerate);
 
@@ -769,6 +835,11 @@ static void PM_AirMove( void ) {
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
 
+	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		wishspeed *= scale;
+	}
+
 	// not on ground, so little effect on velocity
 	PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
 
@@ -792,6 +863,12 @@ static void PM_AirMove( void ) {
 	TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
 
 	PM_StepSlideMove ( qtrue );
+	// BFP - TODO: Handle gravity, make the player heavier
+	/*if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY ) ) {
+		PM_SlideMove ( qtrue );
+	} else {
+		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
+	}*/
 }
 
 // BFP - no hook
@@ -905,6 +982,11 @@ static void PM_WalkMove( void ) {
 		if ( wishspeed > pm->ps->speed * waterScale ) {
 			wishspeed = pm->ps->speed * waterScale;
 		}
+	}
+
+	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		wishspeed *= scale;
 	}
 
 	// when a player gets hit, they temporarily lose
@@ -1301,38 +1383,6 @@ static void PM_GroundTrace( void ) {
 		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 	}
 
-	// BFP - If the player is in the ground, then jump!
-	// And make sure to handle the PMF flag when the player isn't flying and falling
-	if ( pm->ps->powerups[PW_FLIGHT] > 0
-	&& ( pm->ps->pm_flags & PMF_FALLING ) 
-	&& !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
-		if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
-			// do a smooth jump animation like BFP does
-			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE )
-			&& pm->ps->weaponstate != WEAPON_KIEXPLOSIONWAVE
-			&& pm->ps->weaponstate != WEAPON_STUN ) {
-				pm->ps->pm_time = 550;
-				pm->ps->velocity[2] = JUMP_VELOCITY;
-				if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
-				&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
-					if ( pm->cmd.forwardmove > 0 ) {
-						TORSOSTATUS_ANIM_HANDLING( TORSO_FLYA );
-					} else if ( pm->cmd.forwardmove < 0 ) {
-						TORSOSTATUS_ANIM_HANDLING( TORSO_FLYB );
-					} else {
-						TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
-					}
-				}
-				PM_ForceLegsAnim( LEGS_JUMP );
-			}
-			pml.groundPlane = qfalse;		// jumping away
-			pml.walking = qfalse;
-		}
-		pm->ps->pm_flags &= ~PMF_FALLING;	
-		pm->ps->groundEntityNum = ENTITYNUM_NONE;
-		return;
-	}
-
 	// slopes that are too steep will not be considered onground
 	if ( trace.plane.normal[2] < MIN_WALK_NORMAL ) {
 		if ( pm->debugLevel ) {
@@ -1583,6 +1633,7 @@ static void PM_Footsteps( void ) {
 
 	// BFP - Avoid when charging
 	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		return;
 	}
 
@@ -1817,7 +1868,7 @@ static void PM_TorsoAnimation( void ) {
 	}
 
 	VectorCopy( pm->ps->origin, point );
-	point[2] -= 128; // BFP - Put more down, obviously it was 64, but BFP does that
+	point[2] -= 95; // BFP - Put more down, obviously it was 64, but BFP does that
 
 	pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 	pml.groundTrace = trace;
@@ -1866,6 +1917,56 @@ static void PM_TorsoAnimation( void ) {
 		return;
 	}
 #endif
+}
+
+/*
+==============
+PM_FlightStart
+==============
+*/
+static void PM_FlightStart( void ) { // BFP - Start flight handling 
+	vec3_t		point;
+	trace_t		trace;
+
+	point[0] = pm->ps->origin[0];
+	point[1] = pm->ps->origin[1];
+	point[2] = pm->ps->origin[2] - 0.25;
+
+	pm->trace ( &trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask );
+	pml.groundTrace = trace;
+
+	// must wait for flight key to be released
+	if ( pm->ps->pm_flags & PMF_JUMP_HELD ) { // avoid when the flight key is being pressed all time
+		return;
+	}
+
+	// BFP - If the player is in the ground, then jump!
+	// And make sure to handle the PMF flag when the player isn't flying and falling
+	if ( ( pm->ps->powerups[PW_FLIGHT] > 0 || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // Handle the ki boost button if it's being pressed, that avoids jittering
+	&& ( pm->ps->pm_flags & PMF_FALLING ) 
+	&& !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+		if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
+			// do a smooth jump animation like BFP does
+			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE )
+			&& pm->ps->weaponstate != WEAPON_KIEXPLOSIONWAVE
+			&& pm->ps->weaponstate != WEAPON_STUN ) {
+				pm->ps->pm_time = 550;
+				pm->ps->velocity[2] = JUMP_VELOCITY - 200;
+				if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
+				&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
+					if ( pm->cmd.forwardmove > 0 ) {
+						TORSOSTATUS_ANIM_HANDLING( TORSO_FLYA );
+					} else if ( pm->cmd.forwardmove < 0 ) {
+						TORSOSTATUS_ANIM_HANDLING( TORSO_FLYB );
+					} else {
+						TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+					}
+				}
+				PM_ForceLegsAnim( LEGS_JUMP );
+			}
+		}
+		pm->ps->pm_flags &= ~PMF_FALLING;
+	}
 }
 
 /*
@@ -1946,6 +2047,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 
 	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
 		pm->ps->powerups[PW_HASTE] = 0;
+		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		pm->ps->pm_flags |= PMF_KI_CHARGE;
 		PM_ContinueTorsoAnim( TORSO_CHARGE );
 		PM_ContinueLegsAnim( LEGS_CHARGE );
@@ -1997,6 +2099,7 @@ static void PM_Melee( void ) { // BFP - Melee
 	// Don't allow pressing ki attack and block buttons when melee is being used
 	if ( ( pm->ps->pm_flags & PMF_MELEE ) 
 	|| ( pm->cmd.buttons & BUTTON_MELEE ) ) {
+		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_BLOCK );
 	}
 }
@@ -2091,6 +2194,7 @@ static void PM_Weapon( void ) {
 	// can't change if weapon is firing, but can change
 	// again if lowering or raising
 	if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Avoid if the beam is still firing
+	&& pm->ps->weaponstate != WEAPON_KIEXPLOSIONWAVE // BFP - Avoid if ki explosion wave is still on
 	&& pm->ps->weaponstate != WEAPON_STUN // BFP - Avoid when being stunned
 	&& ( pm->ps->weaponTime <= 0 || pm->ps->weaponstate != WEAPON_FIRING ) ) {
 		if ( pm->ps->weapon != pm->cmd.weapon ) {
@@ -2205,6 +2309,7 @@ static void PM_Weapon( void ) {
 			pm->ps->pm_flags |= PMF_KI_ATTACK;
 			//PM_AddEvent( EV_FIRE_WEAPON );
 			break;
+		case WP_GAUNTLET:
 		case WP_LIGHTNING:
 			pm->ps->pm_flags |= PMF_KI_ATTACK;
 		}
@@ -2246,7 +2351,8 @@ static void PM_Weapon( void ) {
 			}
 		}
 		if ( !( pm->cmd.buttons & BUTTON_ATTACK )
-		|| ( pm->cmd.buttons & BUTTON_MELEE ) ) {
+		|| ( pm->cmd.buttons & BUTTON_MELEE )
+		|| pm->ps->weapon != pm->cmd.weapon ) { // avoid when changing weapon
 			pm->ps->weaponTime = 1000;
 			pm->ps->weaponstate = WEAPON_STUN;
 		}
@@ -2490,9 +2596,10 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->ps->eFlags &= ~EF_TALK;
 	}
 
-	// BFP - Handling the PMF flag when stepping the ground
+	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
 		pm->ps->pm_flags |= PMF_FALLING;
+		pm->cmd.buttons &= ~BUTTON_ATTACK;
 	}
 
 	// set the firing flag for continuous beam weapons
@@ -2546,7 +2653,13 @@ void PmoveSingle (pmove_t *pmove) {
 
 	AngleVectors (pm->ps->viewangles, pml.forward, pml.right, pml.up);
 
-	if ( pm->cmd.upmove < 10 ) {
+	// BFP - Avoid when the flight key is being pressed all time
+	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+		pm->ps->pm_flags |= PMF_JUMP_HELD;
+	}
+
+	if ( pm->cmd.upmove < 10
+	&& !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) { // BFP - Don't use for jumping
 		// not holding jump
 		pm->ps->pm_flags &= ~PMF_JUMP_HELD;
 	}
@@ -2622,6 +2735,7 @@ void PmoveSingle (pmove_t *pmove) {
 	// set mins, maxs, and viewheight
 	PM_CheckDuck ();
 
+	PM_FlightStart();
 	// set groundentity
 	PM_GroundTrace();
 
@@ -2694,8 +2808,9 @@ void PmoveSingle (pmove_t *pmove) {
 	// entering / leaving water splashes
 	PM_WaterEvents();
 
+	// BFP - BFP disabled that because the velocity calcualtions aren't correct when timescale is less than 1
 	// snap some parts of playerstate to save network bandwidth
-	trap_SnapVector( pm->ps->velocity );
+	// trap_SnapVector( pm->ps->velocity );
 }
 
 
