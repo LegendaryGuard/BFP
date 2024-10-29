@@ -27,14 +27,9 @@
 ## WIP:
 
 
-#### Cvar Gametypes:
-
-- g_gametype 2 = single player (in original BFP, that doesn't show in UI, so make Single Player option hidden)
-
 ## DONE BUT NOT IN CGAME:
 
 - cg_stfu [0/1]: disable character voices when firing attacks.
-- cg_chargeupAlert [0/1]: turn on or off the "ready" message when charging attacks.
 
 
 ## COMPLETED:
@@ -60,13 +55,14 @@
 - [x] ~~cg_spriteAura~~
 - [x] ~~cg_particleAura~~
 - [x] ~~cg_playHitSound~~
+- [x] ~~g_allowSpectatorChat~~
+- [x] ~~g_meleeOnly~~
 - [x] ~~g_noFlight (disables "fly" bind too, original BFP has a leak though)~~
 - [x] ~~g_blockLength~~
 - [x] ~~g_blockDelay~~
 - [x] ~~g_blockCost~~
 - [x] ~~g_blockCostPct~~
 - [x] ~~g_hitStun~~
-- [x] ~~g_meleeOnly~~
 - [x] ~~g_meleeRange~~
 - [x] ~~g_meleeDiveRange~~
 - [x] ~~g_meleeDamage~~
