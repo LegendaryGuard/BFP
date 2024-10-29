@@ -706,12 +706,10 @@ static int CG_CalcViewValues( void ) {
 	VectorCopy( ps->origin, cg.refdef.vieworg );
 
 	// BFP - Fly tilt
-	if ( cg_flytilt.integer > 0 ) {
-		VectorCopy( ps->viewangles, cg.refdefViewAngles );
-	} else {
+	if ( cg_flytilt.integer <= 0 ) {
 		ps->viewangles[ROLL] = 0; // that removes tilt
-		VectorCopy( ps->viewangles, cg.refdefViewAngles );
 	}
+	VectorCopy( ps->viewangles, cg.refdefViewAngles );
 
 	if (cg_cameraOrbit.integer) {
 		if (cg.time > cg.nextOrbitTime) {
