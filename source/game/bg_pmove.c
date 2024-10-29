@@ -745,9 +745,9 @@ static void PM_FlyMove( void ) {
 	float	scale;
 
 	// BFP - Fly tilt variables
-	static float currentRollAngle = 0;
+	static float	currentRollAngle = 0;
 	short	targetRollAngle = 0;
-	float	lerpSpeed = 2.5;
+	float	rollStep = 0.2;
 
 	// normal slowdown
 	PM_Friction ();
@@ -783,8 +783,23 @@ static void PM_FlyMove( void ) {
 		}
 	}
 
-	// lerp the current roll angle towards the target roll angle
-	currentRollAngle += ( targetRollAngle - currentRollAngle ) * lerpSpeed * pml.frametime;
+	// if going back to the main angle, increase a bit the roll step
+	if ( targetRollAngle == 0 ) {
+		rollStep = 0.375;
+	}
+
+	// apply the fixed step for a more direct roll change
+	if ( currentRollAngle < targetRollAngle ) {
+		currentRollAngle += rollStep;
+		if ( currentRollAngle > targetRollAngle ) {
+			currentRollAngle = targetRollAngle;
+		}
+	} else if ( currentRollAngle > targetRollAngle ) {
+		currentRollAngle -= rollStep;
+		if ( currentRollAngle < targetRollAngle ) {
+			currentRollAngle = targetRollAngle;
+		}
+	}
 
 	pm->ps->viewangles[ROLL] = currentRollAngle;
 
