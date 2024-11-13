@@ -43,7 +43,7 @@ float	pm_flyaccelerate = 2.0f; // BFP - Add less flight acceleration, before 8.0
 float	pm_friction = 6.0f;
 float	pm_waterfriction = 1.0f;
 float	pm_flightfriction = 2.0f; // BFP - Add less flight friction, before 3.0f
-float	pm_spectatorfriction = 5.0f;
+float	pm_spectatorfriction = 2.0f; // BFP - Add less spectator movement friction, before 5.0f
 
 int		c_pmove = 0;
 
@@ -496,6 +496,7 @@ static qboolean PM_CheckJump( void ) {
 	pml.walking = qfalse;
 	pm->ps->pm_flags |= PMF_JUMP_HELD;
 	pm->ps->pm_flags |= PMF_NEARGROUND; // BFP - Handle PMF_NEARGROUND, avoid checking if there's ground at that point
+	pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
@@ -714,6 +715,12 @@ static void PM_WaterMove( void ) {
 		wishspeed = pm->ps->speed * pm_swimScale;
 	}
 
+	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		wishspeed *= scale;
+	}
+
 	PM_Accelerate (wishdir, wishspeed, pm_wateraccelerate);
 
 	// make sure we can go up slopes easily under water
@@ -770,16 +777,32 @@ static void PM_FlyMove( void ) {
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		wishspeed *= (scale + 2); // increase the speed a bit
+		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING ) { // BFP - Don't increase speed when beam firing
+			wishspeed *= (scale + 2); // increase the speed a bit
+		}
 
 		// determine the target roll angle based on rightmove
 		targetRollAngle = 0;
 		if ( pm->cmd.rightmove > 0 ) {
 			targetRollAngle = 20;
-			pm->ps->velocity[2] -= 5; // move a bit down
+			if ( pm->cmd.upmove <= 0 ) {
+				// move a bit down
+				if ( pm->ps->weaponstate == WEAPON_BEAMFIRING ) { // BFP - Low descent speed when beam firing
+					pm->ps->velocity[2] -= 2;
+				} else {
+					pm->ps->velocity[2] -= 12;
+				}
+			}
 		} else if ( pm->cmd.rightmove < 0 ) {
 			targetRollAngle = -20;
-			pm->ps->velocity[2] -= 5; // move a bit down
+			if ( pm->cmd.upmove <= 0 ) {
+				// move a bit down
+				if ( pm->ps->weaponstate == WEAPON_BEAMFIRING ) { // BFP - Low descent speed when beam firing
+					pm->ps->velocity[2] -= 2; 
+				} else {
+					pm->ps->velocity[2] -= 12;
+				}
+			}
 		}
 	}
 
@@ -851,6 +874,7 @@ static void PM_AirMove( void ) {
 	wishspeed *= scale;
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		wishspeed *= scale;
 	}
@@ -878,12 +902,22 @@ static void PM_AirMove( void ) {
 	TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
 
 	PM_StepSlideMove ( qtrue );
-	// BFP - TODO: Handle gravity, make the player heavier
-	/*if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY ) ) {
+
+	// BFP - Handle gravity, make the player heavier
+	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
+	&& ( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE )
+	&& ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		PM_SlideMove ( qtrue );
-	} else {
-		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
-	}*/
+		return;
+	}
+
+	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
+	&& !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+		PM_SlideMove ( qtrue );
+		return;
+	}
+
+	pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
 }
 
 // BFP - no hook
@@ -1000,6 +1034,7 @@ static void PM_WalkMove( void ) {
 	}
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		wishspeed *= scale;
 	}
@@ -1442,6 +1477,8 @@ static void PM_GroundTrace( void ) {
 		pm->ps->pm_flags |= PMF_NEARGROUND;
 		return;
 	}
+
+	pm->ps->pm_flags |= PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 
 	pml.groundPlane = qtrue;
 	pml.walking = qtrue;
@@ -1942,8 +1979,6 @@ PM_FlightStart
 static void PM_FlightStart( void ) { // BFP - Start flight handling 
 	vec3_t		point;
 	trace_t		trace;
-	// BFP - For no flight
-	char		buf[1024];
 
 	point[0] = pm->ps->origin[0];
 	point[1] = pm->ps->origin[1];
@@ -1952,22 +1987,23 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 	pm->trace ( &trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask );
 	pml.groundTrace = trace;
 
-	// must wait for flight key to be released
-	if ( pm->ps->pm_flags & PMF_JUMP_HELD ) { // avoid when the flight key is being pressed all time
-		return;
-	}
-
-	// BFP - No flight
-	trap_Cvar_VariableStringBuffer( "g_noFlight", buf, sizeof( buf ) );
-	if ( atoi( buf ) ) {
-		return;
+	// BFP - Avoid when the flight key is being pressed all time
+	if ( pm->ps->powerups[PW_FLIGHT] <= 0 
+	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID )
+	&& ( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE ) ) {
+		if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
+			return;
+		} else {
+			pm->ps->pm_flags &= ~PMF_FLIGHT_ACTIVE;
+		}
 	}
 
 	// BFP - If the player is in the ground, then jump!
 	// And make sure to handle the PMF flag when the player isn't flying and falling
-	if ( ( pm->ps->powerups[PW_FLIGHT] > 0 || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // Handle the ki boost button if it's being pressed, that avoids jittering
+	if ( ( pm->ps->powerups[PW_FLIGHT] > 0 || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
 	&& ( pm->ps->pm_flags & PMF_FALLING ) 
-	&& !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+	&& !( pm->ps->pm_flags & PMF_NEARGROUND )
+	&& !( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE ) ) {
 		if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
 			// do a smooth jump animation like BFP does
 			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE )
@@ -1989,6 +2025,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 			}
 		}
 		pm->ps->pm_flags &= ~PMF_FALLING;
+		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 	}
 }
 
@@ -2001,8 +2038,10 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 
 	if ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->pm_time <= 0 ) {
 
-		// make sure to handle the PMF flag
+		// make sure to handle the PMF flags
 		pm->ps->pm_flags &= ~PMF_FALLING;
+		pm->ps->pm_flags |= PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 
 		CONTINUEFLY_ANIM_HANDLING()
 		return;
@@ -2381,7 +2420,9 @@ static void PM_Weapon( void ) {
 		}
 
 		// fall even whether the player is flying
-		pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
+		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+			pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
+		}
 		break;
 	// BFP - NOTE: This stun state makes the player can't move in 1 sec, it's different from "hit stun"
 	case WEAPON_STUN:
@@ -2392,7 +2433,9 @@ static void PM_Weapon( void ) {
 		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 
 		// fall even whether the player is flying
-		pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
+		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+			pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
+		}
 	}
 }
 #undef FIRE_CHARGED_STATE
@@ -2621,13 +2664,23 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
+		pm->ps->pm_flags |= PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->cmd.buttons &= ~BUTTON_ATTACK;
+		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 	}
 
-	// BFP - Melee only
 	{
-		char	buf[1024];
+		char		buf[128];
+
+		// BFP - No flight
+		trap_Cvar_VariableStringBuffer( "g_noFlight", buf, sizeof( buf ) );
+		if ( atoi( buf ) ) {
+			pm->cmd.buttons &= ~BUTTON_ENABLEFLIGHT;
+			pm->ps->powerups[PW_FLIGHT] = 0;
+		}
+
+		// BFP - Melee only
 		trap_Cvar_VariableStringBuffer( "g_meleeOnly", buf, sizeof( buf ) );
 		if ( atoi( buf ) ) {
 			pm->cmd.buttons &= ~BUTTON_ATTACK;
@@ -2687,13 +2740,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 	AngleVectors (pm->ps->viewangles, pml.forward, pml.right, pml.up);
 
-	// BFP - Avoid when the flight key is being pressed all time
-	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
-		pm->ps->pm_flags |= PMF_JUMP_HELD;
-	}
-
-	if ( pm->cmd.upmove < 10
-	&& !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) { // BFP - Don't use for jumping
+	if ( pm->cmd.upmove < 10 ) {
 		// not holding jump
 		pm->ps->pm_flags &= ~PMF_JUMP_HELD;
 	}

@@ -164,6 +164,7 @@ typedef enum {
 #define PMF_KI_CHARGE		128		// BFP - Ki charge
 // BFP - PMF_TIME_WATERJUMP is unused
 // #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
+#define	PMF_STOP_AIR_FLY	256		// BFP - Stop air gravity check
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
 // BFP - no hook
@@ -172,6 +173,7 @@ typedef enum {
 #define PMF_FOLLOW			4096	// spectate following another player
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
+#define PMF_FLIGHT_ACTIVE	8192	// BFP - Flight active status
 // BFP - TODO: Reuse the following flag (used on Team Arena), change name if it'll be used
 #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
