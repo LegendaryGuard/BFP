@@ -427,10 +427,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 
 				p->time = timenonscaled;
 				p->snum = 1; // handle the p->snum when already entered in this phase for correction of client side visuals
-				p->vel[0] = 0;
-				p->vel[1] = 0;
-				p->accel[0] = 0;
-				p->accel[1] = 0;
 				// not hit anything or not a collider
 				if ( trace.fraction == 1.0f )
 				{
@@ -440,16 +436,39 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				}
 				else // bouncing
 				{
-					// if the particle is touching a mover and moves down, so keep bouncing
-					if ( trace.fraction <= 0 ) {
-						p->roll = 6;
+					if ( trace.plane.normal[2] > 0.1 
+					&& trace.plane.normal[2] < 0.95 ) { // detect position on the slopes
+						VectorCopy (org, p->org);
+						// if the particle is touching a mover and moves down, so keep bouncing
+						if ( p->roll > 0 ) {
+							p->vel[2] = 50 * p->roll;
+							p->accel[2] = 50 * p->roll;
+							p->roll--; // that decreases bounces
+						}
+						if ( p->roll <= 0 ) { // stop
+							p->vel[2] = 0;
+							p->accel[2] = 0;
+						} else { // keep detecting the position
+							VectorCopy (trace.endpos, p->org);
+						}
 					} else {
-						p->vel[2] = p->accel[2] = (p->roll > 0) ? 50 * p->roll : 0;
-						p->roll--; // that decreases bounces 
+						if ( trace.plane.normal[2] < 0.95 ) { // for slopes
+							VectorCopy (org, p->org);
+						}
+						// if the particle is touching a mover and moves down, so keep bouncing
+						if ( trace.fraction <= 0 ) {
+							p->roll = 6;
+						} else {
+							if ( p->roll > 0 ) {
+								p->vel[2] = 50 * p->roll;
+								p->accel[2] = 50 * p->roll;
+								p->roll--; // that decreases bounces
+							}
+						}
+						if ( p->roll <= 0 ) { // keep detecting the position
+							VectorCopy (trace.endpos, p->org);
+						}
 					}
-				}
-				if ( p->roll <= 0 ) { // keep detecting the position
-					VectorCopy (trace.endpos, p->org);
 				}
 			}
 
@@ -465,7 +484,6 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			// BFP - To detect if there is something solid
 			trace_t		trace;
 			vec3_t		debrisMins = {0, 0, -1}; // place a bit above
-			vec3_t		up = {0, 0, 1};
 			int 		contents;
 			// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
 			CG_Trace( &trace, p->org, debrisMins, debrisMins, org, -1, CONTENTS_SOLID );
@@ -491,8 +509,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				}
 				else // bouncing
 				{
-					// if it's on a slope
-					if ( DotProduct( trace.plane.normal, up ) < 0.7 ) {
+					if ( trace.plane.normal[2] < 0.7 ) { // if it's on a slope
 						if ( fabs( p->vel[2] ) < 1 ) {
 							VectorClear( p->accel );
 							VectorClear( p->vel );
