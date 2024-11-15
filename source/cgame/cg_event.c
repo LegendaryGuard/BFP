@@ -893,9 +893,15 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_SparksExplosion( position, dir );
 		break;
 
-	// BFP - TODO: Implement EV_MISSILE_DETONATE (it has been used on ki grenade bounces and ki disc, that happens when these explode after some time)
+	// BFP - EV_MISSILE_DETONATE - used on ki grenade bounces and beams, 
+	// that happens when projectiles/beams reaches their lifetime limit or are stopped by the player actions
+	// no debris and sparks particles here
 	case EV_MISSILE_DETONATE:
-		DEBUGNAME("EV_MISSILE_DETONATE");
+		{
+			vec3_t	dirDetonate = {0, 0, 1}; // place the explosion position and size correctly
+			DEBUGNAME("EV_MISSILE_DETONATE");
+			CG_MissileHitWall( es->weapon, 0, position, dirDetonate, IMPACTSOUND_DEFAULT );
+		}
 		break;
 
 	case EV_RAILTRAIL:

@@ -289,7 +289,12 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	} else if( trace->surfaceFlags & SURF_METALSTEPS ) {
 		G_AddEvent( ent, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
 	} else {
-		G_AddEvent( ent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
+		// BFP - Detonation check
+		if ( trace->contents & MASK_PLAYERSOLID ) {
+			G_AddEvent( ent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
+		} else {
+			G_AddEvent( ent, EV_MISSILE_DETONATE, 0 );
+		}
 	}
 
 	ent->freeAfterEvent = qtrue;
