@@ -1928,8 +1928,10 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB
+			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // apply on ki charging status too
 			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
+			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
 			&& ( trace.fraction <= 0.70f
 			// If the player is stepping a mover:
 			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
@@ -1949,10 +1951,11 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 		waterContents = CG_PointContents( cent->lerpOrigin, -1 ); // BFP - Detect if the player is entirely under water
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // BFP - Antigrav rock particles on ki charging status
 			if ( !( waterContents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
-			// if the player isn't moving 
+#if 0 /* if the player isn't moving */
 			&& !cent->currentState.pos.trDelta[0] 
 			&& !cent->currentState.pos.trDelta[1] 
 			&& !cent->currentState.pos.trDelta[2] 
+#endif
 			&& ( trace.fraction <= 0.30f
 			// If the player is stepping a mover:
 			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
@@ -2145,9 +2148,12 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 		if ( cg_lightweightAuras.integer <= 0
 		&& cg_polygonAura.integer <= 0
 		&& cg_spriteAura.integer <= 0
-		&& cg_particleAura.integer <= 0
-		&& ( state->clientNum == cg.snap->ps.clientNum 
-			&& cg_smallOwnAura.integer <= 0 ) ) {
+		&& cg_particleAura.integer <= 0 ) {
+			if ( state->clientNum == cg.snap->ps.clientNum 
+			&& cg_smallOwnAura.integer > 0 ) {
+				trap_R_AddRefEntityToScene( &ent );
+				return;
+			}
 			ent.customShader = cgs.media.auraRedChargeShader;
 			// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil (same as the previous TODO notes)
 			if ( team == TEAM_BLUE ) {
