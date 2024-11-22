@@ -506,6 +506,41 @@ static qboolean PM_CheckJump( void ) {
 		pm->ps->velocity[2] = 1100;
 	}
 
+	// BFP - Jumping from slopes without backoffs
+	{
+		vec3_t		point;
+		trace_t		trace;
+
+		point[0] = pm->ps->origin[0];
+		point[1] = pm->ps->origin[1];
+		point[2] = pm->ps->origin[2] - 0.25;
+
+		pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
+		pml.groundTrace = trace;
+
+		if ( trace.plane.normal[2] < 1 ) {
+			float scale = PM_CmdScale( &pm->cmd );
+			float fmove, smove;
+			int i;
+
+			fmove = pm->cmd.forwardmove;
+			smove = pm->cmd.rightmove;
+			pml.forward[2] = 0;
+			pml.right[2] = 0;
+			VectorNormalize (pml.forward);
+			VectorNormalize (pml.right);
+
+			for ( i = 0 ; i < 2 ; i++ ) {
+				pm->ps->velocity[i] = pml.forward[i]*fmove + pml.right[i]*smove;
+			}
+		}
+
+		if ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove == 0 ) {
+			pm->ps->velocity[0] = 0;
+			pm->ps->velocity[1] = 0;
+		}
+	}
+
 	PM_AddEvent( EV_JUMP );
 
 	// BFP - No PMF_BACKWARDS_JUMP handling (code removed)
@@ -873,12 +908,6 @@ static void PM_AirMove( void ) {
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed *= scale;
 
-	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
-	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		wishspeed *= scale;
-	}
-
 	// not on ground, so little effect on velocity
 	PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
 
@@ -902,6 +931,13 @@ static void PM_AirMove( void ) {
 	TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
 
 	PM_StepSlideMove ( qtrue );
+
+	// BFP - Reduces speed when charging ki
+	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
+	&& ( pm->ps->powerups[PW_HASTE] <= 0 && !( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		VectorNormalize( pm->ps->velocity );
+		return;
+	}
 
 	// BFP - Handle gravity, make the player heavier
 	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
@@ -1036,7 +1072,7 @@ static void PM_WalkMove( void ) {
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		wishspeed *= scale;
+		wishspeed *= 2; // move at that speed rate
 	}
 
 	// when a player gets hit, they temporarily lose
@@ -1518,6 +1554,24 @@ static void PM_GroundTrace( void ) {
 	}
 
 	pm->ps->groundEntityNum = trace.entityNum;
+
+	// BFP - Avoid abnormal speed (and strafe - or defrag)
+	if ( pm->ps->groundEntityNum != ENTITYNUM_NONE 
+	&& pm->ps->powerups[PW_FLIGHT] <= 0
+	&& ( pm->cmd.upmove > 0 
+		|| ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) ) {
+		float vel = VectorLength( pm->ps->velocity );
+		if ( vel > 640 ) { // keep maximum speed
+			vel = 640;
+		}
+
+		// slide along the ground plane
+		PM_ClipVelocity ( pm->ps->velocity, pml.groundTrace.plane.normal, 
+			pm->ps->velocity, OVERCLIP );
+
+		VectorNormalize( pm->ps->velocity );
+		VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
+	}
 
 	// don't reset the z velocity for slopes
 	// pm->ps->velocity[2] = 0;
