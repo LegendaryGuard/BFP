@@ -660,7 +660,8 @@ CG_SmokeExplosion
 =================
 */
 void CG_SmokeExplosion( vec3_t origin ) { // BFP - Explosion smoke
-	if ( cg_explosionSmoke.integer > 0 ) {
+	if ( cg_explosionSmoke.integer > 0 
+	&& !( trap_CM_PointContents( origin, 0 ) & MASK_WATER ) ) { // don't spawn smoke under water, lava or any liquid
 		// BFP - TODO: Apply explosionSmoke as indicated on default.cfg file from some character: explosionSmoke <weaponNum> <numSmokes(int)>
 		int	i, numSmokes = 3;
 		// BFP - TODO: Apply explosionSmokeRadius as indicated on default.cfg file from some character: explosionSmokeRadius <weaponNum> <radius(int)>
