@@ -36,7 +36,7 @@ float	pm_duckScale = 0.25f;
 // float	pm_swimScale = 0.50f; // BFP - No water speed slowness
 
 float	pm_accelerate = 10.0f;
-float	pm_airaccelerate = 6.0f; // BFP - Add more air acceleration to handle user movement intentions, before 1.0f
+float	pm_airaccelerate = 4.5f; // BFP - Add more air acceleration to handle user movement intentions, before 1.0f
 float	pm_wateraccelerate = 20.0f; // BFP - Add more water acceleration to handle user movement intentions, before 4.0f
 float	pm_flyaccelerate = 2.0f; // BFP - Add less flight acceleration, before 8.0f
 
@@ -47,118 +47,6 @@ float	pm_spectatorfriction = 2.0f; // BFP - Add less spectator movement friction
 
 int		c_pmove = 0;
 
-// BFP - Macro for torso handling when using ki attacks, since the code looked repetitive, so this macro makes the code a bit shorter
-/* BFP - TODO: When implementing ki attacks, look up about the properties of the ki attacks from cfg and correct animation changes if required
-And tweak pmove_t struct, so we can handle that on g_active.c (like meleeHit), adding:
-attackType ("beam", "hitscan", "missile", "rdmissile", "sbeam" or "forcefield"), // type of attack
-randomWeaponTime (int, number of miliseconds), // random weapon time, maybe the max msec range of the random value
-chargeAttack (int / qboolean), // charging yes or no
-chargeAutoFire (int / qboolean), // even if it's charging the ki attack, fire
-minCharge (int [0-6]), // min charge points
-maxCharge (int [0-6]), // max charge points
-loopAnim (int / qboolean), // Maybe it's: use PM_ContinueTorsoAnim, if not: PM_StartTorsoAnim
-noAttackAnim (int / qboolean), // no animation strike yes or no
-priority (int [0-2]), // if 2, it'll act like a overpowered forcefield, if 1 like a beam, if 0 nothing
-movementPenalty (int, number of seconds) // enters WEAPON_STUN when the ki attack was being used
------
-The following sample testing torso ki attack animations are used with:
-(ultimate_blast)	WP_BFG would be					"beam", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 1, movementPenalty 0
-(finger_blast)		WP_MACHINEGUN would be			"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
-(ki_blast)			WP_ROCKET_LAUNCHER would be		"missile", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(super_homing)		WP_GRENADE_LAUNCHER would be	"missile", chargeAttack 1, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
-(finger_beam)		WP_RAILGUN would be				"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(eyebeam)			WP_LIGHTNING would be			"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(homing_special)	WP_PLASMAGUN would be			"rdmissile", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(aga)				WP_SHOTGUN would be				"forcefield", chargeAttack 1, chargeAutoFire 1, loopingAnim 1, noAttackAnim 0, priority 2, movementPenalty 2
-(blinding_flash)	would be						"forcefield", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 1, priority 0, movementPenalty 0
-
-About "sbeam" attackType would be like a beam that, by holding down the attack key, 
-you direct it wherever you want by moving the cursor. 
-If you stop pressing the attack key, it explodes to the point where it arrived.
-This attackType was originally left unfinished, 
-so there's a bug: after colliding the beam into something solid and 
-keep holding down the attack key, keeps muzzling and 
-doesn't shoot anything while the ki is wasted out of control. 
-*/
-#define KI_ATTACK_TORSO_ANIM_HANDLING() \
-	if ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !( pm->ps->pm_flags & PMF_KI_ATTACK ) ) { \
-		switch( pm->ps->weapon ) { \
-		case WP_ROCKET_LAUNCHER: { PM_StartTorsoAnim( TORSO_ATTACK1_PREPARE ); break; } \
-		case WP_GRENADE_LAUNCHER: { PM_ContinueTorsoAnim( TORSO_ATTACK2_PREPARE ); break; } \
-		case WP_RAILGUN: { PM_StartTorsoAnim( TORSO_ATTACK3_PREPARE ); break; } \
-		case WP_PLASMAGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK3_PREPARE ); break; } \
-		case WP_SHOTGUN: \
-		case WP_BFG: { PM_ContinueTorsoAnim( TORSO_ATTACK4_PREPARE ); break; } \
-		} \
-	} else if ( pm->ps->pm_flags & PMF_KI_ATTACK ) { \
-		pm->cmd.buttons &= ~BUTTON_GESTURE; \
-		switch( pm->ps->weapon ) { \
-		default: \
-		case WP_MACHINEGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK0_STRIKE ); break; } \
-		case WP_ROCKET_LAUNCHER: { PM_ContinueTorsoAnim( TORSO_ATTACK1_STRIKE ); break; } \
-		case WP_GRENADE_LAUNCHER: { PM_ContinueTorsoAnim( TORSO_ATTACK2_STRIKE ); break; } \
-		case WP_PLASMAGUN: \
-		case WP_RAILGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK3_STRIKE ); break; } \
-		case WP_SHOTGUN: \
-		case WP_BFG: { PM_ContinueTorsoAnim( TORSO_ATTACK4_STRIKE ); break; } \
-		} \
-	}
-
-// BFP - Macro for torso handling, since the code looked repetitive, so this macro makes the code a bit shorter
-#define TORSOSTATUS_ANIM_HANDLING(other_torsostatus) \
-	if ( pm->ps->pm_flags & PMF_BLOCK ) PM_ContinueTorsoAnim( TORSO_BLOCK ); \
-	else if ( ( pm->cmd.buttons & BUTTON_MELEE ) && !( pm->ps->pm_flags & PMF_MELEE ) ) PM_ContinueTorsoAnim( TORSO_MELEE_READY ); \
-	else if ( pm->ps->pm_flags & PMF_MELEE ) PM_ContinueTorsoAnim( TORSO_MELEE_STRIKE ); \
-	else KI_ATTACK_TORSO_ANIM_HANDLING() \
-	else PM_ContinueTorsoAnim( other_torsostatus )
-
-// BFP - Macro for jump handling, since the code looked repetitive, so this macro makes the code a bit shorter
-#define FORCEJUMP_ANIM_HANDLING() ( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB )
-
-// BFP - Macro for fly handling, since the code looked repetitive, so this macro makes the code a bit shorter
-#define CONTINUEFLY_ANIM_HANDLING() \
-	if ( pm->cmd.forwardmove > 0 ) { TORSOSTATUS_ANIM_HANDLING( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); } \
-	else if ( pm->cmd.forwardmove < 0 ) { TORSOSTATUS_ANIM_HANDLING( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); } \
-	else { TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
-
-// BFP - Macro for melee strike handling, since the code looked repetitive, so this macro makes the code a bit shorter
-#define CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING(condition) \
-	/* Keep moving the legs when the player is attacking to the target through melee. If the condition variable isn't used leave using this value: 1 */ \
-	if ( ( condition ) && ( pm->ps->pm_flags & PMF_MELEE ) \
-	&& !( pm->ps->pm_flags & PMF_HITSTUN ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) { PM_ContinueLegsAnim( LEGS_MELEE_STRIKE ); }
-
-// BFP - Macro for movement handling in the slopes and when being near to the ground, since the code looked repetitive, so this macro makes the code a bit shorter
-#define SLOPES_NEARGROUND_ANIM_HANDLING(is_slope) \
-	if (is_slope) { \
-		if ( pm->ps->pm_flags & PMF_DUCKED ) { \
-			PM_ContinueLegsAnim( LEGS_IDLECR ); \
-			if ( pm->cmd.forwardmove < 0 \
-			|| ( pm->cmd.forwardmove > 0 \
-			|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) ) { PM_ContinueLegsAnim( LEGS_WALKCR ); } \
-			TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); \
-			return; \
-		} \
-	} else { \
-		/* If it's trying to crouch, then play the jump animation once */ \
-		if ( pm->ps->pm_flags & PMF_DUCKED ) { \
-			pm->ps->pm_flags |= PMF_NEARGROUND; \
-			FORCEJUMP_ANIM_HANDLING(); \
-			return; \
-		} \
-	} \
-	/* If it's very near to the other entity and the melee strike is executed, continue playing the melee strike legs animation */ \
-	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) { PM_ContinueLegsAnim( LEGS_IDLE ); CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 ) return; } \
-	if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) { \
-		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); } \
-		else if ( pm->cmd.forwardmove > 0 \
-		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_RUN ); TORSOSTATUS_ANIM_HANDLING( TORSO_RUN ); } \
-	} else { \
-		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); } \
-		else if ( pm->cmd.forwardmove > 0 \
-		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_WALK ); } \
-		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); \
-	} \
-	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
 
 /*
 ===============
@@ -245,6 +133,153 @@ static void PM_ForceLegsAnim( int anim ) {
 	PM_StartLegsAnim( anim );
 }
 
+
+
+/*
+==================
+PM_KiAttackTorsoAnim
+
+BFP - TODO: When implementing ki attacks, look up about the properties of the ki attacks from cfg and correct animation changes if required
+And tweak pmove_t struct, so we can handle that on g_active.c (like meleeHit), adding:
+attackType ("beam", "hitscan", "missile", "rdmissile", "sbeam" or "forcefield"), // type of attack
+randomWeaponTime (int, number of miliseconds), // random weapon time, maybe the max msec range of the random value
+chargeAttack (int / qboolean), // charging yes or no
+chargeAutoFire (int / qboolean), // even if it's charging the ki attack, fire
+minCharge (int [0-6]), // min charge points
+maxCharge (int [0-6]), // max charge points
+loopAnim (int / qboolean), // Maybe it's: use PM_ContinueTorsoAnim, if not: PM_StartTorsoAnim
+noAttackAnim (int / qboolean), // no animation strike yes or no
+priority (int [0-2]), // if 2, it'll act like a overpowered forcefield, if 1 like a beam, if 0 nothing
+movementPenalty (int, number of seconds) // enters WEAPON_STUN when the ki attack was being used
+-----
+The following sample testing torso ki attack animations are used with:
+(ultimate_blast)	WP_BFG would be					"beam", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 1, movementPenalty 0
+(finger_blast)		WP_MACHINEGUN would be			"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
+(ki_blast)			WP_ROCKET_LAUNCHER would be		"missile", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
+(super_homing)		WP_GRENADE_LAUNCHER would be	"missile", chargeAttack 1, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
+(finger_beam)		WP_RAILGUN would be				"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
+(eyebeam)			WP_LIGHTNING would be			"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
+(homing_special)	WP_PLASMAGUN would be			"rdmissile", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
+(aga)				WP_SHOTGUN would be				"forcefield", chargeAttack 1, chargeAutoFire 1, loopingAnim 1, noAttackAnim 0, priority 2, movementPenalty 2
+(blinding_flash)	would be						"forcefield", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 1, priority 0, movementPenalty 0
+
+About "sbeam" attackType would be like a beam that, by holding down the attack key, 
+you direct it wherever you want by moving the cursor. 
+If you stop pressing the attack key, it explodes to the point where it arrived.
+This attackType was originally left unfinished, 
+so there's a bug: after colliding the beam into something solid and 
+keep holding down the attack key, keeps muzzling and 
+doesn't shoot anything while the ki is wasted out of control. 
+==================
+*/
+static void PM_KiAttackTorsoAnim() { // BFP - Torso ki attack anims
+	if ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !( pm->ps->pm_flags & PMF_KI_ATTACK ) ) {
+		switch( pm->ps->weapon ) {
+		case WP_ROCKET_LAUNCHER: { PM_StartTorsoAnim( TORSO_ATTACK1_PREPARE ); break; }
+		case WP_GRENADE_LAUNCHER: { PM_ContinueTorsoAnim( TORSO_ATTACK2_PREPARE ); break; }
+		case WP_RAILGUN: { PM_StartTorsoAnim( TORSO_ATTACK3_PREPARE ); break; }
+		case WP_PLASMAGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK3_PREPARE ); break; }
+		case WP_SHOTGUN:
+		case WP_BFG: { PM_ContinueTorsoAnim( TORSO_ATTACK4_PREPARE ); break; }
+		}
+	} else if ( pm->ps->pm_flags & PMF_KI_ATTACK ) {
+		pm->cmd.buttons &= ~BUTTON_GESTURE;
+		switch( pm->ps->weapon ) {
+		default:
+		case WP_MACHINEGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK0_STRIKE ); break; }
+		case WP_ROCKET_LAUNCHER: { PM_ContinueTorsoAnim( TORSO_ATTACK1_STRIKE ); break; }
+		case WP_GRENADE_LAUNCHER: { PM_ContinueTorsoAnim( TORSO_ATTACK2_STRIKE ); break; }
+		case WP_PLASMAGUN:
+		case WP_RAILGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK3_STRIKE ); break; }
+		case WP_SHOTGUN:
+		case WP_BFG: { PM_ContinueTorsoAnim( TORSO_ATTACK4_STRIKE ); break; }
+		}
+	}
+}
+
+/*
+==================
+PM_TorsoStatusAnim
+==================
+*/
+static void PM_TorsoStatusAnim( int anim ) { // BFP - Torso status handling
+	if ( pm->ps->pm_flags & PMF_BLOCK ) PM_ContinueTorsoAnim( TORSO_BLOCK );
+	else if ( ( pm->cmd.buttons & BUTTON_MELEE ) && !( pm->ps->pm_flags & PMF_MELEE ) ) PM_ContinueTorsoAnim( TORSO_MELEE_READY );
+	else if ( pm->ps->pm_flags & PMF_MELEE ) PM_ContinueTorsoAnim( TORSO_MELEE_STRIKE );
+	else if ( ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !( pm->ps->pm_flags & PMF_KI_ATTACK ) ) 
+		|| ( pm->ps->pm_flags & PMF_KI_ATTACK ) ) PM_KiAttackTorsoAnim();
+    else PM_ContinueTorsoAnim( anim );
+}
+
+/*
+==================
+PM_ForceJumpAnim
+==================
+*/
+static void PM_ForceJumpAnim() { // BFP - Jump anim handling
+	( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB );
+}
+
+/*
+==================
+PM_ContinueFlyAnim
+==================
+*/
+static void PM_ContinueFlyAnim() { // BFP - Continuous fly anim handling
+	if ( pm->cmd.forwardmove > 0 ) { PM_TorsoStatusAnim( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); }
+	else if ( pm->cmd.forwardmove < 0 ) { PM_TorsoStatusAnim( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); }
+	else { PM_TorsoStatusAnim( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
+}
+
+/*
+===========================
+PM_ContinueMeleeStrikeLegsAnim
+===========================
+*/
+static void PM_ContinueMeleeStrikeLegsAnim( qboolean condition ) { // BFP - Melee strike legs anim handling
+	// keep moving the legs when the player is attacking to the target through melee 
+	// if the condition variable isn't used leave using this value: 1 or qtrue
+	if ( ( condition ) && ( pm->ps->pm_flags & PMF_MELEE )
+	&& !( pm->ps->pm_flags & PMF_HITSTUN ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) { PM_ContinueLegsAnim( LEGS_MELEE_STRIKE ); }
+}
+
+/*
+==================
+PM_SlopesNeargroundAnim
+==================
+*/
+static void PM_SlopesNeargroundAnim( qboolean is_slope ) { // BFP - Animation handling on the slopes and when being near to the ground
+	if ( is_slope ) {
+		if ( pm->ps->pm_flags & PMF_DUCKED ) {
+			PM_ContinueLegsAnim( LEGS_IDLECR );
+			if ( pm->cmd.forwardmove < 0
+			|| ( pm->cmd.forwardmove > 0
+			|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) ) { PM_ContinueLegsAnim( LEGS_WALKCR ); }
+			PM_TorsoStatusAnim( TORSO_STAND );
+			return;
+		}
+	} else {
+		// if it's trying to crouch, then play jumping animation once
+		if ( pm->ps->pm_flags & PMF_DUCKED ) {
+			pm->ps->pm_flags |= PMF_NEARGROUND;
+			PM_ForceJumpAnim();
+			return;
+		}
+	}
+	// if it's very near to the other entity and the melee strike is executed, continue playing the melee strike legs animation
+	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) { PM_ContinueLegsAnim( LEGS_IDLE ); PM_ContinueMeleeStrikeLegsAnim( qtrue ); return; }
+	if ( !( pm->cmd.buttons & BUTTON_WALKING ) ) {
+		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); PM_TorsoStatusAnim( TORSO_STAND ); }
+		else if ( pm->cmd.forwardmove > 0
+		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_RUN ); PM_TorsoStatusAnim( TORSO_RUN ); }
+	} else {
+		if ( pm->cmd.forwardmove < 0 ) { PM_ContinueLegsAnim( LEGS_BACK ); }
+		else if ( pm->cmd.forwardmove > 0
+		|| ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) { PM_ContinueLegsAnim( LEGS_WALK ); }
+		PM_TorsoStatusAnim( TORSO_STAND );
+	}
+	PM_ContinueMeleeStrikeLegsAnim( qtrue );
+}
 
 /*
 ==================
@@ -545,9 +580,9 @@ static qboolean PM_CheckJump( void ) {
 	PM_AddEvent( EV_JUMP );
 
 	// BFP - No PMF_BACKWARDS_JUMP handling (code removed)
-	FORCEJUMP_ANIM_HANDLING();
+	PM_ForceJumpAnim();
 
-	TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+	PM_TorsoStatusAnim( TORSO_STAND );
 
 	return qtrue;
 }
@@ -567,7 +602,7 @@ static qboolean PM_CheckWaterSpot( vec3_t direction, vec3_t spot, int cont, int 
 		if ( !cont ) {
 			VectorScale( pml.forward, horizontalVel, pm->ps->velocity );
 			pm->ps->velocity[2] = verticalVel;
-			FORCEJUMP_ANIM_HANDLING();
+			PM_ForceJumpAnim();
 			return qtrue;
 		}
 	}
@@ -703,12 +738,12 @@ static void PM_WaterMove( void ) {
 
 	// BFP - Underwater animation handling, uses flying animation in that case
 	if ( pm->waterlevel > 2 ) {
-		CONTINUEFLY_ANIM_HANDLING()
+		PM_ContinueFlyAnim();
 	}
 
 
 	// BFP - Melee strike legs animation
-	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
+	PM_ContinueMeleeStrikeLegsAnim( qtrue );
 
 #if 0
 	// jump = head for surface
@@ -934,7 +969,7 @@ static void PM_AirMove( void ) {
 	else
 		PM_SlideMove ( qtrue );
 #endif
-	TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+	PM_TorsoStatusAnim( TORSO_STAND );
 
 	PM_StepSlideMove ( qtrue );
 
@@ -1346,7 +1381,7 @@ static void PM_CheckStuck(void) {
 			}
 		}
 		// BFP - Melee strike legs animation
-		CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
+		PM_ContinueMeleeStrikeLegsAnim( qtrue );
 	}
 }
 #endif
@@ -1466,7 +1501,7 @@ static void PM_GroundTraceMissed( void ) {
 		pm->trace (&trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask);
 		if ( trace.fraction == 1.0 ) {
 			// BFP - No PMF_BACKWARDS_JUMP handling (code removed)
-			FORCEJUMP_ANIM_HANDLING();
+			PM_ForceJumpAnim();
 		}
 	}
 
@@ -1567,7 +1602,7 @@ static void PM_GroundTrace( void ) {
 		// BFP - Handling the PMF flags when that happens
 		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 
-		SLOPES_NEARGROUND_ANIM_HANDLING( 1 )
+		PM_SlopesNeargroundAnim( 1 );
 		return;
 	}
 
@@ -1785,7 +1820,7 @@ static void PM_Footsteps( void ) {
 	// BFP - Avoid when flying (for melee strike animation, that's applied)
 	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
 		// BFP - Melee strike legs animation, don't apply if it's playing the starting jump animation in the flight status
-		CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( pm->ps->pm_time <= 0 )
+		PM_ContinueMeleeStrikeLegsAnim( pm->ps->pm_time <= 0 );
 		return;
 	}
 
@@ -1810,15 +1845,15 @@ static void PM_Footsteps( void ) {
 		// also keep the torso
 		if ( pm->waterlevel > 0 ) { // BFP - Avoid bad animations when jumping off water
 			if ( pm->cmd.upmove == 0 ) {
-				CONTINUEFLY_ANIM_HANDLING()
+				PM_ContinueFlyAnim();
 			}
 			if ( pm->waterlevel <= 1 && pm->cmd.upmove > 0 ) {
-				FORCEJUMP_ANIM_HANDLING();
+				PM_ForceJumpAnim();
 			}
 		} else {
 			// BFP - Keep the torso when using a ki attack even after charged, avoid when melee is being used
 			if ( !( pm->cmd.buttons & BUTTON_MELEE ) ) {
-				KI_ATTACK_TORSO_ANIM_HANDLING()
+				PM_KiAttackTorsoAnim();
 			}
 		}
 
@@ -1838,7 +1873,7 @@ static void PM_Footsteps( void ) {
 			PM_ContinueLegsAnim( LEGS_IDLE );
 		}
 		// BFP - Melee strike legs animation
-		CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
+		PM_ContinueMeleeStrikeLegsAnim( qtrue );
 		return;
 	}
 	
@@ -1854,7 +1889,7 @@ static void PM_Footsteps( void ) {
 			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_WALKCR );
 			}
-			TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); // BFP - Keep the torso
+			PM_TorsoStatusAnim( TORSO_STAND ); // BFP - Keep the torso
 		}
 		// ducked characters never play footsteps
 	/*
@@ -1873,10 +1908,10 @@ static void PM_Footsteps( void ) {
 			// BFP - Replaced PMF_BACKWARDS_RUN handling
 			if ( pm->cmd.forwardmove < 0 ) {
 				PM_ContinueLegsAnim( LEGS_BACK );
-				TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); // BFP - Keep the torso
+				PM_TorsoStatusAnim( TORSO_STAND ); // BFP - Keep the torso
 			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_RUN );
-				TORSOSTATUS_ANIM_HANDLING( TORSO_RUN ); // BFP - Keep the torso
+				PM_TorsoStatusAnim( TORSO_RUN ); // BFP - Keep the torso
 			}
 			footstep = qtrue;
 		} else if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
@@ -1887,12 +1922,12 @@ static void PM_Footsteps( void ) {
 			} else if ( pm->cmd.forwardmove > 0 || ( pm->cmd.forwardmove == 0 && pm->cmd.rightmove ) ) {
 				PM_ContinueLegsAnim( LEGS_WALK );
 			}
-			TORSOSTATUS_ANIM_HANDLING( TORSO_STAND ); // BFP - Keep the torso
+			PM_TorsoStatusAnim( TORSO_STAND ); // BFP - Keep the torso
 		}
 	}
 
 	// BFP - Melee strike legs animation
-	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
+	PM_ContinueMeleeStrikeLegsAnim( qtrue );
 
 	// check for footstep / splash sounds
 	old = pm->ps->bobCycle;
@@ -1965,7 +2000,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 		&& !( pm->ps->pm_flags & PMF_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_MELEE )
 		&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
-			FORCEJUMP_ANIM_HANDLING(); // BFP - Keep legs animation
+			PM_ForceJumpAnim(); // BFP - Keep legs animation
 		}
 	}
 
@@ -2108,7 +2143,7 @@ static void PM_TorsoAnimation( void ) {
 		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY;
 		pm->ps->pm_flags |= PMF_NEARGROUND;
 
-		FORCEJUMP_ANIM_HANDLING();
+		PM_ForceJumpAnim();
 		return;
 	}
 
@@ -2127,13 +2162,13 @@ static void PM_TorsoAnimation( void ) {
 	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND )
 	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) {
 		pm->ps->pm_flags |= PMF_NEARGROUND;
-		FORCEJUMP_ANIM_HANDLING();
-		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+		PM_ForceJumpAnim();
+		PM_TorsoStatusAnim( TORSO_STAND );
 	}
 
 	// If idling, keep the torso
 	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
-		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+		PM_TorsoStatusAnim( TORSO_STAND );
 	}
 
 	// Handle the player movement animation when stopping to fly and falling near to the ground
@@ -2151,11 +2186,11 @@ static void PM_TorsoAnimation( void ) {
 	&& pm->ps->powerups[PW_FLIGHT] <= 0
 	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
-		SLOPES_NEARGROUND_ANIM_HANDLING( 0 )
+		PM_SlopesNeargroundAnim( 0 );
 	}
 
 	// BFP - Melee strike legs animation, don't apply if it isn't touching the ground
-	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( pm->ps->groundEntityNum != ENTITYNUM_NONE )
+	PM_ContinueMeleeStrikeLegsAnim( pm->ps->groundEntityNum != ENTITYNUM_NONE );
 
 #if 0
 	if ( pm->ps->weaponstate == WEAPON_READY ) {
@@ -2217,11 +2252,11 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 				if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
 				&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
 					if ( pm->cmd.forwardmove > 0 ) {
-						TORSOSTATUS_ANIM_HANDLING( TORSO_FLYA );
+						PM_TorsoStatusAnim( TORSO_FLYA );
 					} else if ( pm->cmd.forwardmove < 0 ) {
-						TORSOSTATUS_ANIM_HANDLING( TORSO_FLYB );
+						PM_TorsoStatusAnim( TORSO_FLYB );
 					} else {
-						TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+						PM_TorsoStatusAnim( TORSO_STAND );
 					}
 				}
 				PM_ForceLegsAnim( LEGS_JUMP );
@@ -2246,7 +2281,7 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 		pm->ps->pm_flags |= PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 
-		CONTINUEFLY_ANIM_HANDLING()
+		PM_ContinueFlyAnim();
 		return;
 	}
 
@@ -2264,7 +2299,7 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 		} else {
 			PM_StartLegsAnim( LEGS_JUMP );
 		}
-		TORSOSTATUS_ANIM_HANDLING( TORSO_STAND );
+		PM_TorsoStatusAnim( TORSO_STAND );
 	}
 }
 
@@ -2290,7 +2325,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 			&& ( pm->ps->pm_flags & PMF_FALLING )
 			&& pm->waterlevel <= 1 ) { // Don't force inside the water
 			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
-			FORCEJUMP_ANIM_HANDLING();
+			PM_ForceJumpAnim();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 		return;
@@ -2305,7 +2340,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
 			&& ( pm->ps->pm_flags & PMF_FALLING )
 			&& pm->waterlevel <= 1 ) { // Don't force inside the water
-			FORCEJUMP_ANIM_HANDLING();
+			PM_ForceJumpAnim();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 	}
@@ -2349,7 +2384,7 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
 			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
-			FORCEJUMP_ANIM_HANDLING();
+			PM_ForceJumpAnim();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 	}
@@ -2396,6 +2431,18 @@ static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 		pm->ps->powerups[PW_HASTE] = 0;
 		return;
 	}
+}
+
+/*
+===============
+PM_FireChargedState
+
+Handle weapon state and PMF flag when the ki attack is fully charged
+===============
+*/
+static void PM_FireChargedState( int wepstate ) { // BFP - Ki attack fire charged
+	pm->ps->pm_flags |= PMF_KI_ATTACK;
+	pm->ps->weaponstate = wepstate;
 }
 
 
@@ -2542,19 +2589,15 @@ static void PM_Weapon( void ) {
 			// BFP - When the ki attack is fully charged, enter beam firing state
 			// or enter dividing ki ball firing state if it's a dividing ki ball
 
-#define FIRE_CHARGED_STATE(wepstate) \
-	pm->ps->pm_flags |= PMF_KI_ATTACK; \
-	pm->ps->weaponstate = wepstate;
-
 			switch( pm->ps->weapon ) {
 			case WP_GRENADE_LAUNCHER:
-				FIRE_CHARGED_STATE( WEAPON_EXPLODING_KIBALLFIRING )
+				PM_FireChargedState( WEAPON_EXPLODING_KIBALLFIRING );
 				break;
 			case WP_PLASMAGUN:
-				FIRE_CHARGED_STATE( WEAPON_DIVIDINGKIBALLFIRING )
+				PM_FireChargedState( WEAPON_DIVIDINGKIBALLFIRING );
 				break;
 			case WP_BFG:
-				FIRE_CHARGED_STATE( WEAPON_BEAMFIRING )
+				PM_FireChargedState( WEAPON_BEAMFIRING );
 			}
 			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 		}
@@ -2641,7 +2684,6 @@ static void PM_Weapon( void ) {
 		}
 	}
 }
-#undef FIRE_CHARGED_STATE
 
 /*
 ================
@@ -3145,12 +3187,3 @@ void Pmove (pmove_t *pmove) {
 		}
 	}
 }
-
-// BFP - Undefine the macros
-#undef KI_ATTACK_TORSO_ANIM_HANDLING
-#undef TORSOSTATUS_ANIM_HANDLING
-#undef FORCEJUMP_ANIM_HANDLING
-#undef CONTINUEFLY_ANIM_HANDLING
-#undef CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING
-#undef SLOPES_NEARGROUND_ANIM_HANDLING
-

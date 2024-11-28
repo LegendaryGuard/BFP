@@ -783,9 +783,11 @@ qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (
 ZanzokenHandling
 =================
 */
-#define ZANZOKEN_NUMBER_TIMES_ALLOWED	20
-#define ZANZOKEN_ABUSE_DELAY			2000
 static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handling short-range teleport
+	const int	ZANZOKEN_NUMBER_TIMES_ALLOWED = 20, 
+				ZANZOKEN_ABUSE_DELAY = 2000,
+				MAX_ZANZOKEN_PRESS_TIME = 240;
+
 	// zanzoken cannot be used with ki charging status and using explosion wave even while being stun after using explosion wave
 	if ( !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) 
 	&& ( ent->client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
@@ -815,7 +817,6 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 		}
 
 		// once pressed and having one moment to press again, zanzoken will be possible at these milliseconds
-#define MAX_ZANZOKEN_PRESS_TIME		240
 		if ( !ucmd->rightmove 
 		&& level.time - ent->client->zanzokenPressTime > 100
 		&& level.time - ent->client->zanzokenPressTime <= MAX_ZANZOKEN_PRESS_TIME
@@ -833,7 +834,6 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 			ent->client->zanzokenRight = qfalse;
 			return;
 		}
-#undef MAX_ZANZOKEN_PRESS_TIME
 
 		// BFP - TODO: Zanzoken ki consume looks relative to powerlevel and the maximum ki quantity 
 		// (so, if it's 8160 as ki max quantity, then consumes 408)
@@ -881,19 +881,42 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 		}
 	}
 }
-#undef ZANZOKEN_NUMBER_TIMES_ALLOWED
-#undef ZANZOKEN_ABUSE_DELAY
+
+/*
+==========
+KiConsume
+==========
+*/
+static void KiConsume( gclient_t *client, int kiconsume, int addTime ) { // BFP - Ki skill consume
+	client->ps.stats[STAT_KI] -= kiconsume;
+	client->ps.weaponTime += addTime;
+}
+
+/*
+============
+ChargeKiAttackState
+============
+*/
+static void ChargeKiAttackState( gclient_t *client, int minCharge, int maxCharge, int addTime, int kiconsume ) { // BFP - Charge ki attack state
+	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < maxCharge ) {
+		++client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	}
+	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] >= minCharge ) {
+		client->ps.stats[STAT_READY_KI_ATTACK] = qtrue;
+	}
+	KiConsume( client, addTime, kiconsume );
+}
 
 /*
 =================
 KiAttackWeaponHandling
 =================
 */
-#define ATTACK_CHARGE_LIMIT 6	// BFP - Ki attack charge limit
 // BFP - TODO: Use pmove_t variable to handle the ki attacks and send the info to bg_pmove.c
 static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) {
 	gclient_t	*client;
 	int			addTime;
+	const int	ATTACK_CHARGE_LIMIT = 6; // BFP - Ki attack charge limit
 
 	client = ent->client;
 
@@ -901,19 +924,6 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 	if ( client->ps.pm_flags & PMF_HITSTUN ) {
 		return;
 	}
-
-#define KI_CONSUME(addTime, kiconsume) \
-	client->ps.stats[STAT_KI] -= kiconsume; \
-	client->ps.weaponTime += addTime;
-
-#define CHARGE_KI_ATTACK_STATE(minCharge, maxCharge, addTime, kiconsume) \
-	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < maxCharge ) { \
-		++client->ps.stats[STAT_KI_ATTACK_CHARGE]; \
-	} \
-	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] >= minCharge ) { \
-		client->ps.stats[STAT_READY_KI_ATTACK] = qtrue; \
-	} \
-	KI_CONSUME( addTime, kiconsume )
 
 	// Weapon states, Q3 doesn't have this way
 	switch( client->ps.weaponstate ) {
@@ -998,14 +1008,14 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 				// BFP - TODO: Also? Apply minCharge and maxCharge from reading bfp_weapon.cfg 
 				switch( client->ps.weapon ) {
 				case WP_GRENADE_LAUNCHER:
-					CHARGE_KI_ATTACK_STATE( 2, 2, 700, 20 )
+					ChargeKiAttackState( client, 2, 2, 700, 20 );
 					break;
 				case WP_PLASMAGUN:
-					CHARGE_KI_ATTACK_STATE( 2, ATTACK_CHARGE_LIMIT, 1000, 120 )
+					ChargeKiAttackState( client, 2, ATTACK_CHARGE_LIMIT, 1000, 120 );
 					client->divideBallKiCharged = client->ps.stats[STAT_KI_ATTACK_CHARGE];
 					break;
 				case WP_BFG:
-					CHARGE_KI_ATTACK_STATE( 2, ATTACK_CHARGE_LIMIT, 1000, 20 )
+					ChargeKiAttackState( client, 2, ATTACK_CHARGE_LIMIT, 1000, 20 );
 					break;
 				default: 
 					break;
@@ -1020,32 +1030,32 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 				client->ps.pm_flags &= ~PMF_KI_ATTACK;
 			}
 
-#define KI_CONSUME_ADDTIME(weptime, kiconsume) \
-	addTime = weptime; \
-	client->ps.stats[STAT_KI] -= kiconsume;
-
 			switch( client->ps.weapon ) {
 			default:
 			case WP_MACHINEGUN:
 				FireWeapon( ent );
 				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
-				KI_CONSUME_ADDTIME( 100, 10 )
+				addTime = 100;
+				client->ps.stats[STAT_KI] -= 10;
 				break;
 			case WP_ROCKET_LAUNCHER:
 				FireWeapon( ent );
 				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
-				KI_CONSUME_ADDTIME( 800, 50 )
+				addTime = 800;
+				client->ps.stats[STAT_KI] -= 50;
 				break;
 			case WP_LIGHTNING:
 				if ( client->ps.weaponTime <= 0 ) {
 					FireWeapon( ent );
-					KI_CONSUME_ADDTIME( 50, 70 )
+					addTime = 50;
+					client->ps.stats[STAT_KI] -= 70;
 				}
 				break;
 			case WP_RAILGUN:
 				FireWeapon( ent );
 				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
-				KI_CONSUME_ADDTIME( 1500, 150 )
+				addTime = 1500;
+				client->ps.stats[STAT_KI] -= 150;
 				break;
 			}
 
@@ -1064,14 +1074,14 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 	// BFP - NOTE: The dividing ki ball is triggering until pressing the attack key again after holded or changing weapon
 	case WEAPON_DIVIDINGKIBALLFIRING:
 		if ( ucmd->buttons & BUTTON_ATTACK ) {
-			KI_CONSUME( 0, 120 )
+			KiConsume( client, 0, 120 );
 		}
 		break;
 	// BFP - NOTE: That ki explosion wave is triggering until stop pressing the attack key or changing weapon,
 	// also when stopped enters in WEAPON_STUN state in 1 sec
 	case WEAPON_KIEXPLOSIONWAVE:
 		if ( client->ps.weaponTime <= 0 ) {
-			KI_CONSUME( 200, 20 )
+			KiConsume( client, 200, 20 );
 			if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < ATTACK_CHARGE_LIMIT ) {
 				++client->ps.stats[STAT_KI_ATTACK_CHARGE];
 			}
@@ -1102,9 +1112,6 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 	Com_Printf( "weaponTime: %d\n", client->ps.weaponTime );
 #endif	
 }
-#undef KI_CONSUME
-#undef CHARGE_KI_ATTACK_STATE
-#undef KI_CONSUME_ADDTIME
 
 /*
 ==============
