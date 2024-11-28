@@ -1936,7 +1936,15 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 			// If the player is stepping a mover:
 			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
 				// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
-				CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, trace.endpos );
+				vec3_t	dashSmokePos;
+				VectorCopy( trace.endpos, dashSmokePos );
+
+				// if stepping a mover
+				if ( !( trace.fraction <= 0.70f )
+				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
+					dashSmokePos[2] += 100;
+				}
+				CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, dashSmokePos );
 			}
 
 			waterTrace.endpos[2] -= 20; // BFP - Put a bit down to make the bubbles move
@@ -1956,24 +1964,44 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 			&& !cent->currentState.pos.trDelta[1] 
 			&& !cent->currentState.pos.trDelta[2] 
 #endif
-			&& ( trace.fraction <= 0.30f
+			&& ( trace.fraction <= 0.75f
 			// If the player is stepping a mover:
-			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
+			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE )
+			&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
 				// BFP - Spawn randomly the antigrav rock shaders with the particles
-				int shaderIndex = rand() % 3;
+				int		shaderIndex = rand() % 3;
+				vec3_t	antigravRockPos;
+				vec3_t	chargeSmokePos;
+				VectorCopy( trace.endpos, antigravRockPos );
+
+				// if stepping a mover
+				if ( !( trace.fraction <= 0.75f )
+				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
+					antigravRockPos[2] += 100;
+				}
 				switch ( shaderIndex ) {
 					case 0: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, trace.endpos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, antigravRockPos );
 						break;
 					}
 					case 1: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, trace.endpos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, antigravRockPos );
 						break;
 					}
 					default: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, trace.endpos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, antigravRockPos );
 					}
 				}
+				VectorCopy( trace.endpos, chargeSmokePos );
+				chargeSmokePos[2] += 20; // put a bit above
+
+				// if stepping a mover
+				if ( !( trace.fraction <= 0.75f )
+				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
+					chargeSmokePos[2] += 100;
+				}
+				// BFP - TODO: Set a customized base radius and smoke size for the player who is monster on Monster gametype
+				CG_ParticleChargeSmoke( cent, cgs.media.particleSmokeShader, chargeSmokePos, 40, 450, 80 );
 			}
 		}
 	}

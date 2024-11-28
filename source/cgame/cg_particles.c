@@ -127,7 +127,7 @@ static int	numShaderAnims;
 // done.
 
 #define		PARTICLE_GRAVITY	40
-#define		MAX_PARTICLES	1024 * 3
+#define		MAX_PARTICLES	1024 * 6
 
 static cparticle_t	*active_particles, *free_particles;
 static cparticle_t	particles[MAX_PARTICLES];
@@ -147,6 +147,8 @@ static int				timenonscaled;
 
 // BFP - Function to handle bubbles
 void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org );
+// BFP - Function to handle charge smoke particles
+void CG_ChargeSmokeHandling( cparticle_t *p, vec3_t org );
 
 /*
 ===============
@@ -411,6 +413,12 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 					p->link = qtrue;
 				}
 			}
+		}
+
+		// BFP - Charge smoke particle handling here
+		if (p->type == P_SMOKE_IMPACT && p->snum == 1)
+		{
+			CG_ChargeSmokeHandling( p, org );
 		}
 
 		// BFP - Antigrav rock type
@@ -892,7 +900,7 @@ void CG_AddParticles (void)
 		// BFP - Make alpha timescaled for smoke-like particles
 		alpha = p->alpha + time*p->alphavel*(cg_timescale.value <= 0.1 ? 0.1 : cg_timescale.value);
 		if (p->alphavel < 0.0f) p->alpha = alpha; // BFP - Alpha fading out
-		if (p->alpha <= 0 && cg.frametime > 0.0f) // BFP - If paused, don't fade out
+		if (p->alpha <= 0)
 		{	// faded out
 			p->next = free_particles;
 			free_particles = p;
@@ -1109,21 +1117,26 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 	}
 }
 
-// BFP - Particle for dash smoke when using ki boost and moving in the ground
+// BFP - Particle for dash smoke when using ki boost and moving on the ground
 void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 {
 	cparticle_t	*p;
 
 	// if (!pshader) CG_Printf ("CG_ParticleDashSmoke pshader == ZERO!\n");
 
+	// BFP - Don't spawn on pause
+	if ( cg.frametime <= 0.0f ) {
+		return;
+	}
+
 	// Too much smoke...
 	// That cent->trailTime can be handled to avoid spawning too much and only spawn when the game isn't paused, hehehe :P
-	if ( cent->trailTime > cg.time ) {
+	if ( cent->trailTime > timenonscaled ) {
 		return;
 	}
 	cent->trailTime += 50;
-	if ( cent->trailTime < cg.time ) {
-		cent->trailTime = cg.time;
+	if ( cent->trailTime < timenonscaled ) {
+		cent->trailTime = timenonscaled;
 	}
 
 	if (!free_particles)
@@ -1135,6 +1148,9 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 	active_particles = p;
 
 	p->time = timenonscaled;
+
+	// BFP - Keep entity number to identify who is using
+	p->entityNum = cent->currentState.clientNum;
 
 	p->alpha = 0.45;
 	p->alphavel = -0.1;
@@ -1166,6 +1182,112 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 			1400 );
 
 	p->link = qfalse; // to distinguish the type of smoke
+}
+
+// BFP - Particle for charge smoke when using ki charge near the ground
+void CG_ParticleChargeSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float radialVel, float baseRadius)
+{
+	cparticle_t *p;
+	float angle, radius;
+	vec3_t dir, radial, angular;
+
+	// if (!pshader) CG_Printf ("CG_ParticleChargeSmoke pshader == ZERO!\n");
+
+	// Too much smoke...
+	// That cent->chargeSmokeTime can be handled to avoid spawning too much and only spawn when the game isn't paused, hehehe :P
+	// It isn't possible reusing cent->trailTime, it would have client visual issues
+	/*if ( cent->chargeSmokeTime > timenonscaled ) {
+		return;
+	}
+	cent->chargeSmokeTime += 10;
+	if ( cent->chargeSmokeTime < timenonscaled ) {
+		cent->chargeSmokeTime = timenonscaled;
+	}*/
+
+	if (!free_particles)
+		return;
+
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+
+	p->time = timenonscaled;
+
+	// BFP - Keep entity number to identify who is using
+	p->entityNum = cent->currentState.clientNum;
+
+	p->alpha = 0.31;
+	p->alphavel = -0.09;
+
+	p->pshader = pshader;
+	p->start = cent->currentState.origin[2];
+	p->end = cent->currentState.origin2[2];
+
+	p->endtime = timenonscaled + 2000;
+	p->startfade = timenonscaled + 100;
+
+	p->height = p->width = size;
+
+	p->endheight = p->height * 2;
+	p->endwidth = p->width * 2;
+
+	p->type = P_SMOKE_IMPACT;
+
+	VectorCopy( origin, p->org );
+
+	// randomize angle and radius for circular motion
+	angle = crandom() * 360.0f;
+	radius = baseRadius + crandom() * 10; // radius around the origin
+
+	// compute radial direction
+	dir[0] = cos( DEG2RAD( angle ) );
+	dir[1] = sin( DEG2RAD( angle ) );
+	dir[2] = 0;
+
+	// initial position offset for circular spread
+	VectorMA( origin, radius, dir, p->org );
+
+	// velocity for circular motion
+	VectorScale( dir, radialVel, radial ); // radial component of velocity
+	VectorSet( angular, -dir[1], dir[0], 0 ); // perpendicular for tangential motion
+	VectorScale( angular, 100, angular ); // tangential speed
+
+	// combine radial and angular velocity
+	p->vel[0] = radial[0] + angular[0];
+	p->vel[1] = radial[1] + angular[1];
+	p->vel[2] = radial[2] + angular[2];
+
+	// vertical lift
+	p->vel[2] = 50 + crandom() * 10;
+
+	// dispersion
+	VectorSet( p->accel, 
+			crandom() * 20, 
+			crandom() * 20, 
+			5);
+
+	p->link = qfalse;
+	p->snum = 1;
+}
+
+// BFP - Handle charge smoke particles when touching something solid
+void CG_ChargeSmokeHandling( cparticle_t *p, vec3_t org ) {
+	trace_t		trace;
+	vec3_t		start, end;
+	int			contents;
+
+	VectorCopy( org, start );
+	VectorCopy( org, end );
+
+	// trace to check the collision
+	trap_CM_BoxTrace( &trace, start, end, vec3_origin, vec3_origin, 0, CONTENTS_SOLID );
+
+	contents = trap_CM_PointContents( trace.endpos, 0 );
+	if ( contents & CONTENTS_SOLID ) { // remove when grazing something solid
+		p->next = NULL;
+		p->color = p->alpha = 0;
+	}
 }
 
 // BFP - Antigrav rock particles for ki charging status
@@ -1391,6 +1513,135 @@ void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean w
 	p->snum = 0;
 }
 
+void CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel)
+{
+	cparticle_t	*p;
+
+	if (!free_particles)
+		return;
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+	p->time = timenonscaled;
+	p->endtime = timenonscaled + 400;
+
+	p->color = 0;
+	p->alpha = 1;
+	p->alphavel = 0;
+	p->pshader = pshader;
+	p->height = p->width = (rand() % 10) + 5;
+
+	p->type = P_DEBRIS;
+
+	VectorCopy( origin, p->org );
+
+	p->start = origin[2];
+
+	VectorCopy( vel, p->vel );
+
+	p->accel[0] = (crandom() * 600);
+	p->accel[1] = (crandom() * 600);
+	p->accel[2] = 300 + (crandom() * 100);
+
+	p->roll = 0; // no bounce
+	p->link = qfalse;
+	p->snum = 1; // treat it as non-solid
+}
+
+// BFP - Unused function for particles, looks like here is to determine in the areas
+// CG_SnowLink was never used in Q3
+#if 0
+int CG_NewParticleArea (int num)
+{
+	// const char *str;
+	char *str, *token;
+	int type;
+	vec3_t origin, origin2;
+	int		i;
+	float range = 0;
+	int turb, numparticles, snum;
+	
+	str = (char *) CG_ConfigString (num);
+	if (!str[0])
+		return (0);
+	
+	// returns type 128 64 or 32
+	token = COM_Parse (&str);
+	type = atoi (token);
+	
+	switch( type ) {
+		case 4: range =   8; break;
+		case 5: range =  16; break;
+		case 3:
+		case 6: range =  32; break;
+		case 2: 
+		case 7: range =  64; break;
+		case 1: range = 128; break;
+		case 0: range = 256; break;
+	}
+
+	for (i=0; i<3; i++)
+	{
+		token = COM_Parse (&str);
+		origin[i] = atof (token);
+	}
+
+	for (i=0; i<3; i++)
+	{
+		token = COM_Parse (&str);
+		origin2[i] = atof (token);
+	}
+		
+	token = COM_Parse (&str);
+	numparticles = atoi (token);
+	
+	token = COM_Parse (&str);
+	turb = atoi (token);
+
+	token = COM_Parse (&str);
+	snum = atoi (token);
+	
+	for (i=0; i<numparticles; i++)
+	{
+		/*if (type >= 4)
+			CG_ParticleBubble (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
+		else*/
+			CG_ParticleSnow (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
+	}
+
+	return (1);
+}
+
+void	CG_SnowLink (centity_t *cent, qboolean particleOn)
+{
+	cparticle_t		*p, *next;
+	int id;
+
+	id = cent->currentState.frame;
+
+	for (p=active_particles ; p ; p=next)
+	{
+		next = p->next;
+		
+		if (p->type == P_WEATHER || p->type == P_WEATHER_TURBULENT)
+		{
+			if (p->snum == id)
+			{
+				if (particleOn)
+					p->link = qtrue;
+				else
+					p->link = qfalse;
+			}
+		}
+
+	}
+}
+#endif
+
+
+// BFP - Unused particle stuff, saved for later :P
+#if 0
 void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)
 {
 
@@ -1436,7 +1687,6 @@ void CG_ParticleSmoke (qhandle_t pshader, centity_t *cent)
 
 	p->roll = 8 + (crandom() * 4);
 }
-
 
 void CG_ParticleBulletDebris (vec3_t org, vec3_t vel, int duration)
 {
@@ -1535,42 +1785,6 @@ void CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duratio
 	VectorCopy( vel, p->vel );
 	VectorClear( p->accel );
 
-}
-
-void CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel)
-{
-	cparticle_t	*p;
-
-	if (!free_particles)
-		return;
-	p = free_particles;
-	free_particles = p->next;
-	p->next = active_particles;
-	active_particles = p;
-	p->time = timenonscaled;
-	p->endtime = timenonscaled + 400;
-
-	p->color = 0;
-	p->alpha = 1;
-	p->alphavel = 0;
-	p->pshader = pshader;
-	p->height = p->width = (rand() % 10) + 5;
-
-	p->type = P_DEBRIS;
-
-	VectorCopy( origin, p->org );
-
-	p->start = origin[2];
-
-	VectorCopy( vel, p->vel );
-
-	p->accel[0] = (crandom() * 450);
-	p->accel[1] = (crandom() * 450);
-	p->accel[2] = 250 + (crandom() * 50);
-
-	p->roll = 0; // no bounce
-	p->link = qfalse;
-	p->snum = 1; // treat it as non-solid
 }
 
 void CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir)
@@ -1709,99 +1923,6 @@ void CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, 
 	p->rotate = qfalse;
 }
 
-// BFP - Unused function for particles, looks like here is to determine in the areas
-// CG_SnowLink was never used in Q3
-#if 0
-int CG_NewParticleArea (int num)
-{
-	// const char *str;
-	char *str, *token;
-	int type;
-	vec3_t origin, origin2;
-	int		i;
-	float range = 0;
-	int turb, numparticles, snum;
-	
-	str = (char *) CG_ConfigString (num);
-	if (!str[0])
-		return (0);
-	
-	// returns type 128 64 or 32
-	token = COM_Parse (&str);
-	type = atoi (token);
-	
-	switch( type ) {
-		case 4: range =   8; break;
-		case 5: range =  16; break;
-		case 3:
-		case 6: range =  32; break;
-		case 2: 
-		case 7: range =  64; break;
-		case 1: range = 128; break;
-		case 0: range = 256; break;
-	}
-
-	for (i=0; i<3; i++)
-	{
-		token = COM_Parse (&str);
-		origin[i] = atof (token);
-	}
-
-	for (i=0; i<3; i++)
-	{
-		token = COM_Parse (&str);
-		origin2[i] = atof (token);
-	}
-		
-	token = COM_Parse (&str);
-	numparticles = atoi (token);
-	
-	token = COM_Parse (&str);
-	turb = atoi (token);
-
-	token = COM_Parse (&str);
-	snum = atoi (token);
-	
-	for (i=0; i<numparticles; i++)
-	{
-		/*if (type >= 4)
-			CG_ParticleBubble (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
-		else*/
-			CG_ParticleSnow (cgs.media.waterBubbleShader, origin, origin2, turb, range, snum);
-	}
-
-	return (1);
-}
-
-void	CG_SnowLink (centity_t *cent, qboolean particleOn)
-{
-	cparticle_t		*p, *next;
-	int id;
-
-	id = cent->currentState.frame;
-
-	for (p=active_particles ; p ; p=next)
-	{
-		next = p->next;
-		
-		if (p->type == P_WEATHER || p->type == P_WEATHER_TURBULENT)
-		{
-			if (p->snum == id)
-			{
-				if (particleOn)
-					p->link = qtrue;
-				else
-					p->link = qfalse;
-			}
-		}
-
-	}
-}
-#endif
-
-
-// BFP - Unused particle stuff, saved for later :P
-#if 0
 void CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent)
 {
 	cparticle_t	*p;

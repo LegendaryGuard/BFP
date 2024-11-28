@@ -170,6 +170,7 @@ typedef struct centity_s {
 
 	int				trailTime;		// so missile trails can handle dropped initial packets
 	int				dustTrailTime;
+	int				chargeSmokeTime;	// BFP - Charge smoke time
 	int				miscTime;
 
 	int				snapShotTime;	// last time this entity was found in a snapshot
@@ -1549,11 +1550,6 @@ qboolean	trap_GetEntityToken( char *buffer, int bufferSize );
 
 void	CG_ClearParticles (void);
 void	CG_AddParticles (void);
-void	CG_ParticleSmoke (qhandle_t pshader, centity_t *cent);
-void	CG_ParticleBulletDebris (vec3_t	org, vec3_t vel, int duration);
-void	CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir);
-void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, float alpha);
-void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
 // BFP - Bubble particle
 void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range);
 // BFP - Dash smoke particle for ki boost when moving in the ground
@@ -1568,9 +1564,16 @@ void	CG_ParticleAuraHandling (centity_t *cent);
 void	CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water);
 // BFP - Spark particle
 void	CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel);
+// BFP - Charge smoke particle for ki charge
+void	CG_ParticleChargeSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float radialVel, float baseRadius);
 
 // BFP - Unused particle stuff, saved for later :P
 #if 0
+void	CG_ParticleSmoke (qhandle_t pshader, centity_t *cent);
+void	CG_ParticleBulletDebris (vec3_t	org, vec3_t vel, int duration);
+void	CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir);
+void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, float alpha);
+void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
 void	CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum);
 void	CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent);
 int		CG_NewParticleArea ( int num ); // BFP - Unused function for particles, looks like here is to determine in the areas

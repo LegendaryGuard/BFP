@@ -592,7 +592,7 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 		sprOrg[1] += (rand() % 24);
 		sprOrg[2] += (rand() % 24);
 
-		VectorScale( dir, 1500 + (rand() % 1000), sprVel );
+		VectorScale( dir, 2000 + (rand() % 1000), sprVel );
 		sprVel[0] += (rand() % 2800) - 1500;
 		sprVel[1] += (rand() % 2800) - 1500;
 		sprVel[2] += (rand() % 2200) - 1000;
@@ -638,8 +638,8 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles 
 
 		// move faster
 		VectorScale( dir, 1500 + (rand() % 1000), sparkVel );
-		sparkVel[0] += 1.5 * (rand() % 3500) - 1500;
-		sparkVel[1] += 1.5 * (rand() % 3500) - 1500;
+		sparkVel[0] += crandom() * ( 2 * (rand() % 3500) - 1500 );
+		sparkVel[1] += crandom() * ( 2 * (rand() % 3500) - 1500 );
 		sparkVel[2] += 1.5 * (rand() % 2100) - 1000;
 
 		switch ( shaderIndex ) {
