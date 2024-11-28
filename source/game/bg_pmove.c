@@ -33,11 +33,11 @@ pml_t		pml;
 // movement parameters
 float	pm_stopspeed = 100.0f;
 float	pm_duckScale = 0.25f;
-float	pm_swimScale = 0.50f;
+// float	pm_swimScale = 0.50f; // BFP - No water speed slowness
 
 float	pm_accelerate = 10.0f;
-float	pm_airaccelerate = 1.0f;
-float	pm_wateraccelerate = 4.0f;
+float	pm_airaccelerate = 6.0f; // BFP - Add more air acceleration to handle user movement intentions, before 1.0f
+float	pm_wateraccelerate = 20.0f; // BFP - Add more water acceleration to handle user movement intentions, before 4.0f
 float	pm_flyaccelerate = 2.0f; // BFP - Add less flight acceleration, before 8.0f
 
 float	pm_friction = 6.0f;
@@ -322,7 +322,8 @@ static void PM_Friction( void ) {
 	}
 
 	// apply water friction even if just wading
-	if ( pm->waterlevel ) {
+	if ( pm->waterlevel 
+	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) { // BFP - Don't apply on flight
 		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
 	}
 
@@ -553,6 +554,28 @@ static qboolean PM_CheckJump( void ) {
 
 /*
 =============
+PM_CheckWaterSpot
+=============
+*/
+static qboolean PM_CheckWaterSpot( vec3_t direction, vec3_t spot, int cont, int horizontalVel, int verticalVel ) { // BFP - Check spot to jump off water
+	VectorMA ( pm->ps->origin, 30, direction, spot );
+	spot[2] += 4;
+	cont = pm->pointcontents( spot, pm->ps->clientNum );
+	if ( pm->pointcontents( spot, pm->ps->clientNum ) & CONTENTS_SOLID ) {
+		spot[2] += 16;
+		cont = pm->pointcontents( spot, pm->ps->clientNum );
+		if ( !cont ) {
+			VectorScale( pml.forward, horizontalVel, pm->ps->velocity );
+			pm->ps->velocity[2] = verticalVel;
+			FORCEJUMP_ANIM_HANDLING();
+			return qtrue;
+		}
+	}
+	return qfalse;
+}
+
+/*
+=============
 PM_CheckWaterJump
 =============
 */
@@ -561,7 +584,7 @@ static qboolean	PM_CheckWaterJump( void ) {
 	int		cont;
 	// BFP - Apply for backwards, left and right too, Q3 doesn't have that
 	vec3_t	flatforward, flatbackward, flatleft, flatright;
-	const int WATER_JUMP_HORIZONTAL_VELOCITY = 200, WATER_JUMP_VERTICAL_VELOCITY = 250;
+	const int WATER_JUMP_HORIZONTAL_VELOCITY = 200, WATER_JUMP_VERTICAL_VELOCITY = 300;
 
 	if (pm->ps->pm_time) {
 		return qfalse;
@@ -595,60 +618,34 @@ static qboolean	PM_CheckWaterJump( void ) {
 	flatright[2] = 0;
 	VectorNormalize( flatright );
 
+	// BFP - Don't auto-jump forward/backward
+	if ( pm->cmd.forwardmove == 0 ) {
+		return qfalse;
+	}
+
 	// check forward
-	VectorMA ( pm->ps->origin, 30, flatforward, spot );
-	spot[2] += 4;
-	cont = pm->pointcontents( spot, pm->ps->clientNum );
-	if ( cont & CONTENTS_SOLID ) {
-		spot[2] += 16;
-		cont = pm->pointcontents( spot, pm->ps->clientNum );
-		if ( !cont ) {
-			VectorScale( pml.forward, WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
-			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
-			return qtrue;
-		}
+	if ( PM_CheckWaterSpot( flatforward, spot, cont, WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+		return qtrue;
 	}
 
 	// check backward
-	VectorMA( pm->ps->origin, 30, flatbackward, spot );
-	spot[2] += 4;
-	cont = pm->pointcontents( spot, pm->ps->clientNum );
-	if ( cont & CONTENTS_SOLID ) {
-		spot[2] += 16;
-		cont = pm->pointcontents( spot, pm->ps->clientNum );
-		if ( !cont ) {
-			VectorScale( pml.forward, -WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
-			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
-			return qtrue;
-		}
+	if ( PM_CheckWaterSpot( flatbackward, spot, cont, -WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+		return qtrue;
+	}
+
+	// BFP - Don't auto-jump left/right
+	if ( pm->cmd.rightmove == 0 ) {
+		return qfalse;
 	}
 
 	// check left
-	VectorMA( pm->ps->origin, 30, flatleft, spot );
-	spot[2] += 4;
-	cont = pm->pointcontents( spot, pm->ps->clientNum );
-	if ( cont & CONTENTS_SOLID ) {
-		spot[2] += 16;
-		cont = pm->pointcontents( spot, pm->ps->clientNum );
-		if ( !cont ) {
-			VectorScale( pml.right, -WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
-			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
-			return qtrue;
-		}
+	if ( PM_CheckWaterSpot( flatleft, spot, cont, -WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+		return qtrue;
 	}
 
 	// check right
-	VectorMA( pm->ps->origin, 30, flatright, spot );
-	spot[2] += 4;
-	cont = pm->pointcontents( spot, pm->ps->clientNum );
-	if ( cont & CONTENTS_SOLID ) {
-		spot[2] += 16;
-		cont = pm->pointcontents( spot, pm->ps->clientNum );
-		if ( !cont ) {
-			VectorScale( pml.right, WATER_JUMP_HORIZONTAL_VELOCITY, pm->ps->velocity );
-			pm->ps->velocity[2] = WATER_JUMP_VERTICAL_VELOCITY;
-			return qtrue;
-		}
+	if ( PM_CheckWaterSpot( flatright, spot, cont, WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+		return qtrue;
 	}
 
 	return qfalse;
@@ -694,10 +691,8 @@ static void PM_WaterMove( void ) {
 	float	scale;
 	float	vel;
 
-	// BFP - Avoid adding friction in the water while charging and flying
-	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
-	|| ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) 
-	&& pm->ps->powerups[PW_FLIGHT] > 0 ) {
+	// BFP - Avoid adding friction under water while flying
+	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
 		return;
 	}
 
@@ -706,8 +701,11 @@ static void PM_WaterMove( void ) {
 		return;
 	}
 
-	// BFP - Water animation handling, uses flying animation in that case
-	CONTINUEFLY_ANIM_HANDLING()
+	// BFP - Underwater animation handling, uses flying animation in that case
+	if ( pm->waterlevel > 2 ) {
+		CONTINUEFLY_ANIM_HANDLING()
+	}
+
 
 	// BFP - Melee strike legs animation
 	CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
@@ -746,13 +744,17 @@ static void PM_WaterMove( void ) {
 	VectorCopy (wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 
+// BFP - No water speed slowness
+#if 0
 	if ( wishspeed > pm->ps->speed * pm_swimScale ) {
 		wishspeed = pm->ps->speed * pm_swimScale;
 	}
+#endif
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) )
+	&& ( pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0 || pm->cmd.upmove != 0 ) ) {
 		wishspeed *= scale;
 	}
 
@@ -803,6 +805,10 @@ static void PM_FlyMove( void ) {
 	} else {
 		for ( i = 0; i < 3; i++ ) {
 			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove + scale * pml.up[i]*pm->cmd.upmove;
+		}
+		// BFP - Keep moving up if forward/backward, left/right and up directional keys are pressed
+		if ( pm->cmd.forwardmove != 0 && pm->cmd.rightmove != 0 && pm->cmd.upmove != 0 ) {
+			wishvel[2] += 12;
 		}
 	}
 
@@ -1058,6 +1064,8 @@ static void PM_WalkMove( void ) {
 		}
 	}
 
+// BFP - No water speed slowness
+#if 0
 	// clamp the speed lower if wading or walking on the bottom
 	if ( pm->waterlevel ) {
 		float	waterScale;
@@ -1068,11 +1076,12 @@ static void PM_WalkMove( void ) {
 			wishspeed = pm->ps->speed * waterScale;
 		}
 	}
+#endif
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		wishspeed *= 2; // move at that speed rate
+		wishspeed *= 3; // move at that speed rate
 	}
 
 	// when a player gets hit, they temporarily lose
@@ -1316,6 +1325,7 @@ static void PM_CrashLand( void ) {
 PM_CheckStuck
 =============
 */
+#if 0 /* BFP - Disabled, since that doesn't make sense */
 static void PM_CheckStuck(void) {
 	// BFP - NOTE: Curiously and originally, BFP uses this function to animate when the player is stuck, 
 	// that can be tested when the player is pretty near to the other player
@@ -1339,6 +1349,7 @@ static void PM_CheckStuck(void) {
 		CONTINUEMELEESTRIKE_LEGS_ANIM_HANDLING( 1 )
 	}
 }
+#endif
 
 /*
 =============
@@ -1380,6 +1391,53 @@ static int PM_CorrectAllSolid( trace_t *trace ) {
 	pml.walking = qfalse;
 
 	return qfalse;
+}
+
+/*
+=============
+PM_ControlJumpOnGround
+=============
+*/
+static void PM_ControlJumpOnGround() { // BFP - A control to handle user movement intentions when jumping off the ground
+	if ( pm->ps->groundEntityNum != ENTITYNUM_NONE 
+	&& pm->ps->powerups[PW_FLIGHT] <= 0
+	&& ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) 
+		&& ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
+			|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
+		float scale = PM_CmdScale( &pm->cmd );
+		float fmove, smove;
+		float vel;
+		int i;
+
+		fmove = pm->cmd.forwardmove;
+		smove = pm->cmd.rightmove;
+		pml.forward[2] = 0;
+		pml.right[2] = 0;
+		VectorNormalize (pml.forward);
+		VectorNormalize (pml.right);
+
+		for ( i = 0 ; i < 2 ; i++ ) {
+			pm->ps->velocity[i] = pml.forward[i]*fmove + pml.right[i]*smove;
+		}
+
+		if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+		&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+		&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+			pm->ps->velocity[0] *= 10;
+			pm->ps->velocity[1] *= 10;
+		}
+		vel = VectorLength( pm->ps->velocity );
+		if ( vel > 640 ) { // keep maximum speed
+			vel = 640;
+		}
+
+		// slide along the ground plane
+		PM_ClipVelocity ( pm->ps->velocity, pml.groundTrace.plane.normal, 
+			pm->ps->velocity, OVERCLIP );
+
+		VectorNormalize( pm->ps->velocity );
+		VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
+	}
 }
 
 
@@ -1488,6 +1546,15 @@ static void PM_GroundTrace( void ) {
 		// BFP - Handle if the player is trying to jump and/or do another movements
 		// when stepping the steep slopes
 		if ( PM_CheckJump () ) {
+			// BFP - Handle jumping and changing the direction
+			PM_ControlJumpOnGround();
+			if ( ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) )
+			&& !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+			&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+			&& pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) {
+				pm->ps->velocity[0] *= 5;
+				pm->ps->velocity[1] *= 5;
+			}
 			// jumped away
 			if ( pm->waterlevel > 1 ) {
 				PM_WaterMove();
@@ -1556,22 +1623,7 @@ static void PM_GroundTrace( void ) {
 	pm->ps->groundEntityNum = trace.entityNum;
 
 	// BFP - Avoid abnormal speed (and strafe - or defrag)
-	if ( pm->ps->groundEntityNum != ENTITYNUM_NONE 
-	&& pm->ps->powerups[PW_FLIGHT] <= 0
-	&& ( pm->cmd.upmove > 0 
-		|| ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) ) {
-		float vel = VectorLength( pm->ps->velocity );
-		if ( vel > 640 ) { // keep maximum speed
-			vel = 640;
-		}
-
-		// slide along the ground plane
-		PM_ClipVelocity ( pm->ps->velocity, pml.groundTrace.plane.normal, 
-			pm->ps->velocity, OVERCLIP );
-
-		VectorNormalize( pm->ps->velocity );
-		VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
-	}
+	PM_ControlJumpOnGround();
 
 	// don't reset the z velocity for slopes
 	// pm->ps->velocity[2] = 0;
@@ -1751,13 +1803,18 @@ static void PM_Footsteps( void ) {
 		+  pm->ps->velocity[1] * pm->ps->velocity[1] );
 
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
-		// BFP - PM_CheckStuck has been moved here, Q3 and the rest of mods hadn't used this
-		PM_CheckStuck();
+		// BFP - PM_CheckStuck has been moved here, Q3 and the rest of mods hadn't used this. Currently disabled, since that doesn't make sense
+		// PM_CheckStuck();
 
 		// BFP - Underwater animation handling, uses flying animation in that case
 		// also keep the torso
-		if ( pm->waterlevel > 2 ) {
-			CONTINUEFLY_ANIM_HANDLING()
+		if ( pm->waterlevel > 0 ) { // BFP - Avoid bad animations when jumping off water
+			if ( pm->cmd.upmove == 0 ) {
+				CONTINUEFLY_ANIM_HANDLING()
+			}
+			if ( pm->waterlevel <= 1 && pm->cmd.upmove > 0 ) {
+				FORCEJUMP_ANIM_HANDLING();
+			}
 		} else {
 			// BFP - Keep the torso when using a ki attack even after charged, avoid when melee is being used
 			if ( !( pm->cmd.buttons & BUTTON_MELEE ) ) {
@@ -1869,21 +1926,46 @@ Generate sound events for entering and leaving water
 ==============
 */
 static void PM_WaterEvents( void ) {		// FIXME?
+	vec3_t		point;
+	int			cont;
+
+	// BFP - Jumping off water surface, handle sound event for footsplash
+	point[0] = pm->ps->origin[0];
+	point[1] = pm->ps->origin[1];
+	point[2] = pm->ps->origin[2] + MINS_Z + 6;
+	cont = pm->pointcontents( point, pm->ps->clientNum );
+
 	//
 	// if just entered a water volume, play a sound
 	//
 	if (!pml.previous_waterlevel && pm->waterlevel) {
-		PM_AddEvent( EV_WATER_TOUCH );
+		if ( !( cont & MASK_WATER )
+		&& pm->ps->powerups[PW_FLIGHT] <= 0
+		&& pm->cmd.upmove > 0 ) {
+			PM_AddEvent( EV_FOOTSPLASH ); // BFP - Play a different and smooth sound
+			return;
+		} else {
+			PM_AddEvent( EV_WATER_TOUCH );
+		}
 	}
 
 	//
 	// if just completely exited a water volume, play a sound
 	//
 	if (pml.previous_waterlevel && !pm->waterlevel) {
-		PM_AddEvent( EV_WATER_LEAVE );
-		// BFP - Handle jumping animation when getting out of the water
-		if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
-			FORCEJUMP_ANIM_HANDLING();
+		if ( !( cont & MASK_WATER )
+		&& pm->ps->powerups[PW_FLIGHT] <= 0
+		&& pm->cmd.upmove > 0 ) {
+			PM_AddEvent( EV_FOOTSPLASH ); // BFP - Play a different and smooth sound
+		} else {
+			PM_AddEvent( EV_WATER_LEAVE );
+		}
+		if ( pm->ps->powerups[PW_FLIGHT] <= 0 
+		&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
+		&& !( pm->ps->pm_flags & PMF_KI_CHARGE )
+		&& !( pm->ps->pm_flags & PMF_MELEE )
+		&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+			FORCEJUMP_ANIM_HANDLING(); // BFP - Keep legs animation
 		}
 	}
 
@@ -1967,6 +2049,68 @@ static void PM_TorsoAnimation( void ) {
 	// here is tracing something similar to PM_GroundTraceMissed
 	trace_t		trace;
 	vec3_t		point;
+	int			cont;
+
+	// BFP - Jumping off water surface
+	point[0] = pm->ps->origin[0];
+	point[1] = pm->ps->origin[1];
+	point[2] = pm->ps->origin[2] + MINS_Z + 6;
+	cont = pm->pointcontents( point, pm->ps->clientNum );
+
+	if ( ( cont & MASK_WATER ) 
+	&& pm->waterlevel <= 2
+	&& pm->ps->powerups[PW_FLIGHT] <= 0
+	&& pm->cmd.upmove > 0 ) {
+		pm->ps->velocity[2] = 200;
+		// Control the player depending their moves
+		if ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
+		|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) {
+			float scale = PM_CmdScale( &pm->cmd );
+			float fmove, smove;
+			float vel;
+			int i;
+
+			fmove = pm->cmd.forwardmove;
+			smove = pm->cmd.rightmove;
+			pml.forward[2] = 0;
+			pml.right[2] = 0;
+			VectorNormalize (pml.forward);
+			VectorNormalize (pml.right);
+
+			for ( i = 0 ; i < 2 ; i++ ) {
+				pm->ps->velocity[i] = pml.forward[i]*fmove + pml.right[i]*smove;
+			}
+
+			if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+			&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+			&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+				pm->ps->velocity[0] *= 10;
+				pm->ps->velocity[1] *= 10;
+			}
+			vel = VectorLength( pm->ps->velocity );
+			if ( vel > 640 ) { // keep maximum speed
+				vel = 640;
+			}
+
+			VectorNormalize( pm->ps->velocity );
+			VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
+		}
+		// increase jumping speed using ki boost while not moving directionally		
+		if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
+		&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+		&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) )
+		&& !( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
+		|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
+			pm->ps->velocity[2] *= 5;
+		}
+
+		// BFP - Handle PMF flags, don't do idle or other torso animations while jumping off from the water
+		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY;
+		pm->ps->pm_flags |= PMF_NEARGROUND;
+
+		FORCEJUMP_ANIM_HANDLING();
+		return;
+	}
 
 	// BFP - No ground trace handling in the water
 	if ( pm->waterlevel > 1 ) {
@@ -2033,6 +2177,11 @@ PM_FlightStart
 static void PM_FlightStart( void ) { // BFP - Start flight handling 
 	vec3_t		point;
 	trace_t		trace;
+
+	// BFP - Hit stun
+	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+		return;
+	}
 
 	point[0] = pm->ps->origin[0];
 	point[1] = pm->ps->origin[1];
