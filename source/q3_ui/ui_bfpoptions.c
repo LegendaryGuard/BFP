@@ -133,55 +133,56 @@ void BFPAuraOptions_MenuInit( void );
 void BFPExplosionsOptions_MenuInit( void );
 void BFPViewEffSndsOptions_MenuInit( void );
 
-// A macro to look better the code
-#define BFPOPTIONS_MENUITEM( menu_item_curvalue, cvar ) \
-	menu_item_curvalue = trap_Cvar_VariableValue( cvar ) != 0;
+static void BFPOptions_MenuItem( int *menu_item_curvalue, const char *cvar ) {
+	*menu_item_curvalue = trap_Cvar_VariableValue( cvar ) != 0;
+}
 
 static void BFPOptions_SetMenuItems( void ) {
-	BFPOPTIONS_MENUITEM( s_bfpoptions.fix3person.curvalue,     "cg_fixedThirdPerson" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.particlesfx.curvalue,    "cg_particles" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.dynauralight.curvalue,   "cg_lightAuras" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.dynexplolights.curvalue, "cg_lightExplosions" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.bigexplosions.curvalue,  "cg_bigExplosions" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.explosionshell.curvalue, "cg_explosionShell" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.explosionsmoke.curvalue, "cg_explosionSmoke" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.explosionring.curvalue,  "cg_explosionRing" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.transaura.curvalue,      "cg_transformationAura" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.smallaura.curvalue,      "cg_smallOwnAura" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.ssjglow.curvalue,        "cg_permaglowUltimate" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.accucrosshair.curvalue,  "cg_stableCrosshair" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.simplehud.curvalue,      "cg_simpleHUD" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.chargealert.curvalue,    "cg_chargeupAlert" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.q3hitsfx.curvalue,       "cg_playHitSound" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.flightilt.curvalue,      "cg_flytilt" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.bigheads.curvalue,       "cg_superdeformed" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.defaultskins.curvalue,   "cg_forceSkin" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.stfu.curvalue,           "cg_stfu" )
-	BFPOPTIONS_MENUITEM( s_bfpoptions.lowpolysphere.curvalue,  "cg_lowpolysphere" )
+	BFPOptions_MenuItem( &s_bfpoptions.fix3person.curvalue,     "cg_fixedThirdPerson" );
+	BFPOptions_MenuItem( &s_bfpoptions.particlesfx.curvalue,    "cg_particles" );
+	BFPOptions_MenuItem( &s_bfpoptions.dynauralight.curvalue,   "cg_lightAuras" );
+	BFPOptions_MenuItem( &s_bfpoptions.dynexplolights.curvalue, "cg_lightExplosions" );
+	BFPOptions_MenuItem( &s_bfpoptions.bigexplosions.curvalue,  "cg_bigExplosions" );
+	BFPOptions_MenuItem( &s_bfpoptions.explosionshell.curvalue, "cg_explosionShell" );
+	BFPOptions_MenuItem( &s_bfpoptions.explosionsmoke.curvalue, "cg_explosionSmoke" );
+	BFPOptions_MenuItem( &s_bfpoptions.explosionring.curvalue,  "cg_explosionRing" );
+	BFPOptions_MenuItem( &s_bfpoptions.transaura.curvalue,      "cg_transformationAura" );
+	BFPOptions_MenuItem( &s_bfpoptions.smallaura.curvalue,      "cg_smallOwnAura" );
+	BFPOptions_MenuItem( &s_bfpoptions.ssjglow.curvalue,        "cg_permaglowUltimate" );
+	BFPOptions_MenuItem( &s_bfpoptions.accucrosshair.curvalue,  "cg_stableCrosshair" );
+	BFPOptions_MenuItem( &s_bfpoptions.simplehud.curvalue,      "cg_simpleHUD" );
+	BFPOptions_MenuItem( &s_bfpoptions.chargealert.curvalue,    "cg_chargeupAlert" );
+	BFPOptions_MenuItem( &s_bfpoptions.q3hitsfx.curvalue,       "cg_playHitSound" );
+	BFPOptions_MenuItem( &s_bfpoptions.flightilt.curvalue,      "cg_flytilt" );
+	BFPOptions_MenuItem( &s_bfpoptions.bigheads.curvalue,       "cg_superdeformed" );
+	BFPOptions_MenuItem( &s_bfpoptions.defaultskins.curvalue,   "cg_forceSkin" );
+	BFPOptions_MenuItem( &s_bfpoptions.stfu.curvalue,           "cg_stfu" );
+	BFPOptions_MenuItem( &s_bfpoptions.lowpolysphere.curvalue,  "cg_lowpolysphere" );
 }
-#undef BFPOPTIONS_MENUITEM
 
-// Macros to look better the code
-#define AURATYPE_SETUP(sprite, highpoly, poly, light, particle) \
-		trap_Cvar_SetValue( "cg_spriteAura", sprite ); \
-		trap_Cvar_SetValue( "cg_highPolyAura", highpoly ); \
-		trap_Cvar_SetValue( "cg_polygonAura", poly ); \
-		trap_Cvar_SetValue( "cg_lightweightAuras", light );\
-		trap_Cvar_SetValue( "cg_particleAura", particle );
+static void BFPOptions_AuraType_Setup( int sprite, int highpoly, int poly, int light, int particle ) {
+	trap_Cvar_SetValue( "cg_spriteAura", sprite );
+	trap_Cvar_SetValue( "cg_highPolyAura", highpoly );
+	trap_Cvar_SetValue( "cg_polygonAura", poly );
+	trap_Cvar_SetValue( "cg_lightweightAuras", light );
+	trap_Cvar_SetValue( "cg_particleAura", particle );
+}
 
-#define VIEWPOINT_SETUP(tp, ownmodel) \
-		trap_Cvar_SetValue( "cg_thirdPerson", tp ); \
-		trap_Cvar_SetValue( "cg_drawOwnModel", ownmodel );
+static void BFPOptions_Viewpoint_Setup( int tp, int ownmodel ) {
+	trap_Cvar_SetValue( "cg_thirdPerson", tp );
+	trap_Cvar_SetValue( "cg_drawOwnModel", ownmodel );
+}
 
-#define EXPLOTYPE_SETUP(expShell, expSmoke, particles, expRing ) \
-		trap_Cvar_SetValue( "cg_explosionShell", expShell ); \
-		trap_Cvar_SetValue( "cg_explosionSmoke", expSmoke ); \
-		trap_Cvar_SetValue( "cg_explosionRing", expRing ); \
-		trap_Cvar_SetValue( "cg_particles", particles ); \
-		s_bfpoptions.explosionshell.curvalue = expShell; \
-		s_bfpoptions.explosionsmoke.curvalue = expSmoke; \
-		s_bfpoptions.explosionring.curvalue = expRing; \
-		s_bfpoptions.particlesfx.curvalue = particles;
+static void BFPOptions_ExploType_Setup( int expShell, int expSmoke, int particles, int expRing ) {
+	trap_Cvar_SetValue( "cg_explosionShell", expShell );
+	trap_Cvar_SetValue( "cg_explosionSmoke", expSmoke );
+	trap_Cvar_SetValue( "cg_explosionRing", expRing );
+	trap_Cvar_SetValue( "cg_particles", particles );
+	s_bfpoptions.explosionshell.curvalue = expShell;
+	s_bfpoptions.explosionsmoke.curvalue = expSmoke;
+	s_bfpoptions.explosionring.curvalue = expRing;
+	s_bfpoptions.particlesfx.curvalue = particles;
+}
 
 static void BFPOptions_ExplosionsTypeCheck( void ) {
 	int particles = s_bfpoptions.particlesfx.curvalue;
@@ -236,27 +237,27 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 	case ID_AURATYPE:
 		switch ( s_bfpoptions.auratype.curvalue ) {
 		case SPRITE_AURA:
-			AURATYPE_SETUP( 1, 0, 0, 0, 0 )
+			BFPOptions_AuraType_Setup( 1, 0, 0, 0, 0 );
 			break;
 
 		case LIGHTWEIGHT_AURA:
-			AURATYPE_SETUP( 0, 0, 0, 1, 0 )
+			BFPOptions_AuraType_Setup( 0, 0, 0, 1, 0 );
 			break;
 
 		case POLYGON_AURA:
-			AURATYPE_SETUP( 0, 0, 1, 0, 0 )
+			BFPOptions_AuraType_Setup( 0, 0, 1, 0, 0 );
 			break;
 
 		case HIGHPOLYCOUNT_AURA:
-			AURATYPE_SETUP( 0, 1, 1, 0, 0 )
+			BFPOptions_AuraType_Setup( 0, 1, 1, 0, 0 );
 			break;
 
 		case PARTICLE_AURA:
-			AURATYPE_SETUP( 0, 0, 0, 0, 1 )
+			BFPOptions_AuraType_Setup( 0, 0, 0, 0, 1 );
 			break;
 
 		case SHADER_AURA:
-			AURATYPE_SETUP( 0, 0, 0, 0, 0 )
+			BFPOptions_AuraType_Setup( 0, 0, 0, 0, 0 );
 			break;
 		}
 		break;
@@ -270,11 +271,11 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 			break;
 
 		case 1: // First Person
-			VIEWPOINT_SETUP( 0, 0 )
+			BFPOptions_Viewpoint_Setup( 0, 0 );
 			break;
 
 		case 2: // First Person Vis
-			VIEWPOINT_SETUP( 0, 1 )
+			BFPOptions_Viewpoint_Setup( 0, 1 );
 			break;
 		}
 		break;
@@ -284,19 +285,19 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 	case ID_EXPLOTYPE:
 		switch ( s_bfpoptions.explotype.curvalue ) {
 		case WIMPY_EXPLO: // Wimpy
-			EXPLOTYPE_SETUP( 0, 0, 0, 0 )
+			BFPOptions_ExploType_Setup( 0, 0, 0, 0 );
 			break;
 
 		case WEAK_EXPLO: // Weak
-			EXPLOTYPE_SETUP( 1, 0, 0, 1 )
+			BFPOptions_ExploType_Setup( 1, 0, 0, 1 );
 			break;
 
 		case SO_SO_EXPLO: // So-So
-			EXPLOTYPE_SETUP( 1, 0, 1, 1 )
+			BFPOptions_ExploType_Setup( 1, 0, 1, 1 );
 			break;
 
 		case HARDCORE_EXPLO: // Hardcore
-			EXPLOTYPE_SETUP( 1, 1, 1, 1 )
+			BFPOptions_ExploType_Setup( 1, 1, 1, 1 );
 			break;
 		}
 		break;
