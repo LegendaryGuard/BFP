@@ -330,7 +330,6 @@ typedef enum {
 typedef enum {
 	WP_NONE,
 
-	WP_KI,		// BFP - Ammo bit used for ki
 	WP_GAUNTLET,
 	WP_MACHINEGUN,
 	WP_SHOTGUN,
@@ -341,6 +340,7 @@ typedef enum {
 	WP_PLASMAGUN,
 	WP_BFG,
 	WP_GRAPPLING_HOOK,
+	WP_KI,		// BFP - Ammo bit used for ki
 
 	WP_NUM_WEAPONS
 } weapon_t;

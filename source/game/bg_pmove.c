@@ -770,10 +770,25 @@ static void PM_WaterMove( void ) {
 		wishvel[1] = 0;
 		wishvel[2] = -60;		// sink towards bottom
 	} else {
-		for (i=0 ; i<3 ; i++)
+		for (i=0 ; i<3 ; i++) {
 			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove;
 
+			// BFP - Avoid going up, keep sinking
+			if ( i == 2
+			&& ( pm->ps->weaponstate == WEAPON_KIEXPLOSIONWAVE || pm->ps->weaponstate == WEAPON_STUN 
+			|| ( pm->ps->pm_flags & PMF_HITSTUN ) ) ) {
+				wishvel[2] = 0;
+			}
+		}
+
 		wishvel[2] += scale * pm->cmd.upmove;
+	}
+
+	// BFP - Sink on stunned status
+	if ( pm->ps->weaponstate == WEAPON_KIEXPLOSIONWAVE || pm->ps->weaponstate == WEAPON_STUN 
+	|| ( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+		wishvel[2] -= pm->ps->gravity * pml.frametime;
+		PM_SlideMove( qtrue );
 	}
 
 	VectorCopy (wishvel, wishdir);
@@ -1435,7 +1450,9 @@ PM_ControlJumpOnGround
 =============
 */
 static void PM_ControlJumpOnGround() { // BFP - A control to handle user movement intentions when jumping off the ground
-	if ( pm->ps->groundEntityNum != ENTITYNUM_NONE 
+	if ( !pml.walking // don't use on walking
+	&& pm->ps->weaponstate != WEAPON_STUN
+	&& pm->ps->groundEntityNum != ENTITYNUM_NONE 
 	&& pm->ps->powerups[PW_FLIGHT] <= 0
 	&& ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) 
 		&& ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 

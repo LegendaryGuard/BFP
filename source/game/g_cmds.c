@@ -257,16 +257,23 @@ void Cmd_Give_f (gentity_t *ent)
 	if (give_all || Q_stricmp(name, "weapons") == 0)
 	{
 		ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_NUM_WEAPONS) - 1 - 
-			( 1 << WP_GRAPPLING_HOOK ) - ( 1 << WP_NONE );
+			( 1 << WP_GRAPPLING_HOOK ) - ( 1 << WP_NONE ) - ( 1 << WP_KI );
 		if (!give_all)
 			return;
 	}
 
 	if (give_all || Q_stricmp(name, "ammo") == 0)
 	{
+		// BFP - TODO: Don't give all ammo to all weapons, that part is supposed to be removed in the future
+#if 1
 		for ( i = 0 ; i < MAX_WEAPONS ; i++ ) {
+			if ( i == WP_KI ) continue;
 			ent->client->ps.ammo[i] = 999;
 		}
+#endif
+		// BFP - TODO: If the player is a monster in Monster gametype, give 20000
+		ent->client->ps.ammo[WP_KI] = 10000;
+
 		if (!give_all)
 			return;
 	}
