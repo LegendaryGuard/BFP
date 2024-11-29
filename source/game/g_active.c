@@ -883,13 +883,17 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 }
 
 /*
-==========
-KiConsume
-==========
+===========
+KiConsumption
+===========
 */
-static void KiConsume( gclient_t *client, int kiconsume, int addTime ) { // BFP - Ki skill consume
-	client->ps.stats[STAT_KI] -= kiconsume;
-	client->ps.weaponTime += addTime;
+static void KiConsumption( gclient_t *client, int addTime, int kiConsume ) {
+    if ( client->ps.stats[STAT_KI] >= kiConsume ) { // avoid consuming more ki than available
+        client->ps.stats[STAT_KI] -= kiConsume;
+        client->ps.weaponTime += addTime;
+    } else { // not enough ki
+        client->ps.stats[STAT_READY_KI_ATTACK] = qfalse;
+    }
 }
 
 /*
@@ -897,14 +901,14 @@ static void KiConsume( gclient_t *client, int kiconsume, int addTime ) { // BFP 
 ChargeKiAttackState
 ============
 */
-static void ChargeKiAttackState( gclient_t *client, int minCharge, int maxCharge, int addTime, int kiconsume ) { // BFP - Charge ki attack state
+static void ChargeKiAttackState( gclient_t *client, int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
 	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < maxCharge ) {
 		++client->ps.stats[STAT_KI_ATTACK_CHARGE];
 	}
 	if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] >= minCharge ) {
 		client->ps.stats[STAT_READY_KI_ATTACK] = qtrue;
 	}
-	KiConsume( client, addTime, kiconsume );
+	KiConsumption( client, addTime, kiConsume );
 }
 
 /*
@@ -1074,21 +1078,18 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 	// BFP - NOTE: The dividing ki ball is triggering until pressing the attack key again after holded or changing weapon
 	case WEAPON_DIVIDINGKIBALLFIRING:
 		if ( ucmd->buttons & BUTTON_ATTACK ) {
-			KiConsume( client, 0, 120 );
+			KiConsumption( client, 0, 120 );
 		}
 		break;
 	// BFP - NOTE: That ki explosion wave is triggering until stop pressing the attack key or changing weapon,
 	// also when stopped enters in WEAPON_STUN state in 1 sec
 	case WEAPON_KIEXPLOSIONWAVE:
 		if ( client->ps.weaponTime <= 0 ) {
-			KiConsume( client, 200, 20 );
+			KiConsumption( client, 200, 20 );
 			if ( client->ps.stats[STAT_KI_ATTACK_CHARGE] < ATTACK_CHARGE_LIMIT ) {
 				++client->ps.stats[STAT_KI_ATTACK_CHARGE];
 			}
 		}
-
-		// fall even whether the player is flying
-		//client->ps.velocity[2] -= client->ps.gravity * pml.frametime;
 		break;
 	// BFP - NOTE: This stun state makes the player can't move in 1 sec, it's different from "hit stun"
 	case WEAPON_STUN:

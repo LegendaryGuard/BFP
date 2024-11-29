@@ -975,7 +975,8 @@ static void PM_AirMove( void ) {
 
 	// BFP - Reduces speed when charging ki
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
-	&& ( pm->ps->powerups[PW_HASTE] <= 0 && !( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+	&& ( pm->ps->powerups[PW_HASTE] <= 0 && !( pm->cmd.buttons & BUTTON_KI_USE ) )
+	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
 		VectorNormalize( pm->ps->velocity );
 		return;
 	}
