@@ -93,6 +93,10 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 				kiTrailLength = TRAIL_SEGMENTS;
 			}
 
+			if ( i + j >= kiTrailLength ) {
+				return;
+			}
+
 			if ( i + j >= cg_trails[entityNum].numSegments - 1 ) {
 				return;
 			}

@@ -2372,9 +2372,9 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 
 		// BFP - Ki trail
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE 
-		&& cg_kiTrail.integer >= 10 ) {
+		&& cg_kiTrail.integer > 0 ) {
 			// apply time for using ki trail
-			cent->pe.kiTrailTime = cg.time + cg_kiTrail.integer*5;
+			cent->pe.kiTrailTime = cg.time + cg_kiTrail.integer*7;
 
 			CG_KiTrail( clientNum, kiTrailOrigin, qfalse, kiTrailShader );
 		} else { // handle when the ki trail was being used previously
@@ -2505,7 +2505,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		}
 	} else {
 		// BFP - Ki trail being removed
-		if ( cg_kiTrail.integer >= 10 ) {
+		if ( cg_kiTrail.integer > 0 ) {
 			CG_RemoveKiTrails( cent, clientNum, kiTrailOrigin, kiTrailShader, qtrue );
 		}
 	}
