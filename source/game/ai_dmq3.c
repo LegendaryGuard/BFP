@@ -2382,6 +2382,12 @@ void BotCheckAttack(bot_state_t *bs) {
 	aas_entityinfo_t entinfo;
 	vec3_t mins = {-8, -8, -8}, maxs = {8, 8, 8};
 
+	// BFP - TODO: When the bot receives a hit stun, try to act like they use short-range teleport to escape from this stun status
+	// BFP - Avoid the bot tries to attack with this status, otherwise keeps stunned while pressing attack key
+	if ( ( bs->cur_ps.pm_flags & PMF_HITSTUN ) && bs->cur_ps.pm_time > 0 ) {
+		return;
+	}
+
 	attackentity = bs->enemy;
 	//
 	BotEntityInfo(attackentity, &entinfo);
