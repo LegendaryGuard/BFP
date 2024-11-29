@@ -22,10 +22,9 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [ ] Attacksets (configurable for cfgs)
 - [ ] Cvars as described on old docs
 - [ ] Gametype: Survival (`g_gametype 3`)
-- [ ] Gametype: Oozaru (`g_gametype 4`)
+- [ ] Gametype: Monster (`g_gametype 4`)
 - [ ] Gametype: Last Man Standing (`g_gametype 6`)
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
-- [ ] Player physics movements
 - [ ] Power Struggles (when two beam attacks collide)
 - [ ] Powerlevel and Power Tiers indicated on old docs
 - [ ] Remove some items like powerups and health pickups
@@ -38,6 +37,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 - [x] ~~Animations as listed on the old docs~~
 - [x] ~~Auras~~
+- [x] ~~Balanced player physics movements (different from the original BFP, but balanced for gameplay)~~
 - [x] ~~Bind key to recover ki energy~~
 - [x] ~~Bind key to toggle speed (ki boost). HINT: HASTE POWERUP~~
 - [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
@@ -139,12 +139,25 @@ We're making a replica of the lost source code. <br/>
 The highest priority goal is to copy and recreate the complete logical structure of the BFP game. It would be a game SDK that'll provide a structured and standardized way to modify the mod.<br/>
 You'll notice some differences and things that the original Bid For Power didn't have/were forgotten, incomplete or poorly made such as:
 - some adjusted UI buttons
-- removed unused cvars
-- sprite and particle aura type options in BFP options menu
-- server info menu has pagination and displays info
+- BFP OPTIONS menu is upgraded, big explosions and smoke options are back (these were removed after RC/beta versions), also shell and ring options are available and these are options are interactive with explosion type option. Sprite and particle aura types are available on aura type option
+- SERVER INFO menu displays all server info (on original BFP, the info was badly displayed and nothing was shown) and it has pagination
+- DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
+- explosion dynamic lights are back (these were broken after RC/beta versions)
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
+- g_allowSpectatorChat cvar is functional, spectators can't send messages if the cvar is disabled
+- spectator mode can toggle ki boost as if the player is flying
 - particle aura is almost implemented
+- while charging ki near water, bubble particles appear
+- when player is still moving with/without friction and charging ki, antigrav rock particles appear
+- new particles: charge smoke, which appears when charging ki near the ground
+- removed some unused cvars
+- balanced player pmove physics: 
+  - players can interact bounce pads like Q3 does (on original BFP, the physics are like you're sliding heavily on the ground and not bouncing as usually do, you're being pushed when touching bounce pads)
+  - no weird underwater movements while going intentionally down and moving crazily fast touching the ground (this might be a bug/glitch from original BFP)
+  - no specified stuck animation, so any animation is correctly handled when being stuck (on original BFP, when the player is stuck or pretty near to something solid, the reason is still unknown though. It does a jumping forward/backward animation, that doesn't make sense)
+  - water movement handling is different from original BFP, but it works similarly
 - some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
+- file size differences between the QVM and the original BFP QVM can be quite significant
 - ...
 
 Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.

@@ -16,7 +16,7 @@
 #### Cvar Gametypes:
 
 - g_gametype 3 = sur (survival)
-- g_gametype 4 = ooz (oozaru, in original BFP, that hasn't been added on UI, but add it anyway)
+- g_gametype 4 = ooz (oozaru - it was meant to be renamed as 'monster' in the last version of the original BFP, it hasn't been added to the UI, but add it anyway)
 - g_gametype 5 = tdm (team deathmatch) // originally, in Q3, this number is 3
 - g_gametype 6 = lms (last man standing)
 - g_gametype 7 = ctf (capture the flag) // originally, in Q3, this number is 4
