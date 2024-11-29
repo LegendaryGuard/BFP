@@ -2373,8 +2373,8 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 	}
 
 	// When the player doesn't have more ki, play hit stun animation
-	if ( pm->ps->stats[STAT_KI] <= 0 && !( pm->ps->pm_flags & PMF_HITSTUN )
-		|| ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->stats[STAT_KI] <= 24 ) // BFP - TODO: Apply some timer if used any ki, if flying and has less ki, then hit stun (also BFP does that)
+	if ( pm->ps->ammo[WP_KI] <= 0 && !( pm->ps->pm_flags & PMF_HITSTUN )
+		|| ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->ammo[WP_KI] <= 24 ) // BFP - TODO: Apply some timer if used any ki, if flying and has less ki, then hit stun (also BFP does that)
 		|| ( ( pm->cmd.buttons & BUTTON_ATTACK ) && ( pm->ps->pm_flags & PMF_HITSTUN ) ) ) {
 		pm->ps->pm_time = 1000;
 		pm->ps->pm_flags |= PMF_HITSTUN;
@@ -2842,7 +2842,7 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 	}
 
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && pm->ps->pm_time <= 0 ) {
-		pm->ps->stats[STAT_KI]++;
+		pm->ps->ammo[WP_KI]++;
 	}
 }
 

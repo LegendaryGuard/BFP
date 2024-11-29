@@ -1153,7 +1153,7 @@ void ClientSpawn(gentity_t *ent) {
 
 	// BFP - TODO: list of 5 skills
 
-	client->ps.stats[STAT_KI] = 8160.0f; // BFP - TODO: give ki at start
+	client->ps.ammo[WP_KI] = 8160.0f; // BFP - TODO: give ki at start
 
 	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 	client->ps.ammo[WP_MACHINEGUN] = 100;

@@ -477,9 +477,9 @@ static void CG_DrawStatusBar( void ) {
 	trap_R_SetColor( hcolor );
 
 	// BFP - draw ki amount
-	if ( ps->stats[STAT_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
-		ps->stats[STAT_KI] = 0;
-	value = ps->stats[STAT_KI];
+	if ( ps->ammo[WP_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
+		ps->ammo[WP_KI] = 0;
+	value = ps->ammo[WP_KI];
 	string = va( "KI: %d", value );
 	CG_DrawBigString( spacer, SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
 	if (value >= 100) {
@@ -2059,9 +2059,9 @@ static void CG_DrawKiWarning( void ) {
 
 	// BFP - Low ki warning center notification
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
-	if ( cg.predictedPlayerState.stats[STAT_KI] < 50 ) {
+	if ( cg.predictedPlayerState.ammo[WP_KI] < 50 ) {
 		s = "LOW KI WARNING";
-	} else if ( cg.predictedPlayerState.stats[STAT_KI] < 0 ) {
+	} else if ( cg.predictedPlayerState.ammo[WP_KI] < 0 ) {
 		s = "OUT OF KI";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;

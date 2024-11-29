@@ -228,9 +228,9 @@ void Pmove (pmove_t *pmove);
 // NOTE: may not have more than 16
 typedef enum {
 	STAT_HEALTH,
-	STAT_KI,						// BFP - KI amount
 	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
 	STAT_READY_KI_ATTACK,			// BFP - Ready ki attack notification
+	STAT_HITSTUN_TIME,				// BFP - Hit stun time
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
@@ -330,6 +330,7 @@ typedef enum {
 typedef enum {
 	WP_NONE,
 
+	WP_KI,		// BFP - Ammo bit used for ki
 	WP_GAUNTLET,
 	WP_MACHINEGUN,
 	WP_SHOTGUN,

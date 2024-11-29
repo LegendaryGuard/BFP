@@ -434,21 +434,21 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 			// BFP - TODO: Add cvar for flight cost
 
-			if ( client->ps.stats[STAT_KI] > 0 ) {
-				client->ps.stats[STAT_KI]--;
+			if ( client->ps.ammo[WP_KI] > 0 ) {
+				client->ps.ammo[WP_KI]--;
 			
 				if ( client->pers.cmd.buttons & BUTTON_KI_USE )
-					client->ps.stats[STAT_KI]--;
+					client->ps.ammo[WP_KI]--;
 			}
 		} else {
-			client->ps.stats[STAT_KI]++;
+			client->ps.ammo[WP_KI]++;
 		}
 
 		// BFP - if ki drops to 0, disable flight
-		if ( client->ps.stats[STAT_KI] <= 0 ) {
-			client->ps.stats[STAT_KI] = 0;
+		if ( client->ps.ammo[WP_KI] <= 0 ) {
+			client->ps.ammo[WP_KI] = 0;
 			client->ps.powerups[PW_FLIGHT] = 0;
-			// Com_Printf( "ki amount: %d\n", client->ps.stats[STAT_KI] );
+			// Com_Printf( "ki amount: %d\n", client->ps.ammo[WP_KI] );
 		}
 
 		// count down armor when over max
@@ -671,7 +671,7 @@ static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block
 		// calculate total ki being consumed
 		totalBlockConsume = kiBlockConsume * (g_blockLength.integer * 1000.0) * rndkiConsume;
 
-		client->ps.stats[STAT_KI] -= totalBlockConsume;
+		client->ps.ammo[WP_KI] -= totalBlockConsume;
 	}
 
 	// when the block length duration has been expired, then start the delay to avoid user 
@@ -837,7 +837,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 
 		// BFP - TODO: Zanzoken ki consume looks relative to powerlevel and the maximum ki quantity 
 		// (so, if it's 8160 as ki max quantity, then consumes 408)
-		if ( ent->client->ps.stats[STAT_KI] > 408
+		if ( ent->client->ps.ammo[WP_KI] > 408
 		&& ucmd->rightmove
 		&& ent->client->zanzokenNow ) {
 			int	range = ( ucmd->rightmove > 0 ) ? 500 : -500;
@@ -872,7 +872,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 					ent->client->ps.pm_time = 0;
 				}
 				ent->client->ps.pm_flags &= ~PMF_BLOCK;
-				ent->client->ps.stats[STAT_KI] -= 408;
+				ent->client->ps.ammo[WP_KI] -= 408;
 				ent->client->zanzokenPressTime = 0;
 				ent->client->zanzokenNow = qfalse;
 				ent->client->zanzokenLeft = qfalse;
@@ -888,8 +888,8 @@ KiConsumption
 ===========
 */
 static void KiConsumption( gclient_t *client, int addTime, int kiConsume ) {
-    if ( client->ps.stats[STAT_KI] >= kiConsume ) { // avoid consuming more ki than available
-        client->ps.stats[STAT_KI] -= kiConsume;
+    if ( client->ps.ammo[WP_KI] >= kiConsume ) { // avoid consuming more ki than available
+        client->ps.ammo[WP_KI] -= kiConsume;
         client->ps.weaponTime += addTime;
     } else { // not enough ki
         client->ps.stats[STAT_READY_KI_ATTACK] = qfalse;
@@ -1040,26 +1040,26 @@ static void KiAttackWeaponHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm
 				FireWeapon( ent );
 				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
 				addTime = 100;
-				client->ps.stats[STAT_KI] -= 10;
+				client->ps.ammo[WP_KI] -= 10;
 				break;
 			case WP_ROCKET_LAUNCHER:
 				FireWeapon( ent );
 				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
 				addTime = 800;
-				client->ps.stats[STAT_KI] -= 50;
+				client->ps.ammo[WP_KI] -= 50;
 				break;
 			case WP_LIGHTNING:
 				if ( client->ps.weaponTime <= 0 ) {
 					FireWeapon( ent );
 					addTime = 50;
-					client->ps.stats[STAT_KI] -= 70;
+					client->ps.ammo[WP_KI] -= 70;
 				}
 				break;
 			case WP_RAILGUN:
 				FireWeapon( ent );
 				G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
 				addTime = 1500;
-				client->ps.stats[STAT_KI] -= 150;
+				client->ps.ammo[WP_KI] -= 150;
 				break;
 			}
 
