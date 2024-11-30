@@ -85,7 +85,10 @@ typedef int intptr_t;
 
 #elif defined __linux__ || __FreeBSD__ // BFP - Linux and FreeBSD support
 
-typedef int intptr_t;
+// BFP - Don't use this:
+// typedef int intptr_t;
+// BFP - Use this instead, to remove 'cast to pointer' compiler warnings
+#include <stdint.h>
 
 #include <assert.h>
 #include <math.h>

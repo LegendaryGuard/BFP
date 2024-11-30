@@ -172,7 +172,7 @@ keep holding down the attack key, keeps muzzling and
 doesn't shoot anything while the ki is wasted out of control. 
 ==================
 */
-static void PM_KiAttackTorsoAnim() { // BFP - Torso ki attack anims
+static void PM_KiAttackTorsoAnim( void ) { // BFP - Torso ki attack anims
 	if ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !( pm->ps->pm_flags & PMF_KI_ATTACK ) ) {
 		switch( pm->ps->weapon ) {
 		case WP_ROCKET_LAUNCHER: { PM_StartTorsoAnim( TORSO_ATTACK1_PREPARE ); break; }
@@ -216,7 +216,7 @@ static void PM_TorsoStatusAnim( int anim ) { // BFP - Torso status handling
 PM_ForceJumpAnim
 ==================
 */
-static void PM_ForceJumpAnim() { // BFP - Jump anim handling
+static void PM_ForceJumpAnim( void ) { // BFP - Jump anim handling
 	( pm->cmd.forwardmove >= 0 ) ? PM_ForceLegsAnim( LEGS_JUMP ) : PM_ForceLegsAnim( LEGS_JUMPB );
 }
 
@@ -225,7 +225,7 @@ static void PM_ForceJumpAnim() { // BFP - Jump anim handling
 PM_ContinueFlyAnim
 ==================
 */
-static void PM_ContinueFlyAnim() { // BFP - Continuous fly anim handling
+static void PM_ContinueFlyAnim( void ) { // BFP - Continuous fly anim handling
 	if ( pm->cmd.forwardmove > 0 ) { PM_TorsoStatusAnim( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); }
 	else if ( pm->cmd.forwardmove < 0 ) { PM_TorsoStatusAnim( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); }
 	else { PM_TorsoStatusAnim( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
@@ -555,7 +555,6 @@ static qboolean PM_CheckJump( void ) {
 		pml.groundTrace = trace;
 
 		if ( trace.plane.normal[2] < 1 ) {
-			float scale = PM_CmdScale( &pm->cmd );
 			float fmove, smove;
 			int i;
 
@@ -1449,7 +1448,7 @@ static int PM_CorrectAllSolid( trace_t *trace ) {
 PM_ControlJumpOnGround
 =============
 */
-static void PM_ControlJumpOnGround() { // BFP - A control to handle user movement intentions when jumping off the ground
+static void PM_ControlJumpOnGround( void ) { // BFP - A control to handle user movement intentions when jumping off the ground
 	if ( !pml.walking // don't use on walking
 	&& pm->ps->weaponstate != WEAPON_STUN
 	&& pm->ps->groundEntityNum != ENTITYNUM_NONE 
@@ -1457,7 +1456,6 @@ static void PM_ControlJumpOnGround() { // BFP - A control to handle user movemen
 	&& ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) 
 		&& ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
 			|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
-		float scale = PM_CmdScale( &pm->cmd );
 		float fmove, smove;
 		float vel;
 		int i;
@@ -1604,7 +1602,7 @@ static void PM_GroundTrace( void ) {
 			if ( ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) )
 			&& !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 			&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-			&& pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) {
+			&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 				pm->ps->velocity[0] *= 5;
 				pm->ps->velocity[1] *= 5;
 			}
@@ -1813,7 +1811,7 @@ PM_Footsteps
 ===============
 */
 static void PM_Footsteps( void ) {
-	float		bobmove;
+	float		bobmove = 0.0f;
 	int			old;
 	qboolean	footstep;
 
@@ -2118,7 +2116,6 @@ static void PM_TorsoAnimation( void ) {
 		// Control the player depending their moves
 		if ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
 		|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) {
-			float scale = PM_CmdScale( &pm->cmd );
 			float fmove, smove;
 			float vel;
 			int i;
@@ -2390,7 +2387,7 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 	}
 
 	// When the player doesn't have more ki, play hit stun animation
-	if ( pm->ps->ammo[WP_KI] <= 0 && !( pm->ps->pm_flags & PMF_HITSTUN )
+	if ( ( pm->ps->ammo[WP_KI] <= 0 && !( pm->ps->pm_flags & PMF_HITSTUN ) )
 		|| ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->ammo[WP_KI] <= 24 ) // BFP - TODO: Apply some timer if used any ki, if flying and has less ki, then hit stun (also BFP does that)
 		|| ( ( pm->cmd.buttons & BUTTON_ATTACK ) && ( pm->ps->pm_flags & PMF_HITSTUN ) ) ) {
 		pm->ps->pm_time = 1000;
@@ -2472,7 +2469,8 @@ Generates weapon events and modifes the weapon counter
 ==============
 */
 static void PM_Weapon( void ) {
-	int		addTime;
+	// BFP - TODO: Unused variable, remove for the future?
+	// int		addTime;
 
 	// BFP - Hit stun, avoid shooting if the player is in this status
 	if ( pm->ps->pm_flags & PMF_HITSTUN ) {

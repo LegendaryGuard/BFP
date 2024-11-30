@@ -37,8 +37,10 @@ If the ammo has gone low enough to generate the warning, play a sound
 void CG_CheckAmmo( void ) {
 	int		i;
 	int		total;
-	int		previous;
 	int		weapons;
+
+	// BFP - Unused variable
+	// int		previous;
 
 	// BFP - TODO: Replace to ki
 

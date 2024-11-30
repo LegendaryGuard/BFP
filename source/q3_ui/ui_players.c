@@ -160,7 +160,8 @@ static void UI_ForceLegsAnim( playerInfo_t *pi, int anim ) {
 	}
 }
 
-
+// BFP - Unused Q3 function
+#if 0
 /*
 ===============
 UI_SetLegsAnim
@@ -173,6 +174,7 @@ static void UI_SetLegsAnim( playerInfo_t *pi, int anim ) {
 	}
 	UI_ForceLegsAnim( pi, anim );
 }
+#endif
 
 
 /*

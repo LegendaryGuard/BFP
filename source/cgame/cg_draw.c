@@ -359,7 +359,8 @@ static void CG_DrawStatusBar( void ) {
 	int spacer =  CHAR_WIDTH*2;
 	vec4_t		hcolor;
 	vec3_t		angles;
-	vec3_t		origin;
+	// BFP - Unused variable
+	// vec3_t		origin;
 
 	static float colors[4][4] = { 
 //		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
@@ -449,7 +450,6 @@ static void CG_DrawStatusBar( void ) {
 	}
 #endif
 
-	// BFP - TODO: Draw a HUD bar of 6 points to indicate ki attack preparation
 	// BFP - TODO: Draw player powerlevel info
 
 
@@ -1980,7 +1980,7 @@ static void CG_DrawTeamVote(void) {
 }
 
 
-static qboolean CG_DrawScoreboard() {
+static qboolean CG_DrawScoreboard( void ) {
 	return CG_DrawOldScoreboard();
 }
 
@@ -2319,7 +2319,7 @@ static void CG_Draw2D( void ) {
 }
 
 
-static void CG_DrawTourneyScoreboard() {
+static void CG_DrawTourneyScoreboard( void ) {
 	CG_DrawOldTourneyScoreboard();
 }
 

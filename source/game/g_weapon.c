@@ -440,7 +440,7 @@ void ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, gentity_t *ent ) {
 	float		r, u;
 	vec3_t		end;
 	vec3_t		forward, right, up;
-	int			oldScore;
+	// int			oldScore;
 	qboolean	hitClient = qfalse;
 
 	// derive the right and up vectors from the forward vector, because
@@ -449,7 +449,7 @@ void ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, gentity_t *ent ) {
 	PerpendicularVector( right, forward );
 	CrossProduct( forward, right, up );
 
-	oldScore = ent->client->ps.persistant[PERS_SCORE];
+	// oldScore = ent->client->ps.persistant[PERS_SCORE];
 
 	// generate the "random" spread pattern
 	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
@@ -556,10 +556,9 @@ weapon_railgun_fire
 void weapon_railgun_fire (gentity_t *ent) {
 	vec3_t		end;
 	trace_t		trace;
-	gentity_t	*tent;
-	gentity_t	*traceEnt;
+	gentity_t	*tent = NULL;
+	gentity_t	*traceEnt = NULL;
 	int			damage;
-	int			i;
 	int			hits;
 	int			passent;
 	// BFP - For splash damage
@@ -590,11 +589,13 @@ void weapon_railgun_fire (gentity_t *ent) {
 	// no explosion at end if SURF_NOIMPACT, but still make the trail
 	if ( !( trace.surfaceFlags & SURF_NOIMPACT ) ) {
 		// BFP - Railgun events are also treated as a missile
-		if ( traceEnt->s.eType != ET_PLAYER || traceEnt->physicsObject ) {
+		if ( traceEnt && ( traceEnt->s.eType != ET_PLAYER || traceEnt->physicsObject ) ) {
 			tent = G_TempEntity( trace.endpos, EV_MISSILE_MISS );
 		}
 		// BFP - Sends dir vector variable to the event
-		tent->s.eventParm = DirToByte( trace.plane.normal );
+		if ( tent ) {
+			tent->s.eventParm = DirToByte( trace.plane.normal );
+		}
 	}
 
 	// send railgun beam effect

@@ -530,6 +530,8 @@ static void CG_AddExplosion( localEntity_t *ex ) {
 		case LE_EXPLOSION_SHELL:
 			scale = 1.12f; // scale faster than the explosion sphere
 			break;
+		default:
+			break;
 		}
 
 		VectorScale( ent->axis[0], scale, ent->axis[0] );

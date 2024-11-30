@@ -701,7 +701,6 @@ void BFPExplosionsOptions_MenuInit( void ) {
 void BFPViewEffSndsOptions_MenuInit( void ) {
 	int		y;
 	int		thirdperson, firstpersonvis;
-	int 	particles;
 
 	memset( &s_bfpoptions, 0, sizeof(bfpoptions_t) );
 

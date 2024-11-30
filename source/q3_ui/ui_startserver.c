@@ -697,7 +697,8 @@ static const char *botSkill_list[] = {
 	0
 };
 
-
+// BFP - Bot pic selection, this is disabled (used for Q3)
+#if 0
 /*
 =================
 BotAlreadySelected
@@ -721,6 +722,7 @@ static qboolean BotAlreadySelected( const char *checkName ) {
 
 	return qfalse;
 }
+#endif
 
 
 /*

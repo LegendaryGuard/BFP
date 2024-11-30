@@ -125,7 +125,7 @@ static void DriverInfo_MenuDraw( void )
 	// BFP - For pagination
 	char pageIndicator[64];
 	int startLine, endLine;
-	int lineIndex, len, wrappedLen, j;
+	int len, wrappedLen, j;
 	char wrappedExtension[40]; // 39 characters + 1 null terminator
 #define DRIVERINFO_LINES_PER_PAGE	20
 #define LIMIT_CHARACTERS			39
@@ -163,10 +163,10 @@ static void DriverInfo_MenuDraw( void )
 				}
 
 				// copy the first part of the string and wrap it
-				strncpy( wrappedExtension, s_driverinfo.strings[i] + wrappedLen, j + 1 );
-				wrappedExtension[j + 1] = '\0';
-				wrappedLen += j + 1;
-				len -= j + 1;
+				strncpy( wrappedExtension, s_driverinfo.strings[i] + wrappedLen, j );
+				wrappedExtension[j] = '\0';
+				wrappedLen += j;
+				len -= j;
 			} else {
 				strcpy( wrappedExtension, s_driverinfo.strings[i] + wrappedLen );
 				len = 0;
@@ -217,7 +217,6 @@ UI_DriverInfo_Menu
 static void UI_DriverInfo_Menu( void )
 {
 	char*	eptr;
-	int		len;
 
 	// zero set all our globals
 	memset( &s_driverinfo, 0 ,sizeof(driverinfo_t) );

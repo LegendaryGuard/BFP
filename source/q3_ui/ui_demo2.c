@@ -118,9 +118,9 @@ UI_DemosMenu_Key
 =================
 */
 static sfxHandle_t UI_DemosMenu_Key( int key ) {
-	menucommon_s	*item;
+	// menucommon_s	*item;
 
-	item = Menu_ItemAtCursor( &s_demos.menu );
+	// item = Menu_ItemAtCursor( &s_demos.menu );
 
 	return Menu_DefaultKey( &s_demos.menu, key );
 }

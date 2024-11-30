@@ -102,15 +102,14 @@ void P_WorldEffects( gentity_t *ent ) {
 
 	envirosuit = ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
 
+	waterlevel = ent->waterlevel;
+
 	// BFP - No drowning
 #if 0
 	if ( ent->client->noclip ) {
 		ent->client->airOutTime = level.time + 12000;	// don't need air
 		return;
 	}
-
-	waterlevel = ent->waterlevel;
-
 
 	//
 	// check for drowning
@@ -491,8 +490,9 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int		i, j;
 	int		event;
 	gclient_t *client;
-	int		damage;
-	vec3_t	dir;
+	// BFP - Unused variables
+	// int		damage;
+	// vec3_t	dir;
 	vec3_t	origin, angles;
 //	qboolean	fired;
 	gitem_t *item;
@@ -1479,14 +1479,11 @@ while a slow client may have multiple ClientEndFrame between ClientThink.
 */
 void ClientEndFrame( gentity_t *ent ) {
 	int			i;
-	clientPersistant_t	*pers;
 
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		SpectatorClientEndFrame( ent );
 		return;
 	}
-
-	pers = &ent->client->pers;
 
 	// turn off any expired powerups
 	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {

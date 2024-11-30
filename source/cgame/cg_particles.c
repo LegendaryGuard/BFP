@@ -203,10 +203,9 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	float		ratio;
 	float		invratio;
 	vec3_t		color;
-	polyVert_t	TRIverts[3];
 	vec3_t		rright2, rup2;
-
-#if 0 /* // BFP - Unused particle type conditionals  */
+#if 0 /* // BFP - Unused particle type variable and conditionals  */
+	polyVert_t	TRIverts[3];
 	if (p->type == P_WEATHER || p->type == P_WEATHER_TURBULENT || p->type == P_WEATHER_FLURRY)
 	{// create a front facing polygon
 			
@@ -867,9 +866,7 @@ void CG_AddParticles (void)
 	float			alpha;
 	float			time, time2;
 	vec3_t			org;
-	int				color;
 	cparticle_t		*active, *tail;
-	int				type;
 	vec3_t			rotate_ang;
 
 	timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
@@ -948,15 +945,11 @@ void CG_AddParticles (void)
 		if (alpha > 1.0)
 			alpha = 1;
 
-		color = p->color;
-
 		time2 = time*time;
 
 		org[0] = p->org[0] + p->vel[0]*time + p->accel[0]*time2;
 		org[1] = p->org[1] + p->vel[1]*time + p->accel[1]*time2;
 		org[2] = p->org[2] + p->vel[2]*time + p->accel[2]*time2;
-
-		type = p->type;
 
 		CG_AddParticleToScene (p, org, alpha);
 	}

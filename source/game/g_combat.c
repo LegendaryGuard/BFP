@@ -133,7 +133,6 @@ LookAtKiller
 */
 void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) {
 	vec3_t		dir;
-	vec3_t		angles;
 
 	if ( attacker && attacker != self ) {
 		VectorSubtract (attacker->s.pos.trBase, self->s.pos.trBase, dir);
@@ -145,10 +144,6 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) 
 	}
 
 	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
-
-	angles[YAW] = vectoyaw ( dir );
-	angles[PITCH] = 0; 
-	angles[ROLL] = 0;
 }
 
 /*
@@ -157,11 +152,11 @@ GibEntity
 ==================
 */
 void GibEntity( gentity_t *self, int killer ) {
+// BFP - No EF_KAMIKAZE flag
+#if 0
 	gentity_t *ent;
 	int i;
 
-// BFP - No EF_KAMIKAZE flag
-#if 0
 	//if this entity still has kamikaze
 	if (self->s.eFlags & EF_KAMIKAZE) {
 		// check if there is a kamikaze timer around for this owner

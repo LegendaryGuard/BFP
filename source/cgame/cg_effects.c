@@ -727,7 +727,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	// BFP - Low poly sphere
 	// BFP - TODO: Apply explosionModel from bfp attack config, highPolySphereModel is just a test
 	qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
-	localEntity_t *leSphere, *leRing, *leShell;
+	localEntity_t *leSphere, *leRing = NULL, *leShell = NULL;
 
 	VectorMA( origin, 10, dir, origin );
 
@@ -768,9 +768,11 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 			if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
 			scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
 			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-			VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
-			VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
-			VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
+			if ( leRing ) {
+				VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
+				VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
+				VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
+			}
 		}
 
 		if ( cg_explosionShell.integer > 0 ) {
@@ -778,9 +780,11 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 			if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
 			scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
 			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-			VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
-			VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
-			VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
+			if ( leShell ) {
+				VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
+				VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
+				VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
+			}
 		}
 	}
 

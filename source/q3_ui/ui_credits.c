@@ -249,7 +249,7 @@ static void ScrollingCredits_Draw( void )
 	if ( !ysize ) // ysize not calculated, so calculate it dammit!
 	{
 		// loop through entire credits array
-		for( n = 0; n <= sizeof(credits) - 1; n++ ) 
+		for( n = 0; credits[n].string != NULL; ++n ) 
 		{
 			// it is a small character
 			if ( credits[n].style & UI_SMALLFONT ) 
@@ -281,27 +281,8 @@ static void ScrollingCredits_Draw( void )
 	y = 480 - SCROLLSPEED * (float)( uis.realtime - starttime ) / 100;
 
 	// loop through the entire credits sequence
-	for( n = 0; n <= sizeof(credits) - 1; n++ )
-	{
-		// this NULL string marks the end of the credits struct
-		if ( credits[n].string == NULL ) 
-		{
-			endcount = y;
-			if ( endcount <= 200 ) {
-				endcount = 200;
-			}
-			UI_DrawNamedPic( 100, endcount, 465, 125, ART_BFPLOGO ); // BFP - Draw logo when it's the last credit and stop during 7 seconds
-			if ( y < -(16*12) ) // credits sequence is completely off screen, note: 16 are 3 seconds if you multiply by 3, you add 1 second more to last (more or less)
-			{
-				trap_Cmd_ExecuteText( 
-					EXEC_APPEND, 
-					va( "s_musicvolume %f; quit\n", mvolume )
-				);
-				break; // end of credits
-			}
-			break;
-		}
-		
+	for( n = 0; credits[n].string != NULL; n++ )
+	{	
 		if ( strlen( credits[n].string ) == 1 ) // spacer string, no need to draw
 			continue;
 		if ( y > -( PROP_HEIGHT * (1 / PROP_SMALL_SIZE_SCALE) ) ) {
@@ -322,6 +303,20 @@ static void ScrollingCredits_Draw( void )
 		// if y is off the screen, break out of loop
 		if ( y > 480 ) 
 			break;
+	}
+
+	// end of credits
+	endcount = y;
+	if ( endcount <= 200 ) {
+		endcount = 200;
+	}
+	UI_DrawNamedPic( 100, endcount, 465, 125, ART_BFPLOGO ); // BFP - Draw logo when it's the last credit and stop during 7 seconds
+	if ( y < -(16*12) ) // credits sequence is completely off screen, note: 16 are 3 seconds if you multiply by 3, you add 1 second more to last (more or less)
+	{
+		trap_Cmd_ExecuteText( 
+			EXEC_APPEND, 
+			va( "s_musicvolume %f; quit\n", mvolume )
+		);
 	}
 
 	Credits_DrawHeader(); // BFP - Header

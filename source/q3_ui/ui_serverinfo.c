@@ -176,7 +176,7 @@ static void ServerInfo_MenuDraw( void )
 	char			pageIndicator[64];
 	int				startLine, endLine;
 	int				lineIndex;
-	int				len, wrappedLen, i, j;
+	int				len, wrappedLen, i;
 	char			wrappedValue[MAX_INFO_VALUE];
 #define LIMIT_CHARACTERS		39
 

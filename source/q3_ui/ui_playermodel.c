@@ -406,7 +406,7 @@ static void PlayerModel_SetKiAttacks( void ) // BFP - Set ki attack pics
 	int		numdirs;
 	char	dirlist[2048], modelselected[2048];
 	char*	dirptr;
-	int		i, j, dirlen, bfpnumber;
+	int		i, dirlen, bfpnumber;
 
 	// BFP - NOTE: BFP vanilla uses the static icons for every character from bfp1 to bfp6.
 	// It would be cool to parse bfp_attacksets.cfg file and set every character their own ki attacks. 

@@ -1442,7 +1442,8 @@ CG_ShotgunPellet
 */
 static void CG_ShotgunPellet( vec3_t start, vec3_t end, int skipNum ) {
 	trace_t		tr;
-	int sourceContentType, destContentType;
+	// BFP - Unused variables
+	// int sourceContentType, destContentType;
 
 	CG_Trace( &tr, start, NULL, NULL, end, skipNum, MASK_SHOT );
 

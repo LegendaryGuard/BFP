@@ -171,7 +171,7 @@ static char* netnames[] = {
 };
 
 static char bfpMessage[] = "Visit www.bidforpower.com"; // BFP
-static char otherMessage[] = "Visit www.globalrankings.com - you kick ass, we'll take names"; // BFP - unused message :P
+// static char otherMessage[] = "Visit www.globalrankings.com - you kick ass, we'll take names"; // BFP - unused message :P
 
 typedef struct {
 	char	adrstr[MAX_ADDRESSLENGTH];
@@ -751,13 +751,13 @@ void ArenaServers_LoadFavorites( void )
 	int				i;
 	int				j;
 	int				numtempitems;
-	char			emptyinfo[MAX_INFO_STRING];
+	// char			emptyinfo[MAX_INFO_STRING];
 	char			adrstr[MAX_ADDRESSLENGTH];
 	servernode_t	templist[MAX_FAVORITESERVERS];
 	qboolean		found;
 
 	found        = qfalse;
-	emptyinfo[0] = '\0';
+	// emptyinfo[0] = '\0';
 
 	// copy the old
 	memcpy( templist, g_favoriteserverlist, sizeof(servernode_t)*MAX_FAVORITESERVERS );
@@ -1188,7 +1188,9 @@ ArenaServers_Event
 */
 static void ArenaServers_Event( void* ptr, int event ) {
 	int		id;
+#if ( !ENABLE_MPLAYER ) /* Q3 default */
 	int value;
+#endif
 
 	id = ((menucommon_s*)ptr)->id;
 
@@ -1202,7 +1204,7 @@ static void ArenaServers_Event( void* ptr, int event ) {
 #if ENABLE_MPLAYER
 		g_arenaservers.master.curvalue = ArenaServers_SetType( g_arenaservers.master.curvalue );
 		trap_Cvar_SetValue( "ui_browserMaster", g_arenaservers.master.curvalue );
-#else // Q3 default
+#else /* Q3 default */
 		value = g_arenaservers.master.curvalue;
 		if (value >= 1)
 		{
@@ -1330,10 +1332,12 @@ ArenaServers_MenuInit
 */
 static void ArenaServers_MenuInit( void ) {
 	int			i;
-	int			type;
 	int			y;
 	int			value;
 	static char	statusbuffer[MAX_STATUSLENGTH];
+#if ( !ENABLE_MPLAYER ) /* Q3 default */
+	int			type;
+#endif
 
 	// zero set all our globals
 	memset( &g_arenaservers, 0 ,sizeof(arenaservers_t) );
