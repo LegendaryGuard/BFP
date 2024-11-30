@@ -332,6 +332,15 @@ static float LittleFloat (const float *l) { return FloatSwap(l); }
 
 #endif
 
+//======================= C11 OR NEWER DEFINES =====================
+
+// BFP - C11 or newer support
+#ifndef ID_INLINE
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+    #define ID_INLINE inline
+#endif
+#endif
+
 //=============================================================
 
 typedef unsigned char 		byte;
