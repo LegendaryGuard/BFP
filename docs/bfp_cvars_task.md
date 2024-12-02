@@ -9,9 +9,6 @@
 - g_kiRegen = "0"
 - g_boostCostPct = "0"
 - g_boostCost = "150"
-- g_flightCostPct = "0"
-- g_flightCost = "50"
-- g_chargeDelay = "250"
 
 #### Cvar Gametypes:
 
@@ -62,6 +59,9 @@
 - [x] ~~g_blockDelay~~
 - [x] ~~g_blockCost~~
 - [x] ~~g_blockCostPct~~
+- [x] ~~g_chargeDelay~~
+- [x] ~~g_flightCost~~
+- [x] ~~g_flightCostPct~~
 - [x] ~~g_hitStun~~
 - [x] ~~g_meleeRange~~
 - [x] ~~g_meleeDiveRange~~
