@@ -428,19 +428,21 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 			}
 		}
 
-		// BFP - Ki up/down when flying/ki use
+		// BFP - Decrease ki when flying
 		if ( client->ps.powerups[PW_FLIGHT] > 0 ) {
-
-			// BFP - TODO: Add cvar for flight cost
-
 			if ( client->ps.ammo[WP_KI] > 0 ) {
-				client->ps.ammo[WP_KI]--;
-			
-				if ( client->pers.cmd.buttons & BUTTON_KI_USE )
-					client->ps.ammo[WP_KI]--;
+				client->ps.ammo[WP_KI] -= (int) (g_flightCost.value + ( g_flightCostPct.value * 10 ));
 			}
-		} else {
-			client->ps.ammo[WP_KI]++;
+		}
+
+		// BFP - Regenerate ki
+		// BFP - TODO: Add cvar for ki regen
+		client->ps.ammo[WP_KI]++;
+
+		// BFP - Ki boost consumption
+		// BFP - TODO: Add cvar for boost cost (consumption must be per milliseconds, maybe pml.msec?)
+		if ( client->pers.cmd.buttons & BUTTON_KI_USE ) {
+			client->ps.ammo[WP_KI]--;
 		}
 
 		// BFP - if ki drops to 0, disable flight
