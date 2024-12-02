@@ -1271,8 +1271,12 @@ void ClientThink_real( gentity_t *ent ) {
 		MeleeHandling( ent, ucmd, &pm );
 
 		// BFP - Ki Charge
-		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->ps.pm_time <= 0 
-		&& ( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && ( client->ps.pm_flags & PMF_KI_CHARGE )
+		&& client->ps.pm_time > 0 ) { // still delayed
+			client->ps.eFlags &= ~EF_AURA;
+		}
+		if ( ( client->ps.pm_flags & PMF_KI_CHARGE )
+		&& client->ps.pm_time <= 0 ) { // charge ki!
 			client->ps.eFlags |= EF_AURA;
 		}
 
