@@ -403,6 +403,30 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	client = ent->client;
 	client->timeResidual += msec;
 
+	// BFP - NOTE: BFP handles the ki charge and consumption weirdly with these calculation measures
+
+	// BFP - Ki boost consumption
+	// BFP - TODO: Check with powerlevels
+	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.powerups[PW_HASTE] > 0 ) )
+	&& client->ps.ammo[WP_KI] > 0
+	&& !( client->ps.pm_flags & PMF_BLOCK ) ) {
+		client->ps.ammo[WP_KI] -= g_boostCost.value * 0.001 + ( g_boostCostPct.value * 10 );
+	}
+
+	// BFP - Charge ki
+	// BFP - TODO: Check with powerlevels
+	if ( ( client->ps.pm_flags & PMF_KI_CHARGE )
+	&& ( client->ps.eFlags & EF_AURA )
+	&& client->ps.ammo[WP_KI] > 0 ) {
+		client->ps.ammo[WP_KI] += g_kiCharge.value + ( g_kiChargePct.value * 0.001 );
+	}
+
+	// BFP - Block ki consume
+	// BFP - TODO: Check with powerlevels
+	if ( client->ps.pm_flags & PMF_BLOCK ) {
+		client->ps.ammo[WP_KI] -= g_blockCost.value + ( g_blockCostPct.value * 0.1 );
+	}
+
 	while ( client->timeResidual >= 1000 ) {
 		client->timeResidual -= 1000;
 
@@ -428,34 +452,26 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 			}
 		}
 
-		// BFP - Decrease ki when flying
-		if ( client->ps.powerups[PW_FLIGHT] > 0 ) {
-			if ( client->ps.ammo[WP_KI] > 0 ) {
-				client->ps.ammo[WP_KI] -= (int) (g_flightCost.value + ( g_flightCostPct.value * 10 ));
-			}
+		// BFP - Decrease ki when flying (no powerlevel check required)
+		if ( client->ps.powerups[PW_FLIGHT] > 0 
+		&& client->ps.ammo[WP_KI] > 0 ) {
+			client->ps.ammo[WP_KI] -= g_flightCost.value + ( g_flightCostPct.value * 10 );
 		}
 
 		// BFP - Regenerate ki
-		// BFP - TODO: Add cvar for ki regen
-		client->ps.ammo[WP_KI]++;
-
-		// BFP - Ki boost consumption
-		// BFP - TODO: Add cvar for boost cost (consumption must be per milliseconds, maybe pml.msec?)
-		if ( client->pers.cmd.buttons & BUTTON_KI_USE ) {
-			client->ps.ammo[WP_KI]--;
-		}
-
-		// BFP - if ki drops to 0, disable flight
-		if ( client->ps.ammo[WP_KI] <= 0 ) {
-			client->ps.ammo[WP_KI] = 0;
-			client->ps.powerups[PW_FLIGHT] = 0;
-			// Com_Printf( "ki amount: %d\n", client->ps.ammo[WP_KI] );
-		}
+		// BFP - TODO: Check with powerlevels
+		client->ps.ammo[WP_KI] += g_kiRegen.value + ( g_kiRegenPct.value * 10 );
 
 		// count down armor when over max
 		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
 			client->ps.stats[STAT_ARMOR]--;
 		}
+	}
+
+	// BFP - If ki drops to 0, disable flight
+	if ( client->ps.ammo[WP_KI] <= 0 ) {
+		client->ps.ammo[WP_KI] = 0;
+		client->ps.powerups[PW_FLIGHT] = 0;
 	}
 }
 
@@ -492,9 +508,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 	int		i, j;
 	int		event;
 	gclient_t *client;
-	// BFP - Unused variables
-	// int		damage;
-	// vec3_t	dir;
+	int		damage;
 	vec3_t	origin, angles;
 //	qboolean	fired;
 	gitem_t *item;
@@ -512,22 +526,22 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 		case EV_FALL_MEDIUM:
 		case EV_FALL_FAR:
 			// BFP - There's no crash land damage when the players fell in the ground
-#if 0
 			if ( ent->s.eType != ET_PLAYER ) {
 				break;		// not in the player model
 			}
 			if ( g_dmflags.integer & DF_NO_FALLING ) {
 				break;
 			}
-			if ( event == EV_FALL_FAR ) {
-				damage = 10;
-			} else {
-				damage = 5;
+			// BFP - When the player is falling with stunned status
+			// BFP - TODO: Check with powerlevels, if powerlevel is very low, then the player is weak at falling
+			// but when the powerlevel is getting higher, the less damage it will have
+			if ( client->ps.pm_flags & PMF_HITSTUN ) {
+				if ( event == EV_FALL_FAR ) {
+					damage = 100;
+				}
+				ent->pain_debounce_time = level.time + 200;	// no normal pain sound
+				G_Damage ( ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING );
 			}
-			VectorSet (dir, 0, 0, 1);
-			ent->pain_debounce_time = level.time + 200;	// no normal pain sound
-			G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
-#endif
 			break;
 
 		case EV_FIRE_WEAPON:
@@ -649,31 +663,6 @@ static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block
 		client->ps.eFlags &= ~EF_AURA;
 		ucmd->buttons &= ~BUTTON_KI_USE;
 		client->blockTime = level.time + (g_blockLength.integer * 1000);
-	}
-
-	// BFP - Blocking status. Ki energy is being consumed and ki boost can't be used
-	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-	&& client->blockTime > 0 
-	&& level.time < client->blockTime ) {
-		// BFP - NOTE: Approximate calculation of ki consumption while blocking
-		float blockCostPct = g_blockCostPct.integer * 0.1; // percentage of ki consumed per millisecond
-		float bCost = g_blockCost.integer > 0 ? g_blockCost.integer : 1; // absolute value of ki consumed per millisecond
-		float kiBlockConsume = bCost / (g_blockLength.integer * 1000.0);
-		float totalBlockConsume;
-		// random variable to make an approximate calculation of the ki consumption while using block
-		float rndkiConsume = rand() % 2;
-
-		// BFP - TODO: Implement random calculations correctly?
-		if ( crandom() > 0.5 && crandom() < 0.8 ) {
-			rndkiConsume = rand() % 1;
-		} else if ( crandom() > 0.2 && crandom() < 0.5 ) {
-			rndkiConsume = random() + 0.38;
-		}
-
-		// calculate total ki being consumed
-		totalBlockConsume = kiBlockConsume * (g_blockLength.integer * 1000.0) * rndkiConsume;
-
-		client->ps.ammo[WP_KI] -= totalBlockConsume;
 	}
 
 	// when the block length duration has been expired, then start the delay to avoid user 

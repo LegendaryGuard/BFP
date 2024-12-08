@@ -47,6 +47,8 @@ float	pm_spectatorfriction = 2.0f; // BFP - Add less spectator movement friction
 
 int		c_pmove = 0;
 
+// BFP - TODO: Check with powerlevels, if powerlevel is very low, the player is slow using ki boost; if higher, faster
+// Currently, it's set to faster
 
 /*
 ===============
