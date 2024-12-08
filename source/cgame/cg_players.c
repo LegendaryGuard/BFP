@@ -2435,6 +2435,8 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		// Don't put this line of code here if transformed, just put outside the check EF_AURA conditional
 		// trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), 1.0, 1.0, 0 );
 
+		// BFP - TODO: Check with powerlevels, if the powerlevel is lower than 100.000, the aura is blue on non-team gamemodes
+
 		// apply light blinking
 		if ( ci->team == TEAM_BLUE ) {
 			aura.customShader = aura2.customShader = cgs.media.auraBlueTinyShader;
