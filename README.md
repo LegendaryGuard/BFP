@@ -1,12 +1,12 @@
 Bid For Power (BFP) source code
 ===============================
-[![Stars](https://img.shields.io/github/stars/LegendaryGuard/BFP?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/stargazers)
-[![Issues](https://img.shields.io/github/issues/LegendaryGuard/BFP?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/issues)
-[![Forks](https://img.shields.io/github/forks/LegendaryGuard/BFP?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/forks)
-[![License](https://img.shields.io/github/license/LegendaryGuard/BFP?style=for-the-badge)](#legal)
-[![Build actions](https://img.shields.io/github/actions/workflow/status/LegendaryGuard/BFP/build.yml?style=for-the-badge)](https://github.com/LegendaryGuard/BFP/actions)
+[![Stars](https://img.shields.io/github/stars/LegendaryGuard/BFP)](https://github.com/LegendaryGuard/BFP/stargazers)
+[![Forks](https://img.shields.io/github/forks/LegendaryGuard/BFP)](https://github.com/LegendaryGuard/BFP/forks)
 <br/>
-![Visits](https://badges.pufler.dev/visits/LegendaryGuard/BFP?style=for-the-badge)
+[![License](https://img.shields.io/github/license/LegendaryGuard/BFP)](#legal)
+[![Build actions](https://img.shields.io/github/actions/workflow/status/LegendaryGuard/BFP/build.yml)](https://github.com/LegendaryGuard/BFP/actions)
+<br/>
+![Visits](https://badges.pufler.dev/visits/LegendaryGuard/BFP)
 
 
 A legendary Quake 3 Arena mod from the late 90s to early 2000s.

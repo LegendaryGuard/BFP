@@ -3,12 +3,6 @@
 ## PENDING:
 
 - g_basepl [1-999]: set the starting power level from one thousand to one mil.
-- g_kiChargePct = "15"
-- g_kiCharge = "0"
-- g_kiRegenPct = "0.6"
-- g_kiRegen = "0"
-- g_boostCostPct = "0"
-- g_boostCost = "150"
 
 #### Cvar Gametypes:
 
@@ -22,6 +16,16 @@
 
 
 ## WIP:
+
+Check calculations with powerlevels:
+- g_kiChargePct
+- g_kiCharge
+- g_kiRegenPct
+- g_kiRegen
+- g_boostCostPct
+- g_boostCost
+- g_blockCostPct
+- g_blockCost
 
 
 ## DONE BUT NOT IN CGAME:
@@ -57,8 +61,6 @@
 - [x] ~~g_noFlight (disables "fly" bind too, original BFP has a leak though)~~
 - [x] ~~g_blockLength~~
 - [x] ~~g_blockDelay~~
-- [x] ~~g_blockCost~~
-- [x] ~~g_blockCostPct~~
 - [x] ~~g_chargeDelay~~
 - [x] ~~g_flightCost~~
 - [x] ~~g_flightCostPct~~
