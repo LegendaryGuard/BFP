@@ -589,13 +589,8 @@ void weapon_railgun_fire (gentity_t *ent) {
 	// no explosion at end if SURF_NOIMPACT, but still make the trail
 	if ( !( trace.surfaceFlags & SURF_NOIMPACT ) ) {
 		// BFP - Railgun events are also treated as a missile
-		if ( traceEnt && ( traceEnt->s.eType != ET_PLAYER || traceEnt->physicsObject ) ) {
-			tent = G_TempEntity( trace.endpos, EV_MISSILE_MISS );
-		}
-		// BFP - Sends dir vector variable to the event
-		if ( tent ) {
-			tent->s.eventParm = DirToByte( trace.plane.normal );
-		}
+		tent = G_TempEntity( trace.endpos, EV_MISSILE_MISS );
+		tent->s.eventParm = DirToByte( trace.plane.normal ); // BFP - Sends dir vector variable to the event
 	}
 
 	// send railgun beam effect
