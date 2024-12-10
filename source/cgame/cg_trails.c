@@ -61,6 +61,11 @@ Adds ki trail segments
 void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader ) {
 	int i, j;
 	polyVert_t verts[4];
+	int kiTrailLength = cg_kiTrail.integer;
+
+	if ( kiTrailLength > TRAIL_SEGMENTS ) {
+		kiTrailLength = TRAIL_SEGMENTS;
+	}
 
 	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
 		return;
@@ -69,7 +74,7 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 	if ( remove ) { // removes every segment
 		cg_trails[entityNum].numSegments--;
 	} else {
-		if ( cg_trails[entityNum].numSegments < TRAIL_SEGMENTS ) {
+		if ( cg_trails[entityNum].numSegments < kiTrailLength ) {
 			cg_trails[entityNum].numSegments++;
 		}
 	}
@@ -87,11 +92,6 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 		for ( j = 0; j < 3; ++j ) {
 			vec3_t start, end, forward, right;
 			vec3_t viewAxis;
-			int kiTrailLength = cg_kiTrail.integer;
-
-			if ( kiTrailLength > TRAIL_SEGMENTS ) {
-				kiTrailLength = TRAIL_SEGMENTS;
-			}
 
 			if ( i + j >= kiTrailLength ) {
 				return;
