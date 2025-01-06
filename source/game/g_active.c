@@ -432,22 +432,22 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 		// regenerate
 		if ( client->ps.powerups[PW_REGEN] ) {
-			if ( ent->health < client->ps.stats[STAT_MAX_HEALTH]) {
+			if ( ent->health < MAX_HEALTH) {
 				ent->health += 15;
-				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 1.1 ) {
-					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 1.1;
+				if ( ent->health > MAX_HEALTH * 1.1 ) {
+					ent->health = MAX_HEALTH * 1.1;
 				}
 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
-			} else if ( ent->health < client->ps.stats[STAT_MAX_HEALTH] * 2) {
+			} else if ( ent->health < MAX_HEALTH * 2) {
 				ent->health += 5;
-				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
-					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 2;
+				if ( ent->health > MAX_HEALTH * 2 ) {
+					ent->health = MAX_HEALTH * 2;
 				}
 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
 			}
 		} else {
 			// count down health when over max
-			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
+			if ( ent->health > MAX_HEALTH ) {
 				ent->health--;
 			}
 		}
@@ -463,7 +463,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		client->ps.ammo[WP_KI] += g_kiRegen.value + ( g_kiRegenPct.value * 10 );
 
 		// count down armor when over max
-		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
+		if ( client->ps.stats[STAT_ARMOR] > MAX_HEALTH ) {
 			client->ps.stats[STAT_ARMOR]--;
 		}
 	}
@@ -580,7 +580,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_USE_ITEM2:		// medkit
-			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] + 25;
+			ent->health = MAX_HEALTH; // BFP - Before Q3: + 25
 
 			break;
 

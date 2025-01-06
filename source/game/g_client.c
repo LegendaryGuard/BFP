@@ -750,6 +750,8 @@ void ClientUserinfoChanged( int clientNum ) {
 		}
 	}
 
+	// BFP - No STAT_MAX_HEALTH and handicap
+#if 0
 	// set max health
 	health = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	client->pers.maxHealth = health;
@@ -757,6 +759,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		client->pers.maxHealth = 100;
 	}
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+#endif
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -808,12 +811,12 @@ void ClientUserinfoChanged( int clientNum ) {
 	if ( ent->r.svFlags & SVF_BOT ) {
 		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
 			client->pers.netname, team, model, headModel, c1, c2, 
-			client->pers.maxHealth, client->sess.wins, client->sess.losses,
+			MAX_HEALTH, client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ), teamTask, teamLeader );
 	} else {
 		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
 			client->pers.netname, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 
-			client->pers.maxHealth, client->sess.wins, client->sess.losses, teamTask, teamLeader);
+			MAX_HEALTH, client->sess.wins, client->sess.losses, teamTask, teamLeader);
 	}
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
@@ -1125,6 +1128,8 @@ void ClientSpawn(gentity_t *ent) {
 	// client->airOutTime = level.time + 12000;
 
 	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
+	// BFP - No STAT_MAX_HEALTH and handicap
+#if 0
 	// set max health
 	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
@@ -1132,6 +1137,7 @@ void ClientSpawn(gentity_t *ent) {
 	}
 	// clear entity values
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+#endif
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1175,7 +1181,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
 
 	// health will count down towards max_health
-	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
+	ent->health = client->ps.stats[STAT_HEALTH] = MAX_HEALTH; // BFP - Before Q3: + 25
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
