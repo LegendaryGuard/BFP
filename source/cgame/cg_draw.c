@@ -456,7 +456,7 @@ static void CG_DrawStatusBar( void ) {
 	//
 	// health
 	//
-	value = ps->stats[STAT_HEALTH];
+	value = ps->stats[STAT_HEALTH] * 0.1; // BFP - Visualize only 0 - 100 instead 0 - 1000
 	if ( value > 100 ) {
 		trap_R_SetColor( colors[3] );	// white
 	} else if (value > 25) {
