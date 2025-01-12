@@ -303,7 +303,8 @@ static void CG_DrawStatusBarHead( float x ) {
 	angles[YAW] = cg.headStartYaw + ( cg.headEndYaw - cg.headStartYaw ) * frac;
 	angles[PITCH] = cg.headStartPitch + ( cg.headEndPitch - cg.headStartPitch ) * frac;
 
-	CG_DrawHead( x, 480 - size, size, size, 
+	// BFP - Place the head HUD at the corner leaving a bit of margin
+	CG_DrawHead( x + 7, 472 - size, size, size, 
 				cg.snap->ps.clientNum, angles );
 }
 
@@ -314,7 +315,7 @@ CG_DrawStatusBarFlag
 ================
 */
 static void CG_DrawStatusBarFlag( float x, int team ) {
-	CG_DrawFlagModel( x, 480 - ICON_SIZE, ICON_SIZE, ICON_SIZE, team, qfalse );
+	CG_DrawFlagModel( x + 147, 480 - ICON_SIZE - 63, ICON_SIZE, ICON_SIZE, team, qfalse ); // BFP - Before Q3: x: x, y: 480 - ICON_SIZE
 }
 
 /*
@@ -471,8 +472,8 @@ static void CG_DrawStatusBar( void ) {
 	// stretch the health up when taking damage
 	// CG_DrawField ( 185, 432, 3, value);
 
-	string = va( "HP: %d%%", value ); // %% is a percentage sign
-	CG_DrawBigString( spacer, SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
+	string = va( "%d%%", value ); // %% is a percentage sign
+	CG_DrawBigString( 107, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
 
@@ -480,8 +481,8 @@ static void CG_DrawStatusBar( void ) {
 	if ( ps->ammo[WP_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
 		ps->ammo[WP_KI] = 0;
 	value = ps->ammo[WP_KI];
-	string = va( "KI: %d", value );
-	CG_DrawBigString( spacer, SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
+	string = va( "%d", value );
+	CG_DrawBigString( 107, -12 + SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
 	if (value >= 100) {
 		trap_R_SetColor( colors[3] );	// white
 	} else {
@@ -880,6 +881,14 @@ static float CG_DrawScores( float y ) {
 	vec4_t		color;
 	float		y1;
 	gitem_t		*item;
+	const short	POS_STR_Y = -19; // BFP - Before Q3: 4
+	const short	POS_FLAG_X = 6; // BFP - Before Q3: (nothing)
+	const short	POS_FLAG_Y = 34; // BFP - Before Q3: 4
+
+	// BFP - Don't show small two score display when spectating
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+		return 0;
+	}
 
 	s1 = cgs.scores1;
 	s2 = cgs.scores2;
@@ -890,7 +899,7 @@ static float CG_DrawScores( float y ) {
 
 	// draw from the right side to left
 	if ( cgs.gametype >= GT_TEAM ) {
-		x = 640;
+		x = 630; // BFP - Before Q3: 640
 		color[0] = 0.0f;
 		color[1] = 0.0f;
 		color[2] = 1.0f;
@@ -898,11 +907,11 @@ static float CG_DrawScores( float y ) {
 		s = va( "%2i", s2 );
 		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 		x -= w;
-		CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+		CG_FillRect( x, y-POS_STR_Y,  w, BIGCHAR_HEIGHT+8, color );
 		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE ) {
-			CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+			CG_DrawPic( x, y-POS_STR_Y, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 		}
-		CG_DrawBigString( x + 4, y, s, 1.0F);
+		CG_DrawBigString( x + 4, y - POS_STR_Y, s, 1.0F );
 
 		if ( cgs.gametype == GT_CTF ) {
 			// Display flag status
@@ -911,7 +920,7 @@ static float CG_DrawScores( float y ) {
 			if (item) {
 				y1 = y - BIGCHAR_HEIGHT - 8;
 				if( cgs.blueflag >= 0 && cgs.blueflag <= 2 ) {
-					CG_DrawPic( x, y1-4, w, BIGCHAR_HEIGHT+8, cgs.media.blueFlagShader[cgs.blueflag] );
+					CG_DrawPic( x - POS_FLAG_X, y1-POS_FLAG_Y, w, BIGCHAR_HEIGHT+8, cgs.media.blueFlagShader[cgs.blueflag] );
 				}
 			}
 		}
@@ -922,11 +931,11 @@ static float CG_DrawScores( float y ) {
 		s = va( "%2i", s1 );
 		w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 		x -= w;
-		CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+		CG_FillRect( x, y-POS_STR_Y,  w, BIGCHAR_HEIGHT+8, color );
 		if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED ) {
-			CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+			CG_DrawPic( x, y-POS_STR_Y, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 		}
-		CG_DrawBigString( x + 4, y, s, 1.0F);
+		CG_DrawBigString( x + 4, y - POS_STR_Y, s, 1.0F);
 
 		if ( cgs.gametype == GT_CTF ) {
 			// Display flag status
@@ -935,7 +944,7 @@ static float CG_DrawScores( float y ) {
 			if (item) {
 				y1 = y - BIGCHAR_HEIGHT - 8;
 				if( cgs.redflag >= 0 && cgs.redflag <= 2 ) {
-					CG_DrawPic( x, y1-4, w, BIGCHAR_HEIGHT+8, cgs.media.redFlagShader[cgs.redflag] );
+					CG_DrawPic( x - POS_FLAG_X, y1-POS_FLAG_Y, w, BIGCHAR_HEIGHT+8, cgs.media.redFlagShader[cgs.redflag] );
 				}
 			}
 		}
@@ -949,13 +958,13 @@ static float CG_DrawScores( float y ) {
 			s = va( "%2i", v );
 			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 			x -= w;
-			CG_DrawBigString( x + 4, y, s, 1.0F);
+			CG_DrawBigString( x + 4, y - POS_STR_Y, s, 1.0F);
 		}
 
 	} else {
 		qboolean	spectator;
 
-		x = 640;
+		x = 630; // BFP - Before Q3: 640
 		score = cg.snap->ps.persistant[PERS_SCORE];
 		spectator = ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR );
 
@@ -972,16 +981,16 @@ static float CG_DrawScores( float y ) {
 				color[1] = 0.0f;
 				color[2] = 0.0f;
 				color[3] = 0.33f;
-				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
-				CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+				CG_FillRect( x, y-POS_STR_Y,  w, BIGCHAR_HEIGHT+8, color );
+				CG_DrawPic( x, y-POS_STR_Y, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 			} else {
 				color[0] = 0.5f;
 				color[1] = 0.5f;
 				color[2] = 0.5f;
 				color[3] = 0.33f;
-				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+				CG_FillRect( x, y-POS_STR_Y,  w, BIGCHAR_HEIGHT+8, color );
 			}	
-			CG_DrawBigString( x + 4, y, s, 1.0F);
+			CG_DrawBigString( x + 4, y - POS_STR_Y, s, 1.0F);
 		}
 
 		// first place
@@ -994,23 +1003,23 @@ static float CG_DrawScores( float y ) {
 				color[1] = 0.0f;
 				color[2] = 1.0f;
 				color[3] = 0.33f;
-				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
-				CG_DrawPic( x, y-4, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
+				CG_FillRect( x, y-POS_STR_Y,  w, BIGCHAR_HEIGHT+8, color );
+				CG_DrawPic( x, y-POS_STR_Y, w, BIGCHAR_HEIGHT+8, cgs.media.selectShader );
 			} else {
 				color[0] = 0.5f;
 				color[1] = 0.5f;
 				color[2] = 0.5f;
 				color[3] = 0.33f;
-				CG_FillRect( x, y-4,  w, BIGCHAR_HEIGHT+8, color );
+				CG_FillRect( x, y-POS_STR_Y,  w, BIGCHAR_HEIGHT+8, color );
 			}	
-			CG_DrawBigString( x + 4, y, s, 1.0F);
+			CG_DrawBigString( x + 4, y - POS_STR_Y, s, 1.0F);
 		}
 
 		if ( cgs.fraglimit ) {
 			s = va( "%2i", cgs.fraglimit );
 			w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH + 8;
 			x -= w;
-			CG_DrawBigString( x + 4, y, s, 1.0F);
+			CG_DrawBigString( x + 4, y - POS_STR_Y, s, 1.0F);
 		}
 
 	}
@@ -1181,7 +1190,8 @@ static void CG_DrawLowerLeft( void ) {
 		y = CG_DrawTeamOverlay( y, qfalse, qfalse );
 	} 
 
-
+	// BFP - Put the pickup item icon a bit up
+	y = 480 - ICON_SIZE - 32;
 	y = CG_DrawPickupItem( y );
 }
 
@@ -1471,7 +1481,7 @@ static void CG_DrawLagometer( void ) {
 	// draw the graph
 	//
 	x = 640 - 48;
-	y = 480 - 48;
+	y = 480 - 200; // BFP - Put the lagometer at the center/a bit up. Before Q3: 480 - 48
 
 	trap_R_SetColor( NULL );
 	CG_DrawPic( x, y, 48, 48, cgs.media.lagometerShader );
@@ -1555,6 +1565,41 @@ static void CG_DrawLagometer( void ) {
 	}
 
 	CG_DrawDisconnect();
+}
+
+/*
+==================
+CG_DrawNumConnectedClients
+==================
+*/
+static void CG_DrawNumConnectedClients( void ) { // BFP - Show number of connected clients for the player itself
+	// if the player is the only one playing, the counter won't be shown
+	short i = 0, connectedClients = 0;
+	while ( i < MAX_CLIENTS ) {
+		if ( cg_entities[i].currentValid ) {
+			if ( cgs.gametype >= GT_TEAM 
+			&& cg.snap->ps.persistant[PERS_TEAM] == cgs.clientinfo[i].team ) {
+				++connectedClients;
+			} else {
+				++connectedClients;
+			}
+		}
+		++i;
+	}
+	// don't show number of connected clients when spectating and when there's only one client
+	if ( connectedClients > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
+		CG_DrawBigString( 608, 255, va( "%d", connectedClients ), 1.0F );
+	}
+}
+
+/*
+==================
+CG_DrawSelectedKiAttack
+==================
+*/
+static void CG_DrawSelectedKiAttack( void ) { // BFP - Show selected ki attack
+	// BFP - TODO: Replace weapons into ki attack configs
+	CG_DrawPic( 535, 383, 96, 37, cg_weapons[ cg.weaponSelect ].weaponIcon );
 }
 
 
@@ -2302,6 +2347,8 @@ static void CG_Draw2D( void ) {
 	CG_DrawTeamVote();
 
 	CG_DrawLagometer();
+	CG_DrawNumConnectedClients();	// BFP - Number of connected clients
+	CG_DrawSelectedKiAttack(); // BFP - Selected ki attack
 	CG_DrawUpperRight();
 
 	CG_DrawLowerRight();

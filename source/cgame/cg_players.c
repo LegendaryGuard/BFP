@@ -2322,12 +2322,13 @@ static void CG_SpriteAura( refEntity_t aura ) { // BFP - Sprite aura
 	// Moreover, the lights are disabled as mentioned previously in CG_DynamicAuraLight function comments
 	// In the future, the shader should be added, not sure what kind of aura is this...
 	float pitchView = cg.refdefViewAngles[PITCH];
-	int i, connectedClients = 1;
+	short i = 0, connectedClients = 1;
 
-	for ( i = 0; i < MAX_CLIENTS; i++ ) {
+	while ( i < MAX_CLIENTS ) {
 		if ( cg_entities[i].currentValid ) {
-			connectedClients++;
+			++connectedClients;
 		}
+		++i;
 	}
 	aura.reType = RT_SPRITE;
 	aura.customShader = 0;

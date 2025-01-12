@@ -1327,24 +1327,15 @@ void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum,
 	p->org[1] += (crandom() * 50);
 
 	p->start = cent->currentState.origin[2];
-	// maybe BFP used to debug the client side visual of the other player with this top limit
-	p->end = (cent->currentState.clientNum != cg.snap->ps.clientNum) 
-		? p->org[2] + 130 + (crandom() * 10)
-		: p->org[2] + 200 + (crandom() * 10);
+	p->end = p->org[2] + 200 + (crandom() * 10);
 
 	p->vel[0] = 0;
 	p->vel[1] = 0;
-	// maybe BFP used to debug the client side visual of the other player with this velocity
-	p->vel[2] = (cent->currentState.clientNum != cg.snap->ps.clientNum) 
-		? 200
-		: 450;
+	p->vel[2] = 450;
 
 	p->accel[0] = 0;
 	p->accel[1] = 0;
-	// maybe BFP used to debug the client side visual of the other player with this acceleration
-	p->accel[2] = (cent->currentState.clientNum != cg.snap->ps.clientNum) 
-		? 10
-		: 20;
+	p->accel[2] = 20;
 
 	p->roll = 5; // used as bounce counter
 	p->link = qfalse; // to handle the ki charging status
