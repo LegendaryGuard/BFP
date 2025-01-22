@@ -133,31 +133,31 @@ void BFPAuraOptions_MenuInit( void );
 void BFPExplosionsOptions_MenuInit( void );
 void BFPViewEffSndsOptions_MenuInit( void );
 
-static void BFPOptions_MenuItem( int *menu_item_curvalue, const char *cvar ) {
-	*menu_item_curvalue = trap_Cvar_VariableValue( cvar ) != 0;
+static void BFPOptions_MenuItem( int *menu_item_curvalue, const char *cvar, int value ) {
+	*menu_item_curvalue = trap_Cvar_VariableValue( cvar ) != value;
 }
 
 static void BFPOptions_SetMenuItems( void ) {
-	BFPOptions_MenuItem( &s_bfpoptions.fix3person.curvalue,     "cg_fixedThirdPerson" );
-	BFPOptions_MenuItem( &s_bfpoptions.particlesfx.curvalue,    "cg_particles" );
-	BFPOptions_MenuItem( &s_bfpoptions.dynauralight.curvalue,   "cg_lightAuras" );
-	BFPOptions_MenuItem( &s_bfpoptions.dynexplolights.curvalue, "cg_lightExplosions" );
-	BFPOptions_MenuItem( &s_bfpoptions.bigexplosions.curvalue,  "cg_bigExplosions" );
-	BFPOptions_MenuItem( &s_bfpoptions.explosionshell.curvalue, "cg_explosionShell" );
-	BFPOptions_MenuItem( &s_bfpoptions.explosionsmoke.curvalue, "cg_explosionSmoke" );
-	BFPOptions_MenuItem( &s_bfpoptions.explosionring.curvalue,  "cg_explosionRing" );
-	BFPOptions_MenuItem( &s_bfpoptions.transaura.curvalue,      "cg_transformationAura" );
-	BFPOptions_MenuItem( &s_bfpoptions.smallaura.curvalue,      "cg_smallOwnAura" );
-	BFPOptions_MenuItem( &s_bfpoptions.ssjglow.curvalue,        "cg_permaglowUltimate" );
-	BFPOptions_MenuItem( &s_bfpoptions.accucrosshair.curvalue,  "cg_stableCrosshair" );
-	BFPOptions_MenuItem( &s_bfpoptions.simplehud.curvalue,      "cg_simpleHUD" );
-	BFPOptions_MenuItem( &s_bfpoptions.chargealert.curvalue,    "cg_chargeupAlert" );
-	BFPOptions_MenuItem( &s_bfpoptions.q3hitsfx.curvalue,       "cg_playHitSound" );
-	BFPOptions_MenuItem( &s_bfpoptions.flightilt.curvalue,      "cg_flytilt" );
-	BFPOptions_MenuItem( &s_bfpoptions.bigheads.curvalue,       "cg_superdeformed" );
-	BFPOptions_MenuItem( &s_bfpoptions.defaultskins.curvalue,   "cg_forceSkin" );
-	BFPOptions_MenuItem( &s_bfpoptions.stfu.curvalue,           "cg_stfu" );
-	BFPOptions_MenuItem( &s_bfpoptions.lowpolysphere.curvalue,  "cg_lowpolysphere" );
+	BFPOptions_MenuItem( &s_bfpoptions.fix3person.curvalue,     "cg_fixedThirdPerson",   0 );
+	BFPOptions_MenuItem( &s_bfpoptions.particlesfx.curvalue,    "cg_particles",          0 );
+	BFPOptions_MenuItem( &s_bfpoptions.dynauralight.curvalue,   "cg_lightAuras",         0 );
+	BFPOptions_MenuItem( &s_bfpoptions.dynexplolights.curvalue, "cg_lightExplosions",    0 );
+	BFPOptions_MenuItem( &s_bfpoptions.bigexplosions.curvalue,  "cg_bigExplosions",      0 );
+	BFPOptions_MenuItem( &s_bfpoptions.explosionshell.curvalue, "cg_explosionShell",     0 );
+	BFPOptions_MenuItem( &s_bfpoptions.explosionsmoke.curvalue, "cg_explosionSmoke",     0 );
+	BFPOptions_MenuItem( &s_bfpoptions.explosionring.curvalue,  "cg_explosionRing",      0 );
+	BFPOptions_MenuItem( &s_bfpoptions.transaura.curvalue,      "cg_transformationAura", 0 );
+	BFPOptions_MenuItem( &s_bfpoptions.smallaura.curvalue,      "cg_smallOwnAura",       0 );
+	BFPOptions_MenuItem( &s_bfpoptions.ssjglow.curvalue,        "cg_permaglowUltimate",  0 );
+	BFPOptions_MenuItem( &s_bfpoptions.accucrosshair.curvalue,  "cg_stableCrosshair",    1 ); // doesn't make sense if the crosshair isn't accurate
+	BFPOptions_MenuItem( &s_bfpoptions.simplehud.curvalue,      "cg_simpleHUD",          0 );
+	BFPOptions_MenuItem( &s_bfpoptions.chargealert.curvalue,    "cg_chargeupAlert",      0 );
+	BFPOptions_MenuItem( &s_bfpoptions.q3hitsfx.curvalue,       "cg_playHitSound",       0 );
+	BFPOptions_MenuItem( &s_bfpoptions.flightilt.curvalue,      "cg_flytilt",            0 );
+	BFPOptions_MenuItem( &s_bfpoptions.bigheads.curvalue,       "cg_superdeformed",      0 );
+	BFPOptions_MenuItem( &s_bfpoptions.defaultskins.curvalue,   "cg_forceSkin",          0 );
+	BFPOptions_MenuItem( &s_bfpoptions.stfu.curvalue,           "cg_stfu",               0 );
+	BFPOptions_MenuItem( &s_bfpoptions.lowpolysphere.curvalue,  "cg_lowpolysphere",      0 );
 }
 
 static void BFPOptions_AuraType_Setup( int sprite, int highpoly, int poly, int light, int particle ) {
@@ -368,7 +368,7 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 		break;
 
 	case ID_ACCUCROSSHAIR:
-		trap_Cvar_SetValue( "cg_stableCrosshair", s_bfpoptions.accucrosshair.curvalue );
+		trap_Cvar_SetValue( "cg_stableCrosshair", s_bfpoptions.accucrosshair.curvalue ? 0 : 1 ); // doesn't make sense if the crosshair isn't accurate
 		break;
 
 	case ID_SIMPLEHUD:
