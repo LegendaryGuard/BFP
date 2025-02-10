@@ -62,7 +62,6 @@ G_CVAR( g_debugAlloc, "g_debugAlloc", "0", 0, 0, qfalse )
 G_CVAR( g_motd, "g_motd", "", 0, 0, qfalse )
 G_CVAR( g_blood, "com_blood", "1", 0, 0, qfalse )
 
-G_CVAR( g_basePL, "g_basePL", "150", 0, 0, qtrue ) // BFP - Base powerlevel
 G_CVAR( g_allowSpectatorChat, "g_allowSpectatorChat", "", 0, 0, qtrue ) // BFP - Allow spectator chat
 G_CVAR( g_meleeDamage, "g_meleeDamage", "10", CVAR_ARCHIVE, 0, qtrue ) // BFP - Melee damage
 G_CVAR( g_meleeDiveRange, "g_meleeDiveRange", "700", CVAR_ARCHIVE, 0, qtrue ) // BFP - Melee dive range
@@ -71,10 +70,14 @@ G_CVAR( g_chargeDelay, "g_chargeDelay", "750", CVAR_ARCHIVE, 0, qtrue ) // BFP -
 G_CVAR( g_hitStun, "g_hitStun", "", 0, 0, qtrue ) // BFP - Hit stun
 G_CVAR( g_meleeOnly, "g_meleeOnly", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qtrue ) // BFP - Melee only
 G_CVAR( g_noFlight, "g_noFlight", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qtrue ) // BFP - No flight
-G_CVAR( g_plKillBonusPct, "g_plKillBonusPct", ".1", 0, 0, qtrue ) // BFP - Kill bonus percentage
-G_CVAR( g_maxSpawnPL, "g_maxSpawnPL", "999", 0, 0, qtrue ) // BFP - Max spawn powerlevel
+
+G_CVAR( g_basePL, "g_basePL", "150", CVAR_ARCHIVE | CVAR_LATCH, 0, qtrue ) // BFP - Base powerlevel
+G_CVAR( g_plKillBonusPct, "g_plKillBonusPct", ".1", CVAR_ARCHIVE, 0, qtrue ) // BFP - Kill bonus percentage
+G_CVAR( g_maxSpawnPL, "g_maxSpawnPL", "0", CVAR_ARCHIVE, 0, qtrue ) // BFP - Max spawn powerlevel
+
 G_CVAR( g_flightCost, "g_flightCost", "50", 0, 0, qtrue ) // BFP - Flight cost
 G_CVAR( g_flightCostPct, "g_flightCostPct", "0", 0, 0, qtrue ) // BFP - Flight cost percentage
+
 G_CVAR( g_boostCost, "g_boostCost", "350", 0, 0, qtrue ) // BFP - Boost cost
 G_CVAR( g_boostCostPct, "g_boostCostPct", "0", 0, 0, qtrue ) // BFP - Boost cost percentage
 

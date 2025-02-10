@@ -82,6 +82,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	CS_ITEMS				27		// string of 0's and 1's that tell which items are present
 
+#define	CS_POWERLEVEL			28		// BFP - Powerlevel data to parse to client
+
 #define	CS_MODELS				32
 #define	CS_SOUNDS				(CS_MODELS+MAX_MODELS)
 #define	CS_PLAYERS				(CS_SOUNDS+MAX_SOUNDS)
@@ -175,7 +177,8 @@ typedef enum {
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
 #define PMF_FLIGHT_ACTIVE	8192	// BFP - Flight active status
 // BFP - TODO: Reuse the following flag (used on Team Arena), change name if it'll be used
-#define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
+// BFP - PMF_INVULEXPAND is unused
+// #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
@@ -235,9 +238,9 @@ typedef enum {
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
 	STAT_DEAD_YAW,					// look this direction when dead (FIXME: get rid of?)
-	STAT_CLIENTS_READY				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
-	// BFP - No STAT_MAX_HEALTH, so we saved one stat!
-//	STAT_MAX_HEALTH					// health / armor limit, changable by handicap
+	STAT_CLIENTS_READY,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
+	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
+	STAT_MAX_KI						// BFP - Maximum ki
 } statIndex_t;
 
 
@@ -261,7 +264,8 @@ typedef enum {
 	PERS_DEFEND_COUNT,				// defend awards
 	PERS_ASSIST_COUNT,				// assist awards
 	PERS_GAUNTLET_FRAG_COUNT,		// kills with the guantlet
-	PERS_CAPTURES					// captures
+	PERS_CAPTURES,					// captures
+	PERS_POWERLEVEL					// BFP - Powerlevel
 } persEnum_t;
 
 
@@ -337,7 +341,7 @@ typedef enum {
 	WP_PLASMAGUN,
 	WP_BFG,
 	WP_GRAPPLING_HOOK,
-	WP_KI,		// BFP - Ammo bit used for ki
+	WP_KI,				// BFP - Ammo bit used for ki
 
 	WP_NUM_WEAPONS
 } weapon_t;

@@ -47,9 +47,6 @@ float	pm_spectatorfriction = 2.0f; // BFP - Add less spectator movement friction
 
 int		c_pmove = 0;
 
-// BFP - TODO: Check with powerlevels, if powerlevel is very low, the player is slow using ki boost; if higher, faster
-// Currently, it's set to faster
-
 /*
 ===============
 PM_AddEvent
@@ -785,6 +782,13 @@ static void PM_WaterMove( void ) {
 		wishvel[2] += scale * pm->cmd.upmove;
 	}
 
+	// BFP - Reduces speed when charging ki
+	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
+	&& ( pm->ps->powerups[PW_HASTE] <= 0 && !( pm->cmd.buttons & BUTTON_KI_USE ) )
+	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+		wishvel[2] *= 0.15;
+	}
+
 	// BFP - Sink on stunned status
 	if ( pm->ps->weaponstate == WEAPON_KIEXPLOSIONWAVE || pm->ps->weaponstate == WEAPON_STUN 
 	|| ( pm->ps->pm_flags & PMF_HITSTUN ) ) {
@@ -806,7 +810,8 @@ static void PM_WaterMove( void ) {
 	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& ( pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0 || pm->cmd.upmove != 0 ) ) {
-		wishspeed *= scale;
+		// BFP - Ki boost speed is dependent on powerlevel
+		wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 );
 	}
 
 	PM_Accelerate (wishdir, wishspeed, pm_wateraccelerate);
@@ -870,7 +875,8 @@ static void PM_FlyMove( void ) {
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING ) { // BFP - Don't increase speed when beam firing
-			wishspeed *= (scale + 2); // increase the speed a bit
+			// BFP - Ki boost speed is dependent on powerlevel
+			wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // increase the speed a bit
 		}
 
 		// determine the target roll angle based on rightmove
@@ -989,6 +995,12 @@ static void PM_AirMove( void ) {
 
 	PM_StepSlideMove ( qtrue );
 
+	// BFP - TODO: Avoid being pressed. Some lurker may have problems issues doing that on gameplay, I suggest not to do it
+	if ( ( pm->ps->powerups[PW_FLIGHT] <= 0 && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
+	&& !( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
+		return;
+	}
+
 	// BFP - Reduces speed when charging ki
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
 	&& ( pm->ps->powerups[PW_HASTE] <= 0 && !( pm->cmd.buttons & BUTTON_KI_USE ) )
@@ -999,14 +1011,12 @@ static void PM_AirMove( void ) {
 
 	// BFP - Handle gravity, make the player heavier
 	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
-	&& ( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE )
-	&& ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+	&& ( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE ) ) {
 		PM_SlideMove ( qtrue );
 		return;
 	}
 
-	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
-	&& !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY ) ) {
 		PM_SlideMove ( qtrue );
 		return;
 	}
@@ -1133,7 +1143,8 @@ static void PM_WalkMove( void ) {
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		wishspeed *= 3; // move at that speed rate
+		// BFP - Ki boost speed is dependent on powerlevel
+		wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // move at that speed rate
 	}
 
 	// when a player gets hit, they temporarily lose
@@ -1356,7 +1367,7 @@ static void PM_CrashLand( void ) {
 	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE) )  {
 		if ( delta > 180 ) { // BFP - Before Q3 default value (60), the far fall in BFP is deeper
 			PM_AddEvent( EV_FALL_FAR );
-		} else if ( delta > 40 ) {
+		} else if ( delta > 60 ) { // BFP - Before Q3 default value (40), the far medium in BFP is a bit deeper
 			// this is a pain grunt, so don't play it if dead
 			if ( pm->ps->stats[STAT_HEALTH] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
@@ -1451,8 +1462,7 @@ PM_ControlJumpOnGround
 =============
 */
 static void PM_ControlJumpOnGround( void ) { // BFP - A control to handle user movement intentions when jumping off the ground
-	if ( !pml.walking // don't use on walking
-	&& pm->ps->weaponstate != WEAPON_STUN
+	if ( pm->ps->weaponstate != WEAPON_STUN
 	&& pm->ps->groundEntityNum != ENTITYNUM_NONE 
 	&& pm->ps->powerups[PW_FLIGHT] <= 0
 	&& ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) 
@@ -1743,6 +1753,7 @@ static void PM_CheckDuck (void)
 {
 	trace_t	trace;
 
+#if 0
 	if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
 		if ( pm->ps->pm_flags & PMF_INVULEXPAND ) {
 			// invulnerability sphere has a 42 units radius
@@ -1758,6 +1769,7 @@ static void PM_CheckDuck (void)
 		return;
 	}
 	pm->ps->pm_flags &= ~PMF_INVULEXPAND;
+#endif
 
 	pm->mins[0] = -15;
 	pm->mins[1] = -15;
@@ -2388,14 +2400,6 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 		PM_StartLegsAnim( LEGS_IDLECR );
 	}
 
-	// When the player doesn't have more ki, play hit stun animation
-	if ( ( pm->ps->ammo[WP_KI] <= 0 && !( pm->ps->pm_flags & PMF_HITSTUN ) )
-		|| ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->ammo[WP_KI] <= 24 ) // BFP - TODO: Apply some timer if used any ki, if flying and has less ki, then hit stun (also BFP does that)
-		|| ( ( pm->cmd.buttons & BUTTON_ATTACK ) && ( pm->ps->pm_flags & PMF_HITSTUN ) ) ) {
-		pm->ps->pm_time = 1000;
-		pm->ps->pm_flags |= PMF_HITSTUN;
-	}
-
 	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) && pm->ps->pm_time <= 0 ) {
 		pm->ps->pm_flags &= ~PMF_HITSTUN;
 		// do jump animation if it's falling
@@ -2502,7 +2506,7 @@ static void PM_Weapon( void ) {
 	if ( pm->cmd.buttons & BUTTON_USE_HOLDABLE ) {
 		if ( ! ( pm->ps->pm_flags & PMF_USE_ITEM_HELD ) ) {
 			if ( bg_itemlist[pm->ps->stats[STAT_HOLDABLE_ITEM]].giTag == HI_MEDKIT
-				&& pm->ps->stats[STAT_HEALTH] >= MAX_HEALTH ) { // BFP - Before Q3: + 25
+				&& pm->ps->stats[STAT_HEALTH] >= pm->ps->stats[STAT_MAX_HEALTH] ) { // BFP - Before Q3: + 25
 				// don't use medkit if at max health
 			} else {
 				pm->ps->pm_flags |= PMF_USE_ITEM_HELD;
@@ -2857,10 +2861,6 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		}
 		pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
 	}
-
-	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && pm->ps->pm_time <= 0 ) {
-		pm->ps->ammo[WP_KI]++;
-	}
 }
 
 /*
@@ -2927,7 +2927,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
-		pm->ps->pm_flags |= PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->cmd.buttons &= ~BUTTON_ATTACK;
 		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status

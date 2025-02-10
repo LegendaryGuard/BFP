@@ -249,7 +249,7 @@ void Cmd_Give_f (gentity_t *ent)
 
 	if (give_all || Q_stricmp( name, "health") == 0)
 	{
-		ent->health = MAX_HEALTH;
+		ent->health = ent->client->ps.stats[STAT_MAX_HEALTH];
 		if (!give_all)
 			return;
 	}
@@ -271,8 +271,7 @@ void Cmd_Give_f (gentity_t *ent)
 			ent->client->ps.ammo[i] = 999;
 		}
 #endif
-		// BFP - TODO: If the player is a monster in Monster gametype, give 20000
-		ent->client->ps.ammo[WP_KI] = 10000;
+		ent->client->ps.ammo[WP_KI] = ent->client->ps.stats[STAT_MAX_KI];
 
 		if (!give_all)
 			return;

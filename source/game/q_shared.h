@@ -1165,9 +1165,6 @@ typedef struct {
 
 #define PS_PMOVEFRAMECOUNTBITS	6
 
-// BFP - Max player health (Q3 used STAT_MAX_HEALTH on player_state->stats[] index)
-#define	MAX_HEALTH				1000
-
 // playerState_t is the information needed by both the client and server
 // to predict player motion and actions
 // nothing outside of pmove should modify these, or some degree of prediction error

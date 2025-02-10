@@ -399,32 +399,36 @@ Actions that happen once a second
 */
 void ClientTimerActions( gentity_t *ent, int msec ) {
 	gclient_t	*client;
+	// BFP - Flight cost total variable
+	float		flightCostTotal = g_flightCost.value + g_flightCostPct.value * ( ent->client->ps.stats[STAT_MAX_KI] * 0.01 );
 
 	client = ent->client;
 	client->timeResidual += msec;
 
-	// BFP - NOTE: BFP handles the ki charge and consumption weirdly with these calculation measures
-
 	// BFP - Ki boost consumption
-	// BFP - TODO: Check with powerlevels
-	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.powerups[PW_HASTE] > 0 ) )
+	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || client->ps.powerups[PW_HASTE] > 0 )
 	&& client->ps.ammo[WP_KI] > 0
 	&& !( client->ps.pm_flags & PMF_BLOCK ) ) {
-		client->ps.ammo[WP_KI] -= g_boostCost.value * 0.001 + ( g_boostCostPct.value * 10 );
+		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
+		float boostCostTotal = ( g_boostCost.value * 0.001 ) + ( g_boostCostPct.value * 0.1 ) * client->ps.stats[STAT_MAX_KI] * 0.0001;
+		client->ps.ammo[WP_KI] -= boostCostTotal;
 	}
 
 	// BFP - Charge ki
-	// BFP - TODO: Check with powerlevels
-	if ( ( client->ps.pm_flags & PMF_KI_CHARGE )
-	&& ( client->ps.eFlags & EF_AURA )
-	&& client->ps.ammo[WP_KI] > 0 ) {
-		client->ps.ammo[WP_KI] += g_kiCharge.value + ( g_kiChargePct.value * 0.001 );
+	if ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA )
+	&& !( client->ps.pm_flags & PMF_HITSTUN )
+	&& client->ps.ammo[WP_KI] < client->ps.stats[STAT_MAX_KI] ) {
+		float kiChargeTotal = ( g_kiCharge.value * 0.01 ) + g_kiChargePct.value * ( client->ps.stats[STAT_MAX_KI] * 0.0001 );
+		client->ps.ammo[WP_KI] += kiChargeTotal;
 	}
 
 	// BFP - Block ki consume
-	// BFP - TODO: Check with powerlevels
-	if ( client->ps.pm_flags & PMF_BLOCK ) {
-		client->ps.ammo[WP_KI] -= g_blockCost.value + ( g_blockCostPct.value * 0.1 );
+	if ( ( client->ps.pm_flags & PMF_BLOCK )
+	&& client->ps.ammo[WP_KI] > 0
+	&& random() < 0.75 ) { // a weird random thingy (¬_¬') tried to get the similar result
+		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
+		float blockCostTotal = ( g_blockCost.value * 0.01 ) + ( g_blockCostPct.value * 0.01 ) * ( client->ps.stats[STAT_MAX_KI] * 0.0001 );
+		client->ps.ammo[WP_KI] -= blockCostTotal;
 	}
 
 	while ( client->timeResidual >= 1000 ) {
@@ -432,46 +436,79 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 		// regenerate
 		if ( client->ps.powerups[PW_REGEN] ) {
-			if ( ent->health < MAX_HEALTH) {
+			if ( ent->health < client->ps.stats[STAT_MAX_HEALTH] ) {
 				ent->health += 15;
-				if ( ent->health > MAX_HEALTH * 1.1 ) {
-					ent->health = MAX_HEALTH * 1.1;
+				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 1.1 ) {
+					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 1.1;
 				}
 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
-			} else if ( ent->health < MAX_HEALTH * 2) {
+			} else if ( ent->health < client->ps.stats[STAT_MAX_HEALTH] * 2) {
 				ent->health += 5;
-				if ( ent->health > MAX_HEALTH * 2 ) {
-					ent->health = MAX_HEALTH * 2;
+				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
+					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 2;
 				}
 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
 			}
 		} else {
 			// count down health when over max
-			if ( ent->health > MAX_HEALTH ) {
+			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
 				ent->health--;
 			}
 		}
 
-		// BFP - Decrease ki when flying (no powerlevel check required)
+		// BFP - Decrease ki when flying
 		if ( client->ps.powerups[PW_FLIGHT] > 0 
-		&& client->ps.ammo[WP_KI] > 0 ) {
-			client->ps.ammo[WP_KI] -= g_flightCost.value + ( g_flightCostPct.value * 10 );
+		&& client->ps.ammo[WP_KI] > 0
+		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) { // don't decrease when charging
+			if ( g_flightCostPct.value > 0 && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) { // reduce a bit if the percentage cost is more than 0 and has less powerlevel
+				--flightCostTotal;
+			}
+			client->ps.ammo[WP_KI] -= flightCostTotal;
 		}
 
 		// BFP - Regenerate ki
-		// BFP - TODO: Check with powerlevels
-		client->ps.ammo[WP_KI] += g_kiRegen.value + ( g_kiRegenPct.value * 10 );
+		if ( !( client->pers.cmd.buttons & BUTTON_KI_USE ) && client->ps.powerups[PW_HASTE] <= 0
+		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) ) // don't increase when charging
+		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) // don't increase when trying to charge when stunned
+		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) ) { // don't increase when trying to attack when stunned
+			client->ps.ammo[WP_KI] += g_kiRegen.value + ( g_kiRegenPct.value * client->ps.stats[STAT_MAX_KI] * 0.01 );
+		}
 
 		// count down armor when over max
-		if ( client->ps.stats[STAT_ARMOR] > MAX_HEALTH ) {
+		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
 			client->ps.stats[STAT_ARMOR]--;
 		}
+	}
+
+	// BFP - Set maximum ki
+	// BFP - TODO: On monster gamemode, set +10000 (max. 20000) for the player who is monster
+	if ( client->ps.ammo[WP_KI] > client->ps.stats[STAT_MAX_KI] ) {
+		client->ps.ammo[WP_KI] = client->ps.stats[STAT_MAX_KI];
 	}
 
 	// BFP - If ki drops to 0, disable flight
 	if ( client->ps.ammo[WP_KI] <= 0 ) {
 		client->ps.ammo[WP_KI] = 0;
 		client->ps.powerups[PW_FLIGHT] = 0;
+	}
+
+	// BFP - When the player doesn't have more ki, gets a hit stun
+	if ( ( client->ps.ammo[WP_KI] <= 0 )
+		|| ( client->ps.powerups[PW_FLIGHT] > 0 && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 )
+		|| ( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) ) {
+		if ( client->ps.powerups[PW_FLIGHT] > 0 && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 ) {
+			client->ps.ammo[WP_KI] /= flightCostTotal;
+		}
+		if ( client->ps.ammo[WP_KI] <= 0 ) {
+			client->ps.pm_time = 100; // handle time
+		} else {
+			client->ps.pm_time = 1000;
+		}
+		client->ps.pm_flags |= PMF_HITSTUN;
+	}
+
+	if ( client->ps.ammo[WP_KI] > 0 && ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.pm_time <= 0 ) {
+		client->ps.pm_flags &= ~PMF_HITSTUN;
 	}
 }
 
@@ -533,11 +570,12 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 				break;
 			}
 			// BFP - When the player is falling with stunned status
-			// BFP - TODO: Check with powerlevels, if powerlevel is very low, then the player is weak at falling
-			// but when the powerlevel is getting higher, the less damage it will have
+			// if powerlevel is very low, weaker at falling (player has less max health)
+			// but when the powerlevel is getting higher, the less damage it will have (player has more max health)
 			if ( client->ps.pm_flags & PMF_HITSTUN ) {
+				damage = 5; // medium fall
 				if ( event == EV_FALL_FAR ) {
-					damage = 100;
+					damage = 10;
 				}
 				ent->pain_debounce_time = level.time + 200;	// no normal pain sound
 				G_Damage ( ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING );
@@ -580,7 +618,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_USE_ITEM2:		// medkit
-			ent->health = MAX_HEALTH; // BFP - Before Q3: + 25
+			ent->health = client->ps.stats[STAT_MAX_HEALTH]; // BFP - Before Q3: + 25
 
 			break;
 
@@ -863,7 +901,8 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 					ent->client->ps.pm_time = 0;
 				}
 				ent->client->ps.pm_flags &= ~PMF_BLOCK;
-				ent->client->ps.ammo[WP_KI] -= 408;
+				// consumes 5% of ki
+				ent->client->ps.ammo[WP_KI] -= ( ent->client->ps.stats[STAT_MAX_KI] / 20 );
 				ent->client->zanzokenPressTime = 0;
 				ent->client->zanzokenNow = qfalse;
 				ent->client->zanzokenLeft = qfalse;

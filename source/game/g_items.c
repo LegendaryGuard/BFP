@@ -208,9 +208,9 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 	// small and mega healths will go over the max
 	if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
-		max = MAX_HEALTH;
+		max = other->client->ps.stats[STAT_MAX_HEALTH];
 	} else {
-		max = MAX_HEALTH * 2;
+		max = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
 	}
 
 	if ( ent->count ) {
@@ -237,8 +237,8 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 
 int Pickup_Armor( gentity_t *ent, gentity_t *other ) {
 	other->client->ps.stats[STAT_ARMOR] += ent->item->quantity;
-	if ( other->client->ps.stats[STAT_ARMOR] > MAX_HEALTH * 2 ) {
-		other->client->ps.stats[STAT_ARMOR] = MAX_HEALTH * 2;
+	if ( other->client->ps.stats[STAT_ARMOR] > other->client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
+		other->client->ps.stats[STAT_ARMOR] = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
 	}
 	return RESPAWN_ARMOR;
 }

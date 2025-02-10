@@ -750,7 +750,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		}
 	}
 
-	// BFP - No STAT_MAX_HEALTH and handicap
+	// BFP - No handicap
 #if 0
 	// set max health
 	health = atoi( Info_ValueForKey( userinfo, "handicap" ) );
@@ -760,6 +760,11 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
 #endif
+	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
+	client->ps.stats[STAT_MAX_HEALTH] = 1 + client->ps.persistant[PERS_POWERLEVEL];
+	if ( client->ps.stats[STAT_MAX_HEALTH] > 1000 ) {
+		client->ps.stats[STAT_MAX_HEALTH] = 1000;
+	}
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -811,12 +816,12 @@ void ClientUserinfoChanged( int clientNum ) {
 	if ( ent->r.svFlags & SVF_BOT ) {
 		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
 			client->pers.netname, team, model, headModel, c1, c2, 
-			MAX_HEALTH, client->sess.wins, client->sess.losses,
+			client->ps.stats[STAT_MAX_HEALTH], client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ), teamTask, teamLeader );
 	} else {
 		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
 			client->pers.netname, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 
-			MAX_HEALTH, client->sess.wins, client->sess.losses, teamTask, teamLeader);
+			client->ps.stats[STAT_MAX_HEALTH], client->sess.wins, client->sess.losses, teamTask, teamLeader);
 	}
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
@@ -852,6 +857,33 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
+}
+
+/*
+===========
+ClientGetAveragePowerlevel
+
+Get the average powerlevel when there are another players with 
+different powerlevels.
+============
+*/
+static short ClientGetAveragePowerlevel( void ) { // BFP - Average powerlevel
+	short	i = 0;
+	short	totalPowerLevel = 0;
+	short	activeClients = 0;
+
+	while ( i < level.numConnectedClients ) {
+		gentity_t *ent = &g_entities[level.sortedClients[i]];
+
+		if ( ent->inuse && ent->client ) {
+			totalPowerLevel += ent->client->ps.persistant[PERS_POWERLEVEL];
+			++activeClients;
+		}
+		++i;
+	}
+
+	// avoid division by zero
+	return ( activeClients > 0 ) ? ( totalPowerLevel / activeClients ) : 0;
 }
 
 
@@ -1128,7 +1160,7 @@ void ClientSpawn(gentity_t *ent) {
 	// client->airOutTime = level.time + 12000;
 
 	trap_GetUserinfo( index, userinfo, sizeof(userinfo) );
-	// BFP - No STAT_MAX_HEALTH and handicap
+	// BFP - No handicap
 #if 0
 	// set max health
 	client->pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
@@ -1138,6 +1170,7 @@ void ClientSpawn(gentity_t *ent) {
 	// clear entity values
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
 #endif
+
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1159,7 +1192,42 @@ void ClientSpawn(gentity_t *ent) {
 
 	// BFP - TODO: list of 5 skills
 
-	client->ps.ammo[WP_KI] = 8160.0f; // BFP - TODO: give ki at start
+	// BFP - Powerlevel start
+	if ( client->ps.persistant[PERS_POWERLEVEL] < g_basePL.integer ) {
+		client->ps.persistant[PERS_POWERLEVEL] = g_basePL.integer;
+	} else {
+		if ( level.numConnectedClients > 1 ) {
+			client->ps.persistant[PERS_POWERLEVEL] = ClientGetAveragePowerlevel();
+		}
+	}
+	if ( client->ps.persistant[PERS_POWERLEVEL] > 1000 || g_basePL.integer > 998 ) {
+		client->ps.persistant[PERS_POWERLEVEL] = 1000;
+	}
+
+	// BFP - Max spawn powerlevel, only when g_maxSpawnPL is higher than 0
+	if ( g_maxSpawnPL.integer > 0 && client->ps.persistant[PERS_POWERLEVEL] > g_maxSpawnPL.integer ) {
+		client->ps.persistant[PERS_POWERLEVEL] = g_maxSpawnPL.integer;
+	}
+	// BFP - Send powerlevel data to all clients
+	trap_SetConfigstring( CS_POWERLEVEL + client->ps.clientNum, va( "%d", client->ps.persistant[PERS_POWERLEVEL] ) );
+	
+	// BFP - Max health start
+	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
+	client->ps.stats[STAT_MAX_HEALTH] = 1 + client->ps.persistant[PERS_POWERLEVEL];
+	if ( client->ps.stats[STAT_MAX_HEALTH] > 1000 ) {
+		client->ps.stats[STAT_MAX_HEALTH] = 1000;
+	}
+
+	// BFP - Ki start
+	client->ps.ammo[WP_KI] = 999;
+	// BFP - NOTE: What the heck? Did BFP dev make this multiplying 9.00825 with powerlevel? Strange approximation...
+	client->ps.ammo[WP_KI] = client->ps.ammo[WP_KI] + ( 9.00825 * client->ps.persistant[PERS_POWERLEVEL] );
+	client->ps.stats[STAT_MAX_KI] = client->ps.ammo[WP_KI];
+
+	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, check with max ki multiplied per 2
+	if ( client->ps.stats[STAT_MAX_KI] > 10000 ) {
+		client->ps.stats[STAT_MAX_KI] = client->ps.ammo[WP_KI] = 10000;
+	}
 
 	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 	client->ps.ammo[WP_MACHINEGUN] = 100;
@@ -1181,7 +1249,7 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
 
 	// health will count down towards max_health
-	ent->health = client->ps.stats[STAT_HEALTH] = MAX_HEALTH; // BFP - Before Q3: + 25
+	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH]; // BFP - Before Q3: + 25
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );

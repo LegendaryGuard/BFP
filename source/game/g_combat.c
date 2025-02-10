@@ -390,6 +390,36 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			AddScore( attacker, self->r.currentOrigin, -1 );
 		} else {
 			AddScore( attacker, self->r.currentOrigin, 1 );
+			// BFP - Attacker gains powerlevel from the opponent
+			// Formula: attackerPowerlevel += 1 + ( opponentPowerlevel * g_plKillBonusPct.value )
+			attacker->client->ps.persistant[PERS_POWERLEVEL] += 1 + ( self->client->ps.persistant[PERS_POWERLEVEL] * g_plKillBonusPct.value );
+			if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000
+				attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
+			}
+			// BFP - Send powerlevel data to all clients
+			trap_SetConfigstring( CS_POWERLEVEL + attacker->client->ps.clientNum, va( "%d", attacker->client->ps.persistant[PERS_POWERLEVEL] ) );
+
+			// BFP - Add more maximum ki
+			// BFP - NOTE: What the heck? Did BFP dev make this multiplying 9.00825 with powerlevel? Strange approximation...
+			attacker->client->ps.stats[STAT_MAX_KI] = 999 + ( 9.00825 * attacker->client->ps.persistant[PERS_POWERLEVEL] );
+
+			// BFP - Add a bit of ki bonus respect to powerlevel, these calculations are more or less approximated
+			// BFP - TODO: Handle highest tier
+			if ( attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
+				attacker->client->ps.ammo[WP_KI] += attacker->client->ps.persistant[PERS_POWERLEVEL] * 0.2528 + attacker->client->ps.ammo[WP_KI] * 0.045;
+			}
+
+			// BFP - Add max health
+			// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
+			attacker->client->ps.stats[STAT_MAX_HEALTH] = 1 + attacker->client->ps.persistant[PERS_POWERLEVEL];
+			if ( attacker->client->ps.stats[STAT_MAX_HEALTH] > 1000 ) {
+				attacker->client->ps.stats[STAT_MAX_HEALTH] = 1000;
+			}
+
+			// BFP - TODO: When unlocking a tier, give the player maximum ki 
+			if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
+				attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+			}
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
 				
@@ -692,7 +722,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
-		max = MAX_HEALTH;
+		max = attacker->client->ps.stats[STAT_MAX_HEALTH];
 		damage = damage * max / 100;
 	}
 
