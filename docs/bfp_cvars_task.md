@@ -1,9 +1,5 @@
 # BFP CVARS
 
-## PENDING:
-
-- g_basepl [1-999]: set the starting power level from one thousand to one mil.
-
 #### Cvar Gametypes:
 
 - g_gametype 3 = sur (survival)
@@ -13,19 +9,6 @@
 - g_gametype 7 = ctf (capture the flag) // originally, in Q3, this number is 4
 
 ... and maybe more, look in [cvar_bfp_list.txt](docs/cvar_bfp_list.txt)
-
-
-## WIP:
-
-Check calculations with powerlevels:
-- g_kiChargePct
-- g_kiCharge
-- g_kiRegenPct
-- g_kiRegen
-- g_boostCostPct
-- g_boostCost
-- g_blockCostPct
-- g_blockCost
 
 
 ## DONE BUT NOT IN CGAME:
@@ -57,11 +40,22 @@ Check calculations with powerlevels:
 - [x] ~~cg_particleAura~~
 - [x] ~~cg_playHitSound~~
 - [x] ~~g_allowSpectatorChat~~
+- [x] ~~g_basePL~~
+- [x] ~~g_maxSpawnPL~~
+- [x] ~~g_plKillBonusPct~~
 - [x] ~~g_meleeOnly~~
 - [x] ~~g_noFlight (disables "fly" bind too, original BFP has a leak though)~~
 - [x] ~~g_blockLength~~
 - [x] ~~g_blockDelay~~
+- [x] ~~g_blockCost~~ (completed, but without the original formula)
+- [x] ~~g_blockCostPct~~ (completed, but without the original formula)
+- [x] ~~g_kiRegen~~
+- [x] ~~g_kiRegenPct~~
+- [x] ~~g_boostCost~~ (completed, but without the original formula)
+- [x] ~~g_boostCostPct~~ (completed, but without the original formula)
 - [x] ~~g_chargeDelay~~
+- [x] ~~g_kiCharge~~
+- [x] ~~g_kiChargePct~~
 - [x] ~~g_flightCost~~
 - [x] ~~g_flightCostPct~~
 - [x] ~~g_hitStun~~

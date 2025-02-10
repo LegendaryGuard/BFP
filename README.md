@@ -2,10 +2,8 @@ Bid For Power (BFP) source code
 ===============================
 [![Stars](https://img.shields.io/github/stars/LegendaryGuard/BFP)](https://github.com/LegendaryGuard/BFP/stargazers)
 [![Forks](https://img.shields.io/github/forks/LegendaryGuard/BFP)](https://github.com/LegendaryGuard/BFP/forks)
-<br/>
 [![License](https://img.shields.io/github/license/LegendaryGuard/BFP)](#legal)
 [![Build actions](https://img.shields.io/github/actions/workflow/status/LegendaryGuard/BFP/build.yml)](https://github.com/LegendaryGuard/BFP/actions)
-<br/>
 ![Visits](https://badges.pufler.dev/visits/LegendaryGuard/BFP)
 
 
@@ -26,7 +24,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [ ] Gametype: Last Man Standing (`g_gametype 6`)
 - [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
 - [ ] Power Struggles (when two beam attacks collide)
-- [ ] Powerlevel and Power Tiers indicated on old docs
 - [ ] Remove some items like powerups and health pickups
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
 - [ ] Transformations (related to Power Tiers)
@@ -46,6 +43,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Instant character model changing~~
 - [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
 - [x] ~~Melee feature~~
+- [x] ~~Powerlevel and Power Tiers indicated on old docs~~
 - [x] ~~Playable third person mode and first person vis mode~~
 - [x] ~~Remove weapon visuals (models and stuff)~~
 - [x] ~~Replace ammo to ki energy stamina~~
@@ -158,6 +156,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - water movement handling is different from original BFP, but it works similarly
 - some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
 - file size differences between the QVM and the original BFP QVM can be quite significant
+- kiCharge, boostCost and blockCost cvars work differently
 - ...
 
 Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
@@ -179,17 +178,7 @@ Documentations, references and extracted stuff will give us clues to reach the g
     * [Cmdlist](docs/cmd_bfp_list.txt)
     * [Cvarlist](docs/cvar_bfp_list.txt)
 
-We can see a cvar, e.g. `g_plKillBonusPct`, which means we need to find the function that rewards the player and do something with that. Something like this:
-
-```c
-if ( killedSomeone ) {
-   pl = currentPL + (currentPL * g_plKillBonusPct.value);
-}
-```
-
 <br/>
-
-_**Click on some image to see it complete**._
 
 - How should the HUD be:
 
