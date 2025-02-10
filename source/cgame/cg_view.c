@@ -708,7 +708,7 @@ static int CG_CalcViewValues( void ) {
 	VectorCopy( ps->origin, cg.refdef.vieworg );
 
 	// BFP - Fly tilt
-	if ( cg_flytilt.integer <= 0 ) {
+	if ( cg_flytilt.integer <= 0 || ps->pm_type == PM_SPECTATOR ) {
 		ps->viewangles[ROLL] = 0; // that removes tilt
 	}
 	VectorCopy( ps->viewangles, cg.refdefViewAngles );

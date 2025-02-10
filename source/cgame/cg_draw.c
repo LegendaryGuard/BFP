@@ -345,6 +345,80 @@ void CG_DrawTeamBackground( int x, int y, int w, int h, float alpha, int team )
 	trap_R_SetColor( NULL );
 }
 
+// BFP - Gauge bar colors
+vec4_t		backgroundBlue	= {0, 0, 1, 0.33};
+vec4_t		barRed			= {1, 0, 0, 0.66};
+vec4_t		barGreen		= {0, 1, 0, 0.66};
+vec4_t		barBlue			= {0, 0, 1, 0.66};
+vec4_t		barYellow		= {1, 1, 0, 0.66};
+
+/*
+================
+CG_DrawHealthGauge
+================
+*/
+static void CG_DrawHealthGauge( float x, float y, float w, float h, int value, int maxValue ) { // BFP - Health gauge
+	float	percentage = (float)value / (float)maxValue;
+	float	barWidth = 2 * w * percentage;
+	float	*barColor = barGreen;
+
+	if ( (float)value <= (float)maxValue * 0.64 ) { // <= 64% of health
+		barColor = barBlue;
+	}
+	if ( (float)value <= (float)maxValue * 0.31 ) { // <= 31% of health
+		barColor = barRed;
+	}
+	CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
+	trap_R_SetColor( barColor );
+	CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
+}
+
+/*
+================
+CG_DrawKiGauge
+================
+*/
+static void CG_DrawKiGauge( float x, float y, float w, float h, int value, int maxValue ) { // BFP - Ki gauge
+	float	percentage = (float)value / (float)maxValue;
+	float	barWidth = 2 * w * percentage;
+	float	*barColor = barGreen;
+
+	if ( maxValue > 9999 ) { // make the bar color notice at that small difference (don't change the percentage at all)
+		maxValue = 9999;
+	}
+
+	if ( (float)value < (float)maxValue * (2.0f / 3.0f) ) {
+		barColor = barBlue;
+	}
+	if ( (float)value < (float)maxValue * (1.0f / 3.0f) ) {
+		barColor = barRed;
+	}
+	CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
+	trap_R_SetColor( barColor );
+	CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
+}
+
+/*
+================
+CG_DrawPowerlevelGauge
+================
+*/
+static void CG_DrawPowerlevelGauge( float x, float y, float w, float h, int value, int maxValue ) { // BFP - Powerlevel gauge
+	float	percentage = (float)value / (float)maxValue;
+	float	barWidth = 2 * w * percentage;
+	float	*barColor = barYellow;
+
+	if ( (float)value < (float)maxValue * 0.5 ) {
+		barColor = barRed;
+	}
+	if ( (float)value < (float)maxValue * 0.1 ) {
+		barColor = barBlue;
+	}
+	CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
+	trap_R_SetColor( barColor );
+	CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
+}
+
 /*
 ================
 CG_DrawStatusBar
@@ -369,6 +443,10 @@ static void CG_DrawStatusBar( void ) {
 		{ 1.0f, 0.2f, 0.2f, 1.0f },     // low health
 		{ 0.5f, 0.5f, 0.5f, 1.0f },     // weapon firing
 		{ 1.0f, 1.0f, 1.0f, 1.0f } };   // health > 100
+
+	// BFP - Gauge sizes
+	const float	GAUGE_WIDTH = 57.5;
+	const float	GAUGE_HEIGHT = 18;
 
 	if ( cg_drawStatus.integer == 0 ) {
 		return;
@@ -451,13 +529,38 @@ static void CG_DrawStatusBar( void ) {
 	}
 #endif
 
-	// BFP - TODO: Draw player powerlevel info
-
+	// BFP - Draw player powerlevel info
+	value = ps->persistant[PERS_POWERLEVEL];
+	CG_DrawPowerlevelGauge( 562.5, 452, GAUGE_WIDTH + 10, GAUGE_HEIGHT, value, 1000 );
+	// BFP - NOTE: Just curious, BFP had a 16-bit size issue (only reaches 32767 - the maximum), 
+	// they thought that adding ",000" at the last can be entertaining for the player
+	if ( value >= 1000 ) {
+		string = va( "1 Mil!" );
+		CG_DrawBigString( 510, 454, string, 1.0f );
+	} else {
+		short x = 510;
+		string = va( "%d", value );
+		if ( value < 10 ) {
+			x = 526;
+		}
+		CG_DrawBigString( x, 454, string, 1.0f );
+		string = va( ",000" );
+		x = 552;
+		if ( value < 100 ) {
+			x = 538;
+		}
+		CG_DrawBigString( x, 454, string, 1.0f );
+	}
 
 	//
 	// health
 	//
-	value = ps->stats[STAT_HEALTH] * 0.1; // BFP - Visualize only 0 - 100 instead 0 - 1000
+	// BFP - Visualize only 1 - 100 instead 0 - 1000
+	value = ( ps->stats[STAT_HEALTH] * 100 + ps->stats[STAT_MAX_HEALTH] / 2.1 ) / ps->stats[STAT_MAX_HEALTH]; // dividing the current health by 2.1 to round
+	value = ( value < 1 ) ? 1 : ( value > 100 ) ? 100 : value;
+	CG_DrawHealthGauge( 154.5, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), GAUGE_WIDTH, GAUGE_HEIGHT, value, 100 );
+	// BFP - No drawing HP Q3 field
+#if 0
 	if ( value > 100 ) {
 		trap_R_SetColor( colors[3] );	// white
 	} else if (value > 25) {
@@ -470,7 +573,8 @@ static void CG_DrawStatusBar( void ) {
 	}
 
 	// stretch the health up when taking damage
-	// CG_DrawField ( 185, 432, 3, value);
+	CG_DrawField ( 185, 432, 3, value);
+#endif
 
 	string = va( "%d%%", value ); // %% is a percentage sign
 	CG_DrawBigString( 107, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
@@ -481,17 +585,18 @@ static void CG_DrawStatusBar( void ) {
 	if ( ps->ammo[WP_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
 		ps->ammo[WP_KI] = 0;
 	value = ps->ammo[WP_KI];
+	CG_DrawKiGauge( 154.5, -12 + SCREEN_HEIGHT - SMALLCHAR_HEIGHT, GAUGE_WIDTH, GAUGE_HEIGHT, value, ps->stats[STAT_MAX_KI] );
+
 	string = va( "%d", value );
 	CG_DrawBigString( 107, -12 + SCREEN_HEIGHT - SMALLCHAR_HEIGHT, string, 1.0f );
+// BFP - disable armor
+#if 0
 	if (value >= 100) {
 		trap_R_SetColor( colors[3] );	// white
 	} else {
 		trap_R_SetColor( colors[1] );	// red
 	}
 
-
-// BFP - disable armor
-#if 0
 	//
 	// armor
 	//
@@ -1027,6 +1132,8 @@ static float CG_DrawScores( float y ) {
 	return y1 - 8;
 }
 
+// BFP - Don't draw powerups
+#if 0
 /*
 ================
 CG_DrawPowerups
@@ -1125,6 +1232,7 @@ static float CG_DrawPowerups( float y ) {
 
 	return y;
 }
+#endif
 
 /*
 =====================
@@ -1142,7 +1250,8 @@ static void CG_DrawLowerRight( void ) {
 	} 
 
 	y = CG_DrawScores( y );
-	y = CG_DrawPowerups( y );
+	// BFP - Don't draw powerups
+	// y = CG_DrawPowerups( y );
 }
 
 /*
@@ -1912,7 +2021,8 @@ CG_DrawCrosshairNames
 */
 static void CG_DrawCrosshairNames( void ) {
 	float		*color;
-	char		*name;
+	// BFP - Show powerlevel from the other player
+	char		*namePowerlevel;
 	float		w;
 
 	if ( !cg_drawCrosshair.integer ) {
@@ -1938,9 +2048,22 @@ static void CG_DrawCrosshairNames( void ) {
 		return;
 	}
 
-	name = cgs.clientinfo[ cg.crosshairClientNum ].name;
-	w = CG_DrawStrlen( name ) * BIGCHAR_WIDTH;
-	CG_DrawBigString( 320 - w / 2, 170, name, color[3] * 0.5f );
+	// BFP - Draw name and powerlevel from the other player
+	namePowerlevel = cgs.clientinfo[ cg.crosshairClientNum ].name;
+	w = CG_DrawStrlen( namePowerlevel ) * BIGCHAR_WIDTH;
+	CG_DrawBigString( 320 - w / 2, 170, namePowerlevel, color[3] * 0.5f );
+	trap_R_SetColor( NULL );
+
+	// BFP - NOTE: Just curious, BFP had a 16-bit size issue (only reaches 32767 - the maximum), 
+	// they thought that adding "000" at the last can be entertaining for the player
+	// powerlevel
+	namePowerlevel = va( "%s000", CG_ConfigString( CS_POWERLEVEL + cg.crosshairClientNum ) );
+	// BFP - If the powerlevel is higher than 1000, set to this limit
+	if ( atoi( CG_ConfigString( CS_POWERLEVEL + cg.crosshairClientNum ) ) >= 1000 ) {
+		namePowerlevel = "1 Mil";
+	}
+	w = CG_DrawStrlen( namePowerlevel ) * BIGCHAR_WIDTH;
+	CG_DrawBigString( 320 - w / 2, 190, namePowerlevel, color[3] * 0.5f );
 	trap_R_SetColor( NULL );
 }
 
@@ -1958,7 +2081,7 @@ static void CG_DrawSpectator(void) {
 		CG_DrawBigString(320 - 15 * 8, 460, "waiting to play", 1.0F);
 	}
 	else if ( cgs.gametype >= GT_TEAM ) {
-		CG_DrawBigString(320 - 39 * 8, 460, "press ESC and use the JOIN menu to play", 1.0F);
+		CG_DrawBigString(320 - 25 * 8, 460, "use the TEAM menu to play", 1.0F);
 	}
 }
 
@@ -2120,18 +2243,21 @@ CG_DrawHitStun
 */
 static void CG_DrawHitStun( void ) { // BFP - Hit stun bottom centerprint
 	const char	*s;
-	int			w, t;
+	short		w, t;
 
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
 	// 900 is added to adjust the timer calculated in milliseconds
 	t = ( 900 + cg.predictedPlayerState.pm_time ) / 1000;
-	if ( t > 0 && ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) ) {
+	if ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) {
 		s = "Stun";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 	UI_DrawProportionalString( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ) + 24, 
 		s, UI_SMALLFONT, colorWhite );
-	if ( t > 0 && ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) ) {
+	if ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) {
+		if ( t <= 0 ) {
+			t = 1;
+		}
 		CG_DrawField ( 320 - w - 16, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 4 ) + 12, 3, t );
 	}
 }
@@ -2331,6 +2457,8 @@ static void CG_Draw2D( void ) {
 			CG_DrawHitStun(); // BFP - Hit stun bottom centerprint
 			CG_DrawKiAttackChargeUpPoints(); // BFP - Ki attack charge up points
 			CG_DrawReadyKiAttack(); // BFP - Ready message in the bottom centerprint when charging attacks
+			CG_DrawNumConnectedClients(); // BFP - Number of connected clients
+			CG_DrawSelectedKiAttack(); // BFP - Selected ki attack
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();
@@ -2347,8 +2475,6 @@ static void CG_Draw2D( void ) {
 	CG_DrawTeamVote();
 
 	CG_DrawLagometer();
-	CG_DrawNumConnectedClients();	// BFP - Number of connected clients
-	CG_DrawSelectedKiAttack(); // BFP - Selected ki attack
 	CG_DrawUpperRight();
 
 	CG_DrawLowerRight();
