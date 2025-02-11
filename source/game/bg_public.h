@@ -259,12 +259,15 @@ typedef enum {
 	PERS_ATTACKEE_ARMOR,			// health/armor of last person we attacked
 	PERS_KILLED,					// count of the number of times you died
 	// player awards tracking
-	PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
 	PERS_EXCELLENT_COUNT,			// two successive kills in a short amount of time
+	// BFP - No impressive, gauntlet, defend, assist and capture counters
+/*
+	PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
 	PERS_DEFEND_COUNT,				// defend awards
 	PERS_ASSIST_COUNT,				// assist awards
 	PERS_GAUNTLET_FRAG_COUNT,		// kills with the guantlet
 	PERS_CAPTURES,					// captures
+*/
 	PERS_POWERLEVEL					// BFP - Powerlevel
 } persEnum_t;
 
@@ -277,19 +280,22 @@ typedef enum {
 #define EF_PLAYER_EVENT		0x00000010
 #define	EF_BOUNCE			0x00000010		// for missiles
 #define	EF_BOUNCE_HALF		0x00000020		// for missiles
-#define	EF_AWARD_GAUNTLET	0x00000040		// draw a gauntlet sprite
+// BFP - No EF_AWARD_GAUNTLET flag
+// #define	EF_AWARD_GAUNTLET	0x00000040		// draw a gauntlet sprite
 #define	EF_NODRAW			0x00000080		// may have an event, but no model (unspawned items)
 #define	EF_FIRING			0x00000100		// for lightning gun
 // BFP - No EF_KAMIKAZE flag
 // #define	EF_KAMIKAZE			0x00000200
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
-#define EF_AWARD_CAP		0x00000800		// draw the capture sprite
+// BFP - No EF_AWARD_CAP flag
+// #define EF_AWARD_CAP		0x00000800		// draw the capture sprite
 #define	EF_TALK				0x00001000		// draw a talk balloon
 #define	EF_CONNECTION		0x00002000		// draw a connection trouble sprite
 #define	EF_VOTED			0x00004000		// already cast a vote
-#define	EF_AWARD_IMPRESSIVE	0x00008000		// draw an impressive sprite
-#define	EF_AWARD_DEFEND		0x00010000		// draw a defend sprite
-#define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
+// BFP - No EF_AWARD_IMPRESSIVE, EF_AWARD_DEFEND and EF_AWARD_ASSIST flags
+// #define	EF_AWARD_IMPRESSIVE	0x00008000		// draw an impressive sprite
+// #define	EF_AWARD_DEFEND		0x00010000		// draw a defend sprite
+// #define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
 // BFP - Unused EF flag
 // #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote

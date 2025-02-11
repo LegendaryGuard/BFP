@@ -1882,12 +1882,15 @@ static void CG_PlayerSprites( centity_t *cent ) {
 
 	if ( CG_FloatSpriteCheck( cent, EF_CONNECTION,       cgs.media.connectionShader ) )	return;
 	if ( CG_FloatSpriteCheck( cent, EF_TALK,             cgs.media.balloonShader ) )	return;
-	if ( CG_FloatSpriteCheck( cent, EF_AWARD_IMPRESSIVE, cgs.media.medalImpressive ) )	return;
 	if ( CG_FloatSpriteCheck( cent, EF_AWARD_EXCELLENT,  cgs.media.medalExcellent ) )	return;
+	// BFP - No impressive, gauntlet, defend, assist and cap medals
+#if 0
+	if ( CG_FloatSpriteCheck( cent, EF_AWARD_IMPRESSIVE, cgs.media.medalImpressive ) )	return;
 	if ( CG_FloatSpriteCheck( cent, EF_AWARD_GAUNTLET,   cgs.media.medalGauntlet ) )	return;
 	if ( CG_FloatSpriteCheck( cent, EF_AWARD_DEFEND,     cgs.media.medalDefend ) )		return;
 	if ( CG_FloatSpriteCheck( cent, EF_AWARD_ASSIST,     cgs.media.medalAssist ) )		return;
 	if ( CG_FloatSpriteCheck( cent, EF_AWARD_CAP,        cgs.media.medalCapture ) )		return;
+#endif
 
 	team = cgs.clientinfo[ cent->currentState.clientNum ].team;
 	if ( !(cent->currentState.eFlags & EF_DEAD) && 

@@ -77,9 +77,15 @@ void UpdateTournamentInfo( void ) {
 		}
 
 		perfect = ( level.clients[playerClientNum].ps.persistant[PERS_RANK] == 0 && player->client->ps.persistant[PERS_KILLED] == 0 ) ? 1 : 0;
+		// BFP - No impressive, gauntlet, defend and assist counters
+#if 0
 		Com_sprintf( msg, sizeof(msg), "postgame %i %i %i %i %i %i %i %i", level.numNonSpectatorClients, playerClientNum, accuracy,
 			player->client->ps.persistant[PERS_IMPRESSIVE_COUNT], player->client->ps.persistant[PERS_EXCELLENT_COUNT],
 			player->client->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], player->client->ps.persistant[PERS_SCORE],
+			perfect );
+#endif
+		Com_sprintf( msg, sizeof(msg), "postgame %i %i %i %i %i %i", level.numNonSpectatorClients, playerClientNum, accuracy,
+			player->client->ps.persistant[PERS_EXCELLENT_COUNT], player->client->ps.persistant[PERS_SCORE],
 			perfect );
 	}
 

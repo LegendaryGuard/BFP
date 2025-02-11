@@ -64,6 +64,8 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 		}
 		perfect = ( cl->ps.persistant[PERS_RANK] == 0 && cl->ps.persistant[PERS_KILLED] == 0 ) ? 1 : 0;
 
+		// BFP - No impressive, gauntlet, defend, assist and capture counters
+#if 0
 		Com_sprintf (entry, sizeof(entry),
 			" %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
 			cl->ps.persistant[PERS_SCORE], ping, (level.time - cl->pers.enterTime)/60000,
@@ -75,6 +77,12 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 			cl->ps.persistant[PERS_ASSIST_COUNT], 
 			perfect,
 			cl->ps.persistant[PERS_CAPTURES]);
+#endif
+		Com_sprintf (entry, sizeof(entry),
+			" %i %i %i %i %i %i %i %i", level.sortedClients[i],
+			cl->ps.persistant[PERS_SCORE], ping, (level.time - cl->pers.enterTime)/60000,
+			scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy, 
+			perfect);
 		j = (int)strlen(entry);
 		if (stringlength + j > 1024)
 			break;
@@ -289,6 +297,8 @@ void Cmd_Give_f (gentity_t *ent)
 		ent->client->ps.persistant[PERS_EXCELLENT_COUNT]++;
 		return;
 	}
+	// BFP - No impressive, gauntlet, defend and assist counters
+#if 0
 	if (Q_stricmp(name, "impressive") == 0) {
 		ent->client->ps.persistant[PERS_IMPRESSIVE_COUNT]++;
 		return;
@@ -305,6 +315,7 @@ void Cmd_Give_f (gentity_t *ent)
 		ent->client->ps.persistant[PERS_ASSIST_COUNT]++;
 		return;
 	}
+#endif
 
 	// spawn a specific item right on the player
 	if ( !give_all ) {

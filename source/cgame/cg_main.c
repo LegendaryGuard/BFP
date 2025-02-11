@@ -641,12 +641,15 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.teleportEffectShader = trap_R_RegisterShader( "teleportEffect" );
 
 	cgs.media.invulnerabilityPowerupModel = trap_R_RegisterModel( "models/powerups/shield/shield.md3" );
-	cgs.media.medalImpressive = trap_R_RegisterShaderNoMip( "medal_impressive" );
 	cgs.media.medalExcellent = trap_R_RegisterShaderNoMip( "medal_excellent" );
+	// BFP - No impressive, gauntlet, defend, assist and cap medals
+#if 0
+	cgs.media.medalImpressive = trap_R_RegisterShaderNoMip( "medal_impressive" );
 	cgs.media.medalGauntlet = trap_R_RegisterShaderNoMip( "medal_gauntlet" );
 	cgs.media.medalDefend = trap_R_RegisterShaderNoMip( "medal_defend" );
 	cgs.media.medalAssist = trap_R_RegisterShaderNoMip( "medal_assist" );
 	cgs.media.medalCapture = trap_R_RegisterShaderNoMip( "medal_capture" );
+#endif
 
 	// BFP - Aura models
 	cgs.media.auraModel = trap_R_RegisterModel( "models/effects/aura.md3" ); // BFP - Normal aura model

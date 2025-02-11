@@ -1228,7 +1228,8 @@ void ClientThink_real( gentity_t *ent ) {
 
 	// clear the rewards if time
 	if ( level.time > client->rewardTime ) {
-		client->ps.eFlags &= ~(EF_AWARD_IMPRESSIVE | EF_AWARD_EXCELLENT | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP );
+		// BFP - No impressive, gauntlet, defend, assist and cap medals
+		client->ps.eFlags &= ~(EF_AWARD_EXCELLENT /*| EF_AWARD_IMPRESSIVE | EF_AWARD_GAUNTLET | EF_AWARD_ASSIST | EF_AWARD_DEFEND | EF_AWARD_CAP*/ );
 	}
 
 	if ( client->noclip ) {
@@ -1314,10 +1315,13 @@ void ClientThink_real( gentity_t *ent ) {
 		FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 	}
 
+	// BFP - No force gesture anim
+#if 0
 	if ( ent->flags & FL_FORCE_GESTURE ) {
 		ent->flags &= ~FL_FORCE_GESTURE;
 		ent->client->pers.cmd.buttons |= BUTTON_GESTURE;
 	}
+#endif
 
 	pm.ps = &client->ps;
 	pm.cmd = *ucmd;

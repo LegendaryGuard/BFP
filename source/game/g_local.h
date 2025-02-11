@@ -50,7 +50,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define FL_DROPPED_ITEM			0x00001000
 #define FL_NO_BOTS				0x00002000	// spawn point not for bot use
 #define FL_NO_HUMANS			0x00004000	// spawn point just for bots
-#define FL_FORCE_GESTURE		0x00008000	// force gesture on client
+// BFP - No force gesture flag
+// #define FL_FORCE_GESTURE		0x00008000	// force gesture on client
 
 // movers are things like doors, plats, buttons, etc
 typedef enum {
