@@ -1678,26 +1678,26 @@ static void CG_DrawLagometer( void ) {
 
 /*
 ==================
-CG_DrawNumConnectedClients
+CG_DrawNumAlivePlayers
 ==================
 */
-static void CG_DrawNumConnectedClients( void ) { // BFP - Show number of connected clients for the player itself
+static void CG_DrawNumAlivePlayers( void ) { // BFP - Show number of alive players for the player itself
 	// if the player is the only one playing, the counter won't be shown
-	short i = 0, connectedClients = 0;
+	short i = 0, alivePlayers = 0;
 	while ( i < MAX_CLIENTS ) {
-		if ( cg_entities[i].currentValid ) {
+		if ( cg_entities[i].currentValid && !( cg_entities[i].currentState.eFlags & EF_DEAD ) ) {
 			if ( cgs.gametype >= GT_TEAM 
 			&& cg.snap->ps.persistant[PERS_TEAM] == cgs.clientinfo[i].team ) {
-				++connectedClients;
+				++alivePlayers;
 			} else {
-				++connectedClients;
+				++alivePlayers;
 			}
 		}
 		++i;
 	}
-	// don't show number of connected clients when spectating and when there's only one client
-	if ( connectedClients > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
-		CG_DrawBigString( 608, 255, va( "%d", connectedClients ), 1.0F );
+	// don't show number of alive players when spectating and when there's only one client
+	if ( alivePlayers > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
+		CG_DrawBigString( 608, 255, va( "%d", alivePlayers ), 1.0F );
 	}
 }
 
@@ -2289,15 +2289,16 @@ CG_DrawKiAttackChargeUpPoints
 =====================
 */
 static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up points
-	int			x = 105, y = 412, i;
+	short			x = 105, i = 1;
 
 	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0 ) {
-        for ( i = 1; i <= 6; ++i ) {
-            if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] >= i ) {
-                CG_DrawPic( x, y, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );
-            }
-            x += 16;
-        }
+		while ( i <= 6 ) {
+			if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] >= i ) {
+				CG_DrawPic( x, 412, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );
+			}
+			x += 16;
+			++i;
+		}
 	}
 }
 
@@ -2457,7 +2458,7 @@ static void CG_Draw2D( void ) {
 			CG_DrawHitStun(); // BFP - Hit stun bottom centerprint
 			CG_DrawKiAttackChargeUpPoints(); // BFP - Ki attack charge up points
 			CG_DrawReadyKiAttack(); // BFP - Ready message in the bottom centerprint when charging attacks
-			CG_DrawNumConnectedClients(); // BFP - Number of connected clients
+			CG_DrawNumAlivePlayers(); // BFP - Number of alive players
 			CG_DrawSelectedKiAttack(); // BFP - Selected ki attack
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
