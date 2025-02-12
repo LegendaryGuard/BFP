@@ -1275,7 +1275,9 @@ static void CG_DrawLowerRight( void ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qfalse );
 	} 
 
-	y = CG_DrawScores( y );
+	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 ) { // BFP - Don't draw if the player is dead
+		y = CG_DrawScores( y );
+	}
 	// BFP - Don't draw powerups
 	// y = CG_DrawPowerups( y );
 }
@@ -1312,6 +1314,25 @@ static int CG_DrawPickupItem( int y ) {
 
 /*
 =====================
+CG_DrawKiAttackChargeUpPoints
+=====================
+*/
+static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up points
+	short			x = 105, i = 1;
+
+	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0 ) {
+		while ( i <= 6 ) {
+			if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] >= i ) {
+				CG_DrawPic( x, 412, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );
+			}
+			x += 16;
+			++i;
+		}
+	}
+}
+
+/*
+=====================
 CG_DrawLowerLeft
 
 =====================
@@ -1321,17 +1342,19 @@ static void CG_DrawLowerLeft( void ) {
 
 	y = 480 - ICON_SIZE;
 
-	// BFP - Selected ki attack
-	CG_DrawSelectedKiAttack();
+	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) { // BFP - Don't draw if the player is dead or spectating
+		// BFP - Selected ki attack
+		CG_DrawSelectedKiAttack();
 
-	// BFP - HUD overlay
-	CG_DrawHUDOverlay();
+		// BFP - HUD overlay
+		CG_DrawHUDOverlay();
 
-	// BFP - Place head in the corner
-	CG_DrawStatusBarHead( 0 ); // CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
+		// BFP - Place head in the corner
+		CG_DrawStatusBarHead( 0 ); // CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
 
-	// BFP - Ki attack charge up points
-	CG_DrawKiAttackChargeUpPoints();
+		// BFP - Ki attack charge up points
+		CG_DrawKiAttackChargeUpPoints();
+	}
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 3 ) {
 		y = CG_DrawTeamOverlay( y, qfalse, qfalse );
@@ -2308,25 +2331,6 @@ static void CG_DrawReadyKiAttack( void ) { // BFP - Ready message in the bottom 
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 	UI_DrawProportionalString( 327 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ) + 76, 
 		s, UI_SMALLFONT, colorWhite );
-}
-
-/*
-=====================
-CG_DrawKiAttackChargeUpPoints
-=====================
-*/
-static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up points
-	short			x = 105, i = 1;
-
-	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0 ) {
-		while ( i <= 6 ) {
-			if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] >= i ) {
-				CG_DrawPic( x, 412, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );
-			}
-			x += 16;
-			++i;
-		}
-	}
 }
 
 /*
