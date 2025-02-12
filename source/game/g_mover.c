@@ -1587,7 +1587,7 @@ void SP_func_breakable( gentity_t *ent ) {
 	trap_SetBrushModel( ent, ent->model );
 	ent->s.eType = ET_MOVER;
 	ent->r.contents = CONTENTS_SOLID;
-	ent->health = 100;
+	G_SpawnInt( "health", "0", &ent->health );
 	ent->takedamage = qtrue;
 	ent->use = func_breakable_use;
 }
