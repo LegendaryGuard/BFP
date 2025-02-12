@@ -730,6 +730,10 @@ typedef struct {
 
 	qhandle_t	botSkillShaders[5];
 
+	// BFP - HUD overlay
+	qhandle_t	hudoverlay;
+	qhandle_t	hudoverlayr;
+
 	// BFP - NOTE: These mark shaders are unused, they didn't remove. Remove them in the future?
 
 	// wall mark shaders

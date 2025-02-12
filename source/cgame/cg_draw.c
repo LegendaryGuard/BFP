@@ -358,19 +358,21 @@ CG_DrawHealthGauge
 ================
 */
 static void CG_DrawHealthGauge( float x, float y, float w, float h, int value, int maxValue ) { // BFP - Health gauge
-	float	percentage = (float)value / (float)maxValue;
-	float	barWidth = 2 * w * percentage;
-	float	*barColor = barGreen;
+	if ( cg_simpleHUD.integer < 1 ) { // BFP - Simple HUD
+		float	percentage = (float)value / (float)maxValue;
+		float	barWidth = 2 * w * percentage;
+		float	*barColor = barGreen;
 
-	if ( (float)value <= (float)maxValue * 0.64 ) { // <= 64% of health
-		barColor = barBlue;
+		if ( (float)value <= (float)maxValue * 0.64 ) { // <= 64% of health
+			barColor = barBlue;
+		}
+		if ( (float)value <= (float)maxValue * 0.31 ) { // <= 31% of health
+			barColor = barRed;
+		}
+		CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
+		trap_R_SetColor( barColor );
+		CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
 	}
-	if ( (float)value <= (float)maxValue * 0.31 ) { // <= 31% of health
-		barColor = barRed;
-	}
-	CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
-	trap_R_SetColor( barColor );
-	CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
 }
 
 /*
@@ -379,23 +381,25 @@ CG_DrawKiGauge
 ================
 */
 static void CG_DrawKiGauge( float x, float y, float w, float h, int value, int maxValue ) { // BFP - Ki gauge
-	float	percentage = (float)value / (float)maxValue;
-	float	barWidth = 2 * w * percentage;
-	float	*barColor = barGreen;
+	if ( cg_simpleHUD.integer < 1 ) { // BFP - Simple HUD
+		float	percentage = (float)value / (float)maxValue;
+		float	barWidth = 2 * w * percentage;
+		float	*barColor = barGreen;
 
-	if ( maxValue > 9999 ) { // make the bar color notice at that small difference (don't change the percentage at all)
-		maxValue = 9999;
-	}
+		if ( maxValue > 9999 ) { // make the bar color notice at that small difference (don't change the percentage at all)
+			maxValue = 9999;
+		}
 
-	if ( (float)value < (float)maxValue * (2.0f / 3.0f) ) {
-		barColor = barBlue;
+		if ( (float)value < (float)maxValue * (2.0f / 3.0f) ) {
+			barColor = barBlue;
+		}
+		if ( (float)value < (float)maxValue * (1.0f / 3.0f) ) {
+			barColor = barRed;
+		}
+		CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
+		trap_R_SetColor( barColor );
+		CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
 	}
-	if ( (float)value < (float)maxValue * (1.0f / 3.0f) ) {
-		barColor = barRed;
-	}
-	CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
-	trap_R_SetColor( barColor );
-	CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
 }
 
 /*
@@ -404,19 +408,43 @@ CG_DrawPowerlevelGauge
 ================
 */
 static void CG_DrawPowerlevelGauge( float x, float y, float w, float h, int value, int maxValue ) { // BFP - Powerlevel gauge
-	float	percentage = (float)value / (float)maxValue;
-	float	barWidth = 2 * w * percentage;
-	float	*barColor = barYellow;
+	if ( cg_simpleHUD.integer < 1 ) { // BFP - Simple HUD
+		float	percentage = (float)value / (float)maxValue;
+		float	barWidth = 2 * w * percentage;
+		float	*barColor = barYellow;
 
-	if ( (float)value < (float)maxValue * 0.5 ) {
-		barColor = barRed;
+		if ( (float)value < (float)maxValue * 0.5 ) {
+			barColor = barRed;
+		}
+		if ( (float)value < (float)maxValue * 0.1 ) {
+			barColor = barBlue;
+		}
+		CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
+		trap_R_SetColor( barColor );
+		CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
 	}
-	if ( (float)value < (float)maxValue * 0.1 ) {
-		barColor = barBlue;
+}
+
+/*
+==================
+CG_DrawSelectedKiAttack
+==================
+*/
+static void CG_DrawSelectedKiAttack( void ) { // BFP - Show selected ki attack
+	// BFP - TODO: Replace weapons to ki attack configs
+	CG_DrawPic( 535, 383, 96, 37, cg_weapons[ cg.weaponSelect ].weaponIcon );
+}
+
+/*
+================
+CG_DrawHUDOverlay
+================
+*/
+static void CG_DrawHUDOverlay( void ) { // BFP - HUD overlay
+	if ( cg_simpleHUD.integer < 1 ) { // BFP - Simple HUD
+		CG_DrawPic( 5, 413, 211, 65, cgs.media.hudoverlay );
+		CG_DrawPic( 430, 378, 206, 96.5, cgs.media.hudoverlayr );
 	}
-	CG_FillRect( x - w, y, w * 2, h, backgroundBlue );
-	trap_R_SetColor( barColor );
-	CG_DrawPic( x - w, y, barWidth, h, cgs.media.whiteShader );
 }
 
 /*
@@ -471,9 +499,6 @@ static void CG_DrawStatusBar( void ) {
 		CG_Draw3DModel( CHAR_WIDTH*3 + TEXT_ICON_SPACE, 432, ICON_SIZE, ICON_SIZE, cg_weapons[ cent->currentState.weapon ].ammoModel, 0, origin, angles );
 	}
 #endif
-
-	// BFP - place head in the corner
-	CG_DrawStatusBarHead( 0 ); // CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
 
 	if( cg.predictedPlayerState.powerups[PW_REDFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
@@ -894,6 +919,7 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 			// draw weapon icon
 			xx += TINYCHAR_WIDTH * 3;
 
+			// BFP - TODO: Replace weapons to ki attack configs
 			if ( cg_weapons[ci->curWeapon].weaponIcon ) {
 				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
 					cg_weapons[ci->curWeapon].weaponIcon );
@@ -1294,6 +1320,18 @@ static void CG_DrawLowerLeft( void ) {
 	float	y;
 
 	y = 480 - ICON_SIZE;
+
+	// BFP - Selected ki attack
+	CG_DrawSelectedKiAttack();
+
+	// BFP - HUD overlay
+	CG_DrawHUDOverlay();
+
+	// BFP - Place head in the corner
+	CG_DrawStatusBarHead( 0 ); // CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
+
+	// BFP - Ki attack charge up points
+	CG_DrawKiAttackChargeUpPoints();
 
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 3 ) {
 		y = CG_DrawTeamOverlay( y, qfalse, qfalse );
@@ -1700,17 +1738,6 @@ static void CG_DrawNumAlivePlayers( void ) { // BFP - Show number of alive playe
 		CG_DrawBigString( 608, 255, va( "%d", alivePlayers ), 1.0F );
 	}
 }
-
-/*
-==================
-CG_DrawSelectedKiAttack
-==================
-*/
-static void CG_DrawSelectedKiAttack( void ) { // BFP - Show selected ki attack
-	// BFP - TODO: Replace weapons into ki attack configs
-	CG_DrawPic( 535, 383, 96, 37, cg_weapons[ cg.weaponSelect ].weaponIcon );
-}
-
 
 
 /*
@@ -2456,10 +2483,8 @@ static void CG_Draw2D( void ) {
 			CG_DrawStatusBar();
 			CG_DrawKiWarning(); // BFP - ki warning
 			CG_DrawHitStun(); // BFP - Hit stun bottom centerprint
-			CG_DrawKiAttackChargeUpPoints(); // BFP - Ki attack charge up points
 			CG_DrawReadyKiAttack(); // BFP - Ready message in the bottom centerprint when charging attacks
 			CG_DrawNumAlivePlayers(); // BFP - Number of alive players
-			CG_DrawSelectedKiAttack(); // BFP - Selected ki attack
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
 			CG_DrawWeaponSelect();

@@ -995,7 +995,8 @@ WEAPON SELECTION
 CG_DrawWeaponSelect
 ===================
 */
-void CG_DrawWeaponSelect( void ) {
+void CG_DrawWeaponSelect( void ) { // BFP - Modified Q3 selectable weapon HUD
+	// BFP - TODO: Change that selection to 5 selectable ki attacks
 	int		i;
 	int		bits;
 	int		count;
@@ -1018,18 +1019,20 @@ void CG_DrawWeaponSelect( void ) {
 	cg.itemPickupTime = 0;
 
 	// count the number of weapons owned
+	i = 0;
 	bits = cg.snap->ps.stats[ STAT_WEAPONS ];
 	count = 0;
-	for ( i = 1 ; i < 16 ; i++ ) {
+	while ( ++i < 16 ) {
 		if ( bits & ( 1 << i ) ) {
-			count++;
+			++count;
 		}
 	}
 
-	x = 320 - count * 20;
-	y = 380;
+	x = 10;
+	y = 75;
 
-	for ( i = 1 ; i < 16 ; i++ ) {
+	i = 0;
+	while ( ++i < 16 ) {
 		if ( !( bits & ( 1 << i ) ) ) {
 			continue;
 		}
@@ -1037,19 +1040,19 @@ void CG_DrawWeaponSelect( void ) {
 		CG_RegisterWeapon( i );
 
 		// draw weapon icon
-		CG_DrawPic( x, y, 32, 32, cg_weapons[i].weaponIcon );
+		CG_DrawPic( x, y, 91, 46, cg_weapons[i].weaponIcon );
 
 		// draw selection marker
 		if ( i == cg.weaponSelect ) {
-			CG_DrawPic( x-4, y-4, 40, 40, cgs.media.selectShader );
+			CG_DrawPic( x, y, 91, 46, cgs.media.selectShader );
 		}
 
 		// no ammo cross on top
 		if ( !cg.snap->ps.ammo[ i ] ) {
-			CG_DrawPic( x, y, 32, 32, cgs.media.noammoShader );
+			CG_DrawPic( x, y, 91, 46, cgs.media.noammoShader );
 		}
 
-		x += 40;
+		y += 47;
 	}
 
 	// draw the selected name
@@ -1058,7 +1061,7 @@ void CG_DrawWeaponSelect( void ) {
 		if ( name ) {
 			w = CG_DrawStrlen( name ) * BIGCHAR_WIDTH;
 			x = ( SCREEN_WIDTH - w ) / 2;
-			CG_DrawBigStringColor(x, y - 22, name, color);
+			CG_DrawBigStringColor(x, 288, name, color);
 		}
 	}
 

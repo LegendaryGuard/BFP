@@ -567,8 +567,15 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.backTileShader = trap_R_RegisterShader( "gfx/2d/backtile" );
 	cgs.media.noammoShader = trap_R_RegisterShader( "icons/noammo" );
 
+	// BFP - NOTE: Shaders like that on the HUD must be trap_R_RegisterShaderNoMip, 
+	// otherwise appears weird lines around the image/texture
+
 	// BFP - Ki attack charge up points
-	cgs.media.chargeupbuttgreen = trap_R_RegisterShader( "menu/art/chargeupbuttgreen" );
+	cgs.media.chargeupbuttgreen = trap_R_RegisterShaderNoMip( "menu/art/chargeupbuttgreen" );
+
+	// BFP - HUD overlay
+	cgs.media.hudoverlay = trap_R_RegisterShaderNoMip( "menu/art/hudoverlay" );
+	cgs.media.hudoverlayr = trap_R_RegisterShaderNoMip( "menu/art/hudoverlayr" );
 
 	// powerup shaders
 	cgs.media.quadShader = trap_R_RegisterShader("powerups/quad" );
