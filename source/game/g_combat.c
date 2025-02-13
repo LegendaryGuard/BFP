@@ -405,6 +405,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			// BFP - NOTE: What the heck? Did BFP dev make this multiplying 9.00825 with powerlevel? Strange approximation...
 			attacker->client->ps.stats[STAT_MAX_KI] = 999 + ( 9.00825 * attacker->client->ps.persistant[PERS_POWERLEVEL] );
 
+			// BFP - Avoid exceeding maximum ki
+			// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the maximum ki per 2: maxKi = maxKi * 2
+			if ( attacker->client->ps.stats[STAT_MAX_KI] > 10000 ) {
+				attacker->client->ps.stats[STAT_MAX_KI] = 10000;
+			}
+
 			// BFP - Add and balance ki
 			// BFP - TODO: Handle highest tier (transformation)
 			if ( attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
