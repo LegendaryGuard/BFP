@@ -22,7 +22,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [ ] Gametype: Survival (`g_gametype 3`)
 - [ ] Gametype: Monster (`g_gametype 4`)
 - [ ] Gametype: Last Man Standing (`g_gametype 6`)
-- [ ] Make ki energy regeneration, ki use, attacks, charging balance indicated on old docs
 - [ ] Power Struggles (when two beam attacks collide)
 - [ ] Remove some items like powerups and health pickups
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
@@ -180,12 +179,6 @@ Documentations, references and extracted stuff will give us clues to reach the g
 
 <br/>
 
-- How should the HUD be:
-
-<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147737-248ca7d6-d7db-430e-933d-a3a41cd82ddf.png" alt="hud_display" width=340 />
-
-<br/>
-
 - **cfg files**:
 
 A sample inside `models/players/player_name/default.cfg`:
@@ -205,13 +198,9 @@ Weapon settings:
    * [bfp_weapon.cfg](cfgs/bfp_weapon.cfg)
    * [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg)
 
-BFP config (general binding and some client stuff, unused. WARNING: when executing, game crashes):
+BFP config (optional - general binding and some client stuff, unused. WARNING: when executing, game might crash):
 
    * [bfp.cfg](cfgs/bfp.cfg)
-
-Other q3 config:
-
-   * [q3config.cfg](cfgs/q3config.cfg)
 
 
 # How to build
