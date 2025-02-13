@@ -38,6 +38,8 @@ CG_CVAR( cg_crosshairSize, "cg_crosshairSize", "24", CVAR_ARCHIVE )
 CG_CVAR( cg_crosshairHealth, "cg_crosshairHealth", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_crosshairX, "cg_crosshairX", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_crosshairY, "cg_crosshairY", "0", CVAR_ARCHIVE )
+CG_CVAR( cg_lifedeaths, "cg_lifedeaths", "0", CVAR_ROM | CVAR_ARCHIVE ) // BFP - Number of deaths
+CG_CVAR( cg_lifekills, "cg_lifekills", "0", CVAR_ROM | CVAR_ARCHIVE ) // BFP - Number of kills
 CG_CVAR( cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE )
 CG_CVAR( cg_simpleItems, "cg_simpleItems", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE )

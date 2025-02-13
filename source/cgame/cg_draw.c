@@ -2482,8 +2482,8 @@ static void CG_Draw2D( void ) {
 		CG_DrawCrosshair();
 		CG_DrawCrosshairNames();
 	} else {
-		// don't draw any status if dead or the scoreboard is being explicitly shown
-		if ( !cg.showScores && cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
+		// BFP - Q3 before: don't draw any status if dead or the scoreboard is being explicitly shown
+		if ( cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
 			CG_DrawStatusBar();
 			CG_DrawKiWarning(); // BFP - ki warning
 			CG_DrawHitStun(); // BFP - Hit stun bottom centerprint

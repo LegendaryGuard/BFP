@@ -40,6 +40,8 @@
 - [x] ~~cg_particleAura~~
 - [x] ~~cg_simpleHUD~~
 - [x] ~~cg_playHitSound~~
+- [x] ~~cg_lifedeaths~~
+- [x] ~~cg_lifekills~~
 - [x] ~~g_allowSpectatorChat~~
 - [x] ~~g_basePL~~
 - [x] ~~g_maxSpawnPL~~

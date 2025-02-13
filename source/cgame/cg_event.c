@@ -182,6 +182,9 @@ static void CG_Obituary( entityState_t *ent ) {
 				message = "killed himself";
 			break;
 		}
+		if ( attacker == cg.snap->ps.clientNum ) { // BFP - Add 1 lifedeath in the history
+			trap_Cvar_Set( "cg_lifedeaths", va( "%i", (int)( cg_lifedeaths.integer + 1 ) ) );
+		}
 	}
 
 	if (message) {
@@ -202,6 +205,8 @@ static void CG_Obituary( entityState_t *ent ) {
 		}
 		CG_CenterPrint( s, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 		// print the text message as well
+		// BFP - Add 1 lifekill in the history
+		trap_Cvar_Set( "cg_lifekills", va( "%i", (int)( cg_lifekills.integer + 1 ) ) );
 	}
 
 	// check for double client messages
@@ -281,6 +286,9 @@ static void CG_Obituary( entityState_t *ent ) {
 			break;
 		}
 
+		if ( target == cg.snap->ps.clientNum ) { // BFP - Add 1 lifedeath in the history
+			trap_Cvar_Set( "cg_lifedeaths", va( "%i", (int)( cg_lifedeaths.integer + 1 ) ) );
+		}
 		if (message) {
 			CG_Printf( "%s %s %s%s\n", 
 				targetName, message, attackerName, message2);
@@ -290,6 +298,9 @@ static void CG_Obituary( entityState_t *ent ) {
 
 	// we don't know what it was
 	CG_Printf( "%s died.\n", targetName );
+	if ( target == cg.snap->ps.clientNum ) { // BFP - Add 1 lifedeath in the history
+		trap_Cvar_Set( "cg_lifedeaths", va( "%i", (int)( cg_lifedeaths.integer + 1 ) ) );
+	}
 }
 
 //==========================================================================
