@@ -353,15 +353,16 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage ) {
 
 		// send bullet impact
 		if ( traceEnt->takedamage && traceEnt->client ) {
-			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_FLESH );
-			tent->s.eventParm = traceEnt->s.number;
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT ); // BFP - Before Q3: EV_BULLET_HIT_FLESH
+			tent->s.eventParm = DirToByte( tr.plane.normal ); // BFP - Before Q3: traceEnt->s.number
 			if( LogAccuracyHit( traceEnt, ent ) ) {
 				ent->client->accuracy_hits++;
 			}
 		} else {
-			tent = G_TempEntity( tr.endpos, EV_BULLET_HIT_WALL );
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS ); // BFP - Before Q3: EV_BULLET_HIT_WALL
 			tent->s.eventParm = DirToByte( tr.plane.normal );
 		}
+		tent->s.weapon = ent->s.weapon; // BFP - Sends weapon info to the event
 		tent->s.otherEntityNum = ent->s.number;
 
 		if ( traceEnt->takedamage) {

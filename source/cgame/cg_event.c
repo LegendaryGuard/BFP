@@ -301,6 +301,8 @@ static void CG_Obituary( entityState_t *ent ) {
 	if ( target == cg.snap->ps.clientNum ) { // BFP - Add 1 lifedeath in the history
 		trap_Cvar_Set( "cg_lifedeaths", va( "%i", (int)( cg_lifedeaths.integer + 1 ) ) );
 	}
+	// BFP - Reset ki trails to avoid viewing other trails
+	CG_ResetKiTrail( target, vec3_origin );
 }
 
 //==========================================================================
@@ -888,10 +890,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_MISSILE_MISS");
 		ByteToDir( es->eventParm, dir );
 		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
-		// BFP - Debris particles explosion
-		CG_DebrisExplosion( position, dir );
-		// BFP - Spark particles explosion
-		CG_SparksExplosion( position, dir );
+		if ( es->weapon != WP_MACHINEGUN && es->weapon != WP_SHOTGUN ) { // BFP - Avoid exploding using finger blast type thingies
+			// BFP - Debris particles explosion
+			CG_DebrisExplosion( position, dir );
+			// BFP - Spark particles explosion
+			CG_SparksExplosion( position, dir );
+		}
 		break;
 
 	case EV_MISSILE_MISS_METAL:
