@@ -258,8 +258,14 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 				VectorScale( velocity, g_meleeDamage.integer * forceMultiplier, traceTarget->client->ps.velocity );
 			}
 
-			G_Damage ( traceTarget, attacker, attacker, velocity, attacker->s.origin, 
-				g_meleeDamage.integer, 0, MOD_MELEE );
+			// consume 5% of ki when being defended and apply knockback
+			if ( ( traceTarget->client->ps.pm_flags & PMF_BLOCK ) && traceTarget->client->blockKnockbackTime <= 0 ) {
+				traceTarget->client->ps.ammo[WP_KI] -= traceTarget->client->ps.stats[STAT_MAX_KI] * 0.05;
+				traceTarget->client->blockKnockbackTime = level.time + 250;
+			} else {
+				G_Damage ( traceTarget, attacker, attacker, velocity, attacker->s.origin, 
+					g_meleeDamage.integer, 0, MOD_MELEE );
+			}
 		}
 	}
 

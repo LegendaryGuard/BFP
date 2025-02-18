@@ -832,6 +832,50 @@ static void PM_WaterMove( void ) {
 
 /*
 ===================
+PM_FlyTiltView
+
+Fly tilt view
+===================
+*/
+static void PM_FlyTiltView( void ) { // BFP - Fly tilt
+	static float	currentRollAngle = 0;
+	short	targetRollAngle = 0;
+	float	rollStep = 0.2;
+
+	if ( pm->ps->powerups[PW_FLIGHT] > 0
+	&& !( pm->ps->pm_flags & PMF_BLOCK )
+	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		// determine the target roll angle based on rightmove
+		if ( pm->cmd.rightmove > 0 ) {
+			targetRollAngle = 20;
+		} else if ( pm->cmd.rightmove < 0 ) {
+			targetRollAngle = -20;
+		}
+	}
+
+	// if going back to the main angle, increase a bit the roll step
+	if ( targetRollAngle == 0 ) {
+		rollStep = 0.375;
+	}
+
+	// apply the fixed step for a more direct roll change
+	if ( currentRollAngle < targetRollAngle ) {
+		currentRollAngle += rollStep;
+		if ( currentRollAngle > targetRollAngle ) {
+			currentRollAngle = targetRollAngle;
+		}
+	} else if ( currentRollAngle > targetRollAngle ) {
+		currentRollAngle -= rollStep;
+		if ( currentRollAngle < targetRollAngle ) {
+			currentRollAngle = targetRollAngle;
+		}
+	}
+
+	pm->ps->viewangles[ROLL] = currentRollAngle;
+}
+
+/*
+===================
 PM_FlyMove
 
 Only with the flight powerup
@@ -843,11 +887,6 @@ static void PM_FlyMove( void ) {
 	float	wishspeed;
 	vec3_t	wishdir;
 	float	scale;
-
-	// BFP - Fly tilt variables
-	static float	currentRollAngle = 0;
-	short	targetRollAngle = 0;
-	float	rollStep = 0.2;
 
 	// normal slowdown
 	PM_Friction ();
@@ -879,10 +918,8 @@ static void PM_FlyMove( void ) {
 			wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // increase the speed a bit
 		}
 
-		// determine the target roll angle based on rightmove
-		targetRollAngle = 0;
+		// BFP - Going up/down a bit down when moving left/right
 		if ( pm->cmd.rightmove > 0 ) {
-			targetRollAngle = 20;
 			if ( pm->cmd.upmove <= 0 ) {
 				// move a bit down
 				if ( pm->ps->weaponstate == WEAPON_BEAMFIRING ) { // BFP - Low descent speed when beam firing
@@ -892,7 +929,6 @@ static void PM_FlyMove( void ) {
 				}
 			}
 		} else if ( pm->cmd.rightmove < 0 ) {
-			targetRollAngle = -20;
 			if ( pm->cmd.upmove <= 0 ) {
 				// move a bit down
 				if ( pm->ps->weaponstate == WEAPON_BEAMFIRING ) { // BFP - Low descent speed when beam firing
@@ -903,26 +939,6 @@ static void PM_FlyMove( void ) {
 			}
 		}
 	}
-
-	// if going back to the main angle, increase a bit the roll step
-	if ( targetRollAngle == 0 ) {
-		rollStep = 0.375;
-	}
-
-	// apply the fixed step for a more direct roll change
-	if ( currentRollAngle < targetRollAngle ) {
-		currentRollAngle += rollStep;
-		if ( currentRollAngle > targetRollAngle ) {
-			currentRollAngle = targetRollAngle;
-		}
-	} else if ( currentRollAngle > targetRollAngle ) {
-		currentRollAngle -= rollStep;
-		if ( currentRollAngle < targetRollAngle ) {
-			currentRollAngle = targetRollAngle;
-		}
-	}
-
-	pm->ps->viewangles[ROLL] = currentRollAngle;
 
 	PM_Accelerate (wishdir, wishspeed, pm_flyaccelerate);
 
@@ -2927,9 +2943,9 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
+		// BFP - TODO: Set to the first selected weapon
 		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
-		pm->cmd.buttons &= ~BUTTON_ATTACK;
 		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 	}
 
@@ -3124,6 +3140,9 @@ void PmoveSingle (pmove_t *pmove) {
 		// airborne
 		PM_AirMove();
 	}
+
+	// BFP - Fly tilt
+	PM_FlyTiltView();
 
 	PM_Animate();
 

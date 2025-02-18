@@ -33,7 +33,7 @@ static void HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - W
 	vec3_t	dir, angles;
 	int		i;
 	int		chargePoints = client->divideBallKiCharged;
-	int		projectiles_to_spawn;
+	int		projectiles_to_spawn = 0;
 	int		yawAdjustments[6] = {
 		// if charge attack is 2:
 		// horizontal:
@@ -86,16 +86,13 @@ static void HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - W
 	case 6:
 		projectiles_to_spawn = 6;
 		break;
-	default:
-		projectiles_to_spawn = 0;
-		break;
 	}
 
 	if ( projectiles_to_spawn == 0 ) {
 		return;
 	}
 
-	for ( i = 0; i < projectiles_to_spawn; i++ ) {
+	for ( i = 0; i < projectiles_to_spawn; ++i ) {
 		gentity_t *proj = NULL;
 		VectorCopy( ent->s.angles, angles );
 
@@ -206,9 +203,22 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 			if ( other->client && ( other->client->ps.pm_flags & PMF_BLOCK ) ) {
 				// PUSH!
 				BG_EvaluateTrajectoryDelta( &ent->s.pos, level.time, velocity );
+				// BFP - No vector length check
+#if 0
 				if ( VectorLength( velocity ) == 0 ) {
 					velocity[2] = 1;
 				}
+#endif
+				// BFP - Normalize velocity to apply the force to lose altitude while flying/floating underwater
+				VectorNormalize( velocity );
+				velocity[2] = -1;
+
+				// BFP - Consume 10% of ki when deflecting the projectile and apply knockback
+				if ( other->client->blockKnockbackTime <= 0 ) {
+					other->client->ps.ammo[WP_KI] -= other->client->ps.stats[STAT_MAX_KI] * 0.1;
+					other->client->blockKnockbackTime = level.time + 250;	
+				}
+
 				G_Damage (other, ent, &g_entities[ent->r.ownerNum], velocity,
 					ent->s.origin, ent->damage, 
 					0, ent->methodOfDeath);
@@ -223,9 +233,16 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 				hitClient = qtrue;
 			}
 			BG_EvaluateTrajectoryDelta( &ent->s.pos, level.time, velocity );
+			// BFP - No vector length check
+#if 0
 			if ( VectorLength( velocity ) == 0 ) {
 				velocity[2] = 1;	// stepped on a grenade
 			}
+#endif
+			// BFP - Normalize velocity to apply the force to lose altitude while flying/floating underwater
+			VectorNormalize( velocity );
+			velocity[2] = -1;
+
 			G_Damage (other, ent, &g_entities[ent->r.ownerNum], velocity,
 				ent->s.origin, ent->damage, 
 				0, ent->methodOfDeath);

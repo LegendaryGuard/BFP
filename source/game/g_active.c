@@ -425,9 +425,13 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	// BFP - Block ki consume
 	if ( ( client->ps.pm_flags & PMF_BLOCK )
 	&& client->ps.ammo[WP_KI] > 0
+	&& client->blockKnockbackTime <= 0
 	&& random() < 0.75 ) { // a weird random thingy (¬_¬') tried to get the similar result
 		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
 		float blockCostTotal = ( g_blockCost.value * 0.01 ) + ( g_blockCostPct.value * 0.01 ) * ( client->ps.stats[STAT_MAX_KI] * 0.0001 );
+		if ( blockCostTotal < 1 ) {
+			blockCostTotal = 1;
+		}
 		client->ps.ammo[WP_KI] -= blockCostTotal;
 	}
 
@@ -710,6 +714,13 @@ static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block
 		client->ps.pm_flags &= ~PMF_BLOCK;
 		client->blockTime = 0;
 		client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
+	}
+
+	// knockback when reflecting from attacks
+	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+	&& client->blockTime > 0 
+	&& level.time >= client->blockKnockbackTime ) {
+		client->blockKnockbackTime = 0;
 	}
 
 	// if the block length duration hasn't been expired yet and 
