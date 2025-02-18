@@ -53,11 +53,12 @@ MAIN MENU
 #define ID_UNPACKMUSIC			14 // BFP - Unpack music, strange feature  (· ·;) *curiosity sweat*
 
 // BFP - That's the main banner 3d model of Quake 3 words, it would be a good idea to add a proper 3d banner model :P
-#if 0
+#define ENABLE_BANNER_MODEL		0
+#if ENABLE_BANNER_MODEL
 #define MAIN_BANNER_MODEL				"models/mapobjects/banner/banner5.md3"
-#define MAIN_MENU_VERTICAL_SPACING		34
 #endif
-#define MAIN_MENU_VERTICAL_SPACING		65 // BFP - Set vertical spacing to 65
+
+#define MAIN_MENU_VERTICAL_SPACING		65 // BFP - Set vertical spacing to 65, before Q3: 34
 
 typedef struct {
 	menuframework_s	menu;
@@ -87,7 +88,9 @@ typedef struct {
 	menutext_s		exit;
 
 	// BFP - As said before, idea for a proper 3d banner model
-	// qhandle_t		bannerModel;
+#if ENABLE_BANNER_MODEL
+	qhandle_t		bannerModel;
+#endif
 } mainmenu_t;
 
 
@@ -217,7 +220,9 @@ MainMenu_Cache
 */
 void MainMenu_Cache( void ) {
 	// BFP - Here's where sets the 3d banner model :P
-	// s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
+#if ENABLE_BANNER_MODEL
+	s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
+#endif
 	trap_R_RegisterShaderNoMip( ART_MENUBG );	// BFP - Menu background
 	trap_R_RegisterShaderNoMip( ART_BFPLOGO );	// BFP - Logo
 	trap_R_RegisterShaderNoMip( ART_CRBANNER );	// BFP - copyright banner
@@ -230,26 +235,24 @@ sfxHandle_t ErrorMessage_Key(int key)
 	return (menu_null_sound);
 }
 
+
+// BFP - 3d banner model :P
+#if ENABLE_BANNER_MODEL
 /*
-===============
-Main_MenuDraw
-TTimo: this function is common to the main menu and errorMessage menu
-===============
+========================
+Main_MenuBannerModelDraw
+========================
 */
-
-static void Main_MenuDraw( void ) {
+static void Main_MenuBannerModelDraw( void )
+{
 	refdef_t		refdef;
-
-	// BFP - 3d banner model disabled :P
-#if 0
 	refEntity_t		ent;
 	vec3_t			origin;
 	vec3_t			angles;
 	vec4_t			color = {0.5, 0, 0, 1};
-#endif
-
 	float			adjust;
 	float			x, y, w, h;
+	const int		LOW_MEMORY = 5242880;
 
 	// setup the refdef
 
@@ -262,45 +265,59 @@ static void Main_MenuDraw( void ) {
 	x = 0;
 	y = 0;
 	w = 640;
-	h = 120;
+	h = 480; // BFP - Q3: 120;
 	UI_AdjustFrom640( &x, &y, &w, &h );
 	refdef.x = x;
 	refdef.y = y;
 	refdef.width = w;
 	refdef.height = h;
 
+	if ( trap_MemoryRemaining() <= LOW_MEMORY ) {
+		UI_DrawProportionalString( x, y + h / 2, "LOW MEMORY", UI_LEFT, color_white ); // BFP - modified LOW MEMORY warning color
+		return;
+	}
+
 	adjust = 0; // JDC: Kenneth asked me to stop this 1.0 * sin( (float)uis.realtime / 1000 );
-	refdef.fov_x = 60 + adjust;
-	refdef.fov_y = 19.6875 + adjust;
+	refdef.fov_x = 20; // BFP - Q3: 60 + adjust;
+	refdef.fov_y = 15 + adjust; // BFP - Q3: 19.6875 + adjust;
 
 	refdef.time = uis.realtime;
 
-	// BFP - 3d banner model disabled :P
-#if 0
-	origin[0] = 300;
-	origin[1] = 0;
-	origin[2] = -32;
+	if ( s_main.bannerModel ) {
+		origin[0] = 640; // BFP - Q3: 300;
+		origin[1] = 0;
+		origin[2] = 0; // BFP - Q3: -32;
 
-	trap_R_ClearScene();
+		trap_R_ClearScene();
 
-	// add the model
+		// add the model
 
-	memset( &ent, 0, sizeof(ent) );
+		memset( &ent, 0, sizeof(ent) );
 
-	adjust = 5.0 * sin( (float)uis.realtime / 5000 );
-	VectorSet( angles, 0, 180 + adjust, 0 );
-	AnglesToAxis( angles, ent.axis );
-	ent.hModel = s_main.bannerModel;
-	VectorCopy( origin, ent.origin );
-	VectorCopy( origin, ent.lightingOrigin );
-	ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
-	VectorCopy( ent.origin, ent.oldorigin );
+		adjust = 0; // BFP - Q3: 5.0 * sin( (float)uis.realtime / 5000 );
+		VectorSet( angles, 0, 180 + adjust, 0 );
+		AnglesToAxis( angles, ent.axis );
+		ent.hModel = s_main.bannerModel;
+		VectorCopy( origin, ent.origin );
+		VectorCopy( origin, ent.lightingOrigin );
+		ent.renderfx = RF_LIGHTING_ORIGIN | RF_NOSHADOW;
+		VectorCopy( ent.origin, ent.oldorigin );
 
-	trap_R_AddRefEntityToScene( &ent );
+		trap_R_AddRefEntityToScene( &ent );
 
-	trap_R_RenderScene( &refdef );
+		trap_R_RenderScene( &refdef );
+	}
+}
 #endif
 
+/*
+===============
+Main_MenuDraw
+TTimo: this function is common to the main menu and errorMessage menu
+===============
+*/
+
+static void Main_MenuDraw( void ) {
 	if (strlen(s_errorMessage.errorMessage))
 	{
 		UI_DrawProportionalString_AutoWrapped( 320, 192, 600, 20, s_errorMessage.errorMessage, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
@@ -310,6 +327,10 @@ static void Main_MenuDraw( void ) {
 		// standard menu drawing
 		Menu_Draw( &s_main.menu );		
 	}
+	// BFP - 3d banner model :P
+#if ENABLE_BANNER_MODEL
+	Main_MenuBannerModelDraw();
+#endif
 
 	// BFP - Demo version disabled, possibly we may remove that :P
 #if 0

@@ -29,7 +29,7 @@ BFP OPTIONS MENU
 #define ID_BEAMCMPXY        146
 #define ID_TRANSFORMATIONAURA        147
 #define ID_SMALLAURA        148
-#define ID_SSJGLOW          149
+#define ID_ULTIMAPERMAGLOW  149
 #define ID_ACCUCROSSHAIR    150
 #define ID_SIMPLEHUD        151
 #define ID_CHARGEALERT      152
@@ -112,7 +112,7 @@ typedef struct {
 	menuslider_s		beamcmpxy;
 	menuradiobutton_s	transaura;
 	menuradiobutton_s	smallaura;
-	menuradiobutton_s	ssjglow;
+	menuradiobutton_s	ultpermaglow;
 	menuradiobutton_s	accucrosshair;
 	menuradiobutton_s	simplehud;
 	menuradiobutton_s	chargealert;
@@ -148,7 +148,7 @@ static void BFPOptions_SetMenuItems( void ) {
 	BFPOptions_MenuItem( &s_bfpoptions.explosionring.curvalue,  "cg_explosionRing",      0 );
 	BFPOptions_MenuItem( &s_bfpoptions.transaura.curvalue,      "cg_transformationAura", 0 );
 	BFPOptions_MenuItem( &s_bfpoptions.smallaura.curvalue,      "cg_smallOwnAura",       0 );
-	BFPOptions_MenuItem( &s_bfpoptions.ssjglow.curvalue,        "cg_permaglowUltimate",  0 );
+	BFPOptions_MenuItem( &s_bfpoptions.ultpermaglow.curvalue,   "cg_permaglowUltimate",  0 );
 	BFPOptions_MenuItem( &s_bfpoptions.accucrosshair.curvalue,  "cg_stableCrosshair",    1 ); // doesn't make sense if the crosshair isn't accurate
 	BFPOptions_MenuItem( &s_bfpoptions.simplehud.curvalue,      "cg_simpleHUD",          0 );
 	BFPOptions_MenuItem( &s_bfpoptions.chargealert.curvalue,    "cg_chargeupAlert",      0 );
@@ -363,8 +363,8 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 		trap_Cvar_SetValue( "cg_smallOwnAura", s_bfpoptions.smallaura.curvalue );
 		break;
 
-	case ID_SSJGLOW:
-		trap_Cvar_SetValue( "cg_permaglowUltimate", s_bfpoptions.ssjglow.curvalue );
+	case ID_ULTIMAPERMAGLOW:
+		trap_Cvar_SetValue( "cg_permaglowUltimate", s_bfpoptions.ultpermaglow.curvalue );
 		break;
 
 	case ID_ACCUCROSSHAIR:
@@ -528,13 +528,13 @@ void BFPAuraOptions_MenuInit( void ) {
 	s_bfpoptions.smallaura.generic.y	    = y;
 
 	y += BIGCHAR_HEIGHT + 2;
-	s_bfpoptions.ssjglow.generic.type     = MTYPE_RADIOBUTTON;
-	s_bfpoptions.ssjglow.generic.name	  = "SSJ Perma-Glow:";
-	s_bfpoptions.ssjglow.generic.flags	  = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_bfpoptions.ssjglow.generic.callback = BFPOptions_Event;
-	s_bfpoptions.ssjglow.generic.id       = ID_SSJGLOW;
-	s_bfpoptions.ssjglow.generic.x	      = BFPOPTIONS_X_POS;
-	s_bfpoptions.ssjglow.generic.y	      = y;
+	s_bfpoptions.ultpermaglow.generic.type    = MTYPE_RADIOBUTTON;
+	s_bfpoptions.ultpermaglow.generic.name	  = "Ultimate Perma-Glow:";
+	s_bfpoptions.ultpermaglow.generic.flags	  = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.ultpermaglow.generic.callback = BFPOptions_Event;
+	s_bfpoptions.ultpermaglow.generic.id      = ID_ULTIMAPERMAGLOW;
+	s_bfpoptions.ultpermaglow.generic.x	      = BFPOPTIONS_X_POS;
+	s_bfpoptions.ultpermaglow.generic.y	      = y;
 
 	s_bfpoptions.back.generic.type		= MTYPE_BITMAP;
 	s_bfpoptions.back.generic.name		= ART_BACK0;
@@ -553,7 +553,7 @@ void BFPAuraOptions_MenuInit( void ) {
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.dynauralight );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.transaura );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.smallaura );
-	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.ssjglow );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.ultpermaglow );
 
 	highpolyaura = trap_Cvar_VariableValue( "cg_highPolyAura" );
 	polygonalaura = trap_Cvar_VariableValue( "cg_polygonAura" );
