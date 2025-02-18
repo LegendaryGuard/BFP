@@ -2145,6 +2145,69 @@ static void CG_ModelSize( refEntity_t *model, float size ) { // BFP - Model size
 	model->axis[2][2] *= size;
 }
 
+/*
+==========================
+CG_AuraPowerlevelSetShaderColor
+
+Powerlevel is divided into tiers. 
+While most powerlevel effects are based on the powerlevel itself, 
+aura color is determined by the tier.
+
+- Tier 1:			< 100,000 PL			Blue aura
+- Tier 2:			100,000 – 250,000 PL	Red aura
+- Tier 3:			250,000 – 500,000 PL	Red aura
+- Tier 4:			500,000 – 999,000 PL	Red aura
+- Ultimate Tier:	1 mil PL				Yellow aura
+==========================
+*/
+static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
+	qhandle_t	auraShader = cgs.media.auraRedTinyShader;
+	int			powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + state->clientNum ) );
+
+	// BFP - TODO: On monster gamemode, adjust and set conditional +10000 (max. 20000) for the player who is monster
+	
+	// red
+	if ( cg_lightweightAuras.integer <= 0
+	&& cg_polygonAura.integer <= 0
+	&& cg_spriteAura.integer <= 0
+	&& cg_particleAura.integer <= 0 ) {
+		auraShader = cgs.media.auraRedChargeShader;
+		if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
+			auraShader = cgs.media.auraRedUseShader;
+		}
+	}
+	// blue
+	if ( powerlevel < 100 
+	|| ( cgs.gametype >= GT_TEAM && cgs.clientinfo[ state->clientNum ].team == TEAM_BLUE ) ) {
+		auraShader = cgs.media.auraBlueTinyShader;
+
+		if ( cg_lightweightAuras.integer <= 0
+		&& cg_polygonAura.integer <= 0
+		&& cg_spriteAura.integer <= 0
+		&& cg_particleAura.integer <= 0 ) {
+			auraShader = cgs.media.auraBlueChargeShader;
+			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
+				auraShader = cgs.media.auraBlueUseShader;
+			}
+		}
+	}
+	// yellow
+	if ( powerlevel >= 1000
+	&& !( cgs.gametype >= GT_TEAM ) ) {
+		auraShader = cgs.media.auraYellowTinyShader;
+
+		if ( cg_lightweightAuras.integer <= 0
+		&& cg_polygonAura.integer <= 0
+		&& cg_spriteAura.integer <= 0
+		&& cg_particleAura.integer <= 0 ) {
+			auraShader = cgs.media.auraYellowChargeShader;
+			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
+				auraShader = cgs.media.auraYellowUseShader;
+			}
+		}
+	}
+	return auraShader;
+}
 
 /*
 ===============
@@ -2253,25 +2316,15 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 	// render main model
 	trap_R_AddRefEntityToScene( &ent );
 
-	// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil:
-	// render perma-glow when already transformed
-	/* ent.customShader = cgs.media.auraYellowTinyShader;
-	if ( ( state->powerups & ( 1 << PW_TRANSFORMED ) ) 
-	&& cg_permaglowUltimate.integer > 0 ) {
-		trap_R_AddRefEntityToScene( &ent );
-	}*/
-
-	ent.customShader = cgs.media.auraRedTinyShader;
-	if ( team == TEAM_BLUE ) {
-		ent.customShader = cgs.media.auraBlueTinyShader;
+	// BFP - Render ultimate perma-glow when already transformed
+	if ( cg_permaglowUltimate.integer > 0 
+	&& atoi( CG_ConfigString( CS_POWERLEVEL + state->clientNum ) ) >= 1000 ) {
+		ent.customShader = cgs.media.ultimateAuraShader;
+		if ( ent.customShader ) {
+			trap_R_AddRefEntityToScene( &ent );
+		}
 	}
-
-	// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil:
-	// only on non-team gamemodes render when already transformed
-	/*if ( ( state->powerups & ( 1 << PW_TRANSFORMED ) )
-	&& cgs.gametype < GT_TEAM ) {
-		ent.customShader = cgs.media.auraYellowTinyShader;
-	}*/
+	ent.customShader = CG_AuraPowerlevelSetShaderColor( state );
 
 	if ( state->eFlags & EF_AURA ) {
 		// BFP - If the player is using lightweight auras or their own small aura
@@ -2293,18 +2346,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 				trap_R_AddRefEntityToScene( &ent );
 				return;
 			}
-			ent.customShader = cgs.media.auraRedChargeShader;
-			// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil (same as the previous TODO notes)
-			if ( team == TEAM_BLUE ) {
-				ent.customShader = cgs.media.auraBlueChargeShader;
-			}
-			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
-				ent.customShader = cgs.media.auraRedUseShader;
-				// BFP - TODO: If player is transformed and powerlevel is more than 1 Mil (same as the previous TODO notes)
-				if ( team == TEAM_BLUE ) {
-					ent.customShader = cgs.media.auraBlueUseShader;
-				}
-			}
+			ent.customShader = CG_AuraPowerlevelSetShaderColor( state );
 			trap_R_AddRefEntityToScene( &ent );
 		}
 	}
@@ -2361,6 +2403,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 	refEntity_t		aura2; // secondary aura
 	vec3_t			auraInverseRotation; // for aura inverse rotation
 	vec3_t			kiTrailOrigin;
+	int				powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + clientNum ) );
 	const int		KI_TRAIL_ZPOS = 5;
 
 	memset( &aura, 0, sizeof(aura) );
@@ -2434,19 +2477,21 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		VectorCopy( legs.origin, aura2.origin );
 		VectorCopy( legs.lightingOrigin, aura2.lightingOrigin );
 
-		// BFP - TODO: Add yellow aura only when the player is transformed, but don't override when playing a team gamemode
-		// aura.customShader = aura2.customShader = cgs.media.auraYellowTinyShader;
-		// Don't put this line of code here if transformed, just put outside the check EF_AURA conditional
-		// trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), 1.0, 1.0, 0 );
-
-		// BFP - TODO: Check with powerlevels, if the powerlevel is lower than 100.000, the aura is blue on non-team gamemodes
-
 		// apply light blinking
-		if ( ci->team == TEAM_BLUE ) {
-			aura.customShader = aura2.customShader = cgs.media.auraBlueTinyShader;
+		aura.customShader = aura2.customShader = CG_AuraPowerlevelSetShaderColor( &cent->currentState );
+		// blue
+		if ( powerlevel < 100 
+		|| ( cgs.gametype >= GT_TEAM && ci->team == TEAM_BLUE ) ) {
 			CG_DynamicAuraLight( cent, clientNum, 0.2f, 0.2f, 1.0 );
-		} else {
-			aura.customShader = aura2.customShader = cgs.media.auraRedTinyShader;
+		}
+		// yellow
+		else if ( powerlevel >= 1000
+		&& !( cgs.gametype >= GT_TEAM ) ) {
+			//CG_DynamicAuraLight( cent, clientNum, 1.0, 1.0, 0 );
+			CG_DynamicAuraLight( cent, clientNum, 1.0, 1.0, 0.2f );
+		}
+		// red
+		else {
 			CG_DynamicAuraLight( cent, clientNum, 1.0, 0.2f, 0.2f );
 		}
 
@@ -2577,6 +2622,8 @@ void CG_Player( centity_t *cent ) {
 	qboolean		shadow;
 	float			shadowPlane;
 	qhandle_t		kiTrailShader;
+	// BFP - Powerlevel for the aura
+	int				powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + cent->currentState.clientNum ) );
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2588,11 +2635,17 @@ void CG_Player( centity_t *cent ) {
 	ci = &cgs.clientinfo[ clientNum ];
 
 	// BFP - Ki trail shader set
+	// red
 	kiTrailShader = cgs.media.kiTrailRedShader;
-	// BFP - TODO: Add yellow ki trail only when the player is transformed, but don't override when playing a team gamemode
-	// kiTrailShader = cgs.media.kiTrailYellowShader;
-	if ( ci->team == TEAM_BLUE ) {
+	// blue
+	if ( powerlevel < 100 
+	|| ( cgs.gametype >= GT_TEAM && ci->team == TEAM_BLUE ) ) {
 		kiTrailShader = cgs.media.kiTrailBlueShader;
+	}
+	// yellow
+	if ( powerlevel >= 1000
+	&& !( cgs.gametype >= GT_TEAM ) ) {
+		kiTrailShader = cgs.media.kiTrailYellowShader;
 	}
 
 	// it is possible to see corpses from disconnected players that may
@@ -2736,6 +2789,12 @@ void CG_Player( centity_t *cent ) {
 
 	// BFP - Ki attack sounds
 	CG_KiAttackSounds( cent );
+
+	// BFP - Render ultimate perma-glow dynamic lights when already transformed
+	if ( cg_lightAuras.integer > 0 && cg_permaglowUltimate.integer > 0 && powerlevel >= 1000 ) {
+		trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&80), 1.0, 1.0, 0.2f );
+		trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&80), 1.0, 1.0, 0.2f );
+	}
 
 	//
 	// add the gun / barrel / flash

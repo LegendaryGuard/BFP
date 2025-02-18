@@ -674,6 +674,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.auraYellowTinyShader = trap_R_RegisterShader( "powerups/yellowtiny" );
 	cgs.media.auraYellowChargeShader = trap_R_RegisterShader( "powerups/yellowcharge" );
 	cgs.media.auraYellowUseShader = trap_R_RegisterShader( "powerups/yellowuse" );
+	cgs.media.ultimateAuraShader = trap_R_RegisterShader( "powerups/ultimateaura" );
 
 	// BFP - Ki trail shaders
 	cgs.media.kiTrailBlueShader = trap_R_RegisterShader( "powerups/bluekitrail" );

@@ -92,6 +92,7 @@ CG_CVAR( cg_smallOwnAura, "cg_smallOwnAura", "0", CVAR_ARCHIVE ) // BFP - Small 
 CG_CVAR( cg_lightweightAuras, "cg_lightweightAuras", "0", CVAR_ARCHIVE ) // BFP - Lightweight auras
 CG_CVAR( cg_polygonAura, "cg_polygonAura", "1", CVAR_ARCHIVE ) // BFP - Polygonal aura
 CG_CVAR( cg_highPolyAura, "cg_highPolyAura", "1", CVAR_ARCHIVE ) // BFP - High polycount aura
+CG_CVAR( cg_permaglowUltimate, "cg_permaglowUltimate", "1", CVAR_ARCHIVE ) // BFP - Ultimate perma-glow
 CG_CVAR( cg_thirdPerson, "cg_thirdPerson", "1", 0 ) // BFP
 CG_CVAR( cg_superdeformed, "cg_superdeformed", "0", CVAR_ARCHIVE ) // BFP - Super Deformed (Chibi style) easter egg
 CG_CVAR( cg_yrgolroxor, "cg_yrgolroxor", "0", 0 ) // BFP - Yrgol Roxor easter egg

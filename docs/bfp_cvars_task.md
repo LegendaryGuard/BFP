@@ -38,6 +38,7 @@
 - [x] ~~cg_highPolyAura~~
 - [x] ~~cg_spriteAura~~
 - [x] ~~cg_particleAura~~
+- [x] ~~cg_permaglowUltimate~~
 - [x] ~~cg_simpleHUD~~
 - [x] ~~cg_playHitSound~~
 - [x] ~~cg_lifedeaths~~

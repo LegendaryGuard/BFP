@@ -812,6 +812,7 @@ typedef struct {
 	qhandle_t	auraYellowTinyShader;
 	qhandle_t	auraYellowChargeShader;
 	qhandle_t	auraYellowUseShader;
+	qhandle_t	ultimateAuraShader;
 
 	// BFP - Ki trail shaders
 	qhandle_t	kiTrailRedShader;
