@@ -105,9 +105,6 @@ typedef enum {
 
 	GT_TEAM,			// team deathmatch
 	GT_CTF,				// capture the flag
-	GT_1FCTF,
-	GT_OBELISK,
-	GT_HARVESTER,
 	GT_MAX_GAME_TYPE
 } gametype_t;
 
@@ -176,9 +173,9 @@ typedef enum {
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
 #define PMF_FLIGHT_ACTIVE	8192	// BFP - Flight active status
-// BFP - TODO: Reuse the following flag (used on Team Arena), change name if it'll be used
-// BFP - PMF_INVULEXPAND is unused
-// #define PMF_INVULEXPAND		16384	// invulnerability sphere set to full size
+// BFP - You can reuse the following flags, so change the macro name if going to be used
+// #define PMF_SOMEFLAG		16384	// some pm_flag
+// #define PMF_SOMEFLAG		32768	// some pm_flag
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
@@ -282,10 +279,10 @@ typedef enum {
 #define	EF_BOUNCE_HALF		0x00000020		// for missiles
 // BFP - No EF_AWARD_GAUNTLET flag
 // #define	EF_AWARD_GAUNTLET	0x00000040		// draw a gauntlet sprite
+#define	EF_FLIGHT			0x00000040		// BFP - Used for flying status
 #define	EF_NODRAW			0x00000080		// may have an event, but no model (unspawned items)
 #define	EF_FIRING			0x00000100		// for lightning gun
-// BFP - No EF_KAMIKAZE flag
-// #define	EF_KAMIKAZE			0x00000200
+#define	EF_KI_BOOST			0x00000200		// BFP - Used for ki boost status
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
 // BFP - No EF_AWARD_CAP flag
 // #define EF_AWARD_CAP		0x00000800		// draw the capture sprite
@@ -306,16 +303,16 @@ typedef enum {
 
 	PW_QUAD,
 	PW_BATTLESUIT,
-	PW_HASTE, // BFP - Used for ki boost status
+	// BFP - No haste powerup
+//	PW_HASTE,
 	PW_INVIS,
-	PW_REGEN,
-	PW_FLIGHT, // BFP - Used for flying status
+	// BFP - No regen powerup
+//	PW_REGEN,
+	// BFP - No flight powerup
+//	PW_FLIGHT,
 
 	PW_REDFLAG,
 	PW_BLUEFLAG,
-	PW_NEUTRALFLAG,
-
-	PW_INVULNERABILITY,
 
 	PW_NUM_POWERUPS
 
@@ -326,9 +323,6 @@ typedef enum {
 
 	HI_TELEPORTER,
 	HI_MEDKIT,
-	HI_KAMIKAZE,
-	HI_PORTAL,
-	HI_INVULNERABILITY,
 
 	HI_NUM_HOLDABLE
 } holdable_t;
@@ -470,7 +464,8 @@ typedef enum {
 
 	EV_POWERUP_QUAD,
 	EV_POWERUP_BATTLESUIT,
-	EV_POWERUP_REGEN,
+	// BFP - No regen powerup
+//	EV_POWERUP_REGEN,
 
 	EV_GIB_PLAYER,			// gib a previously living player
 	EV_SCOREPLUM,			// score plum
@@ -495,14 +490,11 @@ typedef enum {
 	GTS_BLUE_RETURN,
 	GTS_RED_TAKEN,
 	GTS_BLUE_TAKEN,
-	GTS_REDOBELISK_ATTACKED,
-	GTS_BLUEOBELISK_ATTACKED,
 	GTS_REDTEAM_SCORED,
 	GTS_BLUETEAM_SCORED,
 	GTS_REDTEAM_TOOK_LEAD,
 	GTS_BLUETEAM_TOOK_LEAD,
-	GTS_TEAMS_ARE_TIED,
-	GTS_KAMIKAZE
+	GTS_TEAMS_ARE_TIED
 } global_team_sound_t;
 
 // animations
@@ -836,27 +828,4 @@ qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTim
 
 #define MAX_BOTS			1024
 #define MAX_BOTS_TEXT		8192
-
-
-// Kamikaze
-
-// 1st shockwave times
-#define KAMI_SHOCKWAVE_STARTTIME		0
-#define KAMI_SHOCKWAVEFADE_STARTTIME	1500
-#define KAMI_SHOCKWAVE_ENDTIME			2000
-// explosion/implosion times
-#define KAMI_EXPLODE_STARTTIME			250
-#define KAMI_IMPLODE_STARTTIME			2000
-#define KAMI_IMPLODE_ENDTIME			2250
-// 2nd shockwave times
-#define KAMI_SHOCKWAVE2_STARTTIME		2000
-#define KAMI_SHOCKWAVE2FADE_STARTTIME	2500
-#define KAMI_SHOCKWAVE2_ENDTIME			3000
-// radius of the models without scaling
-#define KAMI_SHOCKWAVEMODEL_RADIUS		88
-#define KAMI_BOOMSPHEREMODEL_RADIUS		72
-// maximum radius of the models during the effect
-#define KAMI_SHOCKWAVE_MAXRADIUS		1320
-#define KAMI_BOOMSPHERE_MAXRADIUS		720
-#define KAMI_SHOCKWAVE2_MAXRADIUS		704
 

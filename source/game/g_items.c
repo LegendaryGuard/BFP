@@ -120,13 +120,6 @@ int Pickup_Holdable( gentity_t *ent, gentity_t *other ) {
 
 	other->client->ps.stats[STAT_HOLDABLE_ITEM] = ent->item - bg_itemlist;
 
-// BFP - No EF_KAMIKAZE flag
-#if 0
-	if( ent->item->giTag == HI_KAMIKAZE ) {
-		other->client->ps.eFlags |= EF_KAMIKAZE;
-	}
-#endif
-
 	return RESPAWN_HOLDABLE;
 }
 
@@ -291,7 +284,7 @@ void RespawnItem( gentity_t *ent ) {
 		te->r.svFlags |= SVF_BROADCAST;
 	}
 
-	if ( ent->item->giType == IT_HOLDABLE && ent->item->giTag == HI_KAMIKAZE ) {
+	if ( ent->item->giType == IT_HOLDABLE ) {
 		// play powerup spawn sound to all clients
 		gentity_t	*te;
 

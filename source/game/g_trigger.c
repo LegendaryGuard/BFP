@@ -222,7 +222,7 @@ void Use_target_push( gentity_t *self, gentity_t *other, gentity_t *activator ) 
 		return;
 	}
 
-// BFP - Flight status can be interacted to push something
+// BFP - No flight powerup
 #if 0
 	if ( activator->client->ps.powerups[PW_FLIGHT] ) {
 		return;

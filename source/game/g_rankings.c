@@ -901,18 +901,27 @@ void G_RankPickupPowerup( int self, int powerup )
 	case PW_BATTLESUIT:
 		trap_RankReportInt( self, -1, QGR_KEY_SUIT, 1, 1 );
 		break;
+	// BFP - No haste powerup
+#if 0
 	case PW_HASTE:
 		trap_RankReportInt( self, -1, QGR_KEY_HASTE, 1, 1 );
 		break;
+#endif
 	case PW_INVIS:
 		trap_RankReportInt( self, -1, QGR_KEY_INVIS, 1, 1 );
 		break;
+	// BFP - No regen powerup
+#if 0
 	case PW_REGEN:
 		trap_RankReportInt( self, -1, QGR_KEY_REGEN, 1, 1 );
 		break;
+#endif
+	// BFP - No flight powerup
+#if 0
 	case PW_FLIGHT:
 		trap_RankReportInt( self, -1, QGR_KEY_FLIGHT, 1, 1 );
 		break;
+#endif
 	default:
 		break;
 	}

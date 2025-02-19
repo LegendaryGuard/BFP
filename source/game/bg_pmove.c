@@ -334,7 +334,7 @@ static void PM_Friction( void ) {
 		// FIXME: still have z friction underwater?
 
 		// BFP - Brake when flying at that speed rate, otherwise the friction continues
-		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+		if ( pm->ps->eFlags & EF_FLIGHT ) {
 			vel[2] = 0;
 		}
 		return;
@@ -357,13 +357,13 @@ static void PM_Friction( void ) {
 
 	// apply water friction even if just wading
 	if ( pm->waterlevel 
-	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) { // BFP - Don't apply on flight
+	&& !( pm->ps->eFlags & EF_FLIGHT ) ) { // BFP - Don't apply on flight
 		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
 	}
 
 	// apply flying friction
 	// BFP - Flight
-	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+	if ( pm->ps->eFlags & EF_FLIGHT ) {
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
 	}
@@ -536,7 +536,7 @@ static qboolean PM_CheckJump( void ) {
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
 	// BFP - Double jump velocity when using ki boost
-	if ( pm->ps->powerups[PW_HASTE] > 0
+	if ( ( pm->ps->eFlags & EF_KI_BOOST )
 	|| ( pm->cmd.buttons & BUTTON_KI_USE ) ) { // BFP - Handle the ki boost button if it's being pressed, that avoids jittering movements
 		pm->ps->velocity[2] = 1100;
 	}
@@ -725,7 +725,7 @@ static void PM_WaterMove( void ) {
 	float	vel;
 
 	// BFP - Avoid adding friction under water while flying
-	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+	if ( pm->ps->eFlags & EF_FLIGHT ) {
 		return;
 	}
 
@@ -784,7 +784,7 @@ static void PM_WaterMove( void ) {
 
 	// BFP - Reduces speed when charging ki
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
-	&& ( pm->ps->powerups[PW_HASTE] <= 0 && !( pm->cmd.buttons & BUTTON_KI_USE ) )
+	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
 		wishvel[2] *= 0.15;
 	}
@@ -808,7 +808,7 @@ static void PM_WaterMove( void ) {
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) )
+	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& ( pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0 || pm->cmd.upmove != 0 ) ) {
 		// BFP - Ki boost speed is dependent on powerlevel
 		wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 );
@@ -842,9 +842,9 @@ static void PM_FlyTiltView( void ) { // BFP - Fly tilt
 	short	targetRollAngle = 0;
 	float	rollStep = 0.2;
 
-	if ( pm->ps->powerups[PW_FLIGHT] > 0
+	if ( ( pm->ps->eFlags & EF_FLIGHT )
 	&& !( pm->ps->pm_flags & PMF_BLOCK )
-	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		// determine the target roll angle based on rightmove
 		if ( pm->cmd.rightmove > 0 ) {
 			targetRollAngle = 20;
@@ -912,7 +912,7 @@ static void PM_FlyMove( void ) {
 	wishspeed *= scale; // add speed
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
-	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING ) { // BFP - Don't increase speed when beam firing
 			// BFP - Ki boost speed is dependent on powerlevel
 			wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // increase the speed a bit
@@ -1012,14 +1012,14 @@ static void PM_AirMove( void ) {
 	PM_StepSlideMove ( qtrue );
 
 	// BFP - TODO: Avoid being pressed. Some lurker may have problems issues doing that on gameplay, I suggest not to do it
-	if ( ( pm->ps->powerups[PW_FLIGHT] <= 0 && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
+	if ( ( !( pm->ps->eFlags & EF_FLIGHT ) && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
 	&& !( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
 		return;
 	}
 
 	// BFP - Reduces speed when charging ki
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
-	&& ( pm->ps->powerups[PW_HASTE] <= 0 && !( pm->cmd.buttons & BUTTON_KI_USE ) )
+	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
 		VectorNormalize( pm->ps->velocity );
 		return;
@@ -1158,7 +1158,7 @@ static void PM_WalkMove( void ) {
 
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-	&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		// BFP - Ki boost speed is dependent on powerlevel
 		wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // move at that speed rate
 	}
@@ -1480,7 +1480,7 @@ PM_ControlJumpOnGround
 static void PM_ControlJumpOnGround( void ) { // BFP - A control to handle user movement intentions when jumping off the ground
 	if ( pm->ps->weaponstate != WEAPON_STUN
 	&& pm->ps->groundEntityNum != ENTITYNUM_NONE 
-	&& pm->ps->powerups[PW_FLIGHT] <= 0
+	&& !( pm->ps->eFlags & EF_FLIGHT )
 	&& ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) 
 		&& ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
 			|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
@@ -1501,7 +1501,7 @@ static void PM_ControlJumpOnGround( void ) { // BFP - A control to handle user m
 
 		if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 		&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-		&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 			pm->ps->velocity[0] *= 10;
 			pm->ps->velocity[1] *= 10;
 		}
@@ -1601,7 +1601,7 @@ static void PM_GroundTrace( void ) {
 	}
 
 	// BFP - Make sure to handle the PMF flags when the player isn't flying
-	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 	}
@@ -1618,7 +1618,7 @@ static void PM_GroundTrace( void ) {
 		pml.walking = qfalse;
 
 		// BFP - If flying, prevent from doing a jumping action on slopes
-		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+		if ( pm->ps->eFlags & EF_FLIGHT ) {
 			return;
 		}
 
@@ -1630,7 +1630,7 @@ static void PM_GroundTrace( void ) {
 			if ( ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) )
 			&& !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 			&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-			&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+			&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 				pm->ps->velocity[0] *= 5;
 				pm->ps->velocity[1] *= 5;
 			}
@@ -1652,7 +1652,7 @@ static void PM_GroundTrace( void ) {
 
 	// BFP - NOTE: Originally, BFP doesn't stop "groundtracing" until here when the player is flying
 	// BFP - If flying, prevent from doing a jumping action on flat ground
-	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+	if ( pm->ps->eFlags & EF_FLIGHT ) {
 		// BFP - To stick to the movers if the player is near to them
 		pm->ps->groundEntityNum = trace.entityNum;
 		PM_AddTouchEnt( trace.entityNum );
@@ -1677,7 +1677,7 @@ static void PM_GroundTrace( void ) {
 
 	// BFP - Handle when the player isn't flying
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE 
-	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) {
+	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
 		// just hit the ground
 		if ( pm->debugLevel ) {
 			Com_Printf("%i:Land\n", c_pmove);
@@ -1769,24 +1769,6 @@ static void PM_CheckDuck (void)
 {
 	trace_t	trace;
 
-#if 0
-	if ( pm->ps->powerups[PW_INVULNERABILITY] ) {
-		if ( pm->ps->pm_flags & PMF_INVULEXPAND ) {
-			// invulnerability sphere has a 42 units radius
-			VectorSet( pm->mins, -42, -42, -42 );
-			VectorSet( pm->maxs, 42, 42, 42 );
-		}
-		else {
-			VectorSet( pm->mins, -15, -15, MINS_Z );
-			VectorSet( pm->maxs, 15, 15, 16 );
-		}
-		pm->ps->pm_flags |= PMF_DUCKED;
-		pm->ps->viewheight = CROUCH_VIEWHEIGHT;
-		return;
-	}
-	pm->ps->pm_flags &= ~PMF_INVULEXPAND;
-#endif
-
 	pm->mins[0] = -15;
 	pm->mins[1] = -15;
 
@@ -1864,7 +1846,7 @@ static void PM_Footsteps( void ) {
 	}
 
 	// BFP - Avoid when flying (for melee strike animation, that's applied)
-	if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+	if ( pm->ps->eFlags & EF_FLIGHT ) {
 		// BFP - Melee strike legs animation, don't apply if it's playing the starting jump animation in the flight status
 		PM_ContinueMeleeStrikeLegsAnim( pm->ps->pm_time <= 0 );
 		return;
@@ -2021,7 +2003,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 	//
 	if (!pml.previous_waterlevel && pm->waterlevel) {
 		if ( !( cont & MASK_WATER )
-		&& pm->ps->powerups[PW_FLIGHT] <= 0
+		&& !( pm->ps->eFlags & EF_FLIGHT )
 		&& pm->cmd.upmove > 0 ) {
 			PM_AddEvent( EV_FOOTSPLASH ); // BFP - Play a different and smooth sound
 			return;
@@ -2035,13 +2017,13 @@ static void PM_WaterEvents( void ) {		// FIXME?
 	//
 	if (pml.previous_waterlevel && !pm->waterlevel) {
 		if ( !( cont & MASK_WATER )
-		&& pm->ps->powerups[PW_FLIGHT] <= 0
+		&& !( pm->ps->eFlags & EF_FLIGHT )
 		&& pm->cmd.upmove > 0 ) {
 			PM_AddEvent( EV_FOOTSPLASH ); // BFP - Play a different and smooth sound
 		} else {
 			PM_AddEvent( EV_WATER_LEAVE );
 		}
-		if ( pm->ps->powerups[PW_FLIGHT] <= 0 
+		if ( !( pm->ps->eFlags & EF_FLIGHT ) 
 		&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_MELEE )
@@ -2140,7 +2122,7 @@ static void PM_TorsoAnimation( void ) {
 
 	if ( ( cont & MASK_WATER ) 
 	&& pm->waterlevel <= 2
-	&& pm->ps->powerups[PW_FLIGHT] <= 0
+	&& !( pm->ps->eFlags & EF_FLIGHT )
 	&& pm->cmd.upmove > 0 ) {
 		pm->ps->velocity[2] = 200;
 		// Control the player depending their moves
@@ -2163,7 +2145,7 @@ static void PM_TorsoAnimation( void ) {
 
 			if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 			&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-			&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+			&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 				pm->ps->velocity[0] *= 10;
 				pm->ps->velocity[1] *= 10;
 			}
@@ -2178,7 +2160,7 @@ static void PM_TorsoAnimation( void ) {
 		// increase jumping speed using ki boost while not moving directionally		
 		if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 		&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
-		&& ( pm->ps->powerups[PW_HASTE] > 0 || ( pm->cmd.buttons & BUTTON_KI_USE ) )
+		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) )
 		&& !( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
 		|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
 			pm->ps->velocity[2] *= 5;
@@ -2205,7 +2187,7 @@ static void PM_TorsoAnimation( void ) {
 
 	// BFP - Falling distantly from the ground
 	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND )
-	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) {
+	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
 		pm->ps->pm_flags |= PMF_NEARGROUND;
 		PM_ForceJumpAnim();
 		PM_TorsoStatusAnim( TORSO_STAND );
@@ -2219,7 +2201,7 @@ static void PM_TorsoAnimation( void ) {
 	// Handle the player movement animation when stopping to fly and falling near to the ground
 	// that happens when PMF_FALLING flag isn't handled correctly
 	if ( ( pml.groundTrace.contents & MASK_PLAYERSOLID )
-	&& pm->ps->powerups[PW_FLIGHT] <= 0
+	&& !( pm->ps->eFlags & EF_FLIGHT )
 	&& !( pm->ps->pm_flags & PMF_FALLING )
 	&& ( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
 		pm->ps->pm_flags |= PMF_FALLING;
@@ -2228,7 +2210,7 @@ static void PM_TorsoAnimation( void ) {
 
 	// BFP - That happens when the player is landing nearly
 	if ( !( pm->ps->pm_flags & PMF_NEARGROUND )
-	&& pm->ps->powerups[PW_FLIGHT] <= 0
+	&& !( pm->ps->eFlags & EF_FLIGHT )
 	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
 		PM_SlopesNeargroundAnim( 0 );
@@ -2271,7 +2253,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 	pml.groundTrace = trace;
 
 	// BFP - Avoid when the flight key is being pressed all time
-	if ( pm->ps->powerups[PW_FLIGHT] <= 0 
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) 
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID )
 	&& ( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE ) ) {
 		if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
@@ -2283,7 +2265,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 
 	// BFP - If the player is in the ground, then jump!
 	// And make sure to handle the PMF flag when the player isn't flying and falling
-	if ( ( pm->ps->powerups[PW_FLIGHT] > 0 || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
+	if ( ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
 	&& ( pm->ps->pm_flags & PMF_FALLING ) 
 	&& !( pm->ps->pm_flags & PMF_NEARGROUND )
 	&& !( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE ) ) {
@@ -2319,7 +2301,7 @@ PM_FlightAnimation
 */
 static void PM_FlightAnimation( void ) { // BFP - Flight
 
-	if ( pm->ps->powerups[PW_FLIGHT] > 0 && pm->ps->pm_time <= 0 ) {
+	if ( ( pm->ps->eFlags & EF_FLIGHT ) && pm->ps->pm_time <= 0 ) {
 
 		// make sure to handle the PMF flags
 		pm->ps->pm_flags &= ~PMF_FALLING;
@@ -2333,7 +2315,7 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
 	if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
 	&& !( pm->ps->pm_flags & PMF_FALLING )
-	&& pm->ps->powerups[PW_FLIGHT] <= 0 ) {
+	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
 
 		// stops entering again here and don't change the animation to backwards/forward
 		pm->ps->pm_flags |= PMF_FALLING;
@@ -2366,7 +2348,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->ps->pm_time = 0;
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
-			&& pm->ps->powerups[PW_FLIGHT] <= 0
+			&& !( pm->ps->eFlags & EF_FLIGHT )
 			&& ( pm->ps->pm_flags & PMF_FALLING )
 			&& pm->waterlevel <= 1 ) { // Don't force inside the water
 			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
@@ -2391,7 +2373,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	}
 
 	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
-		pm->ps->powerups[PW_HASTE] = 0;
+		pm->ps->eFlags &= ~EF_KI_BOOST;
 		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		pm->ps->pm_flags |= PMF_KI_CHARGE;
 		PM_ContinueTorsoAnim( TORSO_CHARGE );
@@ -2399,8 +2381,8 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	}
 
 	// handle the button to avoid toggling ki boost when already used "kiusetoggle" key bind
-	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->powerups[PW_HASTE] > 0 ) ) {
-		pm->ps->powerups[PW_HASTE] = 0;
+	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->eFlags & EF_KI_BOOST ) ) {
+		pm->ps->eFlags &= ~EF_KI_BOOST;
 	}
 }
 
@@ -2455,7 +2437,7 @@ static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 		pm->cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK );
 		pm->ps->pm_flags &= ~( PMF_KI_CHARGE | PMF_BLOCK );
-		pm->ps->powerups[PW_HASTE] = 0;
+		pm->ps->eFlags &= ~EF_KI_BOOST;
 		return;
 	}
 
@@ -2465,7 +2447,7 @@ static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_CHARGE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_MELEE );
 		pm->ps->pm_flags &= ~( PMF_KI_ATTACK | PMF_KI_CHARGE | PMF_BLOCK | PMF_MELEE );
-		pm->ps->powerups[PW_HASTE] = 0;
+		pm->ps->eFlags &= ~EF_KI_BOOST;
 		return;
 	}
 }
@@ -2704,7 +2686,7 @@ static void PM_Weapon( void ) {
 		}
 
 		// fall even whether the player is flying
-		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+		if ( pm->ps->eFlags & EF_FLIGHT ) {
 			pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
 		}
 		break;
@@ -2717,7 +2699,7 @@ static void PM_Weapon( void ) {
 		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 
 		// fall even whether the player is flying
-		if ( pm->ps->powerups[PW_FLIGHT] > 0 ) {
+		if ( pm->ps->eFlags & EF_FLIGHT ) {
 			pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
 		}
 	}
@@ -2796,7 +2778,7 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
 		temp = cmd->angles[i] + ps->delta_angles[i];
-		if ( i == PITCH && ps->powerups[PW_FLIGHT] <= 0 ) { // BFP - Avoid that when flying
+		if ( i == PITCH && !( ps->eFlags & EF_FLIGHT ) ) { // BFP - Avoid that when flying
 			// don't let the player look up or down more than 90 degrees
 			if ( temp > 16000 ) {
 				ps->delta_angles[i] = 16000 - cmd->angles[i];
@@ -2824,17 +2806,17 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		return qfalse;
 	}
 
-	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
 		return qfalse;
 	}
 
 	// Handle the PMF flag if it's already flying
-	if ( pm->ps->powerups[PW_FLIGHT] > 0 && !( pm->ps->pm_flags & PMF_FALLING ) ) {
+	if ( ( pm->ps->eFlags & EF_FLIGHT ) && !( pm->ps->pm_flags & PMF_FALLING ) ) {
 		return qtrue;
 	}
 
 	// do not proceed to the jump event while enables the flight in the charging status
-	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && pm->ps->powerups[PW_FLIGHT] > 0 ) {
+	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_FLIGHT ) ) {
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
 		return qfalse;
 	}
@@ -2868,7 +2850,7 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
-	if ( pm->ps->powerups[PW_FLIGHT] <= 0 ) {
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
 		// Don't move from the position when falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
 		&& pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
@@ -2892,8 +2874,8 @@ static void PM_HitStun( void ) { // BFP - Hit stun
 		pm->cmd.buttons &= ~( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
-	pm->ps->powerups[PW_FLIGHT] = 0;
-	pm->ps->powerups[PW_HASTE] = 0;
+	pm->ps->eFlags &= ~EF_FLIGHT;
+	pm->ps->eFlags &= ~EF_KI_BOOST;
 	pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 	// don't display shot effects on the stunned status
 	pm->ps->eFlags &= ~EF_FIRING;
@@ -2956,7 +2938,7 @@ void PmoveSingle (pmove_t *pmove) {
 		trap_Cvar_VariableStringBuffer( "g_noFlight", buf, sizeof( buf ) );
 		if ( atoi( buf ) ) {
 			pm->cmd.buttons &= ~BUTTON_ENABLEFLIGHT;
-			pm->ps->powerups[PW_FLIGHT] = 0;
+			pm->ps->eFlags &= ~EF_FLIGHT;
 		}
 
 		// BFP - Melee only
@@ -3037,8 +3019,8 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( pm->ps->pm_type >= PM_DEAD ) {
 
 		// BFP - If player is dead, disable the following statuses
-		pm->ps->powerups[PW_FLIGHT] = 0;
-		pm->ps->powerups[PW_HASTE] = 0;
+		pm->ps->eFlags &= ~EF_FLIGHT;
+		pm->ps->eFlags &= ~EF_KI_BOOST;
 		pm->ps->eFlags &= ~EF_AURA;
 
 // BFP - NOTE: disabled for notes, don't allow pressing these buttons

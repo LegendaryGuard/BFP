@@ -692,7 +692,9 @@ if desired.
 */
 void ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team, health;
+	int		teamTask, teamLeader, team;
+	// BFP - No handicap for health
+	// int		health;
 	char	*s;
 	char	model[MAX_QPATH];
 	char	headModel[MAX_QPATH];
@@ -1116,9 +1118,6 @@ void ClientSpawn(gentity_t *ent) {
 		} while ( 1 );
 	}
 	client->pers.teamState.state = TEAM_ACTIVE;
-
-	// always clear the kamikaze flag
-	// ent->s.eFlags &= ~EF_KAMIKAZE; // BFP - No EF_KAMIKAZE flag
 
 	// toggle the teleport bit so the client knows to not lerp
 	// and never clear the voted flag

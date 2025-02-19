@@ -406,7 +406,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	client->timeResidual += msec;
 
 	// BFP - Ki boost consumption
-	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || client->ps.powerups[PW_HASTE] > 0 )
+	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.eFlags & EF_KI_BOOST ) )
 	&& client->ps.ammo[WP_KI] > 0
 	&& !( client->ps.pm_flags & PMF_BLOCK ) ) {
 		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
@@ -438,6 +438,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	while ( client->timeResidual >= 1000 ) {
 		client->timeResidual -= 1000;
 
+		// BFP - No regen powerup
+#if 0
 		// regenerate
 		if ( client->ps.powerups[PW_REGEN] ) {
 			if ( ent->health < client->ps.stats[STAT_MAX_HEALTH] ) {
@@ -453,7 +455,9 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 				}
 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
 			}
-		} else {
+		} else 
+#endif
+		{
 			// count down health when over max
 			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
 				ent->health--;
@@ -461,7 +465,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// BFP - Decrease ki when flying
-		if ( client->ps.powerups[PW_FLIGHT] > 0 
+		if ( ( client->ps.eFlags & EF_FLIGHT ) 
 		&& client->ps.ammo[WP_KI] > 0
 		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) { // don't decrease when charging
 			if ( g_flightCostPct.value > 0 && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) { // reduce a bit if the percentage cost is more than 0 and has less powerlevel
@@ -471,7 +475,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// BFP - Regenerate ki
-		if ( !( client->pers.cmd.buttons & BUTTON_KI_USE ) && client->ps.powerups[PW_HASTE] <= 0
+		if ( !( client->pers.cmd.buttons & BUTTON_KI_USE ) && !( client->ps.eFlags & EF_KI_BOOST )
 		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) ) // don't increase when charging
 		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) // don't increase when trying to charge when stunned
 		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) ) { // don't increase when trying to attack when stunned
@@ -493,14 +497,14 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	// BFP - If ki drops to 0, disable flight
 	if ( client->ps.ammo[WP_KI] <= 0 ) {
 		client->ps.ammo[WP_KI] = 0;
-		client->ps.powerups[PW_FLIGHT] = 0;
+		client->ps.eFlags &= ~EF_FLIGHT;
 	}
 
 	// BFP - When the player doesn't have more ki, gets a hit stun
 	if ( ( client->ps.ammo[WP_KI] <= 0 )
-		|| ( client->ps.powerups[PW_FLIGHT] > 0 && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 )
+		|| ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 )
 		|| ( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) ) {
-		if ( client->ps.powerups[PW_FLIGHT] > 0 && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 ) {
+		if ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 ) {
 			client->ps.ammo[WP_KI] /= flightCostTotal;
 		}
 		if ( client->ps.ammo[WP_KI] <= 0 ) {
@@ -601,9 +605,6 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			} else if ( ent->client->ps.powerups[ PW_BLUEFLAG ] ) {
 				item = BG_FindItemForPowerup( PW_BLUEFLAG );
 				j = PW_BLUEFLAG;
-			} else if ( ent->client->ps.powerups[ PW_NEUTRALFLAG ] ) {
-				item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
-				j = PW_NEUTRALFLAG;
 			}
 
 			if ( item ) {
@@ -701,7 +702,7 @@ static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block
 	&& client->blockTime <= 0
 	&& client->blockDelayTime <= 0 ) {
 		client->ps.pm_flags |= PMF_BLOCK;
-		client->ps.powerups[PW_HASTE] = 0;
+		client->ps.eFlags &= ~EF_KI_BOOST;
 		client->ps.eFlags &= ~EF_AURA;
 		ucmd->buttons &= ~BUTTON_KI_USE;
 		client->blockTime = level.time + (g_blockLength.integer * 1000);
@@ -1288,15 +1289,15 @@ void ClientThink_real( gentity_t *ent ) {
 		if ( !( client->ps.pm_flags & PMF_HITSTUN )
 		&& !( client->ps.pm_flags & PMF_BLOCK )
 		&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
-			|| client->ps.powerups[PW_HASTE] > 0 ) // BFP - When "kiusetoggle" is binded, enables/disables
+			|| ( client->ps.eFlags & EF_KI_BOOST ) ) // BFP - When "kiusetoggle" is binded, enables/disables
 		&& ( client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
 			&& client->ps.weaponstate != WEAPON_STUN ) ) {
-			client->ps.powerups[PW_HASTE] = 1; // Handle ki boost status
+			client->ps.eFlags |= EF_KI_BOOST; // Handle ki boost status
 			client->ps.eFlags |= EF_AURA;
 		} else {
 			if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
 				client->ps.eFlags &= ~EF_AURA;
-				client->ps.powerups[PW_HASTE] = 0; // Handle ki boost status
+				client->ps.eFlags &= ~EF_KI_BOOST; // Handle ki boost status
 			}
 
 			// BFP - g_chargeDelay cvar for ki charge animation and appearing the aura after this time
@@ -1536,8 +1537,6 @@ void ClientEndFrame( gentity_t *ent ) {
 
 	// turn off any expired powerups
 	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		// BFP - Flight and haste are skipped, these are treated for player status
-		if ( i == PW_FLIGHT || i == PW_HASTE ) continue;
 		if ( ent->client->ps.powerups[ i ] < level.time ) {
 			ent->client->ps.powerups[ i ] = 0;
 		}

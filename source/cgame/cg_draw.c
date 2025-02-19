@@ -226,8 +226,6 @@ void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean fo
 			handle = cgs.media.redFlagModel;
 		} else if( team == TEAM_BLUE ) {
 			handle = cgs.media.blueFlagModel;
-		} else if( team == TEAM_FREE ) {
-			handle = cgs.media.neutralFlagModel;
 		} else {
 			return;
 		}
@@ -239,8 +237,6 @@ void CG_DrawFlagModel( float x, float y, float w, float h, int team, qboolean fo
 			item = BG_FindItemForPowerup( PW_REDFLAG );
 		} else if( team == TEAM_BLUE ) {
 			item = BG_FindItemForPowerup( PW_BLUEFLAG );
-		} else if( team == TEAM_FREE ) {
-			item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
 		} else {
 			return;
 		}
@@ -454,16 +450,17 @@ CG_DrawStatusBar
 ================
 */
 static void CG_DrawStatusBar( void ) {
-	int			color;
-	centity_t	*cent;
 	playerState_t	*ps;
 	int			value;
 	char *string;
-	int spacer =  CHAR_WIDTH*2;
 	vec4_t		hcolor;
 	vec3_t		angles;
-	// BFP - Unused variable
-	// vec3_t		origin;
+	// BFP - Unused variables
+#if 0
+	centity_t	*cent;
+	int spacer =  CHAR_WIDTH*2;
+	vec3_t		origin;
+	int			color;
 
 	static float colors[4][4] = { 
 //		{ 0.2, 1.0, 0.2, 1.0 } , { 1.0, 0.2, 0.2, 1.0 }, {0.5, 0.5, 0.5, 1} };
@@ -471,6 +468,7 @@ static void CG_DrawStatusBar( void ) {
 		{ 1.0f, 0.2f, 0.2f, 1.0f },     // low health
 		{ 0.5f, 0.5f, 0.5f, 1.0f },     // weapon firing
 		{ 1.0f, 1.0f, 1.0f, 1.0f } };   // health > 100
+#endif
 
 	// BFP - Gauge sizes
 	const float	GAUGE_WIDTH = 57.5;
@@ -483,7 +481,8 @@ static void CG_DrawStatusBar( void ) {
 	// draw the team background
 	CG_DrawTeamBackground( 0, 420, 640, 60, 0.33f, cg.snap->ps.persistant[PERS_TEAM] );
 
-	cent = &cg_entities[cg.snap->ps.clientNum];
+	// BFP - Unused cent variable
+	// cent = &cg_entities[cg.snap->ps.clientNum];
 	ps = &cg.snap->ps;
 
 	VectorClear( angles );
@@ -504,8 +503,6 @@ static void CG_DrawStatusBar( void ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_RED );
 	} else if( cg.predictedPlayerState.powerups[PW_BLUEFLAG] ) {
 		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_BLUE );
-	} else if( cg.predictedPlayerState.powerups[PW_NEUTRALFLAG] ) {
-		CG_DrawStatusBarFlag( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE + ICON_SIZE, TEAM_FREE );
 	}
 
 // BFP - hide armor and disable ammo text
@@ -1320,7 +1317,9 @@ CG_DrawKiAttackChargeUpPoints
 static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up points
 	short			x = 105, i = 1;
 
-	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0 ) {
+	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0
+	// don't draw unless the player is charging/exploding a ki wave
+	&& ( cg.predictedPlayerState.weaponstate == WEAPON_CHARGING || cg.predictedPlayerState.weaponstate == WEAPON_KIEXPLOSIONWAVE ) ) {
 		while ( i <= 6 ) {
 			if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] >= i ) {
 				CG_DrawPic( x, 412, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );
@@ -2342,7 +2341,8 @@ static void CG_DrawWarmup( void ) {
 	int			w;
 	int			sec;
 	int			i;
-	float scale;
+	// BFP - Unused variable, wth?
+	// float scale;
 	clientInfo_t	*ci1, *ci2;
 	int			cw;
 	const char	*s;
@@ -2427,23 +2427,25 @@ static void CG_DrawWarmup( void ) {
 			break;
 		}
 	}
-	scale = 0.45f;
+
+	// BFP - Unused scale variable on this logic, wth?
+	// scale = 0.45f;
 	switch ( cg.warmupCount ) {
 	case 0:
 		cw = 28;
-		scale = 0.54f;
+		// scale = 0.54f;
 		break;
 	case 1:
 		cw = 24;
-		scale = 0.51f;
+		// scale = 0.51f;
 		break;
 	case 2:
 		cw = 20;
-		scale = 0.48f;
+		// scale = 0.48f;
 		break;
 	default:
 		cw = 16;
-		scale = 0.45f;
+		// scale = 0.45f;
 		break;
 	}
 
@@ -2521,10 +2523,12 @@ static void CG_Draw2D( void ) {
 	}
 }
 
-
+// BFP - Unused function
+#if 0
 static void CG_DrawTourneyScoreboard( void ) {
 	CG_DrawOldTourneyScoreboard();
 }
+#endif
 
 /*
 =====================

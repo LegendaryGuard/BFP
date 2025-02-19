@@ -141,6 +141,7 @@ typedef struct {
 	int				painDirection;	// flip from 0 to 1
 	int				lightningFiring;
 	int				kiTrailTime;	// BFP - Ki trail time
+	int				chargeSmokeTime;	// BFP - Charge smoke time
 
 	// railgun trail spawning
 	vec3_t			railgunImpact;
@@ -170,7 +171,6 @@ typedef struct centity_s {
 
 	int				trailTime;		// so missile trails can handle dropped initial packets
 	int				dustTrailTime;
-	int				chargeSmokeTime;	// BFP - Charge smoke time
 	int				miscTime;
 
 	int				snapShotTime;	// last time this entity was found in a snapshot
@@ -653,13 +653,8 @@ typedef struct {
 	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
 
-	qhandle_t	redCubeModel;
-	qhandle_t	blueCubeModel;
-	qhandle_t	redCubeIcon;
-	qhandle_t	blueCubeIcon;
 	qhandle_t	redFlagModel;
 	qhandle_t	blueFlagModel;
-	qhandle_t	neutralFlagModel;
 	qhandle_t	redFlagShader[3];
 	qhandle_t	blueFlagShader[3];
 	qhandle_t	flagShader[4];
@@ -669,11 +664,9 @@ typedef struct {
 
 	qhandle_t	redFlagFlapSkin;
 	qhandle_t	blueFlagFlapSkin;
-	qhandle_t	neutralFlagFlapSkin;
 
 	qhandle_t	redFlagBaseModel;
 	qhandle_t	blueFlagBaseModel;
-	qhandle_t	neutralFlagBaseModel;
 
 	qhandle_t	armorModel;
 	qhandle_t	armorIcon;
@@ -787,7 +780,8 @@ typedef struct {
 	qhandle_t	teleportEffectModel;
 	qhandle_t	teleportEffectShader;
 
-	qhandle_t	invulnerabilityPowerupModel;
+	// BFP - No invulnerability powerup
+//	qhandle_t	invulnerabilityPowerupModel;
 
 	// BFP - Particle shaders
 	qhandle_t	pebbleShader1;
@@ -826,12 +820,15 @@ typedef struct {
 	qhandle_t	scoreboardTime;
 
 	// medals shown during gameplay
-	qhandle_t	medalImpressive;
 	qhandle_t	medalExcellent;
+	// BFP - No impressive, gauntlet, defend, assist and cap medals
+/*
+	qhandle_t	medalImpressive;
 	qhandle_t	medalGauntlet;
 	qhandle_t	medalDefend;
 	qhandle_t	medalAssist;
 	qhandle_t	medalCapture;
+*/
 
 	// sounds
 	sfxHandle_t	quadSound;
@@ -875,15 +872,19 @@ typedef struct {
 	sfxHandle_t hitSoundHighArmor;
 	sfxHandle_t hitSoundLowArmor;
 	sfxHandle_t hitTeamSound;
-	sfxHandle_t impressiveSound;
 	sfxHandle_t excellentSound;
+	sfxHandle_t firstExcellentSound;
+
+	// BFP - No impressive, gauntlet, defend and assist sounds
+/*
+	sfxHandle_t impressiveSound;
 	sfxHandle_t deniedSound;
 	sfxHandle_t humiliationSound;
 	sfxHandle_t assistSound;
 	sfxHandle_t defendSound;
 	sfxHandle_t firstImpressiveSound;
-	sfxHandle_t firstExcellentSound;
 	sfxHandle_t firstHumiliationSound;
+*/
 
 	sfxHandle_t takenLeadSound;
 	sfxHandle_t tiedLeadSound;
@@ -897,7 +898,8 @@ typedef struct {
 	sfxHandle_t watrOutSound;
 	sfxHandle_t watrUnSound;
 
-	sfxHandle_t flightSound;
+	// BFP - No flight powerup sound
+//	sfxHandle_t flightSound;
 	sfxHandle_t medkitSound;
 
 	sfxHandle_t weaponHoverSound;
@@ -919,13 +921,11 @@ typedef struct {
 
 	sfxHandle_t redFlagReturnedSound;
 	sfxHandle_t blueFlagReturnedSound;
-	sfxHandle_t neutralFlagReturnedSound;
 	sfxHandle_t	enemyTookYourFlagSound;
 	sfxHandle_t	enemyTookTheFlagSound;
 	sfxHandle_t yourTeamTookEnemyFlagSound;
 	sfxHandle_t yourTeamTookTheFlagSound;
 	sfxHandle_t	youHaveFlagSound;
-	sfxHandle_t yourBaseIsUnderAttackSound;
 	sfxHandle_t holyShitSound;
 
 	// tournament sounds
@@ -939,7 +939,8 @@ typedef struct {
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
 
-	sfxHandle_t	regenSound;
+	// BFP - No regen sound
+//	sfxHandle_t	regenSound;
 	sfxHandle_t	protectSound;
 	sfxHandle_t	n_healthSound;
 	sfxHandle_t	hgrenb1aSound;

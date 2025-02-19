@@ -743,9 +743,6 @@ static void CG_TeamBase( centity_t *cent ) {
 		else if ( cent->currentState.modelindex == TEAM_BLUE ) {
 			model.hModel = cgs.media.blueFlagBaseModel;
 		}
-		else {
-			model.hModel = cgs.media.neutralFlagBaseModel;
-		}
 		trap_R_AddRefEntityToScene( &model );
 	}
 }

@@ -79,10 +79,16 @@ void DeathmatchScoreboardMessage( gentity_t *ent ) {
 			cl->ps.persistant[PERS_CAPTURES]);
 #endif
 		Com_sprintf (entry, sizeof(entry),
-			" %i %i %i %i %i %i %i %i", level.sortedClients[i],
+			" %i %i %i %i %i %i %i %i %i %i %i %i %i %i", level.sortedClients[i],
 			cl->ps.persistant[PERS_SCORE], ping, (level.time - cl->pers.enterTime)/60000,
 			scoreFlags, g_entities[level.sortedClients[i]].s.powerups, accuracy, 
-			perfect);
+			0,
+			cl->ps.persistant[PERS_EXCELLENT_COUNT],
+			0, 
+			0, 
+			0, 
+			perfect,
+			0);
 		j = (int)strlen(entry);
 		if (stringlength + j > 1024)
 			break;
@@ -1632,10 +1638,10 @@ void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		// do not play the sound in the charging status
-		if ( ent->client->ps.powerups[PW_FLIGHT] <= 0 && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+		if ( !( ent->client->ps.eFlags & EF_FLIGHT ) && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
 			G_AddEvent( ent, EV_ENABLE_FLIGHT, 0 ); // play the sound
 		}
-		ent->client->ps.powerups[PW_FLIGHT] ^= 1;
+		ent->client->ps.eFlags ^= EF_FLIGHT;
 	}
 }
 
@@ -1668,7 +1674,7 @@ void Cmd_BFP_SetKiUse_f( gentity_t* ent ) { // BFP - Set Ki use
 	// BFP - NOTE: Originally, an unfinished command...
 #if 0
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		ent->client->ps.powerups[PW_HASTE] = 1;
+		ent->client->ps.eFlags |= EF_KI_BOOST;
 	}
 #endif
 }
@@ -1681,7 +1687,7 @@ Cmd_BFP_KiUseToggle_f
 void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) { // BFP - Ki use toggle
 
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		ent->client->ps.powerups[PW_HASTE] ^= 1;
+		ent->client->ps.eFlags ^= EF_KI_BOOST;
 	}
 }
 
@@ -1694,7 +1700,7 @@ void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) { // BFP - Set Ki idle
 
 	// BFP - NOTE: originally... Ki idling means disabling the ki? Sounds like it isn't operating...
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
-		ent->client->ps.powerups[PW_HASTE] = 0;
+		ent->client->ps.eFlags &= ~EF_KI_BOOST;
 	}
 }
 

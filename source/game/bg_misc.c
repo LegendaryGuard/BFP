@@ -111,6 +111,8 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+	// BFP - No health items
+#if 0
 	//
 	// health
 	//
@@ -181,6 +183,7 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ ""
 	},
+#endif
 
 
 	//
@@ -347,6 +350,8 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+	// BFP - No ammo items
+#if 0
 	//
 	// AMMO ITEMS
 	//
@@ -478,6 +483,7 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ ""
 	},
+#endif
 
 	//
 	// HOLDABLE ITEMS
@@ -552,6 +558,8 @@ gitem_t	bg_itemlist[] =
 /* sounds */ "sound/items/airout.wav sound/items/protect3.wav"
 	},
 
+	// BFP - No haste powerup
+#if 0
 /*QUAKED item_haste (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -568,6 +576,7 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ ""
 	},
+#endif
 
 /*QUAKED item_invis (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
@@ -586,6 +595,8 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+	// BFP - No regen powerup
+#if 0
 /*QUAKED item_regen (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -602,7 +613,10 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ "sound/items/regen.wav"
 	},
+#endif
 
+	// BFP - No flight powerup
+#if 0
 /*QUAKED item_flight (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -619,6 +633,7 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ "sound/items/flight.wav"
 	},
+#endif
 
 /*QUAKED team_CTF_redflag (1 0 0) (-16 -16 -16) (16 16 16)
 Only in CTF games
@@ -1027,7 +1042,8 @@ char *eventnames[] = {
 
 	"EV_POWERUP_QUAD",
 	"EV_POWERUP_BATTLESUIT",
-	"EV_POWERUP_REGEN",
+	// BFP - No regen powerup
+//	"EV_POWERUP_REGEN",
 
 	"EV_GIB_PLAYER",			// gib a previously living player
 	"EV_SCOREPLUM",			// score plum

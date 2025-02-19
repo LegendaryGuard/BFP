@@ -310,7 +310,7 @@ CG_FindClientModelFile
 ==========================
 */
 static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *modelName, const char *skinName, const char *base, const char *ext ) {
-	char *team, *charactersFolder;
+	char *team;
 	int i;
 
 	if ( cgs.gametype >= GT_TEAM ) {
@@ -328,16 +328,15 @@ static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t
 	else {
 		team = "default";
 	}
-	charactersFolder = "";
 	while(1) {
 		for ( i = 0; i < 2; i++ ) {
 			if ( i == 0 && teamName && *teamName ) {
-				//								"models/players/characters/james/stroggs/lower_lily_red.skin"
-				Com_sprintf( filename, length, "models/players/%s%s/%s%s_%s_%s.%s", charactersFolder, modelName, teamName, base, skinName, team, ext );
+				//								"models/players/james/stroggs/lower_lily_red.skin"
+				Com_sprintf( filename, length, "models/players/%s/%s%s_%s_%s.%s", modelName, teamName, base, skinName, team, ext );
 			}
 			else {
-				//								"models/players/characters/james/lower_lily_red.skin"
-				Com_sprintf( filename, length, "models/players/%s%s/%s_%s_%s.%s", charactersFolder, modelName, base, skinName, team, ext );
+				//								"models/players/james/lower_lily_red.skin"
+				Com_sprintf( filename, length, "models/players/%s/%s_%s_%s.%s", modelName, base, skinName, team, ext );
 			}
 			if ( CG_FileExists( filename ) ) {
 				return qtrue;
@@ -347,27 +346,27 @@ static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t
 #if 0
 			if ( cgs.gametype >= GT_TEAM ) {
 				if ( i == 0 && teamName && *teamName ) {
-					//								"models/players/characters/james/stroggs/lower_red.skin"
-					Com_sprintf( filename, length, "models/players/%s%s/%s%s_%s.%s", charactersFolder, modelName, teamName, base, team, ext );
+					//								"models/players/james/stroggs/lower_red.skin"
+					Com_sprintf( filename, length, "models/players/%s/%s%s_%s.%s", modelName, teamName, base, team, ext );
 				}
 				else {
-					//								"models/players/characters/james/lower_red.skin"
-					Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", charactersFolder, modelName, base, team, ext );
+					//								"models/players/james/lower_red.skin"
+					Com_sprintf( filename, length, "models/players/%s/%s_%s.%s", modelName, base, team, ext );
 				}
 			}
 			else {
 				if ( i == 0 && teamName && *teamName ) {
-					//								"models/players/characters/james/stroggs/lower_lily.skin"
-					Com_sprintf( filename, length, "models/players/%s%s/%s%s_%s.%s", charactersFolder, modelName, teamName, base, skinName, ext );
+					//								"models/players/james/stroggs/lower_lily.skin"
+					Com_sprintf( filename, length, "models/players/%s/%s%s_%s.%s", modelName, teamName, base, skinName, ext );
 				}
 				else {
-					//								"models/players/characters/james/lower_lily.skin"
-					Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", charactersFolder, modelName, base, skinName, ext );
+					//								"models/players/james/lower_lily.skin"
+					Com_sprintf( filename, length, "models/players/%s/%s_%s.%s", modelName, base, skinName, ext );
 				}
 			}
 #endif
 
-			Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", charactersFolder, modelName, base, skinName, ext );
+			Com_sprintf( filename, length, "models/players/%s/%s_%s.%s", modelName, base, skinName, ext );
 			if ( CG_FileExists( filename ) ) {
 				return qtrue;
 			}
@@ -375,11 +374,6 @@ static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t
 				break;
 			}
 		}
-		// if tried the heads folder first
-		if ( charactersFolder[0] ) {
-			break;
-		}
-		charactersFolder = "characters/";
 	}
 
 	return qfalse;
@@ -535,6 +529,9 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	const char		*headName;
 	char newTeamName[MAX_QPATH*2];
 
+	// BFP - Most stuff is modified here to reduce memory load, 
+	// anyone can modify and insert their own customized player folder/load error messages
+
 	if ( headModelName[0] == '\0' ) {
 		headName = modelName;
 	}
@@ -544,37 +541,39 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/lower.md3", modelName );
 	ci->legsModel = trap_R_RegisterModel( filename );
 	if ( !ci->legsModel ) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/lower.md3", modelName );
-		ci->legsModel = trap_R_RegisterModel( filename );
-		if ( !ci->legsModel ) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/lower.md3", modelName );
+		// ci->legsModel = trap_R_RegisterModel( filename );
+		// if ( !ci->legsModel ) {
 			Com_Printf( "Failed to load model file %s\n", filename );
 			return qfalse;
-		}
+		// }
 	}
 
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper.md3", modelName );
 	ci->torsoModel = trap_R_RegisterModel( filename );
 	if ( !ci->torsoModel ) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/upper.md3", modelName );
-		ci->torsoModel = trap_R_RegisterModel( filename );
-		if ( !ci->torsoModel ) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/upper.md3", modelName );
+		// ci->torsoModel = trap_R_RegisterModel( filename );
+		// if ( !ci->torsoModel ) {
 			Com_Printf( "Failed to load model file %s\n", filename );
 			return qfalse;
-		}
+		// }
 	}
 
-	if( headName[0] == '*' ) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/heads/%s/%s.md3", &headModelName[1], &headModelName[1] );
-	}
-	else {
+	// if( headName[0] == '*' ) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/heads/%s/%s.md3", &headModelName[1], &headModelName[1] );
+	// }
+	// else {
 		Com_sprintf( filename, sizeof( filename ), "models/players/%s/head.md3", headName );
-	}
+	// }
 	ci->headModel = trap_R_RegisterModel( filename );
+	/*
 	// if the head model could not be found and we didn't load from the heads folder try to load from there
 	if ( !ci->headModel && headName[0] != '*' ) {
 		Com_sprintf( filename, sizeof( filename ), "models/players/heads/%s/%s.md3", headModelName, headModelName );
 		ci->headModel = trap_R_RegisterModel( filename );
 	}
+	*/
 	if ( !ci->headModel ) {
 		Com_Printf( "Failed to load model file %s\n", filename );
 		return qfalse;
@@ -1452,7 +1451,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		dest = headAngles[PITCH] * 0.75f;
 	}
 	// BFP - When flying, set the legs in the first case
-	if ( cent->currentState.powerups & ( 1 << PW_FLIGHT ) ) {
+	if ( cent->currentState.eFlags & EF_FLIGHT ) {
 		CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.legs.pitchAngle, &cent->pe.legs.pitching );
 		legsAngles[PITCH] = cent->pe.legs.pitchAngle;
 	} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {}
@@ -1496,7 +1495,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		legsAngles[PITCH] += side;
 
 		// BFP - Make the torso move the pitch angle a bit in the flight
-		if ( cent->currentState.powerups & ( 1 << PW_FLIGHT ) ) {
+		if ( cent->currentState.eFlags & EF_FLIGHT ) {
 			AnglesToAxis( torsoAngles, axis );
 			side = speed * DotProduct( velocity, axis[0] );
 			torsoAngles[PITCH] += side;
@@ -1772,17 +1771,6 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 0.2f, 0.2f, 1.0 );
 	}
 
-	// neutralflag
-	if ( powerups & ( 1 << PW_NEUTRALFLAG ) ) {
-		if (ci->newAnims) {
-			CG_PlayerFlag( cent, cgs.media.neutralFlagFlapSkin, torso );
-		}
-		else {
-			CG_TrailItem( cent, cgs.media.neutralFlagModel );
-		}
-		trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&31), 1.0, 1.0, 1.0 );
-	}
-
 	// BFP - No haste powerup handling
 #if 0
 	// haste leaves smoke trails
@@ -1967,7 +1955,8 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 		}
 
 		waterContents = CG_PointContents( cent->lerpOrigin, -1 ); // BFP - Detect if the player is entirely under water
-		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // BFP - Antigrav rock particles on ki charging status
+		if ( !( cent->currentState.eFlags & EF_KI_BOOST )
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // BFP - Antigrav rock particles on ki charging status
 			if ( !( waterContents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
 #if 0 /* if the player isn't moving */
 			&& !cent->currentState.pos.trDelta[0] 
@@ -2248,9 +2237,10 @@ the other clients only show small lights.
 ===============
 */
 static void CG_DynamicAuraLight( centity_t *cent, int clientNum, float r, float g, float b ) { // BFP - Dynamic aura light
-	// BFP - NOTE: Originally, if cg_spriteAura is on, the lights aren't displayed. 
-	// But that should be removed in the future and just keep cg_lightAuras conditional
-	if ( cg_lightAuras.integer > 0 && cg_spriteAura.integer <= 0 && cg_particleAura.integer <= 0 ) {
+	// BFP - NOTE: Originally, if cg_spriteAura or cg_particleAura is on, the lights aren't displayed. 
+	// But in that case, that can displayed, so it makes no sense not being displayed and 
+	// maybe these things were broken on original BFP.
+	if ( cg_lightAuras.integer > 0 ) {
 		if ( clientNum == cg.snap->ps.clientNum && cg_smallOwnAura.integer > 0 ) {
 			trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b );
 			trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b );
@@ -2468,8 +2458,8 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		CG_AuraAnims( cent, &aura2, 1, auraInverseRotation );
 
 		// resize the aura
-		CG_ModelSize( &aura, 1.3f );
-		CG_ModelSize( &aura2, 1.49f );
+		CG_ModelSize( &aura, 1.1565f );
+		CG_ModelSize( &aura2, 1.252f );
 
 		// set aura position to the player
 		VectorCopy( legs.origin, aura.origin );

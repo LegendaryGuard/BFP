@@ -115,6 +115,8 @@ static int	shaderAnimCounts[MAX_SHADER_ANIMS] = {
 	23,
 	5,
 };
+// BFP - Unused static variable for CG_ParticleExplosion
+#if 0
 static float	shaderAnimSTRatio[MAX_SHADER_ANIMS] = {
 	1.405f,
 	1.0f,
@@ -123,6 +125,7 @@ static float	shaderAnimSTRatio[MAX_SHADER_ANIMS] = {
 	1.0f,
 	1.0f,
 };
+#endif
 static int	numShaderAnims;
 // done.
 
@@ -1187,15 +1190,17 @@ void CG_ParticleChargeSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, 
 	// if (!pshader) CG_Printf ("CG_ParticleChargeSmoke pshader == ZERO!\n");
 
 	// Too much smoke...
-	// That cent->chargeSmokeTime can be handled to avoid spawning too much and only spawn when the game isn't paused, hehehe :P
+	// That cent->pe.chargeSmokeTime can be handled to avoid spawning too much and only spawn when the game isn't paused, hehehe :P
 	// It isn't possible reusing cent->trailTime, it would have client visual issues
-	/*if ( cent->chargeSmokeTime > timenonscaled ) {
+#if 0
+	if ( cent->pe.chargeSmokeTime > timenonscaled ) {
 		return;
 	}
-	cent->chargeSmokeTime += 10;
-	if ( cent->chargeSmokeTime < timenonscaled ) {
-		cent->chargeSmokeTime = timenonscaled;
-	}*/
+	cent->pe.chargeSmokeTime += 10;
+	if ( cent->pe.chargeSmokeTime < timenonscaled ) {
+		cent->pe.chargeSmokeTime = timenonscaled;
+	}
+#endif
 
 	if (!free_particles)
 		return;

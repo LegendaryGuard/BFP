@@ -272,6 +272,8 @@ returning qfalse if not found
 qboolean G_CallSpawn( gentity_t *ent ) {
 	spawn_t	*s;
 	gitem_t	*item;
+	// BFP - To avoid showing these kind of spawn function warning messages
+	qboolean cannotSpawn = qfalse;
 
 	if ( !ent->classname ) {
 		G_Printf ("G_CallSpawn: NULL classname\n");
@@ -280,6 +282,11 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 
 	// check item spawn functions
 	for ( item=bg_itemlist+1 ; item->classname ; item++ ) {
+		// BFP - Don't spawn ammo, health and weapon items
+		if ( item->giType == IT_AMMO || item->giType == IT_HEALTH || item->giType == IT_WEAPON ) {
+			cannotSpawn = qtrue;
+			continue;
+		}
 		if ( !strcmp(item->classname, ent->classname) ) {
 			G_SpawnItem( ent, item );
 			return qtrue;
@@ -293,6 +300,10 @@ qboolean G_CallSpawn( gentity_t *ent ) {
 			s->spawn(ent);
 			return qtrue;
 		}
+	}
+	// BFP - To avoid showing these kind of spawn function warning messages
+	if ( cannotSpawn ) {
+		return qfalse;
 	}
 	G_Printf ("%s doesn't have a spawn function\n", ent->classname);
 	return qfalse;

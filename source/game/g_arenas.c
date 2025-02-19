@@ -84,8 +84,9 @@ void UpdateTournamentInfo( void ) {
 			player->client->ps.persistant[PERS_GAUNTLET_FRAG_COUNT], player->client->ps.persistant[PERS_SCORE],
 			perfect );
 #endif
-		Com_sprintf( msg, sizeof(msg), "postgame %i %i %i %i %i %i", level.numNonSpectatorClients, playerClientNum, accuracy,
-			player->client->ps.persistant[PERS_EXCELLENT_COUNT], player->client->ps.persistant[PERS_SCORE],
+		Com_sprintf( msg, sizeof(msg), "postgame %i %i %i %i %i %i %i %i", level.numNonSpectatorClients, playerClientNum, accuracy,
+			0, player->client->ps.persistant[PERS_EXCELLENT_COUNT],
+			0, player->client->ps.persistant[PERS_SCORE],
 			perfect );
 	}
 

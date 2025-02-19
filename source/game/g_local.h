@@ -307,7 +307,6 @@ struct gclient_s {
 	int			inactivityTime;		// kick players when time > this
 	qboolean	inactivityWarning;	// qtrue if the five seoond warning has been given
 	int			rewardTime;			// clear the EF_AWARD_IMPRESSIVE, etc when time > this
-	int			blockKnockbackTime;	// BFP - Knockback time check for block status
 
 	// BFP - No drowning
 	// int			airOutTime;
@@ -329,6 +328,7 @@ struct gclient_s {
 	// BFP - Block timers
 	int			blockTime;
 	int			blockDelayTime;
+	int			blockKnockbackTime;
 
 	// BFP - Zanzoken handlers
 	int			zanzokenPressTime;
@@ -525,7 +525,6 @@ qboolean G_RadiusDamage (vec3_t origin, gentity_t *attacker, float damage, float
 int G_InvulnerabilityEffect( gentity_t *targ, vec3_t dir, vec3_t point, vec3_t impactpoint, vec3_t bouncedir );
 void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath );
 void TossClientItems( gentity_t *self );
-void TossClientCubes( gentity_t *self );
 
 // damage flags
 #define DAMAGE_RADIUS				0x00000001	// damage was indirect
@@ -658,7 +657,6 @@ void Cmd_BFP_Fly_f( gentity_t *ent ); // BFP - Flight
 //
 qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
 void Team_CheckDroppedItem( gentity_t *dropped );
-qboolean CheckObeliskAttack( gentity_t *obelisk, gentity_t *attacker );
 
 //
 // g_mem.c

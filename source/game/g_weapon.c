@@ -279,7 +279,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 
 	// if the attacker is using ki boost, stun the target! (g_hitStun enabled only)
 	if ( g_hitStun.integer >= 1 
-	&& attacker->client->ps.powerups[PW_HASTE] > 0 
+	&& ( attacker->client->ps.eFlags & EF_KI_BOOST ) 
 	&& !( traceTarget->client->ps.pm_flags & PMF_HITSTUN )
 	&& !( traceTarget->client->ps.pm_flags & PMF_BLOCK ) 
 	&& attacker->client->hitStunMeleeDelayTime <= 0 ) {
@@ -581,7 +581,7 @@ void weapon_railgun_fire (gentity_t *ent) {
 	trap_Trace( &trace, muzzle, NULL, NULL, end, passent, MASK_SHOT );
 	if ( trace.entityNum < ENTITYNUM_MAX_NORMAL ) {
 		traceEnt = &g_entities[ trace.entityNum ];
-		if ( traceEnt->takedamage ) {
+		if ( traceEnt && traceEnt->takedamage ) {
 			// BFP - Railgun events are also treated as a missile
 			tent = G_TempEntity( trace.endpos, EV_MISSILE_HIT );
 		}
