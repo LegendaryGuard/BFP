@@ -202,6 +202,10 @@ PM_TorsoStatusAnim
 ==================
 */
 static void PM_TorsoStatusAnim( int anim ) { // BFP - Torso status handling
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
 	if ( pm->ps->pm_flags & PMF_BLOCK ) PM_ContinueTorsoAnim( TORSO_BLOCK );
 	else if ( ( pm->cmd.buttons & BUTTON_MELEE ) && !( pm->ps->pm_flags & PMF_MELEE ) ) PM_ContinueTorsoAnim( TORSO_MELEE_READY );
 	else if ( pm->ps->pm_flags & PMF_MELEE ) PM_ContinueTorsoAnim( TORSO_MELEE_STRIKE );
@@ -236,6 +240,10 @@ PM_ContinueMeleeStrikeLegsAnim
 ===========================
 */
 static void PM_ContinueMeleeStrikeLegsAnim( qboolean condition ) { // BFP - Melee strike legs anim handling
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
 	// keep moving the legs when the player is attacking to the target through melee 
 	// if the condition variable isn't used leave using this value: 1 or qtrue
 	if ( ( condition ) && ( pm->ps->pm_flags & PMF_MELEE )
@@ -248,6 +256,10 @@ PM_SlopesNeargroundAnim
 ==================
 */
 static void PM_SlopesNeargroundAnim( qboolean is_slope ) { // BFP - Animation handling on the slopes and when being near to the ground
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
 	if ( is_slope ) {
 		if ( pm->ps->pm_flags & PMF_DUCKED ) {
 			PM_ContinueLegsAnim( LEGS_IDLECR );
@@ -729,6 +741,11 @@ static void PM_WaterMove( void ) {
 		return;
 	}
 
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
+
 	if ( PM_CheckWaterJump() ) {
 		PM_WaterJumpMove();
 		return;
@@ -842,6 +859,11 @@ static void PM_FlyTiltView( void ) { // BFP - Fly tilt
 	short	targetRollAngle = 0;
 	float	rollStep = 0.2;
 
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
+
 	if ( ( pm->ps->eFlags & EF_FLIGHT )
 	&& !( pm->ps->pm_flags & PMF_BLOCK )
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
@@ -890,6 +912,11 @@ static void PM_FlyMove( void ) {
 
 	// normal slowdown
 	PM_Friction ();
+
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
 
 	scale = PM_CmdScale( &pm->cmd );
 	//
@@ -1085,6 +1112,11 @@ static void PM_WalkMove( void ) {
 	usercmd_t	cmd;
 	float		accelerate;
 	float		vel;
+
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
 
 	if ( pm->waterlevel > 2 && DotProduct( pml.forward, pml.groundTrace.plane.normal ) > 0 ) {
 		// begin swimming
@@ -1827,8 +1859,8 @@ static void PM_Footsteps( void ) {
 	int			old;
 	qboolean	footstep;
 
-	// BFP - Hit stun
-	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+	// BFP - Hit stun and ultimate tier
+	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
 		return;
 	}
 
@@ -2027,6 +2059,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 		&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_MELEE )
+		&& !( pm->ps->pm_flags & PMF_ULTIMATE_TIER )
 		&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
 			PM_ForceJumpAnim(); // BFP - Keep legs animation
 		}
@@ -2113,6 +2146,11 @@ static void PM_TorsoAnimation( void ) {
 	trace_t		trace;
 	vec3_t		point;
 	int			cont;
+
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
 
 	// BFP - Jumping off water surface
 	point[0] = pm->ps->origin[0];
@@ -2276,17 +2314,21 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 			&& pm->ps->weaponstate != WEAPON_STUN ) {
 				pm->ps->pm_time = 550;
 				pm->ps->velocity[2] = JUMP_VELOCITY - 200;
-				if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
-				&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
-					if ( pm->cmd.forwardmove > 0 ) {
-						PM_TorsoStatusAnim( TORSO_FLYA );
-					} else if ( pm->cmd.forwardmove < 0 ) {
-						PM_TorsoStatusAnim( TORSO_FLYB );
-					} else {
-						PM_TorsoStatusAnim( TORSO_STAND );
+
+				// don't play the animation when being transformed
+				if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
+					if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
+					&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
+						if ( pm->cmd.forwardmove > 0 ) {
+							PM_TorsoStatusAnim( TORSO_FLYA );
+						} else if ( pm->cmd.forwardmove < 0 ) {
+							PM_TorsoStatusAnim( TORSO_FLYB );
+						} else {
+							PM_TorsoStatusAnim( TORSO_STAND );
+						}
 					}
+					PM_ForceLegsAnim( LEGS_JUMP );
 				}
-				PM_ForceLegsAnim( LEGS_JUMP );
 			}
 		}
 		pm->ps->pm_flags &= ~PMF_FALLING;
@@ -2300,6 +2342,11 @@ PM_FlightAnimation
 ==============
 */
 static void PM_FlightAnimation( void ) { // BFP - Flight
+
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
 
 	if ( ( pm->ps->eFlags & EF_FLIGHT ) && pm->ps->pm_time <= 0 ) {
 
@@ -2336,6 +2383,12 @@ PM_KiChargeAnimation
 ==============
 */
 static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
+
+	// BFP - Ultimate tier
+	if ( ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ||
+	( ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) && ( pm->ps->pm_flags & EF_AURA_TIER_UP ) ) ) {
+		return;
+	}
 
 	// stop charging if it's using ki boost
 	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
@@ -2383,6 +2436,25 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	// handle the button to avoid toggling ki boost when already used "kiusetoggle" key bind
 	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->eFlags & EF_KI_BOOST ) ) {
 		pm->ps->eFlags &= ~EF_KI_BOOST;
+	}
+}
+
+/*
+==============
+PM_UltimateTierTransformAnimation
+==============
+*/
+static void PM_UltimateTierTransformAnimation( void ) { // BFP - Ultimate Tier transform animation
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		pm->ps->pm_flags &= ~( PMF_KI_ATTACK| PMF_BLOCK | PMF_MELEE );
+		pm->ps->eFlags &= ~EF_FIRING;
+		pm->ps->weaponstate = WEAPON_READY;
+		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_WALKING | BUTTON_GESTURE | BUTTON_USE_HOLDABLE | BUTTON_MELEE | BUTTON_BLOCK );
+		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
+		pm->ps->viewangles[PITCH] = 0;
+		pm->ps->viewangles[ROLL] = 0;
+		PM_ContinueTorsoAnim( TORSO_CHARGE );
+		PM_ContinueLegsAnim( LEGS_CHARGE );
 	}
 }
 
@@ -2508,8 +2580,8 @@ static void PM_Weapon( void ) {
 	int			addTime;
 	const int	ATTACK_CHARGE_LIMIT = 6; // BFP - Ki attack charge limit
 
-	// BFP - Hit stun, avoid shooting if the player is in this status
-	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
+	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
 		pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
 		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 		pm->ps->weaponTime = 0;
@@ -3271,6 +3343,9 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Ki Charge animation
 	PM_KiChargeAnimation();
+
+	// BFP - Ultimate Tier transform animation
+	PM_UltimateTierTransformAnimation();
 
 	// BFP - Hit stun animation
 	PM_HitStunAnimation();

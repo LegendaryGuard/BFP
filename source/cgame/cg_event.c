@@ -748,27 +748,34 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/srteleport.wav" ) );
 		break;
 
-	// BFP - TODO: Implement EV_TIER_0-4 (Tiers)
+	// BFP - Tier up events
 	case EV_TIER_0:
 		DEBUGNAME("EV_TIER_0");
+		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
 		break;
 
 	case EV_TIER_1:
 		DEBUGNAME("EV_TIER_1");
+		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
 		break;
 
 	case EV_TIER_2:
 		DEBUGNAME("EV_TIER_2");
+		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
 		break;
 
 	case EV_TIER_3:
 		DEBUGNAME("EV_TIER_3");
+		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
 		break;
 
 	case EV_TIER_4:
 		DEBUGNAME("EV_TIER_4");
+		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
+		if ( es->number == cg.snap->ps.clientNum ) {
+			trap_SendConsoleCommand( "transformorbit\n" );
+		}
 		break;
-	// BFP - TODO: Implement EV_TIER_0-4 (Tiers) ^
 
 	// BFP - A normal jump sound is played when enables the flight
 	case EV_ENABLE_FLIGHT:

@@ -330,6 +330,9 @@ struct gclient_s {
 	int			blockDelayTime;
 	int			blockKnockbackTime;
 
+	// BFP - Tier unlocked effect timer
+	int			tierUnlockedTime;
+
 	// BFP - Zanzoken handlers
 	int			zanzokenPressTime;
 	qboolean	zanzokenNow;

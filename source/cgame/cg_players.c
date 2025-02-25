@@ -469,28 +469,77 @@ CG_RegisterClientSkin
 static qboolean	CG_RegisterClientSkin( clientInfo_t *ci, const char *teamName, const char *modelName, const char *skinName, const char *headModelName, const char *headSkinName ) {
 	char filename[MAX_QPATH];
 
-	/*
-	Com_sprintf( filename, sizeof( filename ), "models/players/%s/%slower_%s.skin", modelName, teamName, skinName );
+	// BFP - That was a way to load the skins, so CG_FindClientModelFile function does the job, 
+	// but it tends to have more memory load. Also the characters folder check is disabled, BFP doesn't have any check of this
+
+	// BFP - Legs skin
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/lower_%s.skin", modelName, skinName );
 	ci->legsSkin = trap_R_RegisterSkin( filename );
 	if (!ci->legsSkin) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/%slower_%s.skin", modelName, teamName, skinName );
-		ci->legsSkin = trap_R_RegisterSkin( filename );
-		if (!ci->legsSkin) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/lower_%s.skin", modelName, skinName );
+		// ci->legsSkin = trap_R_RegisterSkin( filename );
+		// if (!ci->legsSkin) {
 			Com_Printf( "Leg skin load failure: %s\n", filename );
-		}
+		// }
 	}
 
+	// BFP - Ultimate tier legs skin
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjlower.skin", modelName, skinName );
+	ci->ultTierLegsSkin = trap_R_RegisterSkin( filename );
+	// if (!ci->ultTierLegsSkin) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjlower.skin", modelName, skinName );
+		// ci->ultTierLegsSkin = trap_R_RegisterSkin( filename );
+		// if (!ci->ultTierLegsSkin) {
+		//	Com_Printf( "Ultimate tier leg skin load failure: %s\n", filename );
+		// }
+	// }
 
-	Com_sprintf( filename, sizeof( filename ), "models/players/%s/%supper_%s.skin", modelName, teamName, skinName );
+	// BFP - Torso skin
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper_%s.skin", modelName, skinName );
 	ci->torsoSkin = trap_R_RegisterSkin( filename );
 	if (!ci->torsoSkin) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/%supper_%s.skin", modelName, teamName, skinName );
-		ci->torsoSkin = trap_R_RegisterSkin( filename );
-		if (!ci->torsoSkin) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/upper_%s.skin", modelName, skinName );
+		// ci->torsoSkin = trap_R_RegisterSkin( filename );
+		// if (!ci->torsoSkin) {
 			Com_Printf( "Torso skin load failure: %s\n", filename );
-		}
+		// }
 	}
-	*/
+
+	// BFP - Ultimate tier torso skin
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjtorso.skin", modelName, skinName );
+	ci->ultTierTorsoSkin = trap_R_RegisterSkin( filename );
+	// if (!ci->ultTierTorsoSkin) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjtorso.skin", modelName, skinName );
+		// ci->ultTierTorsoSkin = trap_R_RegisterSkin( filename );
+		// if (!ci->ultTierTorsoSkin) {
+		//	Com_Printf( "Ultimate tier torso skin load failure: %s\n", filename );
+		// }
+	// }
+
+	// BFP - Head skin
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/head_%s.skin", modelName, skinName );
+	ci->headSkin = trap_R_RegisterSkin( filename );
+	if (!ci->headSkin) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/head_%s.skin", modelName, skinName );
+		// ci->headSkin = trap_R_RegisterSkin( filename );
+		// if (!ci->headSkin) {
+			Com_Printf( "Head skin load failure: %s\n", filename );
+		// }
+	}
+
+	// BFP - Ultimate tier head skin
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjhead.skin", modelName, skinName );
+	ci->ultTierHeadSkin = trap_R_RegisterSkin( filename );
+	// if (!ci->ultTierHeadSkin) {
+		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjhead.skin", modelName, skinName );
+		// ci->ultTierHeadSkin = trap_R_RegisterSkin( filename );
+		// if (!ci->ultTierHeadSkin) {
+		//	Com_Printf( "Ultimate tier head skin load failure: %s\n", filename );
+		// }
+	// }
+
+	// BFP - Uses more memory load, not recommended, remove in the future?
+#if 0
 	if ( CG_FindClientModelFile( filename, sizeof(filename), ci, teamName, modelName, skinName, "lower", "skin" ) ) {
 		ci->legsSkin = trap_R_RegisterSkin( filename );
 	}
@@ -511,6 +560,7 @@ static qboolean	CG_RegisterClientSkin( clientInfo_t *ci, const char *teamName, c
 	if (!ci->headSkin) {
 		Com_Printf( "Head skin load failure: %s\n", filename );
 	}
+#endif
 
 	// if any skins failed to load
 	if ( !ci->legsSkin || !ci->torsoSkin || !ci->headSkin ) {
@@ -549,6 +599,18 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 		// }
 	}
 
+	// BFP - Ultimate tier legs model
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjlegs.md3", modelName );
+	ci->ultTierLegsModel = trap_R_RegisterModel( filename );
+	/*if ( !ci->ultTierLegsModel ) {
+		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjlegs.md3", modelName );
+		ci->ultTierLegsModel = trap_R_RegisterModel( filename );
+		if ( !ci->ultTierLegsModel ) {
+			Com_Printf( "Failed to load ultimate tier legs model file %s\n", filename );
+			return qfalse;
+		}
+	}*/
+
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper.md3", modelName );
 	ci->torsoModel = trap_R_RegisterModel( filename );
 	if ( !ci->torsoModel ) {
@@ -559,6 +621,18 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 			return qfalse;
 		// }
 	}
+
+	// BFP - Ultimate tier torso model
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjtorso.md3", modelName );
+	ci->ultTierTorsoModel = trap_R_RegisterModel( filename );
+	/*if ( !ci->ultTierTorsoModel ) {
+		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjtorso.md3", modelName );
+		ci->ultTierTorsoModel = trap_R_RegisterModel( filename );
+		if ( !ci->ultTierTorsoModel ) {
+			Com_Printf( "Failed to load ultimate tier torso model file %s\n", filename );
+			return qfalse;
+		}
+	}*/
 
 	// if( headName[0] == '*' ) {
 		// Com_sprintf( filename, sizeof( filename ), "models/players/heads/%s/%s.md3", &headModelName[1], &headModelName[1] );
@@ -578,6 +652,18 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 		Com_Printf( "Failed to load model file %s\n", filename );
 		return qfalse;
 	}
+
+	// BFP - Ultimate tier head model
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjhead.md3", modelName );
+	ci->ultTierHeadModel = trap_R_RegisterModel( filename );
+	/*if ( !ci->ultTierHeadModel ) {
+		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjhead.md3", modelName );
+		ci->ultTierHeadModel = trap_R_RegisterModel( filename );
+		if ( !ci->ultTierHeadModel ) {
+			Com_Printf( "Failed to load ultimate tier head model file %s\n", filename );
+			return qfalse;
+		}
+	}*/
 
 	// if any skins failed to load, return failure
 	if ( !CG_RegisterClientSkin( ci, teamName, modelName, skinName, headName, headSkinName ) ) {
@@ -1922,7 +2008,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 
 	// BFP - Dash smoke and bubble particles when using ki boost on the ground or above the water
 	contents = CG_PointContents( trace.endpos, -1 );
-	if ( cent->currentState.eFlags & EF_AURA ) {
+	if ( ( cent->currentState.eFlags & EF_AURA ) || ( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
 		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
@@ -2161,7 +2247,8 @@ static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 	&& cg_spriteAura.integer <= 0
 	&& cg_particleAura.integer <= 0 ) {
 		auraShader = cgs.media.auraRedChargeShader;
-		if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
+		if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+		&& !( state->eFlags & EF_AURA_TIER_UP ) ) {
 			auraShader = cgs.media.auraRedUseShader;
 		}
 	}
@@ -2175,7 +2262,8 @@ static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 		&& cg_spriteAura.integer <= 0
 		&& cg_particleAura.integer <= 0 ) {
 			auraShader = cgs.media.auraBlueChargeShader;
-			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
+			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+			&& !( state->eFlags & EF_AURA_TIER_UP ) ) {
 				auraShader = cgs.media.auraBlueUseShader;
 			}
 		}
@@ -2190,7 +2278,8 @@ static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 		&& cg_spriteAura.integer <= 0
 		&& cg_particleAura.integer <= 0 ) {
 			auraShader = cgs.media.auraYellowChargeShader;
-			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE ) {
+			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
+			&& !( state->eFlags & EF_AURA_TIER_UP ) ) {
 				auraShader = cgs.media.auraYellowUseShader;
 			}
 		}
@@ -2316,7 +2405,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 	}
 	ent.customShader = CG_AuraPowerlevelSetShaderColor( state );
 
-	if ( state->eFlags & EF_AURA ) {
+	if ( ( state->eFlags & EF_AURA ) || ( state->eFlags & EF_AURA_TIER_UP ) ) {
 		// BFP - If the player is using lightweight auras or their own small aura
 		if ( ( cg_lightweightAuras.integer > 0
 		|| ( state->clientNum == cg.snap->ps.clientNum 
@@ -2324,6 +2413,11 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 		&& cg_spriteAura.integer <= 0
 		&& cg_particleAura.integer <= 0 ) {
 			trap_R_AddRefEntityToScene( &ent );
+		}
+
+		// BFP - Resize shader aura when tier is up
+		if ( state->eFlags & EF_AURA_TIER_UP ) {
+			CG_ModelSize( &ent, 1.4f );
 		}
 
 		// BFP - Shader aura
@@ -2403,7 +2497,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 	VectorCopy( cent->lerpOrigin, kiTrailOrigin );
 	kiTrailOrigin[2] += KI_TRAIL_ZPOS;
 
-	if ( cent->currentState.eFlags & EF_AURA ) {
+	if ( ( cent->currentState.eFlags & EF_AURA ) || ( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
 		// trace for bubble particles only when moving in the water and charging
 		int destContentType = CG_PointContents( legs.origin, -1 );
 
@@ -2490,12 +2584,22 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		VectorCopy( aura2.origin, aura2.oldorigin );	// don't positionally lerp at all
 
 		// ki boost and ki charge sounds
-		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
-			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-				vec3_origin, cgs.media.kiChargeSound );
-		} else {
-			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-				vec3_origin, cgs.media.kiUseSound );
+		if ( !( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
+			if ( !( cent->currentState.eFlags & EF_KI_BOOST )
+			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
+				trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
+					vec3_origin, cgs.media.kiChargeSound );
+			} else {
+				trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
+					vec3_origin, cgs.media.kiUseSound );
+			}
+		}
+
+		// aura tier
+		if ( cent->currentState.eFlags & EF_AURA_TIER_UP ) {
+			// resize the aura
+			CG_ModelSize( &aura, 1.1565f );
+			CG_ModelSize( &aura2, 1.252f );
 		}
 
 		// keep the aura pivot tagged in tag_torso
@@ -2694,6 +2798,16 @@ void CG_Player( centity_t *cent ) {
 	legs.hModel = ci->legsModel;
 	legs.customSkin = ci->legsSkin;
 
+	// BFP - Ultimate tier legs model and skin
+	if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+		if ( ci->ultTierLegsModel ) {
+			legs.hModel = ci->ultTierLegsModel;
+		}
+		if ( ci->ultTierLegsSkin ) {
+			legs.customSkin = ci->ultTierLegsSkin;
+		}
+	}
+
 	// BFP - Super Deformed (Chibi style) easter egg for the base model (the legs apply all parts of the body)
 	if ( cg_superdeformed.integer > 0 ) {
 		CG_ModelSize( &legs, 0.8f );
@@ -2724,6 +2838,16 @@ void CG_Player( centity_t *cent ) {
 
 	torso.customSkin = ci->torsoSkin;
 
+	// BFP - Ultimate tier torso model and skin
+	if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+		if ( ci->ultTierTorsoModel ) {
+			torso.hModel = ci->ultTierTorsoModel;
+		}
+		if ( ci->ultTierTorsoSkin ) {
+			torso.customSkin = ci->ultTierTorsoSkin;
+		}
+	}
+
 	VectorCopy( cent->lerpOrigin, torso.lightingOrigin );
 
 	CG_PositionRotatedEntityOnTag( &torso, &legs, ci->legsModel, "tag_torso");
@@ -2740,11 +2864,31 @@ void CG_Player( centity_t *cent ) {
 	if ( !head.hModel ) {
 		return;
 	}
+
+	head.customSkin = ci->headSkin;
+
+	// BFP - Ultimate tier head model and skin
+	if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+		if ( ci->ultTierHeadModel ) {
+			head.hModel = ci->ultTierHeadModel;
+		}
+		if ( ci->ultTierHeadSkin ) {
+			head.customSkin = ci->ultTierHeadSkin;
+		}
+	}
+
+	// BFP - Make a model changing effect when aura tier is up
+	if ( ( cent->currentState.eFlags & EF_AURA_TIER_UP )
+	&& cg.time > cent->pe.ultTierTransformTime ) {
+		cent->pe.ultTierTransformTime = cg.time + 1100;
+	}
+	if ( !( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
+		cent->pe.ultTierTransformTime = 0;
+	}
+	
 	if ( cg_yrgolroxor.integer > 0 ) { // BFP - Yrgol Roxor easter egg
 		head.hModel = 0; // 0: no head model display, display pivot only
 	}
-
-	head.customSkin = ci->headSkin;
 
 	// BFP - Super Deformed (Chibi style) easter egg for the head model
 	if ( cg_superdeformed.integer > 0 ) {

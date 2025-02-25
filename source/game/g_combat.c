@@ -297,10 +297,32 @@ GainPowerlevelKiHealth
 */
 static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // BFP - Gain powerlevel, ki and health
 	float currentKiPercentage;
+	qboolean alreadyTransformed = qfalse;
 
+	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] >= 1000 ) {
+		alreadyTransformed = qtrue;
+	}
 	// BFP - Attacker gains powerlevel from the opponent
 	// Formula: attackerPowerlevel += 1 + ( opponentPowerlevel * g_plKillBonusPct.value )
 	attacker->client->ps.persistant[PERS_POWERLEVEL] += 1 + ( self->client->ps.persistant[PERS_POWERLEVEL] * g_plKillBonusPct.value );
+	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
+		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
+		attacker->client->tierUnlockedTime = level.time + 2000;
+		G_AddEvent( attacker, EV_TIER_1, 0 );
+	} else if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
+		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
+		attacker->client->tierUnlockedTime = level.time + 2000;
+		G_AddEvent( attacker, EV_TIER_2, 0 );
+	} else if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
+		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
+		attacker->client->tierUnlockedTime = level.time + 2000;
+		G_AddEvent( attacker, EV_TIER_3, 0 );
+	} else if ( !alreadyTransformed && attacker->client->ps.persistant[PERS_POWERLEVEL] > 999 ) {
+		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
+		attacker->client->ps.pm_flags |= PMF_ULTIMATE_TIER;
+		attacker->client->tierUnlockedTime = level.time + 5000;
+		G_AddEvent( attacker, EV_TIER_4, 0 );
+	}
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000
 		attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
 	}
@@ -353,6 +375,12 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	}
 
 	if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
+		attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+	}
+
+	// BFP - When unlocking a tier, give the player maximum health and ki
+	if ( attacker->client->ps.eFlags & EF_AURA_TIER_UP ) {
+		attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_MAX_HEALTH];
 		attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
 	}
 }
@@ -708,6 +736,12 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	int			asave;
 	int			knockback;
 	int			max;
+
+	// BFP - Ultimate tier status is invulnerable!
+	if ( targ 
+	&& ( targ->client->ps.pm_flags & PMF_ULTIMATE_TIER ) ) {
+		return;
+	}
 
 	if (!targ->takedamage) {
 		return;

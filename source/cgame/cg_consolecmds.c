@@ -194,6 +194,23 @@ static void CG_StartOrbit_f( void ) {
 	}
 }
 
+
+/*
+==================
+CG_TransformOrbit_f
+==================
+*/
+static void CG_TransformOrbit_f( void ) { // BFP - Transformation orbit
+	// just force enabling camera orbit with these values
+	if ( cg_cameraOrbit.integer != 5 ) { // c'mon, force it! (>_<)
+		trap_Cvar_Set("cg_cameraOrbit", "5");
+		cg_cameraOrbit.integer = 5;
+	}
+	trap_Cvar_Set("cg_cameraOrbitDelay", "50");
+	trap_Cvar_Set("cg_thirdPerson", "1");
+	trap_Cvar_Set("cg_thirdPersonAngle", "0");
+}
+
 /*
 static void CG_Camera_f( void ) {
 	char name[1024];
@@ -236,6 +253,7 @@ static consoleCommand_t	commands[] = {
 	{ "vtell_attacker", CG_VoiceTellAttacker_f },
 	{ "tcmd", CG_TargetCommand_f },
 	{ "startOrbit", CG_StartOrbit_f },
+	{ "transformorbit", CG_TransformOrbit_f }, // BFP - Transformation orbit
 	//{ "camera", CG_Camera_f },
 	{ "loaddeferred", CG_LoadDeferredPlayers }	
 };

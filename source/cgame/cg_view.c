@@ -717,6 +717,13 @@ static int CG_CalcViewValues( void ) {
 		if (cg.time > cg.nextOrbitTime) {
 			cg.nextOrbitTime = cg.time + cg_cameraOrbitDelay.integer;
 			cg_thirdPersonAngle.value += cg_cameraOrbit.value;
+			// BFP - If third person angle cvar surpasses 360º degrees, disable forcely camera orbit and set cg_thirdPersonAngle to 0
+			if ( cg_thirdPersonAngle.value >= 360.0f ) {
+				trap_Cvar_Set( "cg_cameraOrbit", "0" );
+				trap_Cvar_Set( "cg_thirdPersonAngle", "0" );
+				cg_cameraOrbit.value = 0.0f;
+				cg_thirdPersonAngle.value = 0.0f;
+			}
 		}
 	}
 	// add error decay

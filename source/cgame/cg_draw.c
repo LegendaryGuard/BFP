@@ -155,11 +155,31 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	float			len;
 	vec3_t			origin;
 	vec3_t			mins, maxs;
+	// BFP - Powerlevel
+	int				powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + clientNum ) );
+	// BFP - Ultimate tier head model and skin
+	qhandle_t		tierHeadModel, tierHeadSkin;
 
 	ci = &cgs.clientinfo[ clientNum ];
 
+	// BFP - Ultimate tier head model and skin
+	tierHeadModel = ci->headModel;
+	tierHeadSkin = ci->headSkin;
+	if ( powerlevel >= 1000 ) {
+		if ( ci->ultTierHeadModel ) {
+			tierHeadModel = ci->ultTierHeadModel;
+		}
+		if ( ci->ultTierHeadSkin ) {
+			tierHeadSkin = ci->ultTierHeadSkin;
+		}
+	}
+
 	if ( cg_draw3dIcons.integer ) {
 		cm = ci->headModel;
+		// BFP - Ultimate tier head model
+		if ( powerlevel >= 1000 && ci->ultTierHeadModel ) {
+			cm = ci->ultTierHeadModel;
+		}
 		if ( !cm ) {
 			return;
 		}
@@ -178,7 +198,8 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 		// allow per-model tweaking
 		VectorAdd( origin, ci->headOffset, origin );
 
-		CG_Draw3DModel( x, y, w, h, ci->headModel, ci->headSkin, origin, headAngles );
+		// BFP - Ultimate tier head model and skin draw
+		CG_Draw3DModel( x, y, w, h, tierHeadModel, tierHeadSkin, origin, headAngles );
 	} else if ( cg_drawIcons.integer ) {
 		CG_DrawPic( x, y, w, h, ci->modelIcon );
 	}

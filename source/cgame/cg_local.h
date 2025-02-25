@@ -142,6 +142,7 @@ typedef struct {
 	int				lightningFiring;
 	int				kiTrailTime;	// BFP - Ki trail time
 	int				chargeSmokeTime;	// BFP - Charge smoke time
+	int				ultTierTransformTime;	// BFP - Ultimate tier transformation time
 
 	// railgun trail spawning
 	vec3_t			railgunImpact;
@@ -359,6 +360,14 @@ typedef struct {
 
 	qhandle_t		headModel;
 	qhandle_t		headSkin;
+
+	// BFP - Ultimate tier models and skins
+	qhandle_t		ultTierLegsModel;
+	qhandle_t		ultTierLegsSkin;
+	qhandle_t		ultTierTorsoModel;
+	qhandle_t		ultTierTorsoSkin;
+	qhandle_t		ultTierHeadModel;
+	qhandle_t		ultTierHeadSkin;
 
 	qhandle_t		modelIcon;
 
@@ -949,6 +958,9 @@ typedef struct {
 	sfxHandle_t	wstbimpmSound;
 	sfxHandle_t	wstbimpdSound;
 	sfxHandle_t	wstbactvSound;
+
+	// BFP - Tier up sound
+	sfxHandle_t tierUpSound;
 
 	// BFP - Explosion sounds
 	sfxHandle_t	explosion1Sound;

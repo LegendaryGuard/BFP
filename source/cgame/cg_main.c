@@ -487,6 +487,7 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.kiChargeSound = trap_S_RegisterSound("sound/bfp/kicharge1.wav", qfalse); // BFP - Ki charge sound
 	cgs.media.kiUseSound = trap_S_RegisterSound("sound/bfp/kiuse1.wav", qfalse); // BFP - Ki use sound
 	cgs.media.defaultKiChargingSound = trap_S_RegisterSound("sound/bfp/attackcharge1.wav", qfalse); // BFP - Default ki charging attack sound
+	cgs.media.tierUpSound = trap_S_RegisterSound("sound/bfp/tierup.wav", qfalse); // BFP - Tier up sound
 
 	// BFP - NOTE: Sounds like that are reusing Q3 ones
 	cgs.media.defaultKiBeamExplosionWaveSound = trap_S_RegisterSound("sound/weapons/rocket/rockfly.wav", qfalse); // BFP - Default ki beam and ki explosion wave sound

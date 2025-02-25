@@ -173,8 +173,8 @@ typedef enum {
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
 #define PMF_FLIGHT_ACTIVE	8192	// BFP - Flight active status
+#define PMF_ULTIMATE_TIER	16384	// BFP - Ultimate tier status
 // BFP - You can reuse the following flags, so change the macro name if going to be used
-// #define PMF_SOMEFLAG		16384	// some pm_flag
 // #define PMF_SOMEFLAG		32768	// some pm_flag
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
@@ -286,6 +286,7 @@ typedef enum {
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
 // BFP - No EF_AWARD_CAP flag
 // #define EF_AWARD_CAP		0x00000800		// draw the capture sprite
+#define EF_AURA_TIER_UP		0x00000800		// BFP - Aura tier up effect when transforms or passes to the next tier
 #define	EF_TALK				0x00001000		// draw a talk balloon
 #define	EF_CONNECTION		0x00002000		// draw a connection trouble sprite
 #define	EF_VOTED			0x00004000		// already cast a vote

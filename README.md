@@ -23,9 +23,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [ ] Gametype: Monster (`g_gametype 4`)
 - [ ] Gametype: Last Man Standing (`g_gametype 6`)
 - [ ] Power Struggles (when two beam attacks collide)
-- [ ] Remove some items like powerups and health pickups
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
-- [ ] Transformations (related to Power Tiers)
 - [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
 - [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
 
@@ -42,6 +40,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Instant character model changing~~
 - [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
 - [x] ~~Melee feature~~
+- [x] ~~Remove some items like powerups and health pickups~~
 - [x] ~~Powerlevel and Power Tiers indicated on old docs~~
 - [x] ~~Playable third person mode and first person vis mode~~
 - [x] ~~Remove weapon visuals (models and stuff)~~
@@ -49,6 +48,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Short-Range Teleport - Zanzoken (when pressing 2 times left or right)~~
 - [x] ~~Third person traceable crosshair~~
 - [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
+- [x] ~~Transformations (related to Power Tiers)~~
 
 
 ## Table of contents
