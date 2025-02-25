@@ -2452,6 +2452,38 @@ static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 	}
 }
 
+
+/*
+===========
+PM_KiConsumption
+===========
+*/
+static void PM_KiConsumption( int addTime, int kiConsume ) { // BFP - Ki consumption when using ki attacks
+	if ( pm->ps->ammo[WP_KI] >= kiConsume ) { // avoid consuming more ki than available
+		pm->ps->ammo[WP_KI] -= kiConsume;
+		pm->ps->weaponTime += addTime;
+	} else { // not enough ki
+		pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
+	}
+}
+
+
+/*
+============
+PM_ChargeKiAttackState
+============
+*/
+static void PM_ChargeKiAttackState( int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
+	if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] < maxCharge ) {
+		++pm->ps->stats[STAT_KI_ATTACK_CHARGE];
+	}
+	if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= minCharge ) {
+		pm->ps->stats[STAT_READY_KI_ATTACK] = qtrue;
+	}
+	PM_KiConsumption( addTime, kiConsume );
+}
+
+
 /*
 ===============
 PM_FireChargedState
@@ -2473,8 +2505,8 @@ Generates weapon events and modifes the weapon counter
 ==============
 */
 static void PM_Weapon( void ) {
-	// BFP - TODO: Unused variable, remove for the future?
-	// int		addTime;
+	int			addTime;
+	const int	ATTACK_CHARGE_LIMIT = 6; // BFP - Ki attack charge limit
 
 	// BFP - Hit stun, avoid shooting if the player is in this status
 	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
@@ -2560,6 +2592,7 @@ static void PM_Weapon( void ) {
 	// BFP - Weapon states, Q3 doesn't have this way
 	switch( pm->ps->weaponstate ) {
 	case WEAPON_READY:
+		pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
 		if ( pm->ps->weaponTime <= 0 ) {
 			pm->ps->weaponTime = 0;
 			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
@@ -2567,7 +2600,7 @@ static void PM_Weapon( void ) {
 			if ( pm->cmd.buttons & BUTTON_ATTACK ) {
 
 				// BFP - NOTE: These are just examples of ki charging and shooting,
-				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNINGGUN to keep the continuous shooting animations
+				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNING to keep the continuous shooting animations
 				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
 				// - WP_SHOTGUN is used as example of ki explosion wave
 				// - WP_PLASMAGUN is used as example of dividing ki ball
@@ -2578,8 +2611,20 @@ static void PM_Weapon( void ) {
 				case WP_BFG:
 					pm->ps->weaponstate = WEAPON_CHARGING;
 					break;
-				case WP_SHOTGUN:
+				case WP_SHOTGUN: // add time to handle ki explosion wave animation
+					pm->ps->weaponTime += 700;
 					pm->ps->weaponstate = WEAPON_KIEXPLOSIONWAVE;
+					break;
+				case WP_MACHINEGUN:
+					PM_AddEvent( EV_FIRE_WEAPON );
+					pm->ps->weaponstate = WEAPON_FIRING;
+					break;
+				case WP_LIGHTNING: // only play once this sound for ki attacks like eyebeam
+					PM_AddEvent( EV_FIRE_WEAPON );
+					pm->ps->weaponstate = WEAPON_FIRING;
+					break;
+				case WP_RAILGUN:
+					pm->ps->weaponstate = WEAPON_FIRING;
 					break;
 				default: 
 					pm->ps->weaponstate = WEAPON_FIRING;
@@ -2601,25 +2646,60 @@ static void PM_Weapon( void ) {
 		}
 		break;
 	case WEAPON_CHARGING:
-		if ( pm->ps->weaponTime <= 0 ) {
-			break;
-		}
-
 		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
 			// BFP - When the ki attack is fully charged, enter beam firing state
 			// or enter dividing ki ball firing state if it's a dividing ki ball
+			pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
+			// no fully charged, skip...
+			// BFP - TODO: Apply minCharge in that condition also
+			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] < 2 ) {
+				pm->ps->weaponstate = WEAPON_READY;
+				break;
+			}
 
+			// handle the animation for the start of beam or ball shoot
 			switch( pm->ps->weapon ) {
 			case WP_GRENADE_LAUNCHER:
 				PM_FireChargedState( WEAPON_EXPLODING_KIBALLFIRING );
+				pm->ps->weaponTime += 500;
 				break;
 			case WP_PLASMAGUN:
 				PM_FireChargedState( WEAPON_DIVIDINGKIBALLFIRING );
 				break;
 			case WP_BFG:
 				PM_FireChargedState( WEAPON_BEAMFIRING );
+				pm->ps->weaponTime += 500;
 			}
-			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+			// fire and make a sound
+			PM_AddEvent( EV_FIRE_WEAPON );
+		}
+
+		if ( pm->ps->weaponTime <= 0 ) {
+			// check for fire
+			if ( pm->cmd.buttons & BUTTON_ATTACK ) {
+
+				// BFP - NOTE: These are just examples of ki charging and shooting,
+				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNING to keep the continuous shooting animations
+				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
+				// - WP_SHOTGUN is used as example of ki explosion wave
+				// - WP_PLASMAGUN is used as example of dividing ki ball
+				// - WP_BFG is used as example of ki beam
+
+				// BFP - TODO: Also? Apply minCharge and maxCharge from reading bfp_weapon.cfg 
+				switch( pm->ps->weapon ) {
+				case WP_GRENADE_LAUNCHER:
+					PM_ChargeKiAttackState( 2, 2, 700, 20 );
+					break;
+				case WP_PLASMAGUN:
+					PM_ChargeKiAttackState( 2, ATTACK_CHARGE_LIMIT, 1000, 120 );
+					break;
+				case WP_BFG:
+					PM_ChargeKiAttackState( 2, ATTACK_CHARGE_LIMIT, 1000, 20 );
+					break;
+				default: 
+					break;
+				}
+			}
 		}
 		break;
 	case WEAPON_FIRING:
@@ -2628,18 +2708,44 @@ static void PM_Weapon( void ) {
 			break;
 		}
 
-		// fire weapon
+		if ( pm->ps->weaponTime <= 0
+		&& pm->ps->weapon != WP_LIGHTNING ) {
+			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
+		}
+
 		switch( pm->ps->weapon ) {
+		default:
 		case WP_MACHINEGUN:
-		case WP_ROCKET_LAUNCHER:
-		case WP_RAILGUN:
+			addTime = 100;
+			pm->ps->ammo[WP_KI] -= 10;
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->pm_flags |= PMF_KI_ATTACK;
-			//PM_AddEvent( EV_FIRE_WEAPON );
+			break;
+		case WP_ROCKET_LAUNCHER:
+			PM_AddEvent( EV_FIRE_WEAPON );
+			addTime = 800;
+			pm->ps->ammo[WP_KI] -= 50;
+			pm->ps->weaponstate = WEAPON_READY;
+			pm->ps->pm_flags |= PMF_KI_ATTACK;
+			break;
+		case WP_RAILGUN:
+			PM_AddEvent( EV_FIRE_WEAPON );
+			addTime = 1500;
+			pm->ps->ammo[WP_KI] -= 150;
+			pm->ps->weaponstate = WEAPON_READY;
+			pm->ps->pm_flags |= PMF_KI_ATTACK;
 			break;
 		case WP_GAUNTLET:
 		case WP_LIGHTNING:
+			if ( pm->ps->weaponTime <= 0 ) {
+				addTime = 50;
+				pm->ps->ammo[WP_KI] -= 70;
+			}
 			pm->ps->pm_flags |= PMF_KI_ATTACK;
+		}
+
+		if ( pm->ps->weaponTime <= 0 ) {
+			pm->ps->weaponTime = addTime;
 		}
 		break;
 	// BFP - NOTE: The beam is triggering until pressing the attack key again after holded, using ki charge or blocking
@@ -2664,6 +2770,7 @@ static void PM_Weapon( void ) {
 	// BFP - NOTE: The dividing ki ball is triggering until pressing the attack key again after holded or changing weapon
 	case WEAPON_DIVIDINGKIBALLFIRING:
 		if ( pm->cmd.buttons & BUTTON_ATTACK ) {
+			PM_KiConsumption( 0, 120 );
 			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->weaponTime += 100;
@@ -2673,6 +2780,10 @@ static void PM_Weapon( void ) {
 	// also when stopped enters in WEAPON_STUN state in 1 sec
 	case WEAPON_KIEXPLOSIONWAVE:
 		if ( pm->ps->weaponTime <= 0 ) {
+			PM_KiConsumption( 200, 20 );
+			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] < ATTACK_CHARGE_LIMIT ) {
+				++pm->ps->stats[STAT_KI_ATTACK_CHARGE];
+			}
 			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= 1 ) {
 				pm->ps->pm_flags |= PMF_KI_ATTACK;
 				PM_AddEvent( EV_FIRE_WEAPON );
@@ -2703,6 +2814,23 @@ static void PM_Weapon( void ) {
 			pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
 		}
 	}
+	
+	// debug print about weapon states and weapon time
+#if 0
+	switch( pm->ps->weaponstate ) {
+	case WEAPON_FIRING: Com_Printf( "WEAPON_FIRING\n" ); break;
+	case WEAPON_BEAMFIRING: Com_Printf( "WEAPON_BEAMFIRING\n" ); break;
+	case WEAPON_CHARGING: Com_Printf( "WEAPON_CHARGING\n" ); break;
+	case WEAPON_DIVIDINGKIBALLFIRING: Com_Printf( "WEAPON_DIVIDINGKIBALLFIRING\n" ); break;
+	case WEAPON_READY: Com_Printf( "WEAPON_READY\n" ); break;
+	case WEAPON_EXPLODING_KIBALLFIRING: Com_Printf( "WEAPON_EXPLODING_KIBALLFIRING\n" ); break;
+	case WEAPON_RAISING: Com_Printf( "WEAPON_RAISING\n" ); break;
+	case WEAPON_KIEXPLOSIONWAVE: Com_Printf( "WEAPON_KIEXPLOSIONWAVE\n" ); break;
+	case WEAPON_DROPPING: Com_Printf( "WEAPON_DROPPING\n" ); break;
+	case WEAPON_STUN: Com_Printf( "WEAPON_STUN\n" ); break;
+	}
+	Com_Printf( "weaponTime: %d\n", pm->ps->weaponTime );
+#endif
 }
 
 /*

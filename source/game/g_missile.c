@@ -105,6 +105,7 @@ static void HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - W
 	}
 
 	client->ps.pm_flags &= ~PMF_KI_ATTACK;
+	client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 }
 
 /*
@@ -381,6 +382,7 @@ void G_RunMissile( gentity_t *ent ) {
 	&& client->ps.weaponstate != WEAPON_BEAMFIRING
 	&& ent->s.weapon == WP_BFG ) {
 		client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 		G_MissileImpact( ent, &tr );
 	}
 

@@ -291,6 +291,73 @@ void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
 }
 
 /*
+======================
+GainPowerlevelKiHealth
+======================
+*/
+static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // BFP - Gain powerlevel, ki and health
+	float currentKiPercentage;
+
+	// BFP - Attacker gains powerlevel from the opponent
+	// Formula: attackerPowerlevel += 1 + ( opponentPowerlevel * g_plKillBonusPct.value )
+	attacker->client->ps.persistant[PERS_POWERLEVEL] += 1 + ( self->client->ps.persistant[PERS_POWERLEVEL] * g_plKillBonusPct.value );
+	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000
+		attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
+	}
+	// BFP - Send powerlevel data to all clients
+	trap_SetConfigstring( CS_POWERLEVEL + attacker->client->ps.clientNum, va( "%d", attacker->client->ps.persistant[PERS_POWERLEVEL] ) );
+
+	// BFP - Add more maximum ki
+	currentKiPercentage = ( (float)attacker->client->ps.ammo[WP_KI] / (float)attacker->client->ps.stats[STAT_MAX_KI] );
+	// BFP - NOTE: What the heck? Did BFP dev make this multiplying 9.00825 with powerlevel? Strange approximation...
+	attacker->client->ps.stats[STAT_MAX_KI] = 999 + ( 9.00825 * attacker->client->ps.persistant[PERS_POWERLEVEL] );
+
+	// BFP - Avoid exceeding maximum ki
+	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the maximum ki per 2: maxKi = maxKi * 2
+	if ( attacker->client->ps.stats[STAT_MAX_KI] > 10000 ) {
+		attacker->client->ps.stats[STAT_MAX_KI] = 10000;
+	}
+
+	// BFP - Add and balance ki
+	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
+		if ( currentKiPercentage < 1.0f ) {
+			currentKiPercentage *= (float)attacker->client->ps.stats[STAT_MAX_KI];
+			attacker->client->ps.ammo[WP_KI] = currentKiPercentage;
+		} else {
+			attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+		}
+		if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
+			attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+		}
+	}
+
+	// BFP - Add max health and balance health
+	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
+	if ( attacker->client->ps.stats[STAT_MAX_HEALTH] < 1000 ) {
+		float currentHealthPercentage = ( (float)attacker->client->ps.stats[STAT_HEALTH] / (float)attacker->client->ps.stats[STAT_MAX_HEALTH] ) * 10.0f;
+		
+		attacker->client->ps.stats[STAT_MAX_HEALTH] = 1 + attacker->client->ps.persistant[PERS_POWERLEVEL];
+		if ( attacker->client->ps.stats[STAT_MAX_HEALTH] > 1000 ) {
+			attacker->client->ps.stats[STAT_MAX_HEALTH] = 1000;
+		}
+
+		// keep and balance health
+		if ( currentHealthPercentage < 10 ) {
+			attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_HEALTH] + (short)currentHealthPercentage;
+		} else {
+			attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_MAX_HEALTH];
+		}
+		if ( attacker->client->ps.stats[STAT_HEALTH] > attacker->client->ps.stats[STAT_MAX_HEALTH] ) {
+			attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_MAX_HEALTH];
+		}
+	}
+
+	if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
+		attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+	}
+}
+
+/*
 ==================
 player_die
 ==================
@@ -371,67 +438,7 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		if ( attacker == self || OnSameTeam (self, attacker ) ) {
 			AddScore( attacker, self->r.currentOrigin, -1 );
 		} else {
-			float currentKiPercentage;
 			AddScore( attacker, self->r.currentOrigin, 1 );
-			// BFP - Attacker gains powerlevel from the opponent
-			// Formula: attackerPowerlevel += 1 + ( opponentPowerlevel * g_plKillBonusPct.value )
-			attacker->client->ps.persistant[PERS_POWERLEVEL] += 1 + ( self->client->ps.persistant[PERS_POWERLEVEL] * g_plKillBonusPct.value );
-			if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000
-				attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
-			}
-			// BFP - Send powerlevel data to all clients
-			trap_SetConfigstring( CS_POWERLEVEL + attacker->client->ps.clientNum, va( "%d", attacker->client->ps.persistant[PERS_POWERLEVEL] ) );
-
-			// BFP - Add more maximum ki
-			currentKiPercentage = ( (float)attacker->client->ps.ammo[WP_KI] / (float)attacker->client->ps.stats[STAT_MAX_KI] );
-			// BFP - NOTE: What the heck? Did BFP dev make this multiplying 9.00825 with powerlevel? Strange approximation...
-			attacker->client->ps.stats[STAT_MAX_KI] = 999 + ( 9.00825 * attacker->client->ps.persistant[PERS_POWERLEVEL] );
-
-			// BFP - Avoid exceeding maximum ki
-			// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the maximum ki per 2: maxKi = maxKi * 2
-			if ( attacker->client->ps.stats[STAT_MAX_KI] > 10000 ) {
-				attacker->client->ps.stats[STAT_MAX_KI] = 10000;
-			}
-
-			// BFP - Add and balance ki
-			// BFP - TODO: Handle highest tier (transformation)
-			if ( attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
-				if ( currentKiPercentage < 1.0f ) {
-					currentKiPercentage *= (float)attacker->client->ps.stats[STAT_MAX_KI];
-					attacker->client->ps.ammo[WP_KI] = currentKiPercentage;
-				} else {
-					attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
-				}
-				if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
-					attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
-				}
-			}
-
-			// BFP - Add max health and balance health
-			// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
-			if ( attacker->client->ps.stats[STAT_MAX_HEALTH] < 1000 ) {
-				float currentHealthPercentage = ( (float)attacker->client->ps.stats[STAT_HEALTH] / (float)attacker->client->ps.stats[STAT_MAX_HEALTH] ) * 10.0f;
-				
-				attacker->client->ps.stats[STAT_MAX_HEALTH] = 1 + attacker->client->ps.persistant[PERS_POWERLEVEL];
-				if ( attacker->client->ps.stats[STAT_MAX_HEALTH] > 1000 ) {
-					attacker->client->ps.stats[STAT_MAX_HEALTH] = 1000;
-				}
-
-				// keep and balance health
-				if ( currentHealthPercentage < 10 ) {
-					attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_HEALTH] + (short)currentHealthPercentage;
-				} else {
-					attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_MAX_HEALTH];
-				}
-				if ( attacker->client->ps.stats[STAT_HEALTH] > attacker->client->ps.stats[STAT_MAX_HEALTH] ) {
-					attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_MAX_HEALTH];
-				}
-			}
-
-			// BFP - TODO: When unlocking a tier, give the player maximum ki 
-			if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
-				attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
-			}
 
 			if( meansOfDeath == MOD_GAUNTLET ) {
 				
@@ -466,6 +473,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		}
 	} else {
 		AddScore( self, self->r.currentOrigin, -1 );
+	}
+
+	// BFP - Gain powerlevel, ki and health
+	if ( attacker && attacker->client 
+	&& attacker != self && !OnSameTeam (self, attacker ) ) {
+		GainPowerlevelKiHealth( self, attacker );
 	}
 
 	// BFP - For compilation safety from shared objects (.so) and dll
