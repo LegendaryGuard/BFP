@@ -450,12 +450,16 @@ void CopyToBodyQue( gentity_t *ent ) {
 
 	body->die = body_die;
 
+	// BFP - Attention: DLL & SO are prone to crash here, so setting body->takedamage as qfalse avoids that
+	body->takedamage = qfalse;
+#if 0
 	// don't take more damage if already gibbed
 	if ( ent->health <= GIB_HEALTH ) {
 		body->takedamage = qfalse;
 	} else {
 		body->takedamage = qtrue;
 	}
+#endif
 
 
 	VectorCopy ( body->s.pos.trBase, body->r.currentOrigin );
