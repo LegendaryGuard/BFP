@@ -859,11 +859,6 @@ static void PM_FlyTiltView( void ) { // BFP - Fly tilt
 	short	targetRollAngle = 0;
 	float	rollStep = 0.2;
 
-	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
-		return;
-	}
-
 	if ( ( pm->ps->eFlags & EF_FLIGHT )
 	&& !( pm->ps->pm_flags & PMF_BLOCK )
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
@@ -2384,12 +2379,6 @@ PM_KiChargeAnimation
 */
 static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 
-	// BFP - Ultimate tier
-	if ( ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ||
-	( ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) && ( pm->ps->pm_flags & EF_AURA_TIER_UP ) ) ) {
-		return;
-	}
-
 	// stop charging if it's using ki boost
 	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 		// handle the button to avoid toggling the animations forward and backwards while using ki boost
@@ -2405,8 +2394,10 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 			&& ( pm->ps->pm_flags & PMF_FALLING )
 			&& pm->waterlevel <= 1 ) { // Don't force inside the water
 			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
-			PM_ForceJumpAnim();
-			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
+			if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+				PM_ForceJumpAnim();
+				PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
+			}
 		}
 		return;
 	}
@@ -2415,22 +2406,30 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
 		pm->ps->pm_flags &= ~PMF_NEARGROUND; // Make sure to handle the PMF flag
-		PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
+		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+			PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
+		}
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
 			&& ( pm->ps->pm_flags & PMF_FALLING )
-			&& pm->waterlevel <= 1 ) { // Don't force inside the water
+			&& pm->waterlevel <= 1 // don't force inside the water
+			&& ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) ) { // avoid forcing animations on transformation phase
 			PM_ForceJumpAnim();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 	}
 
 	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
+		if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
+			pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the visual charging effect continues without handling correctly
+		}
 		pm->ps->eFlags &= ~EF_KI_BOOST;
 		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		pm->ps->pm_flags |= PMF_KI_CHARGE;
-		PM_ContinueTorsoAnim( TORSO_CHARGE );
-		PM_ContinueLegsAnim( LEGS_CHARGE );
+		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+			PM_ContinueTorsoAnim( TORSO_CHARGE );
+			PM_ContinueLegsAnim( LEGS_CHARGE );
+		}
 	}
 
 	// handle the button to avoid toggling ki boost when already used "kiusetoggle" key bind

@@ -1046,15 +1046,10 @@ void ClientThink_real( gentity_t *ent ) {
 			client->ps.eFlags &= ~EF_AURA_TIER_UP;
 		}
 
-		if ( client->ps.pm_flags & PMF_ULTIMATE_TIER ) {
-			if ( level.time <= client->tierUnlockedTime - 1000 ) {
-				client->ps.pm_flags &= ~PMF_KI_CHARGE;
-				ucmd->buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE );
-				client->ps.eFlags &= ~( EF_KI_BOOST | EF_AURA );
-			}
-			if ( level.time >= client->tierUnlockedTime - 1000 ) { // remove aura transformation effect after 3.6 secs
-				client->ps.eFlags &= ~EF_AURA_TIER_UP;
-			}
+		// BFP - Ultimate tier
+		if ( ( client->ps.pm_flags & PMF_ULTIMATE_TIER )
+		&& ( level.time >= client->tierUnlockedTime - 1000 ) ) { // remove aura transformation effect after 3.6 secs
+			client->ps.eFlags &= ~EF_AURA_TIER_UP;
 		}
 
 		if ( ( client->ps.pm_flags & PMF_ULTIMATE_TIER ) && level.time >= client->tierUnlockedTime ) {
@@ -1089,9 +1084,8 @@ void ClientThink_real( gentity_t *ent ) {
 			}
 
 			// BFP - g_chargeDelay cvar for ki charge animation and appearing the aura after this time
-			if ( ( ucmd->buttons & BUTTON_KI_CHARGE )  
-			&& !( client->ps.pm_flags & PMF_KI_CHARGE )
-			&& !( client->ps.pm_flags & PMF_ULTIMATE_TIER ) ) {
+			if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) 
+			&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
 				client->ps.pm_time = ( g_chargeDelay.integer > 0 ) ? g_chargeDelay.integer : 0;
 			}
 		}
