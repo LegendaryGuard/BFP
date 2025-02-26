@@ -694,7 +694,6 @@ typedef enum {
 typedef enum {
 	MOD_UNKNOWN,
 	MOD_SHOTGUN,
-	MOD_MELEE, // BFP - Melee
 	MOD_GAUNTLET,
 	MOD_MACHINEGUN,
 	MOD_GRENADE,
@@ -716,6 +715,8 @@ typedef enum {
 	MOD_SUICIDE,
 	MOD_TARGET_LASER,
 	MOD_TRIGGER_HURT,
+	MOD_KI_ATTACK, // BFP - Ki attack kill message
+	MOD_MELEE, // BFP - Melee
 	MOD_GRAPPLE
 } meansOfDeath_t;
 

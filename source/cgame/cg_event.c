@@ -83,7 +83,8 @@ static void CG_Obituary( entityState_t *ent ) {
 	const char	*attackerInfo;
 	char		targetName[32];
 	char		attackerName[32];
-	gender_t	gender;
+	// BFP - No gender variable for MOD messages
+	// gender_t	gender;
 	clientInfo_t	*ci;
 
 	target = ent->otherEntityNum;
@@ -144,6 +145,8 @@ static void CG_Obituary( entityState_t *ent ) {
 	}
 
 	if (attacker == target) {
+		// BFP - No gender MOD messages
+#if 0
 		gender = ci->gender;
 		switch (mod) {
 		case MOD_GRENADE_SPLASH:
@@ -182,6 +185,7 @@ static void CG_Obituary( entityState_t *ent ) {
 				message = "killed himself";
 			break;
 		}
+#endif
 		if ( attacker == cg.snap->ps.clientNum ) { // BFP - Add 1 lifedeath in the history
 			trap_Cvar_Set( "cg_lifedeaths", va( "%i", (int)( cg_lifedeaths.integer + 1 ) ) );
 		}
@@ -196,12 +200,12 @@ static void CG_Obituary( entityState_t *ent ) {
 	if ( attacker == cg.snap->ps.clientNum ) {
 		char	*s;
 
-		if ( cgs.gametype < GT_TEAM ) {
-			s = va("You fragged %s\n%s place with %i", targetName, 
+		if ( cgs.gametype < GT_TEAM ) { // BFP - Before Q3: "You fragged %s\n%s place with %i"
+			s = va("You sent %s to the next dimension!\n%s place with %i", targetName, 
 				CG_PlaceString( cg.snap->ps.persistant[PERS_RANK] + 1 ),
 				cg.snap->ps.persistant[PERS_SCORE] );
-		} else {
-			s = va("You fragged %s", targetName );
+		} else { // BFP - Before Q3: "You fragged %s"
+			s = va("You sent %s to the next dimension!", targetName );
 		}
 		CG_CenterPrint( s, SCREEN_HEIGHT * 0.30, BIGCHAR_WIDTH );
 		// print the text message as well
@@ -222,19 +226,16 @@ static void CG_Obituary( entityState_t *ent ) {
 		}
 	}
 
-	if ( attacker != ENTITYNUM_WORLD ) {
+	// BFP - Don't admit that the attacker is the same as the target
+	if ( attacker != ENTITYNUM_WORLD && attacker != target ) {
 		switch (mod) {
+		// BFP - No other MOD messages
+#if 0
 		case MOD_GRAPPLE:
 			message = "was caught by";
 			break;
-		// BFP - No gauntlet
-#if 0
 		case MOD_GAUNTLET:
 			message = "was pummeled by";
-			break;
-#endif
-		case MOD_MELEE: // BFP - Melee
-			message = "was beaten up by";
 			break;
 		case MOD_MACHINEGUN:
 			message = "was machinegunned by";
@@ -281,8 +282,12 @@ static void CG_Obituary( entityState_t *ent ) {
 			message = "tried to invade";
 			message2 = "'s personal space";
 			break;
-		default:
-			message = "was killed by";
+#endif
+		case MOD_MELEE: // BFP - Melee
+			message = "was beaten up by";
+			break;
+		default: // BFP - Kill with ki attack and telefrag message
+			message = "was sent to the next dimension by";
 			break;
 		}
 
