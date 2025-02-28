@@ -2406,6 +2406,10 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 	ent.customShader = CG_AuraPowerlevelSetShaderColor( state );
 
 	if ( ( state->eFlags & EF_AURA ) || ( state->eFlags & EF_AURA_TIER_UP ) ) {
+		// BFP - Transformation aura
+		if ( ( state->eFlags & EF_AURA_TIER_UP ) && cg_transformationAura.integer <= 0 ) {
+			return;
+		}
 		// BFP - If the player is using lightweight auras or their own small aura
 		if ( ( cg_lightweightAuras.integer > 0
 		|| ( state->clientNum == cg.snap->ps.clientNum 
@@ -2636,6 +2640,11 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 
 		// BFP - Small own aura only can be shown to the one who enables it for themself, not everyone
 		if ( clientNum != cg.snap->ps.clientNum || cg_smallOwnAura.integer <= 0 ) {
+			// BFP - Transformation aura
+			if ( ( cent->currentState.eFlags & EF_AURA_TIER_UP ) && cg_transformationAura.integer <= 0 ) {
+				return;
+			}
+
 			// add aura
 			if ( cg_spriteAura.integer <= 0 && cg_particleAura.integer <= 0 
 			&& cg_polygonAura.integer > 0 && cg_lightweightAuras.integer <= 0 ) {
