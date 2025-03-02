@@ -567,6 +567,7 @@ static void CG_RegisterGraphics( void ) {
 
 	for ( i = 0 ; i < NUM_CROSSHAIRS ; i++ ) {
 		cgs.media.crosshairShader[i] = trap_R_RegisterShader( va("gfx/2d/crosshair%c", 'a'+i) );
+		cgs.media.redCrosshairShader[i] = trap_R_RegisterShader( va("gfx/2d/redcrosshair%c", 'a'+i) ); // BFP - BFP crosshair health feature
 	}
 
 	cgs.media.backTileShader = trap_R_RegisterShader( "gfx/2d/backtile" );

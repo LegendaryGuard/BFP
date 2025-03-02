@@ -712,6 +712,7 @@ typedef struct {
 	qhandle_t	viewBloodShader;
 	qhandle_t	tracerShader;
 	qhandle_t	crosshairShader[NUM_CROSSHAIRS];
+	qhandle_t	redCrosshairShader[NUM_CROSSHAIRS]; // BFP - BFP crosshair health feature
 	qhandle_t	lagometerShader;
 	qhandle_t	backTileShader;
 	qhandle_t	noammoShader;

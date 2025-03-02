@@ -1986,9 +1986,6 @@ static void CG_DrawCrosshair(void) {
 		// BFP - Make crosshair size starting from biggest to current
 		w = LERP( w*2, w, f ); // before: w *= ( 1 + f );
 		h = LERP( h*2, h, f ); // before: h *= ( 1 + f );
-		if ( cg_crosshairHealth.integer && f <= 0.35f ) { // BFP - BFP crosshair health feature
-			trap_R_SetColor( colorRed );
-		}
 	}
 
 	x = cg_crosshairX.integer;
@@ -1999,6 +1996,9 @@ static void CG_DrawCrosshair(void) {
 		ca = 0;
 	}
 	hShader = cgs.media.crosshairShader[ ca % NUM_CROSSHAIRS ];
+	if ( cg_crosshairHealth.integer && f <= 0.425f ) { // BFP - BFP crosshair health feature
+		hShader = cgs.media.redCrosshairShader[ ca % NUM_CROSSHAIRS ];
+	}
 
 	if ( cg_thirdPerson.integer >= 1 && cg_stableCrosshair.integer <= 0 ) { // BFP - Third person traceable crosshair
 #if ESF_STYLE
