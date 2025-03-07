@@ -228,7 +228,8 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 			// if the target position is being covered under something solid (e.g. a brush from the map), 
 			// avoid the attacker teleporting there, otherwise gets stuck
 			target = &g_entities[ tr.entityNum ];
-			if ( target->client->ps.pm_type != PM_DEAD && !target->takedamage ) {
+			if ( target->client // avoids DLL/SO crash
+			&& target->client->ps.pm_type != PM_DEAD && !target->takedamage ) {
 				attacker->client->ps.pm_flags &= ~PMF_MELEE;
 				return qfalse;
 			}
@@ -239,7 +240,8 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 			}
 
 			// TELEPORT!
-			if ( attacker->client->ps.origin[2] == target->client->ps.origin[2] ) {
+			if ( target->client // avoids DLL/SO crash
+			&& attacker->client->ps.origin[2] == target->client->ps.origin[2] ) {
 				tr.endpos[2] = target->client->ps.origin[2];
 			}
 			VectorCopy( tr.endpos, attacker->client->ps.origin );
