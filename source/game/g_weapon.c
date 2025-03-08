@@ -247,6 +247,12 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 			VectorCopy( tr.endpos, attacker->client->ps.origin );
 		}
 
+		// BFP - Don't deal damage on warmup
+		if ( level.time < level.warmupTime ) {
+			// act as if the player is attacking
+			return qtrue;
+		}
+
 		// PUSH AND DEAL DAMAGE!
 		if ( g_meleeDamage.integer > 0 ) {
 			float forceMultiplier = 100.0f + 2.0f * (g_meleeDamage.integer - 10);
@@ -268,14 +274,6 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 				G_Damage ( traceTarget, attacker, attacker, velocity, attacker->s.origin, 
 					g_meleeDamage.integer, 0, MOD_MELEE );
 			}
-		}
-	}
-
-	// melee sound event is randomly executed
-	{
-		int rndSnd = rand() % 6;
-		if ( rndSnd > 4 ) {
-			G_AddEvent( attacker, EV_MELEE, 0 );
 		}
 	}
 

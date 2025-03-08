@@ -229,6 +229,7 @@ PM_ContinueFlyAnim
 ==================
 */
 static void PM_ContinueFlyAnim( void ) { // BFP - Continuous fly anim handling
+	if ( pm->ps->pm_flags & PMF_MELEE ) { return; }
 	if ( pm->cmd.forwardmove > 0 ) { PM_TorsoStatusAnim( TORSO_FLYA ); PM_ContinueLegsAnim( LEGS_FLYA ); }
 	else if ( pm->cmd.forwardmove < 0 ) { PM_TorsoStatusAnim( TORSO_FLYB ); PM_ContinueLegsAnim( LEGS_FLYB ); }
 	else { PM_TorsoStatusAnim( TORSO_STAND ); PM_ContinueLegsAnim( LEGS_FLYIDLE ); }
@@ -741,11 +742,6 @@ static void PM_WaterMove( void ) {
 		return;
 	}
 
-	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
-		return;
-	}
-
 	if ( PM_CheckWaterJump() ) {
 		PM_WaterJumpMove();
 		return;
@@ -777,6 +773,12 @@ static void PM_WaterMove( void ) {
 	PM_Friction ();
 
 	scale = PM_CmdScale( &pm->cmd );
+
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		scale = 0;
+	}
+
 	//
 	// user intentions
 	//
@@ -2654,8 +2656,13 @@ static void PM_Weapon( void ) {
 		}
 		// Melee fight handling
 		if ( pm->meleeHit && pm->ps->weaponTime <= 0 ) {
+			int rndSnd = rand() % 6;
 			pm->ps->weaponTime += 300;
 			pm->ps->pm_flags |= PMF_MELEE;
+			// melee sound event is randomly executed
+			if ( rndSnd > 3 ) {
+				PM_AddEvent( EV_MELEE );
+			}
 		}
 		return;
 	}
