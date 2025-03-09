@@ -850,7 +850,8 @@ void ClientUserinfoChanged( int clientNum ) {
 		}
 
 		// compare model prefixes
-		if ( Q_stricmp( ent->oldModelPrefix, newModelPrefix ) ) {
+		if ( Q_stricmp( ent->oldModelPrefix, newModelPrefix )
+		&& ent->client->sess.sessionTeam != TEAM_SPECTATOR ) { // only when the player is playing
 			// prefixes differ, kill the player
 			ent->flags &= ~FL_GODMODE;
 			ent->client->ps.stats[STAT_HEALTH] = ent->health = 0;
