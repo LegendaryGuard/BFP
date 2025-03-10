@@ -24,6 +24,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "menudef.h"			// for the voice chats
 
+// BFP - BFP tournament allow chat macro
+#define BFP_TOURNAMENT_CHAT_NOT_ALLOWED		0
+
 /*
 ==================
 DeathmatchScoreboardMessage
@@ -703,10 +706,13 @@ void Cmd_Team_f( gentity_t *ent ) {
 		return;
 	}
 
+	// BFP - No switch team time delay
+#if BFP_NO_SWITCH_TEAM_TIME
 	if ( ent->client->switchTeamTime > level.time ) {
 		trap_SendServerCommand( ent-g_entities, "print \"May not switch teams more than once per 5 seconds.\n\"" );
 		return;
 	}
+#endif
 
 	// if they are playing a tournement game, count as a loss
 	if ( (g_gametype.integer == GT_TOURNAMENT )
@@ -718,7 +724,10 @@ void Cmd_Team_f( gentity_t *ent ) {
 
 	SetTeam( ent, s );
 
+	// BFP - No switch team time delay
+#if BFP_NO_SWITCH_TEAM_TIME
 	ent->client->switchTeamTime = level.time + 5000;
+#endif
 }
 
 
@@ -845,12 +854,15 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 	if ( mode == SAY_TEAM  && !OnSameTeam(ent, other) ) {
 		return;
 	}
+	// BFP - Chatting is allowed on BFP tournaments
+#if BFP_TOURNAMENT_CHAT_NOT_ALLOWED
 	// no chatting to players in tournements
 	if ( (g_gametype.integer == GT_TOURNAMENT )
 		&& other->client->sess.sessionTeam == TEAM_FREE
 		&& ent->client->sess.sessionTeam != TEAM_FREE ) {
 		return;
 	}
+#endif
 
 	trap_SendServerCommand( other-g_entities, va("%s \"%s%c%c%s\"", 
 		mode == SAY_TEAM ? "tchat" : "chat",
@@ -1004,10 +1016,13 @@ static void G_VoiceTo( gentity_t *ent, gentity_t *other, int mode, const char *i
 	if ( mode == SAY_TEAM && !OnSameTeam(ent, other) ) {
 		return;
 	}
+	// BFP - Chatting is allowed on BFP tournaments
+#if BFP_TOURNAMENT_CHAT_NOT_ALLOWED
 	// no chatting to players in tournements
 	if ( (g_gametype.integer == GT_TOURNAMENT )) {
 		return;
 	}
+#endif
 
 	if (mode == SAY_TEAM) {
 		color = COLOR_CYAN;

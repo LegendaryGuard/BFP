@@ -260,6 +260,8 @@ typedef struct {
 	qboolean	teamInfo;			// send team overlay updates?
 } clientPersistant_t;
 
+// BFP - A macro to enable/disable switch team time delay
+#define BFP_NO_SWITCH_TEAM_TIME			0
 
 // this structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'
@@ -316,7 +318,10 @@ struct gclient_s {
 	//qboolean	fireHeld;			// used for hook
 	//gentity_t	*hook;				// grapple hook if out
 
+	// BFP - No switch team time delay
+#if BFP_NO_SWITCH_TEAM_TIME
 	int			switchTeamTime;		// time the player switched teams
+#endif
 
 	// timeResidual is used to handle events that happen every second
 	// like health / armor countdowns and regeneration
