@@ -297,23 +297,36 @@ GainPowerlevelKiHealth
 */
 static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // BFP - Gain powerlevel, ki and health
 	float currentKiPercentage;
+	qboolean alreadyTier1 = qfalse;
+	qboolean alreadyTier2 = qfalse;
+	qboolean alreadyTier3 = qfalse;
 	qboolean alreadyTransformed = qfalse;
 
+	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
+		alreadyTier1 = qtrue;
+	}
+	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
+		alreadyTier2 = qtrue;
+	}
+	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
+		alreadyTier3 = qtrue;
+	}
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] >= 1000 ) {
 		alreadyTransformed = qtrue;
 	}
+
 	// BFP - Attacker gains powerlevel from the opponent
 	// Formula: attackerPowerlevel += 1 + ( opponentPowerlevel * g_plKillBonusPct.value )
 	attacker->client->ps.persistant[PERS_POWERLEVEL] += 1 + ( self->client->ps.persistant[PERS_POWERLEVEL] * g_plKillBonusPct.value );
-	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
+	if ( !alreadyTier1 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
 		G_AddEvent( attacker, EV_TIER_1, 0 );
-	} else if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
+	} else if ( !alreadyTier2 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
 		G_AddEvent( attacker, EV_TIER_2, 0 );
-	} else if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
+	} else if ( !alreadyTier3 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
 		G_AddEvent( attacker, EV_TIER_3, 0 );
