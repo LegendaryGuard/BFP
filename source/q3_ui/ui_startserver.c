@@ -92,16 +92,28 @@ typedef struct {
 
 static startserver_t s_startserver;
 
+// BFP - Gametypes have been sorted this way
 static const char *gametype_items[] = {
 	"Free For All",
-	"Team Deathmatch",
 	"Tournament",
 	"Capture the Flag",
+	"Team Deathmatch",
 	0
 };
 
-static int gametype_remap[] = {GT_FFA, GT_TEAM, GT_TOURNAMENT, GT_CTF};
-static int gametype_remap2[] = {0, 2, 0, 1, 3};
+static int gametype_remap[] = {
+	GT_FFA,			// "Free For All"
+	GT_TOURNAMENT,	// "Tournament"
+	GT_CTF,			// "Capture the Flag"
+	GT_TEAM		// "Team Deathmatch"
+};
+static int gametype_remap2[] = {	// Take a look on gametype_items indexes
+	0,	// GT_FFA (0)			->	"Free For All"
+	1,	// GT_TOURNAMENT (1)	->	"Tournament"
+	0,	// GT_SINGLE_PLAYER (2)		(not in menu, default to 0)
+	5,	// GT_TEAM (5)			->	"Team Deathmatch"
+	4	// GT_CTF (7)			->	"Capture the Flag"
+};
 
 static void UI_ServerOptionsMenu( qboolean multiplayer );
 
@@ -578,6 +590,12 @@ void StartServer_Cache( void )
 		Q_strncpyz( s_startserver.maplist[i], Info_ValueForKey( info, "map"), MAX_NAMELENGTH );
 		Q_strupr( s_startserver.maplist[i] );
 		s_startserver.mapGamebits[i] = GametypeBits( Info_ValueForKey( info, "type") );
+
+		// BFP - A log to display every map? Why would they do that?
+		Com_Printf( "adding %s\n", s_startserver.maplist[i] );
+
+		// BFP - NOTE: BFP pretended to insert descriptions about maps...
+		// Com_Printf( "Description: %s\n", Info_ValueForKey( info, "longname" ) );
 
 		if( precache ) {
 			Com_sprintf( picname, sizeof(picname), "levelshots/%s", s_startserver.maplist[i] );
@@ -1058,9 +1076,9 @@ static void ServerOptions_InitBotNames( void ) {
 	char		*bot;
 	char		bots[MAX_INFO_STRING];
 
-	// BFP - TODO: When selecting to the bot in the list,
-	// by default in BFP is: 1) Gothax 2) Pyrate 3) Shilo 4) Ryuujin 5) Tetsedah 6) Kyah
+	// BFP - Don't show Q3 model characters on team gamemodes
 	if( s_serveroptions.gametype >= GT_TEAM ) {
+#if 0
 		Q_strncpyz( s_serveroptions.playerNameBuffers[1], "grunt", 16 );
 		Q_strncpyz( s_serveroptions.playerNameBuffers[2], "major", 16 );
 		if( s_serveroptions.gametype == GT_TEAM ) {
@@ -1081,6 +1099,17 @@ static void ServerOptions_InitBotNames( void ) {
 		else {
 			s_serveroptions.playerType[9].curvalue = 2;
 		}
+		s_serveroptions.playerType[10].curvalue = 2;
+		s_serveroptions.playerType[11].curvalue = 2;
+#endif
+		// BFP - That means that these slots are closed (just "---"), although these can be toggled to open or set as bot
+		// blue
+		s_serveroptions.playerType[3].curvalue = 2;
+		s_serveroptions.playerType[4].curvalue = 2;
+		s_serveroptions.playerType[5].curvalue = 2;
+
+		// red
+		s_serveroptions.playerType[9].curvalue = 2;
 		s_serveroptions.playerType[10].curvalue = 2;
 		s_serveroptions.playerType[11].curvalue = 2;
 
@@ -1257,7 +1286,8 @@ static void ServerOptions_MenuInit( qboolean multiplayer ) {
 
 	memset( &s_serveroptions, 0 ,sizeof(serveroptions_t) );
 	s_serveroptions.multiplayer = multiplayer;
-	s_serveroptions.gametype = (int)Com_Clamp( 0, 5, trap_Cvar_VariableValue( "g_gameType" ) );
+	// BFP - Modified from 0 to max gametype value, before Q3: 0 to 5
+	s_serveroptions.gametype = (int)Com_Clamp( 0, GT_MAX_GAME_TYPE, trap_Cvar_VariableValue( "g_gametype" ) );
 
 	ServerOptions_Cache();
 
