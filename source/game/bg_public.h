@@ -101,6 +101,8 @@ typedef enum {
 	GT_TOURNAMENT,		// one on one tournament
 	GT_SINGLE_PLAYER,	// single player ffa
 
+	GT_SURVIVAL,		// BFP - Survival "survival":					g_gametype 3
+
 	//-- team games go after this --
 
 	GT_TEAM,			// team deathmatch

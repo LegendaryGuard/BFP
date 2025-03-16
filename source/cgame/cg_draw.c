@@ -2147,7 +2147,8 @@ CG_DrawSpectator
 */
 static void CG_DrawSpectator(void) {
 	CG_DrawBigString(320 - 9 * 8, 440, "SPECTATOR", 1.0F);
-	if ( cgs.gametype == GT_TOURNAMENT ) {
+	if ( cgs.gametype == GT_TOURNAMENT
+	|| cgs.gametype == GT_SURVIVAL ) { // BFP - Survival
 		CG_DrawBigString(320 - 15 * 8, 460, "waiting to play", 1.0F);
 	}
 	else if ( cgs.gametype >= GT_TEAM ) {
@@ -2381,7 +2382,8 @@ static void CG_DrawWarmup( void ) {
 		return;
 	}
 
-	if (cgs.gametype == GT_TOURNAMENT) {
+	if ( cgs.gametype == GT_TOURNAMENT
+	|| cgs.gametype == GT_SURVIVAL ) { // BFP - Survival) {
 		// find the two active players
 		ci1 = NULL;
 		ci2 = NULL;

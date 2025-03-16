@@ -1066,7 +1066,8 @@ void LogExit( const char *string ) {
 
 		cl = &level.clients[level.sortedClients[i]];
 
-		if ( cl->sess.sessionTeam == TEAM_SPECTATOR ) {
+		if ( cl->sess.sessionTeam == TEAM_SPECTATOR
+		&& g_gametype.integer != GT_SURVIVAL ) { // BFP - Survival
 			continue;
 		}
 		if ( cl->pers.connected == CON_CONNECTING ) {
@@ -1250,7 +1251,8 @@ void CheckExitRules( void ) {
 			if ( cl->pers.connected != CON_CONNECTED ) {
 				continue;
 			}
-			if ( cl->sess.sessionTeam != TEAM_FREE ) {
+			if ( cl->sess.sessionTeam != TEAM_FREE
+			&& g_gametype.integer != GT_SURVIVAL ) { // BFP - Survival
 				continue;
 			}
 
@@ -1303,6 +1305,10 @@ void CheckTournament( void ) {
 	if ( level.numPlayingClients == 0 ) {
 		return;
 	}
+	
+	if ( g_gametype.integer == GT_SURVIVAL ) { // BFP - Survival
+		return;
+	}
 
 	if ( g_gametype.integer == GT_TOURNAMENT ) {
 
@@ -1341,6 +1347,8 @@ void CheckTournament( void ) {
 			return;
 		}
 
+		// BFP - Don't restart the map on BFP tournaments if the warmup time has counted down
+#if 0
 		// if the warmup time has counted down, restart
 		if ( level.time > level.warmupTime ) {
 			level.warmupTime += 10000;
@@ -1349,6 +1357,7 @@ void CheckTournament( void ) {
 			level.restarted = qtrue;
 			return;
 		}
+#endif
 	} else if ( g_gametype.integer != GT_SINGLE_PLAYER && level.warmupTime != 0 ) {
 		int		counts[TEAM_NUM_TEAMS];
 		qboolean	notEnough = qfalse;
@@ -1399,6 +1408,73 @@ void CheckTournament( void ) {
 			level.restarted = qtrue;
 			return;
 		}
+	}
+}
+
+/*
+=============
+CheckSurvival
+
+Once a frame, check for changes in survival player state
+=============
+*/
+void CheckSurvival( void ) {
+	int i, oldestTime = level.time, oldestClient = -1;
+
+	if ( level.numPlayingClients == 0 ) {
+		return;
+	}
+
+	if ( g_gametype.integer != GT_SURVIVAL ) {
+		return;
+	}
+
+	// pull in a spectator if needed
+	if ( level.numPlayingClients > 0 ) {
+		AddTournamentPlayer();
+	}
+
+	// if we don't have two players, go back to "waiting for players"
+	if ( level.numPlayingClients != 2 ) {
+		if ( level.warmupTime != -1 ) {
+			level.warmupTime = -1;
+			trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
+			G_LogPrintf( "Warmup:\n" );
+		}
+		return;
+	}
+
+	if ( level.warmupTime > 0 && level.time > level.warmupTime ) {
+        // warmup period has ended
+        level.warmupTime = 0;
+        trap_SetConfigstring( CS_WARMUP, "0" );
+    }
+
+	if ( level.warmupTime == 0 ) {
+		return;
+	}
+
+	// if we don't have two players, go back to "waiting for players"
+	if ( level.numPlayingClients != 2 ) {
+		if ( level.warmupTime != -1 ) {
+			level.warmupTime = -1;
+			trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
+			G_LogPrintf( "Warmup:\n" );
+		}
+		return;
+	}
+
+	// if the warmup is changed at the console, restart it
+	if ( g_warmup.modificationCount != level.warmupModificationCount ) {
+		level.warmupModificationCount = g_warmup.modificationCount;
+		level.warmupTime = -1;
+	}
+
+	// if all players have arrived, start the countdown
+	if ( level.warmupTime < 0 && level.numPlayingClients == 2 ) {
+		// fudge by -1 to account for extra delays
+		level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+		trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
 	}
 }
 
@@ -1698,6 +1774,9 @@ void G_RunFrame( int levelTime ) {
 
 	// see if it is time to do a tournement restart
 	CheckTournament();
+
+	// BFP - Survival
+	CheckSurvival();
 
 	// see if it is time to end the level
 	CheckExitRules();

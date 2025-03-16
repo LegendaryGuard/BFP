@@ -2,7 +2,6 @@
 
 #### Cvar Gametypes:
 
-- g_gametype 3 = sur (survival)
 - g_gametype 4 = ooz (oozaru - it was meant to be renamed as 'monster' in the last version of the original BFP, it hasn't been added to the UI, but add it anyway)
 - g_gametype 5 = tdm (team deathmatch) // originally, in Q3, this number is 3
 - g_gametype 6 = lms (last man standing)
@@ -78,3 +77,4 @@
 
 - [x] ~~g_gametype 0 = dm (aka FFA)~~ (already in Q3 code)
 - [x] ~~g_gametype 1 = 1v1 (tournament)~~ (already in Q3 code)
+- [x] ~~g_gametype 3 = survival (survival)~~

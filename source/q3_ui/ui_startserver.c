@@ -96,6 +96,7 @@ static startserver_t s_startserver;
 static const char *gametype_items[] = {
 	"Free For All",
 	"Tournament",
+	"Survival",					// BFP - Survival
 	"Capture the Flag",
 	"Team Deathmatch",
 	0
@@ -104,6 +105,7 @@ static const char *gametype_items[] = {
 static int gametype_remap[] = {
 	GT_FFA,			// "Free For All"
 	GT_TOURNAMENT,	// "Tournament"
+	GT_SURVIVAL,	// "Survival"
 	GT_CTF,			// "Capture the Flag"
 	GT_TEAM		// "Team Deathmatch"
 };
@@ -111,6 +113,7 @@ static int gametype_remap2[] = {	// Take a look on gametype_items indexes
 	0,	// GT_FFA (0)			->	"Free For All"
 	1,	// GT_TOURNAMENT (1)	->	"Tournament"
 	0,	// GT_SINGLE_PLAYER (2)		(not in menu, default to 0)
+	2,	// GT_SURVIVAL (3)		->	"Survival"
 	5,	// GT_TEAM (5)			->	"Team Deathmatch"
 	4	// GT_CTF (7)			->	"Capture the Flag"
 };
@@ -148,6 +151,12 @@ static int GametypeBits( char *string ) {
 
 		if( Q_stricmp( token, "single" ) == 0 ) {
 			bits |= 1 << GT_SINGLE_PLAYER;
+			continue;
+		}
+
+		// BFP - Survival
+		if( Q_stricmp( token, "survival" ) == 0 ) {
+			bits |= 1 << GT_SURVIVAL;
 			continue;
 		}
 
@@ -267,6 +276,10 @@ static void StartServer_GametypeEvent( void* ptr, int event ) {
 	matchbits = 1 << gametype_remap[s_startserver.gametype.curvalue];
 	if( gametype_remap[s_startserver.gametype.curvalue] == GT_FFA ) {
 		matchbits |= ( 1 << GT_SINGLE_PLAYER );
+	}
+	// BFP - Survival maps are also part of "tourney" maps
+	if ( gametype_remap[s_startserver.gametype.curvalue] == GT_SURVIVAL ) {
+		matchbits |= ( 1 << GT_TOURNAMENT );
 	}
 	for( i = 0; i < count; i++ ) {
 		info = UI_GetArenaInfoByNumber( i );

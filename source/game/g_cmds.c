@@ -597,7 +597,8 @@ void SetTeam( gentity_t *ent, char *s ) {
 	}
 
 	// override decision if limiting the players
-	if ( (g_gametype.integer == GT_TOURNAMENT)
+	if ( ( g_gametype.integer == GT_TOURNAMENT
+		|| g_gametype.integer == GT_SURVIVAL ) // BFP - Survival
 		&& level.numNonSpectatorClients >= 2 ) {
 		team = TEAM_SPECTATOR;
 	} else if ( g_maxGameClients.integer > 0 && 
@@ -715,7 +716,8 @@ void Cmd_Team_f( gentity_t *ent ) {
 #endif
 
 	// if they are playing a tournement game, count as a loss
-	if ( (g_gametype.integer == GT_TOURNAMENT )
+	if ( ( g_gametype.integer == GT_TOURNAMENT 
+		|| g_gametype.integer == GT_SURVIVAL ) // BFP - Survival
 		&& ent->client->sess.sessionTeam == TEAM_FREE ) {
 		ent->client->sess.losses++;
 	}
@@ -764,7 +766,8 @@ void Cmd_Follow_f( gentity_t *ent ) {
 	}
 
 	// if they are playing a tournement game, count as a loss
-	if ( (g_gametype.integer == GT_TOURNAMENT )
+	if ( ( g_gametype.integer == GT_TOURNAMENT 
+		|| g_gametype.integer == GT_SURVIVAL ) // BFP - Survival
 		&& ent->client->sess.sessionTeam == TEAM_FREE ) {
 		ent->client->sess.losses++;
 	}
@@ -788,7 +791,8 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 	int		original;
 
 	// if they are playing a tournement game, count as a loss
-	if ( (g_gametype.integer == GT_TOURNAMENT )
+	if ( ( g_gametype.integer == GT_TOURNAMENT 
+		|| g_gametype.integer == GT_SURVIVAL ) // BFP - Survival
 		&& ent->client->sess.sessionTeam == TEAM_FREE ) {
 		ent->client->sess.losses++;
 	}

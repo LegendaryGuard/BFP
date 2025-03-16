@@ -432,7 +432,8 @@ void G_CheckMinimumPlayers( void ) {
 			G_RemoveRandomBot( TEAM_BLUE );
 		}
 	}
-	else if (g_gametype.integer == GT_TOURNAMENT ) {
+	else if ( g_gametype.integer == GT_TOURNAMENT
+	|| g_gametype.integer == GT_SURVIVAL ) { // BFP - Survival
 		if (minplayers >= g_maxclients.integer) {
 			minplayers = g_maxclients.integer-1;
 		}

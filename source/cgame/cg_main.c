@@ -603,7 +603,8 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.blueFlagShader[2] = trap_R_RegisterShaderNoMip( "icons/iconf_blu3" );
 	}
 
-	if ( cgs.gametype >= GT_TEAM || cg_buildScript.integer ) {
+	if ( cgs.gametype >= GT_TEAM || cg_buildScript.integer
+	|| cgs.gametype == GT_SURVIVAL ) { // BFP - Survival gametype, needs to draw the line status too
 		cgs.media.friendShader = trap_R_RegisterShader( "sprites/foe" );
 		cgs.media.redQuadShader = trap_R_RegisterShader("powerups/blueflag" );
 		cgs.media.teamStatusBar = trap_R_RegisterShader( "gfx/2d/colorbar.tga" );

@@ -260,6 +260,9 @@ void CG_DrawInformation( void ) {
 	case GT_TOURNAMENT:
 		s = "Tournament";
 		break;
+	case GT_SURVIVAL: // BFP - Survival
+		s = "Survival";
+		break;
 	case GT_TEAM:
 		s = "Team Deathmatch";
 		break;

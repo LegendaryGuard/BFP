@@ -631,6 +631,13 @@ void BotInterbreeding(void) {
 		ExitLevel();
 		return;
 	}
+
+	if ( gametype != GT_SURVIVAL ) { // BFP - Survival
+		trap_Cvar_Set("g_gametype", va("%d", GT_SURVIVAL));
+		ExitLevel();
+		return;
+	}
+
 	//shutdown all the bots
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (botstates[i] && botstates[i]->inuse) {

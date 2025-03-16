@@ -19,7 +19,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 - [ ] Attacksets (configurable for cfgs)
 - [ ] Cvars as described on old docs
-- [ ] Gametype: Survival (`g_gametype 3`)
 - [ ] Gametype: Monster (`g_gametype 4`)
 - [ ] Gametype: Last Man Standing (`g_gametype 6`)
 - [ ] Power Struggles (when two beam attacks collide)
@@ -36,6 +35,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Bind key to toggle speed (ki boost). HINT: HASTE POWERUP~~
 - [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
 - [x] ~~Breakable map entities ("func_breakable")~~
+- [x] ~~Gametype: Survival (`g_gametype 3`)~~
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
 - [x] ~~Instant character model changing~~
 - [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
@@ -153,6 +153,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - no weird underwater movements while going intentionally down and moving crazily fast touching the ground (this might be a bug/glitch from original BFP)
   - no specified stuck animation, so any animation is correctly handled when being stuck (on original BFP, when the player is stuck or pretty near to something solid, the reason is still unknown though. It does a jumping forward/backward animation, that doesn't make sense)
   - water movement handling is different from original BFP, but it works similarly
+- survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own preffix, dies and respawns during warmup, the warmup resets. So, that's unfair)
 - some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
 - file size differences between the QVM and the original BFP QVM can be quite significant
 - kiCharge, boostCost and blockCost cvars work differently

@@ -190,6 +190,7 @@ void TeamMain_MenuInit( void ) {
 	case GT_SINGLE_PLAYER:
 	case GT_FFA:
 	case GT_TOURNAMENT:
+	case GT_SURVIVAL: // BFP - Survival
 		s_teammain.joinred.generic.flags  |= QMF_GRAYED;
 		s_teammain.joinblue.generic.flags |= QMF_GRAYED;
 		break;

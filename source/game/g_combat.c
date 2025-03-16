@@ -399,6 +399,129 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 }
 
 /*
+==================================================
+Survival_ForceToSpectateAndRespawnAnotherPlayer
+==================================================
+*/
+static void Survival_ForceToSpectateAndRespawnAnotherPlayer( gentity_t *self ) { // BFP - Function for survival gamemode
+	int i, oldestTime = level.time, oldestClient = -1;
+
+	// force to spectate the dead player
+	if ( level.numPlayingClients == 2 && level.numConnectedClients > 2 ) {
+		SetTeam( self, "s" );
+		self->client->sess.sessionTeam = TEAM_SPECTATOR;
+	}
+
+	for ( i = 0; i < level.maxclients; ++i ) {
+		gclient_t *cl = &level.clients[i];
+		if ( cl->pers.connected == CON_CONNECTED && cl->sess.sessionTeam == TEAM_SPECTATOR ) {
+			if ( cl->pers.enterTime < oldestTime ) {
+				oldestTime = cl->pers.enterTime;
+				oldestClient = i;
+			}
+		}
+	}
+
+	if ( oldestClient != -1 && level.numConnectedClients > 2 ) {
+		gentity_t *spectator = &g_entities[oldestClient];
+		SetTeam( spectator, "f" );
+		ClientSpawn( spectator );
+	}
+}
+
+/*
+====================
+CheckSurvivalWarmup
+====================
+*/
+static void CheckSurvivalWarmup( void ) { // BFP - Function for survival gamemode
+	// if the warmup is changed at the console, restart it
+	if ( g_warmup.modificationCount != level.warmupModificationCount ) {
+		level.warmupModificationCount = g_warmup.modificationCount;
+		level.warmupTime = -1;
+	}
+
+	// if all players have arrived, start the countdown
+	if ( level.numPlayingClients == 2 ) {
+		// fudge by -1 to account for extra delays
+		level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+		trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
+	}
+}
+
+/*
+==================
+CheckSurvivalRules
+==================
+*/
+static void CheckSurvivalRules( gentity_t *self, int meansOfDeath ) { // BFP - Survival rules
+	int i;
+
+	if ( g_gametype.integer != GT_SURVIVAL ) {
+		return;
+	}
+
+	// don't make players not see the scoreboard when the match timelimit ends
+	if ( g_timelimit.integer && !level.warmupTime 
+	&& level.time - level.startTime >= g_timelimit.integer*60000 ) {
+		return;
+	}
+
+	// don't make players blind to the scoreboard when the winner reached the fraglimit and the match ended
+	for ( i = 0 ; i < level.maxclients; ++i ) {
+		gclient_t	*cl;
+		cl = level.clients + i;
+		if ( cl->ps.persistant[PERS_SCORE] >= g_fraglimit.integer ) {
+			return;
+		}
+	}
+
+	// BFP - NOTE: This is the best conditional when changing a character model.
+	// Originally on BFP, when a player changed the model, the warmup time was being restarted.
+	// So, that could lead trolling cases to break the game balance.
+
+	if ( level.warmupTime > 0 && level.numPlayingClients == 2 ) {
+		// force to spectate the player who is touching something mortal
+		if ( meansOfDeath == MOD_TRIGGER_HURT || meansOfDeath == MOD_CRUSH ) {
+			// if the score points didn't decrease, decrease it for balance sake!
+			ScorePlum( self, self->r.currentOrigin, -1 );
+			--self->client->ps.persistant[PERS_SCORE];
+			CalculateRanks();
+
+			Survival_ForceToSpectateAndRespawnAnotherPlayer( self );
+			
+			CheckSurvivalWarmup();
+
+			if ( level.numConnectedClients == 2 ) {
+				respawn( self );
+			}
+			
+			return;
+		}
+		// respawn if changing, trying to spectate or commiting a suicide
+		else if ( meansOfDeath != MOD_TRIGGER_HURT && meansOfDeath != MOD_CRUSH ) {
+			respawn( self );
+			return;
+		}
+	}
+
+	// if there are only 2 players in the game
+	if ( level.warmupTime <= 0 
+	&& level.numConnectedClients == 2 && level.numPlayingClients == 2 ) {
+		// respawn quickly instead watching the scoreboard while being dead
+		respawn( self );
+
+		CheckSurvivalWarmup();
+
+		return;
+	}
+
+	Survival_ForceToSpectateAndRespawnAnotherPlayer( self );
+
+	CheckSurvivalWarmup();
+}
+
+/*
 ==================
 player_die
 ==================
@@ -641,6 +764,8 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	trap_LinkEntity (self);
 
+	// BFP - Survival rules
+	CheckSurvivalRules( self, meansOfDeath );
 }
 
 

@@ -154,7 +154,8 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 	if ( score->ping == -1 ) {
 		Com_sprintf(string, sizeof(string),
 			" connecting    %s", ci->name);
-	} else if ( ci->team == TEAM_SPECTATOR ) {
+	} else if ( ci->team == TEAM_SPECTATOR
+	&& cgs.gametype != GT_SURVIVAL ) { // BFP - Survival, don't draw SPECT word on score column
 		Com_sprintf(string, sizeof(string),
 			" SPECT %3i %4i %s", score->ping, score->time, ci->name);
 	} else {
@@ -376,13 +377,22 @@ qboolean CG_DrawOldScoreboard( void ) {
 		y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
 
 	} else {
-		//
-		// free for all scoreboard
-		//
-		n1 = CG_TeamScoreboard( y, TEAM_FREE, fade, maxClients, lineHeight );
-		y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
-		n2 = CG_TeamScoreboard( y, TEAM_SPECTATOR, fade, maxClients - n1, lineHeight );
-		y += (n2 * lineHeight) + BIGCHAR_HEIGHT;
+		// BFP - Survival gametype, draws the blue line status for these who are in the match
+		if ( cgs.gametype == GT_SURVIVAL ) {
+			n1 = CG_TeamScoreboard( y, TEAM_FREE, fade, maxClients, lineHeight );
+			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n1 * lineHeight + bottomBorderSize, 0.33f, TEAM_BLUE );
+			y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
+			n1 = CG_TeamScoreboard( y, TEAM_SPECTATOR, fade, maxClients, lineHeight );
+			y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
+		} else {
+			//
+			// free for all scoreboard
+			//
+			n1 = CG_TeamScoreboard( y, TEAM_FREE, fade, maxClients, lineHeight );
+			y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
+			n2 = CG_TeamScoreboard( y, TEAM_SPECTATOR, fade, maxClients - n1, lineHeight );
+			y += (n2 * lineHeight) + BIGCHAR_HEIGHT;
+		}
 	}
 
 	if (!localClient) {

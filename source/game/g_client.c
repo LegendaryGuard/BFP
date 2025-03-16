@@ -886,6 +886,14 @@ static short ClientGetAveragePowerlevel( void ) { // BFP - Average powerlevel
 			totalPowerLevel += ent->client->ps.persistant[PERS_POWERLEVEL];
 			++activeClients;
 		}
+
+		// BFP - Survival
+		if ( g_gametype.integer == GT_SURVIVAL 
+		&& ent->inuse && ent->client && ent->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+			// get the same powerlevel of the standing one for the sake of balance
+			// avoid division by zero
+			return ( activeClients > 0 ) ? ent->client->ps.persistant[PERS_POWERLEVEL] : 0;
+		}
 		++i;
 	}
 
@@ -974,6 +982,27 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	G_LogPrintf( "ClientConnect: %i\n", clientNum );
 	ClientUserinfoChanged( clientNum );
 
+	// BFP - Survival
+	if ( g_gametype.integer == GT_SURVIVAL ) {
+		// make sure the player isn't playing and must be spectator
+		// when the match is restarted or the map is changed
+		if ( !firstTime && client->sess.sessionTeam != TEAM_SPECTATOR ) {
+			client->sess.sessionTeam = TEAM_SPECTATOR;
+			// output "joined to ..." message
+			BroadcastTeamChange( client, -1 );
+		}
+
+		// output "joined to ..." message
+		if ( level.newSession ) {
+			BroadcastTeamChange( client, -1 );
+		}
+
+		// make sure the player score isn't negative when being connected at that moment
+		if ( client->ps.persistant[PERS_SCORE] < 0 ) {
+			client->ps.persistant[PERS_SCORE] = 0;
+		}
+	}
+
 	// don't do the "xxx connected" messages if they were caried over from previous level
 	if ( firstTime ) {
 		trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " connected\n\"", client->pers.netname) );
@@ -1009,6 +1038,8 @@ void ClientBegin( int clientNum ) {
 	gclient_t	*client;
 	gentity_t	*tent;
 	int			flags;
+	// BFP - Survival, save scores if the players are spectating
+	int			savedScore;
 
 	ent = g_entities + clientNum;
 
@@ -1025,6 +1056,8 @@ void ClientBegin( int clientNum ) {
 	client->pers.connected = CON_CONNECTED;
 	client->pers.enterTime = level.time;
 	client->pers.teamState.state = TEAM_BEGIN;
+	// BFP - Survival, save scores if the players are spectating
+	savedScore = client->ps.persistant[PERS_SCORE];
 
 	// save eflags around this, because changing teams will
 	// cause this to happen with a valid entity, and we
@@ -1035,6 +1068,11 @@ void ClientBegin( int clientNum ) {
 	memset( &client->ps, 0, sizeof( client->ps ) );
 	client->ps.eFlags = flags;
 
+	// BFP - Survival, save scores if the players are spectating
+	if ( g_gametype.integer == GT_SURVIVAL ) {
+		client->ps.persistant[PERS_SCORE] = savedScore;
+	}
+
 	// locate ent at a spawn point
 	ClientSpawn( ent );
 
@@ -1043,7 +1081,8 @@ void ClientBegin( int clientNum ) {
 		tent = G_TempEntity( ent->client->ps.origin, EV_PLAYER_TELEPORT_IN );
 		tent->s.clientNum = ent->s.clientNum;
 
-		if ( g_gametype.integer != GT_TOURNAMENT  ) {
+		if ( g_gametype.integer != GT_TOURNAMENT 
+		&& g_gametype.integer != GT_SURVIVAL ) { // BFP - Survival
 			trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname) );
 		}
 	}
@@ -1375,7 +1414,8 @@ void ClientDisconnect( int clientNum ) {
 	G_LogPrintf( "ClientDisconnect: %i\n", clientNum );
 
 	// if we are playing in tourney mode and losing, give a win to the other player
-	if ( (g_gametype.integer == GT_TOURNAMENT )
+	if ( ( g_gametype.integer == GT_TOURNAMENT
+		|| g_gametype.integer == GT_SURVIVAL ) // BFP - Survival
 		&& !level.intermissiontime
 		&& !level.warmupTime && level.sortedClients[1] == clientNum ) {
 		level.clients[ level.sortedClients[0] ].sess.wins++;

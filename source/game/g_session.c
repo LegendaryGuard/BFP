@@ -142,6 +142,10 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 					sess->sessionTeam = TEAM_FREE;
 				}
 				break;
+			case GT_SURVIVAL: // BFP - Survival
+				// always spawn as spectator
+				sess->sessionTeam = TEAM_SPECTATOR;
+				break;
 			}
 		}
 	}
