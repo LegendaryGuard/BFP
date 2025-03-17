@@ -720,11 +720,13 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	// never gib in a nodrop
 	// BFP - No gibs when being attacked and entering to death phase, just stay as corpse
-	// (self->health <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || 
-	if (meansOfDeath == MOD_SUICIDE) {
+#if 0
+	if ((self->health <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
 		// gib death
 		GibEntity( self, killer );
-	} else {
+	} else
+#endif
+	{
 		// normal death
 		static int i;
 
