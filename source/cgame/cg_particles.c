@@ -960,7 +960,7 @@ void CG_AddParticles (void)
 	active_particles = active;
 }
 
-void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range)
+void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range, float size)
 {
 	cparticle_t	*p;
 
@@ -981,6 +981,13 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->endtime = timenonscaled + 600;
 	p->startfade = timenonscaled + 200;
 
+	// BFP - Monster gamemode, player monster bubble particles last a bit more
+	if ( cgs.gametype == GT_MONSTER
+	&& ( cent->currentState.eFlags & EF_MONSTER ) ) {
+		p->endtime += 200;
+		p->startfade += 200;
+	}
+
 	p->color = 0;
 	p->alpha = 1;
 	p->alphavel = 0;
@@ -988,7 +995,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	p->start = cent->currentState.origin[2];
 	p->end = cent->currentState.origin2[2];
 	p->pshader = pshader;
-	p->height = p->width = (rand() % 2) + 1;
+	p->height = p->width = (rand() % (int)size) + 1;
 
 	VectorCopy(origin, p->org);
 
@@ -997,7 +1004,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		p->type = P_BUBBLE_TURBULENT;
 		// BFP - Apply end time to remove particles in that case, if there's no end time the particles will remain there
 		p->endtime = timenonscaled + turbtime;
-		p->height = p->width = (rand() % 1) + 2;
+		p->height = p->width = (rand() % 1) + size;
 
 		p->org[0] += (crandom() * range);
 		p->org[1] += (crandom() * range);
@@ -1114,7 +1121,7 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 }
 
 // BFP - Particle for dash smoke when using ki boost and moving on the ground
-void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
+void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float velocityDisp, float upVelocity, float accel)
 {
 	cparticle_t	*p;
 
@@ -1158,7 +1165,7 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 	p->endtime = timenonscaled + 2000;
 	p->startfade = timenonscaled + 100;
 
-	p->height = p->width = 25;
+	p->height = p->width = size;
 
 	p->endheight = p->height * 2;
 	p->endwidth = p->width * 2;
@@ -1167,15 +1174,15 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin)
 
 	VectorCopy( origin, p->org );
 	VectorSet( p->vel, 
-				(rand() % 401) - 200,
-				(rand() % 401) - 200,
-				20 );
+				(rand() % (int)velocityDisp) - velocityDisp * 0.5,
+				(rand() % (int)velocityDisp) - velocityDisp * 0.5,
+				upVelocity );
 
 	// dispersion
 	VectorSet( p->accel, 
-			crandom() * 10, 
-			crandom() * 10, 
-			1400 );
+			crandom() * accel, 
+			crandom() * accel, 
+			1800 );
 
 	p->link = qfalse; // to distinguish the type of smoke
 }
@@ -1289,7 +1296,7 @@ void CG_ChargeSmokeHandling( cparticle_t *p, vec3_t org ) {
 }
 
 // BFP - Antigrav rock particles for ki charging status
-void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin)
+void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin, float size, float spawnRange, float endTime)
 {
 	cparticle_t	*p;
 
@@ -1317,22 +1324,22 @@ void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum,
 	// BFP - Keep entity number to identify who is using
 	p->entityNum = entityNum;
 
-	p->endtime = timenonscaled + 450 + (crandom() * 20);
+	p->endtime = timenonscaled + endTime + (crandom() * 20);
 
 	p->color = 0;
 	p->alpha = 1;
 	p->alphavel = 0;
 	p->pshader = pshader;
-	p->height = p->width = (rand() % 2) + 2;
+	p->height = p->width = (rand() % (int)size) + size;
 	p->type = P_ANTIGRAV_ROCK;
 
 	VectorCopy( origin, p->org );
 
-	p->org[0] += (crandom() * 50);
-	p->org[1] += (crandom() * 50);
+	p->org[0] += (crandom() * spawnRange);
+	p->org[1] += (crandom() * spawnRange);
 
 	p->start = cent->currentState.origin[2];
-	p->end = p->org[2] + 200 + (crandom() * 10);
+	p->end = p->org[2] + 800 + (crandom() * 10);
 
 	p->vel[0] = 0;
 	p->vel[1] = 0;
@@ -1447,7 +1454,7 @@ void CG_ParticleAuraHandling (centity_t *cent)
 }
 
 // BFP - Debris particles for ki explosions and water splash
-void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water)
+void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water, float size, float velocity, float accel)
 {
 	cparticle_t	*p;
 
@@ -1471,7 +1478,7 @@ void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean w
 	p->alphavel = 0;
 	p->pshader = pshader;
 	p->height = p->width = (water) 
-		? (rand() % 3) + 1 
+		? (rand() % (int)size) + size * 0.335
 		: (rand() % 6) + 3;
 
 	p->type = P_DEBRIS;
@@ -1488,14 +1495,14 @@ void CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean w
 	VectorCopy( vel, p->vel );
 
 	if ( water ) {
-		p->vel[0] = (crandom() * 150);
-		p->vel[1] = (crandom() * 150);
-		p->vel[2] = 1050;
+		p->vel[0] = (crandom() * velocity);
+		p->vel[1] = (crandom() * velocity);
+		p->vel[2] = velocity * 7;
 	}
 
-	p->accel[0] = (crandom() * 250);
-	p->accel[1] = (crandom() * 250);
-	p->accel[2] = 250 + (crandom() * 50);
+	p->accel[0] = (crandom() * accel);
+	p->accel[1] = (crandom() * accel);
+	p->accel[2] = accel + (crandom() * 50);
 
 	p->roll = (water) // used as bounce counter
 		? 0

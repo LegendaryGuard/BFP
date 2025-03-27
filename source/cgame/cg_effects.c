@@ -599,15 +599,15 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 
 		switch ( shaderIndex ) {
 			case 0: {
-				CG_ParticleDebris( cgs.media.pebbleShader1, sprOrg, sprVel, qfalse );
+				CG_ParticleDebris( cgs.media.pebbleShader1, sprOrg, sprVel, qfalse, 3, 150, 250 );
 				break;
 			}
 			case 1: {
-				CG_ParticleDebris( cgs.media.pebbleShader2, sprOrg, sprVel, qfalse );
+				CG_ParticleDebris( cgs.media.pebbleShader2, sprOrg, sprVel, qfalse, 3, 150, 250 );
 				break;
 			}
 			default: {
-				CG_ParticleDebris( cgs.media.pebbleShader3, sprOrg, sprVel, qfalse );
+				CG_ParticleDebris( cgs.media.pebbleShader3, sprOrg, sprVel, qfalse, 3, 150, 250 );
 			}
 		}
 	}

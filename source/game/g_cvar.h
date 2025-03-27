@@ -91,6 +91,8 @@ G_CVAR( g_kiRegenPct, "g_kiRegenPct", "0.6", 0, 0, qtrue ) // BFP - Ki regenerat
 G_CVAR( g_kiCharge, "g_kiCharge", "0", 0, 0, qtrue ) // BFP - Ki charge
 G_CVAR( g_kiChargePct, "g_kiChargePct", "15", 0, 0, qtrue ) // BFP - Ki charge percentage
 
+G_CVAR( g_monster, "g_monster", "0", CVAR_SERVERINFO | CVAR_USERINFO | CVAR_LATCH | CVAR_ARCHIVE, 0, qtrue ) // BFP - Monster feature option for Monster gamemode
+
 G_CVAR( g_podiumDist, "g_podiumDist", "80", 0, 0, qfalse )
 G_CVAR( g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse )
 

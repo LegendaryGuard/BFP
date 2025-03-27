@@ -340,6 +340,10 @@ typedef struct {
 	char			skinName[MAX_QPATH];
 	char			headModelName[MAX_QPATH];
 	char			headSkinName[MAX_QPATH];
+
+	// BFP - Monster original player model name to keep the player sounds
+	char			originalModelName[MAX_QPATH];
+
 	char			redTeam[MAX_TEAMNAME];
 	char			blueTeam[MAX_TEAMNAME];
 	qboolean		deferred;
@@ -1004,6 +1008,8 @@ typedef struct {
 	int				capturelimit;
 	int				timelimit;
 	int				maxclients;
+	// BFP - Monster gamemode, to get g_monster g_cvar
+	int				monster;
 	char			mapname[MAX_QPATH];
 	char			redTeam[MAX_QPATH];
 	char			blueTeam[MAX_QPATH];
@@ -1570,17 +1576,17 @@ qboolean	trap_GetEntityToken( char *buffer, int bufferSize );
 void	CG_ClearParticles (void);
 void	CG_AddParticles (void);
 // BFP - Bubble particle
-void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range);
+void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range, float size);
 // BFP - Dash smoke particle for ki boost when moving in the ground
-void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin);
+void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float velocityDisp, float upVelocity, float accel);
 // BFP - Antigrav rock particles for charging
-void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin);
+void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin, float size, float spawnRange, float endTime);
 void	CG_AntigravRockHandling (centity_t *cent);
 // BFP - Particle aura
 void	CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t origin, vec3_t origin2, float range);
 void	CG_ParticleAuraHandling (centity_t *cent);
 // BFP - Debris particle
-void	CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water);
+void	CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water, float size, float velocity, float accel);
 // BFP - Spark particle
 void	CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel);
 // BFP - Charge smoke particle for ki charge

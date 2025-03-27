@@ -792,6 +792,10 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 
 	// sounds
 	dir = ci->modelName;
+	// BFP - Monster gamemode, get original model name to keep the player sounds
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 ) {
+		dir = ci->originalModelName;
+	}
 	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
 
 	for ( i = 0 ; i < MAX_CUSTOM_SOUNDS ; i++ ) {
@@ -1073,6 +1077,21 @@ void CG_NewClientInfo( int clientNum ) {
 		Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
 		// truncate modelName
 		*slash = 0;
+	}
+
+	// BFP - Monster gamemode, get original model name with "omodel" to keep the player sounds
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 ) {
+		v = Info_ValueForKey( configstring, "omodel" );
+		Q_strncpyz( newInfo.originalModelName, v, sizeof( newInfo.originalModelName ) );
+		slash = strchr( newInfo.originalModelName, '/' );
+		if ( !slash ) {
+			// modelName didn not include a skin name
+			Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
+		} else {
+			Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
+			// truncate modelName
+			*slash = 0;
+		}
 	}
 
 	// head model
@@ -1924,6 +1943,11 @@ static void CG_PlayerFloatSprite( centity_t *cent, qhandle_t shader ) {
 	ent.shaderRGBA[1] = 255;
 	ent.shaderRGBA[2] = 255;
 	ent.shaderRGBA[3] = 255;
+	// BFP - Monster gamemode, player monster' floating sprite is bigger and higher than a normal one
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		ent.origin[2] += 250;
+		ent.radius = 50;
+	}
 	trap_R_AddRefEntityToScene( &ent );
 }
 
@@ -1990,17 +2014,67 @@ Returns the Z component of the surface being shadowed
 ===============
 */
 static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
-	const int	SHADOW_DISTANCE = 128;
+	// BFP - Shadow distance variable isn't constant anymore
+	int			shadow_distance = 128;
 	vec3_t		end, mins = {-15, -15, 0}, maxs = {15, 15, 2};
 	trace_t		trace, waterTrace; // BFP - Trace for the water
 	float		alpha;
 	int			contents, waterContents; // BFP - To detect if there is water or lava
+	float		radius = 24.0f; // BFP - Shadow radius
+
+	// BFP - Bubble particle size and range
+	float		bubbleSize = 2;
+	float		bubbleRange = 10;
+
+	// BFP - Dash smoke particle size, velocity and acceleration (dispersion)
+	float		dashSmokeSize = 25;
+	float		dashSmokeVelDisp = 401;
+	float		dashSmokeUpVel = 20;
+	float		dashSmokeAccel = 10;
+
+	// BFP - Antigrav rock particle size, spawn range and end time
+	float		antigravRockSize = 2;
+	float		antigravRockSpawnRange = 50;
+	float		antigravRockEndTime = 450;
+
+	// BFP - Charge smoke particle size, radial velocity, base radius and up origin
+	float		chargeSmokeSize = 40;
+	float		chargeSmokeRadialVel = 450;
+	float		chargeSmokeBaseRadius = 80;
+	float		chargeSmokeUpOrigin = 20;
+
+	// BFP - Monster gamemode, resize shadow and particles if the player is the monster
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		shadow_distance = 400;
+		mins[0] *= 2.5;
+		mins[1] *= 2.5;
+
+		maxs[0] *= 2.5;
+		maxs[1] *= 2.5;
+		radius = 180;
+		bubbleSize = 8;
+		bubbleRange = 150;
+
+		dashSmokeSize = 120;
+		dashSmokeVelDisp = 1201;
+		dashSmokeUpVel = 1400;
+		dashSmokeAccel = 260;
+
+		antigravRockSize = 8;
+		antigravRockSpawnRange = 220;
+		antigravRockEndTime = 2050;
+
+		chargeSmokeSize = 150;
+		chargeSmokeRadialVel = 760;
+		chargeSmokeBaseRadius = 300;
+		chargeSmokeUpOrigin = 50;
+	}
 
 	*shadowPlane = 0;
 
 	// send a trace down from the player to the ground
 	VectorCopy( cent->lerpOrigin, end );
-	end[2] -= SHADOW_DISTANCE;
+	end[2] -= shadow_distance;
 
 	trap_CM_BoxTrace( &trace, cent->lerpOrigin, end, mins, maxs, 0, MASK_PLAYERSOLID );
 	// BFP - Tracing the water surface
@@ -2028,15 +2102,15 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
 					dashSmokePos[2] += 100;
 				}
-				CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, dashSmokePos );
+				CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, dashSmokePos, dashSmokeSize, dashSmokeVelDisp, dashSmokeUpVel, dashSmokeAccel );
 			}
 
 			waterTrace.endpos[2] -= 20; // BFP - Put a bit down to make the bubbles move
 			if ( ( contents & CONTENTS_WATER ) 
 			&& waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
 			}
 		}
 
@@ -2066,27 +2140,26 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 				}
 				switch ( shaderIndex ) {
 					case 0: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, antigravRockPos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
 						break;
 					}
 					case 1: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, antigravRockPos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
 						break;
 					}
 					default: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, antigravRockPos );
+						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
 					}
 				}
 				VectorCopy( trace.endpos, chargeSmokePos );
-				chargeSmokePos[2] += 20; // put a bit above
+				chargeSmokePos[2] += chargeSmokeUpOrigin; // put a bit above
 
 				// if stepping a mover
 				if ( !( trace.fraction <= 0.75f )
 				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
 					chargeSmokePos[2] += 100;
 				}
-				// BFP - TODO: Set a customized base radius and smoke size for the player who is monster on Monster gametype
-				CG_ParticleChargeSmoke( cent, cgs.media.particleSmokeShader, chargeSmokePos, 40, 450, 80 );
+				CG_ParticleChargeSmoke( cent, cgs.media.particleSmokeShader, chargeSmokePos, chargeSmokeSize, chargeSmokeRadialVel, chargeSmokeBaseRadius );
 			}
 		}
 	}
@@ -2120,7 +2193,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	// add the mark as a temporary, so it goes directly to the renderer
 	// without taking a spot in the cg_marks array
 	CG_ImpactMark( cgs.media.shadowMarkShader, trace.endpos, trace.plane.normal, 
-		cent->pe.legs.yawAngle, alpha,alpha,alpha,1, qfalse, 24, qtrue );
+		cent->pe.legs.yawAngle, alpha,alpha,alpha,1, qfalse, radius, qtrue );
 
 	return qtrue;
 }
@@ -2138,6 +2211,7 @@ static void CG_PlayerSplash( centity_t *cent ) {
 	trace_t		trace;
 	int			contents;
 	polyVert_t	verts[4];
+	float		markSize = 32;
 
 	if ( !cg_shadows.integer ) {
 		return;
@@ -2145,6 +2219,12 @@ static void CG_PlayerSplash( centity_t *cent ) {
 
 	VectorCopy( cent->lerpOrigin, end );
 	end[2] -= 24;
+
+	// BFP - Monster gamemode, player monster water surface mark size and position
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		markSize = 192;
+		end[2] -= 114;
+	}
 
 	// if the feet aren't in liquid, don't make a mark
 	// this won't handle moving water brushes, but they wouldn't draw right anyway...
@@ -2155,6 +2235,11 @@ static void CG_PlayerSplash( centity_t *cent ) {
 
 	VectorCopy( cent->lerpOrigin, start );
 	start[2] += 32;
+
+	// BFP - Monster gamemode, player monster water surface mark position
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		start[2] += 164;
+	}
 
 	// if the head isn't out of liquid, don't make a mark
 	contents = trap_CM_PointContents( start, 0 );
@@ -2171,26 +2256,26 @@ static void CG_PlayerSplash( centity_t *cent ) {
 
 	// create a mark polygon
 	VectorCopy( trace.endpos, verts[0].xyz );
-	verts[0].xyz[0] -= 32;
-	verts[0].xyz[1] -= 32;
+	verts[0].xyz[0] -= markSize;
+	verts[0].xyz[1] -= markSize;
 	VectorArray2Set( verts[0].st, 0, 0 );
 	Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
 
 	VectorCopy( trace.endpos, verts[1].xyz );
-	verts[1].xyz[0] -= 32;
-	verts[1].xyz[1] += 32;
+	verts[1].xyz[0] -= markSize;
+	verts[1].xyz[1] += markSize;
 	VectorArray2Set( verts[1].st, 0, 1 );
 	Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
 
 	VectorCopy( trace.endpos, verts[2].xyz );
-	verts[2].xyz[0] += 32;
-	verts[2].xyz[1] += 32;
+	verts[2].xyz[0] += markSize;
+	verts[2].xyz[1] += markSize;
 	VectorArray2Set( verts[2].st, 1, 1 );
 	Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
 
 	VectorCopy( trace.endpos, verts[3].xyz );
-	verts[3].xyz[0] += 32;
-	verts[3].xyz[1] -= 32;
+	verts[3].xyz[0] += markSize;
+	verts[3].xyz[1] -= markSize;
 	VectorArray2Set( verts[3].st, 1, 0 );
 	Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
 
@@ -2239,8 +2324,6 @@ static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 	qhandle_t	auraShader = cgs.media.auraRedTinyShader;
 	int			powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + state->clientNum ) );
 
-	// BFP - TODO: On monster gamemode, adjust and set conditional +10000 (max. 20000) for the player who is monster
-	
 	// red
 	if ( cg_lightweightAuras.integer <= 0
 	&& cg_polygonAura.integer <= 0
@@ -2326,36 +2409,60 @@ the other clients only show small lights.
 ===============
 */
 static void CG_DynamicAuraLight( centity_t *cent, int clientNum, float r, float g, float b ) { // BFP - Dynamic aura light
+	int dLightSize = 200;
+	int rndDLight = dLightSize * 0.7845;
+	int firstRndDlight = dLightSize * 1.26;
+
+	// BFP - Monster gamemode, player monster dynamic light size
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		dLightSize = 1000;
+	}
 	// BFP - NOTE: Originally, if cg_spriteAura or cg_particleAura is on, the lights aren't displayed. 
 	// But in that case, that can displayed, so it makes no sense not being displayed and 
 	// maybe these things were broken on original BFP.
 	if ( cg_lightAuras.integer > 0 ) {
 		if ( clientNum == cg.snap->ps.clientNum && cg_smallOwnAura.integer > 0 ) {
-			trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b );
-			trap_R_AddLightToScene( cent->lerpOrigin, 200, r, g, b );
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize, r, g, b );
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize, r, g, b );
 			if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) {
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
 			} else {
-				trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b );
-				trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&100), r, g, b );
+				dLightSize = 100;
+				// BFP - Monster gamemode, player monster dynamic light size
+				if ( cent->currentState.eFlags & EF_MONSTER ) {
+					dLightSize = 500;
+				}
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&dLightSize), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&dLightSize), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&dLightSize), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&dLightSize), r, g, b );
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&dLightSize), r, g, b );
 			}
 		} else if ( clientNum != cg.snap->ps.clientNum || cg_lightweightAuras.integer > 0 || cg_polygonAura.integer > 0 || cg_highPolyAura.integer > 0 ) {
-			trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b );
-			trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b );
-			trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&100), r, g, b );
+			dLightSize = 50;
+			// BFP - Monster gamemode, player monster dynamic light size
+			if ( cent->currentState.eFlags & EF_MONSTER ) {
+				dLightSize = 250;
+			}
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&(dLightSize * 2)), r, g, b );
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&(dLightSize * 2)), r, g, b );
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&(dLightSize * 2)), r, g, b );
 		} else {
-			trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&63), r, g, b );
-			trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b );
-			trap_R_AddLightToScene( cent->lerpOrigin, 200 + (rand()&255), r, g, b );
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&firstRndDlight), r, g, b );
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
+			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
 			if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) {
-				trap_R_AddLightToScene( cent->lerpOrigin, 100 + (rand()&150), r, g, b );
+				dLightSize = 100;
+				// BFP - Monster gamemode, player monster dynamic light size
+				if ( cent->currentState.eFlags & EF_MONSTER ) {
+					dLightSize = 500;
+				}
+				firstRndDlight = dLightSize * 1.5;
+				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&firstRndDlight), r, g, b );
 			}
 		}
 	}
@@ -2520,27 +2627,38 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		if ( destContentType & CONTENTS_WATER ) {
 			trace_t trace;
 			vec3_t start, bubbleOrigin;
+			float bubbleSize = 2;
+			float bubbleRange = 10;
 
 			VectorCopy( legs.origin, bubbleOrigin );
 			trap_CM_BoxTrace( &trace, start, bubbleOrigin, NULL, NULL, 0, CONTENTS_WATER );
 
 			bubbleOrigin[2] += -15; // put the origin below the character's feet
 
+			// BFP - Monster gamemode, player monster bubble particle size, range and position
+			if ( cent->currentState.eFlags & EF_MONSTER ) {
+				bubbleSize = 8;
+				bubbleRange = 100;
+				bubbleOrigin[2] += -85; // put the origin below the character's feet
+				trace.endpos[2] += 100;
+			}
+
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, 10 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -3; // put the origin a little below
+				bubbleRange *= 2;
 
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, 20 );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
 			}
 		}
 
@@ -2825,6 +2943,18 @@ void CG_Player( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, legs.origin );
 
 	VectorCopy( cent->lerpOrigin, legs.lightingOrigin );
+
+	// BFP - Monster gamemode, the player monster is bigger than a normal player
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		// monster model position
+		if ( cgs.monster > 0 ) {
+			CG_ModelSize( &legs, 4.75 );
+		} else { // tweak a bit because of the hit box upside... huh... :/
+			CG_ModelSize( &legs, 7.9 );
+		}
+		// adjust the model a bit up to see the legs correctly
+		legs.origin[2] -= 22;
+	}
 
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;

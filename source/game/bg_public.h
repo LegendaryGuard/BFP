@@ -102,6 +102,7 @@ typedef enum {
 	GT_SINGLE_PLAYER,	// single player ffa
 
 	GT_SURVIVAL,		// BFP - Survival "survival":					g_gametype 3
+	GT_MONSTER,			// BFP - Monster "monster" / "oozaru":			g_gametype 4
 
 	//-- team games go after this --
 
@@ -296,6 +297,7 @@ typedef enum {
 // #define	EF_AWARD_IMPRESSIVE	0x00008000		// draw an impressive sprite
 // #define	EF_AWARD_DEFEND		0x00010000		// draw a defend sprite
 // #define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
+#define	EF_MONSTER			0x00008000		// BFP - Player marked as monster on monster gametype (g_gametype 4)
 // BFP - Unused EF flag
 // #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote

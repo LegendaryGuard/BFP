@@ -197,7 +197,7 @@ static void CG_Obituary( entityState_t *ent ) {
 	}
 
 	// check for kill messages from the current clientNum
-	if ( attacker == cg.snap->ps.clientNum ) {
+	if ( attacker == cg.snap->ps.clientNum && attacker != target ) {
 		char	*s;
 
 		if ( cgs.gametype < GT_TEAM ) { // BFP - Before Q3: "You fragged %s\n%s place with %i"
@@ -615,6 +615,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		{
 			vec3_t end = {0, 0, 1};
 			vec3_t splashOrigin;
+			float bubbleSize = 2;
+			float bubbleRange = 20;
+			float debrisSize = 3;
+			float velocity = 150;
+			float accel = 250;
 
 			VectorCopy( cent->lerpOrigin, splashOrigin );
 			splashOrigin[2] += 20; // place a bit above
@@ -623,22 +628,37 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			splashOrigin[0] += (crandom() * 5);
 			splashOrigin[1] += (crandom() * 5);
 
+			// BFP - Monster gamemode, player monster particle size and positions
+			if ( cgs.gametype == GT_MONSTER
+			&& ( cent->currentState.eFlags & EF_MONSTER ) ) {
+				bubbleSize = 8;
+				bubbleRange = 100;
+				debrisSize = 8;
+				velocity = 400;
+				accel = 700;
+			}
+
 			// Splash!
 			// BFP - NOTE: These are not debris :P
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
+			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
 
 			splashOrigin[2] -= 25; // place a bit below
+			// BFP - Monster gamemode, player monster particle size and positions
+			if ( cgs.gametype == GT_MONSTER
+			&& ( cent->currentState.eFlags & EF_MONSTER ) ) {
+				splashOrigin[2] -= 100; // place a bit below
+			}
 
 			// Blub, blub, blub...
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, 20 );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
 		}
 		break;
 	case EV_WATER_CLEAR:

@@ -97,6 +97,7 @@ static const char *gametype_items[] = {
 	"Free For All",
 	"Tournament",
 	"Survival",					// BFP - Survival
+	"Monster",					// BFP - Monster
 	"Capture the Flag",
 	"Team Deathmatch",
 	0
@@ -106,6 +107,7 @@ static int gametype_remap[] = {
 	GT_FFA,			// "Free For All"
 	GT_TOURNAMENT,	// "Tournament"
 	GT_SURVIVAL,	// "Survival"
+	GT_MONSTER,		// "Monster"
 	GT_CTF,			// "Capture the Flag"
 	GT_TEAM		// "Team Deathmatch"
 };
@@ -114,6 +116,7 @@ static int gametype_remap2[] = {	// Take a look on gametype_items indexes
 	1,	// GT_TOURNAMENT (1)	->	"Tournament"
 	0,	// GT_SINGLE_PLAYER (2)		(not in menu, default to 0)
 	2,	// GT_SURVIVAL (3)		->	"Survival"
+	3,	// GT_MONSTER (4)		->	"Monster"
 	5,	// GT_TEAM (5)			->	"Team Deathmatch"
 	4	// GT_CTF (7)			->	"Capture the Flag"
 };
@@ -157,6 +160,12 @@ static int GametypeBits( char *string ) {
 		// BFP - Survival
 		if( Q_stricmp( token, "survival" ) == 0 ) {
 			bits |= 1 << GT_SURVIVAL;
+			continue;
+		}
+
+		// BFP - Monster
+		if( Q_stricmp( token, "monster" ) == 0 || Q_stricmp( token, "oozaru" ) == 0 ) {
+			bits |= 1 << GT_MONSTER;
 			continue;
 		}
 

@@ -711,8 +711,12 @@ void ClientUserinfoChanged( int clientNum ) {
 	char	userinfo[MAX_INFO_STRING];
 
 	// BFP - Model prefix load
+	char originalPlayerModel[MAX_QPATH];
 	char newModelPrefix[MAX_QPATH];
 	char *oldModelDash, *newModelDash;
+
+	// BFP - Monster gamemode, constant monster model name variable
+	const char	*MONSTER_NAME = "oozaru";
 
 	ent = g_entities + clientNum;
 	client = ent->client;
@@ -766,7 +770,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
 #endif
-	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
+
 	client->ps.stats[STAT_MAX_HEALTH] = 1 + client->ps.persistant[PERS_POWERLEVEL];
 	if ( client->ps.stats[STAT_MAX_HEALTH] > 1000 ) {
 		client->ps.stats[STAT_MAX_HEALTH] = 1000;
@@ -776,9 +780,15 @@ void ClientUserinfoChanged( int clientNum ) {
 	if( g_gametype.integer >= GT_TEAM ) {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "team_model"), sizeof( model ) );
 		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "team_headmodel"), sizeof( headModel ) );
+
+		// BFP - Save original player model
+		Q_strncpyz( originalPlayerModel, Info_ValueForKey (userinfo, "team_model"), sizeof( originalPlayerModel ) );
 	} else {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "headmodel"), sizeof( headModel ) );
+
+		// BFP - Save original player model
+		Q_strncpyz( originalPlayerModel, Info_ValueForKey (userinfo, "model"), sizeof( originalPlayerModel ) );
 	}
 
 	// bots set their team a few frames later
@@ -817,16 +827,29 @@ void ClientUserinfoChanged( int clientNum ) {
 	strcpy(redTeam, Info_ValueForKey( userinfo, "g_redteam" ));
 	strcpy(blueTeam, Info_ValueForKey( userinfo, "g_blueteam" ));
 
+	// BFP - Monster gamemode, if g_monster is enabled, that "monster" appears :)
+	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
+	&& level.monsterClientNum == client->ps.clientNum
+	&& ( client->ps.eFlags & EF_MONSTER ) ) {
+		Q_strncpyz( model, MONSTER_NAME, sizeof( model ) );
+		Q_strncpyz( headModel, MONSTER_NAME, sizeof( headModel ) );
+	}
+
+	// BFP - NOTE: "omodel" is added for Monster gamemode purposes. 
+	// Historically, on RC versions, the monster model pack went without player sounds 
+	// and the game loaded the selected player model sounds that the user played 
+	// on the other gamemodes
+
 	// send over a subset of the userinfo keys so other clients can
 	// print scoreboards, display models, and play custom sounds
 	if ( ent->r.svFlags & SVF_BOT ) {
-		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
-			client->pers.netname, team, model, headModel, c1, c2, 
+		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\hmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
+			client->pers.netname, team, model, originalPlayerModel, headModel, c1, c2, 
 			client->ps.stats[STAT_MAX_HEALTH], client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ), teamTask, teamLeader );
 	} else {
-		s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
-			client->pers.netname, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 
+		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
+			client->pers.netname, client->sess.sessionTeam, model, originalPlayerModel, headModel, redTeam, blueTeam, c1, c2, 
 			client->ps.stats[STAT_MAX_HEALTH], client->sess.wins, client->sess.losses, teamTask, teamLeader);
 	}
 
@@ -842,11 +865,11 @@ void ClientUserinfoChanged( int clientNum ) {
 			Q_strncpyz( ent->oldModelPrefix, ent->oldModel, sizeof( ent->oldModelPrefix ) );
 		}
 
-		newModelDash = strchr(model, '-');
+		newModelDash = strchr(originalPlayerModel, '-');
 		if ( newModelDash ) {
-			Q_strncpyz( newModelPrefix, model, newModelDash - model + 1 );
+			Q_strncpyz( newModelPrefix, originalPlayerModel, newModelDash - originalPlayerModel + 1 );
 		} else {
-			Q_strncpyz( newModelPrefix, model, sizeof( newModelPrefix ) );
+			Q_strncpyz( newModelPrefix, originalPlayerModel, sizeof( newModelPrefix ) );
 		}
 
 		// compare model prefixes
@@ -859,7 +882,7 @@ void ClientUserinfoChanged( int clientNum ) {
 		}
 
 		// save the new model as the old model for the next time this function runs
-		Q_strncpyz( ent->oldModel, model, sizeof( ent->oldModel ) );
+		Q_strncpyz( ent->oldModel, originalPlayerModel, sizeof( ent->oldModel ) );
 	}
 
 	// this is not the userinfo, more like the configstring actually
@@ -901,6 +924,65 @@ static short ClientGetAveragePowerlevel( void ) { // BFP - Average powerlevel
 	return ( activeClients > 0 ) ? ( totalPowerLevel / activeClients ) : 0;
 }
 
+/*
+==================
+ClientBecomeMonster
+
+Sets the player monster status and properties.
+==================
+*/
+static void ClientBecomeMonster( gentity_t *ent ) { // BFP - Monster gamemode function to set the player monster status
+	// double health and max health
+	ent->client->ps.stats[STAT_MAX_HEALTH] *= 2;
+	ent->health = ent->client->ps.stats[STAT_HEALTH] = ent->client->ps.stats[STAT_MAX_HEALTH];
+
+	// double ki and max ki
+	ent->client->ps.stats[STAT_MAX_KI] *= 2;
+	ent->client->ps.ammo[WP_KI] = ent->client->ps.stats[STAT_MAX_KI];
+
+	ent->client->ps.eFlags |= EF_MONSTER;
+
+	// update collision
+	//trap_LinkEntity( ent );
+
+	trap_SendServerCommand( -1, va("print \"%s is the monster\n\"", ent->client->pers.netname) );
+}
+
+/*
+===========
+ClientCheckMonsterGone
+
+Check if the player monster is gone and set the monster 
+to the most waited player.
+============
+*/
+static void ClientCheckMonsterGone( gentity_t *ent ) { // BFP - Monster gamemode function check
+	if ( g_gametype.integer == GT_MONSTER 
+	&& ( ent->client->ps.eFlags & EF_MONSTER )
+	&& ent->client->ps.clientNum == level.monsterClientNum ) {
+		qboolean becameMonster = qfalse;
+		int i;
+		for ( i = 0 ; i < level.maxclients ; ++i ) {
+			if ( g_entities[i].client->pers.connected == CON_CONNECTED
+			&& g_entities[i].client->sess.sessionTeam != TEAM_SPECTATOR
+			&& ent->client->ps.clientNum != g_entities[i].client->ps.clientNum ) {
+				level.monsterClientNum = g_entities[i].client->ps.clientNum;
+				g_entities[i].client->ps.eFlags |= EF_MONSTER;
+				becameMonster = qtrue;
+				// force change if playing with that "monster" thing
+				if ( g_monster.integer > 0 ) {
+					ClientUserinfoChanged( g_entities[i].client->ps.clientNum );
+				}
+				respawn( &g_entities[i] );
+				break;
+			}
+		}
+		// a check to detect if no one is here, so reset the value, otherwise whoever joins won't become a monster
+		if ( !becameMonster ) {
+			level.monsterClientNum = -1;
+		}
+	}
+}
 
 /*
 ===========
@@ -958,9 +1040,20 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	ent->client = level.clients + clientNum;
 	client = ent->client;
 
+	// BFP - Monster gamemode
+	if ( level.monsterClientNum == -1 ) {
+		// first player becomes the monster
+		level.monsterClientNum = clientNum;
+	}
+
 //	areabits = client->areabits;
 
 	memset( client, 0, sizeof(*client) );
+	
+	// BFP - Monster gamemode
+	if ( clientNum == level.monsterClientNum ) {
+		client->ps.eFlags |= EF_MONSTER;
+	}
 
 	client->pers.connected = CON_CONNECTING;
 
@@ -1068,6 +1161,15 @@ void ClientBegin( int clientNum ) {
 	memset( &client->ps, 0, sizeof( client->ps ) );
 	client->ps.eFlags = flags;
 
+	// BFP - Monster gamemode
+	if ( level.monsterClientNum == -1 ) {
+		// first player becomes the monster
+		level.monsterClientNum = clientNum;
+	}
+	if ( clientNum == level.monsterClientNum ) {
+		client->ps.eFlags |= EF_MONSTER;
+	}
+
 	// BFP - Survival, save scores if the players are spectating
 	if ( g_gametype.integer == GT_SURVIVAL ) {
 		client->ps.persistant[PERS_SCORE] = savedScore;
@@ -1135,6 +1237,12 @@ void ClientSpawn(gentity_t *ent) {
 						spawn_origin, spawn_angles);
 	} else {
 		do {
+			// BFP - Monster gamemode, the player monster spawns at the spectator spawn point, kinda curious (¬_¬)
+			if ( g_gametype.integer == GT_MONSTER
+			&& ( client->ps.eFlags & EF_MONSTER ) ) {
+				spawnPoint = SelectSpectatorSpawnPoint ( spawn_origin, spawn_angles );
+				break;
+			}
 			// the first spawn should be at a good looking spot
 			if ( !client->pers.initialSpawn && client->pers.localClient ) {
 				client->pers.initialSpawn = qtrue;
@@ -1255,7 +1363,6 @@ void ClientSpawn(gentity_t *ent) {
 	trap_SetConfigstring( CS_POWERLEVEL + client->ps.clientNum, va( "%d", client->ps.persistant[PERS_POWERLEVEL] ) );
 	
 	// BFP - Max health start
-	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
 	client->ps.stats[STAT_MAX_HEALTH] = 1 + client->ps.persistant[PERS_POWERLEVEL];
 	if ( client->ps.stats[STAT_MAX_HEALTH] > 1000 ) {
 		client->ps.stats[STAT_MAX_HEALTH] = 1000;
@@ -1267,32 +1374,44 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.ammo[WP_KI] = client->ps.ammo[WP_KI] + ( 9.00825 * client->ps.persistant[PERS_POWERLEVEL] );
 	client->ps.stats[STAT_MAX_KI] = client->ps.ammo[WP_KI];
 
-	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, check with max ki multiplied per 2
 	if ( client->ps.stats[STAT_MAX_KI] > 10000 ) {
 		client->ps.stats[STAT_MAX_KI] = client->ps.ammo[WP_KI] = 10000;
 	}
 
-	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
-	client->ps.ammo[WP_MACHINEGUN] = 100;
-
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ROCKET_LAUNCHER );
-	client->ps.ammo[WP_ROCKET_LAUNCHER] = 100;
-
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_PLASMAGUN );
-	client->ps.ammo[WP_PLASMAGUN] = 100;
+	// BFP - Monster gamemode
+	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
+	&& client->ps.clientNum == level.monsterClientNum ) {
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_BFG );
+		client->ps.ammo[WP_BFG] = 100;
+	} else {
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
+		client->ps.ammo[WP_MACHINEGUN] = 100;
 	
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_RAILGUN );
-	client->ps.ammo[WP_RAILGUN] = 100;
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ROCKET_LAUNCHER );
+		client->ps.ammo[WP_ROCKET_LAUNCHER] = 100;
 	
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_BFG );
-	client->ps.ammo[WP_BFG] = 100;
-
-	client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
-	client->ps.ammo[WP_GAUNTLET] = -1;
-	client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_PLASMAGUN );
+		client->ps.ammo[WP_PLASMAGUN] = 100;
+		
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_RAILGUN );
+		client->ps.ammo[WP_RAILGUN] = 100;
+		
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_BFG );
+		client->ps.ammo[WP_BFG] = 100;
+	
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
+		client->ps.ammo[WP_GAUNTLET] = -1;
+		client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+	}
 
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH]; // BFP - Before Q3: + 25
+
+	// BFP - Monster gamemode
+	if ( g_gametype.integer == GT_MONSTER && client->ps.clientNum == level.monsterClientNum
+	&& ent->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		ClientBecomeMonster( ent );
+	}
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );
@@ -1304,7 +1423,8 @@ void ClientSpawn(gentity_t *ent) {
 	SetClientViewAngle( ent, spawn_angles );
 
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
-
+		// BFP - Monster gamemode, if this guy spectated, respawn the other guy who can be become a monster
+		ClientCheckMonsterGone( ent );
 	} else {
 		G_KillBox( ent );
 		trap_LinkEntity (ent);
@@ -1421,6 +1541,9 @@ void ClientDisconnect( int clientNum ) {
 		level.clients[ level.sortedClients[0] ].sess.wins++;
 		ClientUserinfoChanged( level.sortedClients[0] );
 	}
+
+	// BFP - Monster gamemode, if this guy disconnected, respawn the other guy who can be become a monster
+	ClientCheckMonsterGone( ent );
 
 	trap_UnlinkEntity (ent);
 	ent->s.modelindex = 0;

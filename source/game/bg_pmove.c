@@ -458,6 +458,18 @@ static float PM_CmdScale( usercmd_t *cmd ) {
 	int		max;
 	float	total;
 	float	scale;
+	// BFP - Monster gamemode, player monster speed is doubled
+	float	speed = pm->ps->speed;
+	if ( pm->ps->eFlags & EF_MONSTER ) {
+		if ( !( pm->ps->eFlags & EF_KI_BOOST )
+		&& !( pm->cmd.buttons & BUTTON_KI_USE )
+		&& !( pm->ps->eFlags & EF_FLIGHT )
+		&& !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+			speed *= 2;
+		} else {
+			speed *= 1.25;
+		}
+	}
 
 	max = abs( cmd->forwardmove );
 	if ( abs( cmd->rightmove ) > max ) {
@@ -472,7 +484,7 @@ static float PM_CmdScale( usercmd_t *cmd ) {
 
 	total = sqrt( cmd->forwardmove * cmd->forwardmove
 		+ cmd->rightmove * cmd->rightmove + cmd->upmove * cmd->upmove );
-	scale = (float)pm->ps->speed * max / ( 127.0 * total );
+	scale = (float)speed * max / ( 127.0 * total );
 
 	return scale;
 }
@@ -604,11 +616,20 @@ PM_CheckWaterSpot
 =============
 */
 static qboolean PM_CheckWaterSpot( vec3_t direction, vec3_t spot, int cont, int horizontalVel, int verticalVel ) { // BFP - Check spot to jump off water
-	VectorMA ( pm->ps->origin, 30, direction, spot );
+	// BFP - Monster gamemode, use the measures to jump correctly near to the spot
+	float spotDir = 1, spotUnits = 1;
+	if ( pm->ps->eFlags & EF_MONSTER ) {
+		spotDir = 2.5;
+		spotUnits = 5.625;
+		verticalVel *= spotDir;
+		horizontalVel *= spotDir;
+	}
+
+	VectorMA ( pm->ps->origin, 30 * spotDir, direction, spot );
 	spot[2] += 4;
 	cont = pm->pointcontents( spot, pm->ps->clientNum );
-	if ( pm->pointcontents( spot, pm->ps->clientNum ) & CONTENTS_SOLID ) {
-		spot[2] += 16;
+	if ( cont & CONTENTS_SOLID ) {
+		spot[2] += 16 * spotUnits;
 		cont = pm->pointcontents( spot, pm->ps->clientNum );
 		if ( !cont ) {
 			VectorScale( pml.forward, horizontalVel, pm->ps->velocity );
@@ -1838,6 +1859,17 @@ static void PM_CheckDuck (void)
 	{
 		pm->maxs[2] = 32;
 		pm->ps->viewheight = DEFAULT_VIEWHEIGHT;
+	}
+
+	// BFP - Monster gamemode, player monster bounding box sizes
+	if ( pm->ps->eFlags & EF_MONSTER ) {
+		pm->mins[0] *= 2.5;
+		pm->mins[1] *= 2.5;
+		pm->mins[2] *= 5.625;
+
+		pm->maxs[0] *= 2.5;
+		pm->maxs[1] *= 2.5;
+		pm->maxs[2] *= 5.625;
 	}
 }
 

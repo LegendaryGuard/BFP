@@ -230,8 +230,6 @@ static void CG_OffsetThirdPersonView( void ) {
 	vec3_t		overrideOrg;
 	float		camAngle, camHeight, camRange;
 
-	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, adjust the camera height and/or range views
-
 	// BFP - Camera setup
 	camAngle  =  cg_thirdPersonAngle.value;
 	camHeight =  cg_thirdPersonHeight.value;
@@ -240,6 +238,15 @@ static void CG_OffsetThirdPersonView( void ) {
 		camAngle  =   0.0f;
 		camHeight = -60.0f;
 		camRange  = 110.0f;
+	}
+
+	// BFP - Monster gamemode, force player monster third person camera views
+	if ( cg.predictedPlayerState.eFlags & EF_MONSTER ) {
+		camHeight = -530.0f;
+		camRange  =  900.0f;
+		// BFP original camera view position (disabled)
+		// camHeight = -385.0f;
+		// camRange  =  500.0f;
 	}
 	VectorCopy( cg.refdef.vieworg, overrideOrg );
 

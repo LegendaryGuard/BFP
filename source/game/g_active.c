@@ -489,7 +489,6 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	}
 
 	// BFP - Set maximum ki
-	// BFP - TODO: On monster gamemode, set +10000 (max. 20000) for the player who is monster
 	if ( client->ps.ammo[WP_KI] > client->ps.stats[STAT_MAX_KI] ) {
 		client->ps.ammo[WP_KI] = client->ps.stats[STAT_MAX_KI];
 	}

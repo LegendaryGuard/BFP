@@ -445,6 +445,9 @@ typedef struct {
 	int			numSpawnSpots;
 	int			numSpawnSpotsTeam;
 	int			numSpawnSpotsFFA;
+
+	// BFP - Monster gamemode clientNum handling
+	int			monsterClientNum;
 } level_locals_t;
 
 

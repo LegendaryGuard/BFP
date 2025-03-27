@@ -117,7 +117,7 @@ static const char *servertype_items[] = {
 	"Free For All",
 	"Tournament",
 	"Survival", // BFP - Survival gametype
-	"Oozaru", // BFP - TODO: Oozaru gametype, remove TODO and this comment if it has been added successfully
+	"Monster", // BFP - Monster gametype
 	"Team Deathmatch",
 	"Last Man Standing", // BFP - TODO: LMS gametype, remove TODO and this comment if it has been added successfully
 	"Capture the Flag",

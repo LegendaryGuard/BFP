@@ -158,6 +158,10 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 	&& cgs.gametype != GT_SURVIVAL ) { // BFP - Survival, don't draw SPECT word on score column
 		Com_sprintf(string, sizeof(string),
 			" SPECT %3i %4i %s", score->ping, score->time, ci->name);
+	} else if ( cgs.gametype == GT_MONSTER // BFP - Monster gamemode, mark the player who is monster
+	&& ( cg_entities[score->client].currentState.eFlags & EF_MONSTER ) ) {
+		Com_sprintf(string, sizeof(string),
+			"MON%2i %3i %4i %s", score->score, score->ping, score->time, ci->name);
 	} else {
 		Com_sprintf(string, sizeof(string),
 			"%5i %4i %4i %s", score->score, score->ping, score->time, ci->name);

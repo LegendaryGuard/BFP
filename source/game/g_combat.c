@@ -348,7 +348,6 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	attacker->client->ps.stats[STAT_MAX_KI] = 999 + ( 9.00825 * attacker->client->ps.persistant[PERS_POWERLEVEL] );
 
 	// BFP - Avoid exceeding maximum ki
-	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the maximum ki per 2: maxKi = maxKi * 2
 	if ( attacker->client->ps.stats[STAT_MAX_KI] > 10000 ) {
 		attacker->client->ps.stats[STAT_MAX_KI] = 10000;
 	}
@@ -367,7 +366,6 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	}
 
 	// BFP - Add max health and balance health
-	// BFP - TODO: On monster gametype (g_gametype 4), if the player is a monster, multiply the max health per 2: maxHealth = ( 1 + powerlevel ) * 2
 	if ( attacker->client->ps.stats[STAT_MAX_HEALTH] < 1000 ) {
 		float currentHealthPercentage = ( (float)attacker->client->ps.stats[STAT_HEALTH] / (float)attacker->client->ps.stats[STAT_MAX_HEALTH] ) * 10.0f;
 		
@@ -519,6 +517,55 @@ static void CheckSurvivalRules( gentity_t *self, int meansOfDeath ) { // BFP - S
 	Survival_ForceToSpectateAndRespawnAnotherPlayer( self );
 
 	CheckSurvivalWarmup();
+}
+
+/*
+==========================
+CheckMonsterGamemodeRules
+==========================
+*/
+static void CheckMonsterGamemodeRules( gentity_t *self, gentity_t *attacker, int meansOfDeath ) { // BFP - Monster gamemode rules
+	qboolean selfMonster = ( self && self->client && self->client->ps.clientNum == level.monsterClientNum );
+
+	if ( g_gametype.integer != GT_MONSTER ) {
+		return;
+	}
+
+	// if it's going to spectate
+	if ( selfMonster && self->client->pers.teamState.state == TEAM_BEGIN ) {
+		return;
+	}
+
+	// if changed the character, just respawn
+	if ( selfMonster && meansOfDeath == MOD_UNKNOWN ) {
+		respawn( self );
+		return;
+	}
+
+	if ( selfMonster && ( meansOfDeath == MOD_TRIGGER_HURT || meansOfDeath == MOD_CRUSH || meansOfDeath == MOD_FALLING ) ) {
+		trap_SendServerCommand( -1, va("print \"The monster died without a killer.\n\"") );
+		respawn( self );
+		return;
+	}
+
+	if ( attacker && attacker->client && selfMonster ) {
+		if ( attacker == self ) {
+			trap_SendServerCommand( -1, va("print \"The monster killed himself!\n\"") );
+			respawn( attacker );
+			return;
+		}
+		trap_SendServerCommand( -1, va("print \"%s killed the monster!\n\"", attacker->client->pers.netname) );
+		level.monsterClientNum = attacker->client->ps.clientNum;
+		self->client->ps.eFlags &= ~EF_MONSTER;
+		attacker->client->ps.eFlags |= EF_MONSTER;
+
+		// if they're playing with the monster, then they're forced to change to that "monster" thing
+		if ( g_monster.integer > 0 ) {
+			ClientUserinfoChanged( self->client->ps.clientNum );
+			ClientUserinfoChanged( attacker->client->ps.clientNum );
+		}
+		respawn( attacker );
+	}
 }
 
 /*
@@ -768,6 +815,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	// BFP - Survival rules
 	CheckSurvivalRules( self, meansOfDeath );
+
+	// BFP - Monster gamemode rules
+	CheckMonsterGamemodeRules( self, attacker, meansOfDeath );
 }
 
 

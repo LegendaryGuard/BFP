@@ -19,7 +19,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 - [ ] Attacksets (configurable for cfgs)
 - [ ] Cvars as described on old docs
-- [ ] Gametype: Monster (`g_gametype 4`)
 - [ ] Gametype: Last Man Standing (`g_gametype 6`)
 - [ ] Power Struggles (when two beam attacks collide)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
@@ -36,6 +35,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
 - [x] ~~Breakable map entities ("func_breakable")~~
 - [x] ~~Gametype: Survival (`g_gametype 3`)~~
+- [x] ~~Gametype: Monster (`g_gametype 4`)~~
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
 - [x] ~~Instant character model changing~~
 - [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
@@ -154,6 +154,16 @@ You'll notice some differences and things that the original Bid For Power didn't
   - no specified stuck animation, so any animation is correctly handled when being stuck (on original BFP, when the player is stuck or pretty near to something solid, the reason is still unknown though. It does a jumping forward/backward animation, that doesn't make sense)
   - water movement handling is different from original BFP, but it works similarly
 - survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own preffix, dies and respawns during warmup, the warmup resets. So, that's unfair)
+- monster/oozaru gamemode has the following in-game differences compared to the original:
+  - the player monster is labeled 'MON' on the scoreboard so teammates can identify them quickly
+  - the player monster has a larger floating sprite chat
+  - the player monster has a larger shadow effect similar to regular players
+  - the player monster's ki trails are larger than other players'
+  - the player monster generates bigger bubbles, smoke, and antigrav rock particles when charging/using ki boost
+  - player monster's first-person and first-person vis mode viewpoints work properly
+  - player monster's third-person camera has improved focus (similar to BFP's standard third-person view but scaled for giant characters)
+  - `g_monster` cvar enables the monster/big monkey feature (that happened in the RC/beta versions)
+  - available in the UI, maps marked as `monster` besides `oozaru` can be viewed in the UI
 - some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
 - file size differences between the QVM and the original BFP QVM can be quite significant
 - kiCharge, boostCost and blockCost cvars work differently
