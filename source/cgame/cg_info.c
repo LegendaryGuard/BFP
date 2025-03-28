@@ -234,16 +234,16 @@ void CG_DrawInformation( void ) {
 	}
 
 	// BFP - Melee only
-	trap_Cvar_VariableStringBuffer( "g_meleeOnly", buf, sizeof( buf ) );
-	if ( atoi( buf ) ) {
+	s = Info_ValueForKey( info, "g_meleeOnly" );
+	if ( atoi( s ) > 0 ) {
 		UI_DrawProportionalString( 320, y, "MELEE ONLY",
 			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
 		y += PROP_HEIGHT;
 	}
 
 	// BFP - No flight
-	trap_Cvar_VariableStringBuffer( "g_noFlight", buf, sizeof( buf ) );
-	if ( atoi( buf ) ) {
+	s = Info_ValueForKey( info, "g_noFlight" );
+	if ( atoi( s ) > 0 ) {
 		UI_DrawProportionalString( 320, y, "NO FLIGHT",
 			UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, colorWhite );
 		y += PROP_HEIGHT;
