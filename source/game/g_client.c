@@ -701,19 +701,19 @@ void ClientUserinfoChanged( int clientNum ) {
 	// int		health;
 	char	*s;
 	char	model[MAX_QPATH];
-	char	headModel[MAX_QPATH];
 	char	oldname[MAX_STRING_CHARS];
 	gclient_t	*client;
 	char	c1[MAX_INFO_STRING];
-	char	c2[MAX_INFO_STRING];
-	char	redTeam[MAX_INFO_STRING];
-	char	blueTeam[MAX_INFO_STRING];
 	char	userinfo[MAX_INFO_STRING];
 
 	// BFP - Model prefix load
 	char originalPlayerModel[MAX_QPATH];
 	char newModelPrefix[MAX_QPATH];
 	char *oldModelDash, *newModelDash;
+
+	// BFP - Skin name to truncate the "/default" word
+	char	skinName[MAX_QPATH];
+	char	*slash;
 
 	// BFP - Monster gamemode, constant monster model name variable
 	const char	*MONSTER_NAME = "oozaru";
@@ -779,16 +779,26 @@ void ClientUserinfoChanged( int clientNum ) {
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "team_model"), sizeof( model ) );
-		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "team_headmodel"), sizeof( headModel ) );
+		// BFP - Truncate the "/default" word
+		slash = strchr( model, '/' );
+		if ( slash ) {
+			Q_strncpyz( skinName, slash + 1, sizeof( skinName ) );
+			*slash = 0;
+		}
 
 		// BFP - Save original player model
-		Q_strncpyz( originalPlayerModel, Info_ValueForKey (userinfo, "team_model"), sizeof( originalPlayerModel ) );
+		Q_strncpyz( originalPlayerModel, model, sizeof( originalPlayerModel ) );
 	} else {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
-		Q_strncpyz( headModel, Info_ValueForKey (userinfo, "headmodel"), sizeof( headModel ) );
+		// BFP - Truncate the "/default" word
+		slash = strchr( model, '/' );
+		if ( slash ) {
+			Q_strncpyz( skinName, slash + 1, sizeof( skinName ) );
+			*slash = 0;
+		}
 
 		// BFP - Save original player model
-		Q_strncpyz( originalPlayerModel, Info_ValueForKey (userinfo, "model"), sizeof( originalPlayerModel ) );
+		Q_strncpyz( originalPlayerModel, model, sizeof( originalPlayerModel ) );
 	}
 
 	// bots set their team a few frames later
@@ -815,24 +825,14 @@ void ClientUserinfoChanged( int clientNum ) {
 		client->pers.teamInfo = qfalse;
 	}
 
-	// team task (0 = none, 1 = offence, 2 = defence)
-	teamTask = atoi(Info_ValueForKey(userinfo, "teamtask"));
-	// team Leader (1 = leader, 0 is normal player)
-	teamLeader = client->sess.teamLeader;
-
 	// colors
 	strcpy(c1, Info_ValueForKey( userinfo, "color1" ));
-	strcpy(c2, Info_ValueForKey( userinfo, "color2" ));
-
-	strcpy(redTeam, Info_ValueForKey( userinfo, "g_redteam" ));
-	strcpy(blueTeam, Info_ValueForKey( userinfo, "g_blueteam" ));
 
 	// BFP - Monster gamemode, if g_monster is enabled, that "monster" appears :)
 	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
 	&& level.monsterClientNum == client->ps.clientNum
 	&& ( client->ps.eFlags & EF_MONSTER ) ) {
 		Q_strncpyz( model, MONSTER_NAME, sizeof( model ) );
-		Q_strncpyz( headModel, MONSTER_NAME, sizeof( headModel ) );
 	}
 
 	// BFP - NOTE: "omodel" is added for Monster gamemode purposes. 
@@ -843,14 +843,14 @@ void ClientUserinfoChanged( int clientNum ) {
 	// send over a subset of the userinfo keys so other clients can
 	// print scoreboards, display models, and play custom sounds
 	if ( ent->r.svFlags & SVF_BOT ) {
-		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\hmodel\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s\\tt\\%d\\tl\\%d",
-			client->pers.netname, team, model, originalPlayerModel, headModel, c1, c2, 
+		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\c1\\%s\\hc\\%i\\w\\%i\\l\\%i\\skill\\%s",
+			client->pers.netname, team, model, originalPlayerModel, c1, 
 			client->ps.stats[STAT_MAX_HEALTH], client->sess.wins, client->sess.losses,
-			Info_ValueForKey( userinfo, "skill" ), teamTask, teamLeader );
+			Info_ValueForKey( userinfo, "skill" ) );
 	} else {
-		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
-			client->pers.netname, client->sess.sessionTeam, model, originalPlayerModel, headModel, redTeam, blueTeam, c1, c2, 
-			client->ps.stats[STAT_MAX_HEALTH], client->sess.wins, client->sess.losses, teamTask, teamLeader);
+		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\c1\\%s\\hc\\%i\\w\\%i\\l\\%i",
+			client->pers.netname, client->sess.sessionTeam, model, originalPlayerModel, c1, 
+			client->ps.stats[STAT_MAX_HEALTH], client->sess.wins, client->sess.losses );
 	}
 
 	trap_SetConfigstring( CS_PLAYERS+clientNum, s );

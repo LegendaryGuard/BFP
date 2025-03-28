@@ -311,7 +311,6 @@ typedef struct {
 	int				botSkill;		// 0 = not bot, 1-5 = bot
 
 	vec3_t			color1;
-	vec3_t			color2;
 
 	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
@@ -321,9 +320,6 @@ typedef struct {
 
 	int				handicap;
 	int				wins, losses;	// in tourney mode
-
-	int				teamTask;		// task in teamplay (offence/defence)
-	qboolean		teamLeader;		// true when this is a team leader
 
 	int				powerups;		// so can display quad/flag status
 
@@ -344,8 +340,6 @@ typedef struct {
 	// BFP - Monster original player model name to keep the player sounds
 	char			originalModelName[MAX_QPATH];
 
-	char			redTeam[MAX_TEAMNAME];
-	char			blueTeam[MAX_TEAMNAME];
 	qboolean		deferred;
 
 	qboolean		newAnims;		// true if using the new mission pack animations

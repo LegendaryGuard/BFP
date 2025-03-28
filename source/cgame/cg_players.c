@@ -996,9 +996,6 @@ void CG_NewClientInfo( int clientNum ) {
 	v = Info_ValueForKey( configstring, "c1" );
 	CG_ColorFromString( v, newInfo.color1 );
 
-	v = Info_ValueForKey( configstring, "c2" );
-	CG_ColorFromString( v, newInfo.color2 );
-
 	// bot skill
 	v = Info_ValueForKey( configstring, "skill" );
 	newInfo.botSkill = atoi( v );
@@ -1018,20 +1015,6 @@ void CG_NewClientInfo( int clientNum ) {
 	// team
 	v = Info_ValueForKey( configstring, "t" );
 	newInfo.team = atoi( v );
-
-	// team task
-	v = Info_ValueForKey( configstring, "tt" );
-	newInfo.teamTask = atoi(v);
-
-	// team leader
-	v = Info_ValueForKey( configstring, "tl" );
-	newInfo.teamLeader = atoi(v);
-
-	v = Info_ValueForKey( configstring, "g_redteam" );
-	Q_strncpyz(newInfo.redTeam, v, MAX_TEAMNAME);
-
-	v = Info_ValueForKey( configstring, "g_blueteam" );
-	Q_strncpyz(newInfo.blueTeam, v, MAX_TEAMNAME);
 
 	// model
 	v = Info_ValueForKey( configstring, "model" );
@@ -1094,8 +1077,6 @@ void CG_NewClientInfo( int clientNum ) {
 		}
 	}
 
-	// head model
-	v = Info_ValueForKey( configstring, "hmodel" );
 	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
 #if 0
 	if ( cg_forceModel.integer ) {
@@ -1128,8 +1109,9 @@ void CG_NewClientInfo( int clientNum ) {
 		}
 	} else 
 #endif
-	Q_strncpyz( newInfo.headModelName, v, sizeof( newInfo.headModelName ) );
 
+	// BFP - Set the head model name as the same as model name
+	Q_strncpyz( newInfo.headModelName, newInfo.modelName, sizeof( newInfo.headModelName ) );
 	slash = strchr( newInfo.headModelName, '/' );
 	if ( !slash ) {
 		// modelName didn not include a skin name
