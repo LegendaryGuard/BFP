@@ -2437,6 +2437,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	}
 
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+		pm->ps->pm_time = 0; // Make sure the animation isn't playing yet
 		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
 		pm->ps->pm_flags &= ~PMF_NEARGROUND; // Make sure to handle the PMF flag

@@ -1010,6 +1010,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
 		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
+		// BFP - Lose altitude while flying/floating underwater
+		if ( targ->client->ps.velocity[2] > 0 ) {
+			targ->client->ps.velocity[2] = -targ->client->ps.velocity[2];
+		}
 
 		// set the timer so that the other client can't cancel
 		// out the movement immediately
