@@ -340,7 +340,7 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 		attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
 	}
 	// BFP - Send powerlevel data to all clients
-	trap_SetConfigstring( CS_POWERLEVEL + attacker->client->ps.clientNum, va( "%d", attacker->client->ps.persistant[PERS_POWERLEVEL] ) );
+	ClientSendPowerlevelInfo();
 
 	// BFP - Add more maximum ki
 	currentKiPercentage = ( (float)attacker->client->ps.ammo[WP_KI] / (float)attacker->client->ps.stats[STAT_MAX_KI] );

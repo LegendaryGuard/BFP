@@ -327,6 +327,9 @@ typedef struct {
 	int				invulnerabilityStartTime;
 	int				invulnerabilityStopTime;
 
+	// BFP - Powerlevel
+	int				powerlevel;
+
 	int				breathPuffTime;
 
 	// when clientinfo is changed, the loading of models/skins/sounds

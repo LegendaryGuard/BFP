@@ -682,6 +682,26 @@ static void ClientCleanName( const char *in, char *out, int outSize ) {
 	}
 }
 
+/*
+===========
+ClientSendPowerlevelInfo
+============
+*/
+void ClientSendPowerlevelInfo( void ) { // BFP - Send player's powerlevel info
+	int		i = 0;
+
+	while ( i < level.numConnectedClients ) {
+		gentity_t	*ent = &g_entities[level.sortedClients[i]];
+
+		trap_SendServerCommand( -1,
+			va( "powerlevel %d %d",
+				ent->client->ps.clientNum,
+				ent->client->ps.persistant[PERS_POWERLEVEL]
+			)
+		);
+		++i;
+	}
+}
 
 /*
 ===========
@@ -1360,7 +1380,7 @@ void ClientSpawn(gentity_t *ent) {
 		client->ps.persistant[PERS_POWERLEVEL] = g_maxSpawnPL.integer;
 	}
 	// BFP - Send powerlevel data to all clients
-	trap_SetConfigstring( CS_POWERLEVEL + client->ps.clientNum, va( "%d", client->ps.persistant[PERS_POWERLEVEL] ) );
+	ClientSendPowerlevelInfo();
 	
 	// BFP - Max health start
 	client->ps.stats[STAT_MAX_HEALTH] = 1 + client->ps.persistant[PERS_POWERLEVEL];

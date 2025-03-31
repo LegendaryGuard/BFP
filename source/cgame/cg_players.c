@@ -2304,7 +2304,7 @@ aura color is determined by the tier.
 */
 static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 	qhandle_t	auraShader = cgs.media.auraRedTinyShader;
-	int			powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + state->clientNum ) );
+	int			powerlevel = cgs.clientinfo[state->clientNum].powerlevel;
 
 	// red
 	if ( cg_lightweightAuras.integer <= 0
@@ -2486,7 +2486,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 
 	// BFP - Render ultimate perma-glow when already transformed
 	if ( cg_permaglowUltimate.integer > 0 
-	&& atoi( CG_ConfigString( CS_POWERLEVEL + state->clientNum ) ) >= 1000 ) {
+	&& cgs.clientinfo[state->clientNum].powerlevel >= 1000 ) {
 		ent.customShader = cgs.media.ultimateAuraShader;
 		if ( ent.customShader ) {
 			trap_R_AddRefEntityToScene( &ent );
@@ -2580,7 +2580,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 	refEntity_t		aura2; // secondary aura
 	vec3_t			auraInverseRotation; // for aura inverse rotation
 	vec3_t			kiTrailOrigin;
-	int				powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + clientNum ) );
+	int				powerlevel = ci->powerlevel;
 	const int		KI_TRAIL_ZPOS = 5;
 
 	memset( &aura, 0, sizeof(aura) );
@@ -2826,7 +2826,7 @@ void CG_Player( centity_t *cent ) {
 	float			shadowPlane;
 	qhandle_t		kiTrailShader;
 	// BFP - Powerlevel for the aura
-	int				powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + cent->currentState.clientNum ) );
+	int				powerlevel = -1;
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -2836,6 +2836,9 @@ void CG_Player( centity_t *cent ) {
 		CG_Error( "Bad clientNum on player entity");
 	}
 	ci = &cgs.clientinfo[ clientNum ];
+	
+	// BFP - Powerlevel for the aura
+	powerlevel = ci->powerlevel;
 
 	// BFP - Ki trail shader set
 	// red

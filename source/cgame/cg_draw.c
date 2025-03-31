@@ -156,11 +156,14 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	vec3_t			origin;
 	vec3_t			mins, maxs;
 	// BFP - Powerlevel
-	int				powerlevel = atoi( CG_ConfigString( CS_POWERLEVEL + clientNum ) );
+	int				powerlevel = -1;
 	// BFP - Ultimate tier head model and skin
 	qhandle_t		tierHeadModel, tierHeadSkin;
 
 	ci = &cgs.clientinfo[ clientNum ];
+
+	// BFP - Powerlevel
+	powerlevel = ci->powerlevel;
 
 	// BFP - Ultimate tier head model and skin
 	tierHeadModel = ci->headModel;
@@ -2094,6 +2097,7 @@ static void CG_DrawCrosshairNames( void ) {
 	// BFP - Show powerlevel from the other player
 	char		*namePowerlevel;
 	float		w;
+	int			powerlevel = -1;
 
 	if ( !cg_drawCrosshair.integer ) {
 		return;
@@ -2120,16 +2124,16 @@ static void CG_DrawCrosshairNames( void ) {
 
 	// BFP - Draw name and powerlevel from the other player
 	namePowerlevel = cgs.clientinfo[ cg.crosshairClientNum ].name;
+	powerlevel = cgs.clientinfo[ cg.crosshairClientNum ].powerlevel;
 	w = CG_DrawStrlen( namePowerlevel ) * BIGCHAR_WIDTH;
 	CG_DrawBigString( 320 - w / 2, 170, namePowerlevel, color[3] * 0.5f );
 	trap_R_SetColor( NULL );
 
 	// BFP - NOTE: Just curious, BFP had a 16-bit size issue (only reaches 32767 - the maximum), 
-	// they thought that adding "000" at the last can be entertaining for the player
-	// powerlevel
-	namePowerlevel = va( "%s000", CG_ConfigString( CS_POWERLEVEL + cg.crosshairClientNum ) );
+	// they thought that adding "000" at the last can be entertaining for the player powerlevel
+	namePowerlevel = va( "%i000", powerlevel );
 	// BFP - If the powerlevel is higher than 1000, set to this limit
-	if ( atoi( CG_ConfigString( CS_POWERLEVEL + cg.crosshairClientNum ) ) >= 1000 ) {
+	if ( powerlevel >= 1000 ) {
 		namePowerlevel = "1 Mil";
 	}
 	w = CG_DrawStrlen( namePowerlevel ) * BIGCHAR_WIDTH;
