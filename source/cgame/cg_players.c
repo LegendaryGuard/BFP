@@ -1988,6 +1988,83 @@ static void CG_PlayerSprites( centity_t *cent ) {
 
 /*
 ===============
+CG_ChargeSmokeBubbles
+
+Spawns charge smoke and bubble particles when being near something solid or water
+===============
+*/
+static void CG_ChargeSmokeBubbles( centity_t *cent, vec3_t mins, vec3_t maxs,
+					float chargeSmokeSize, float chargeSmokeRadialVel, 
+					float chargeSmokeBaseRadius, float chargeSmokeUpOrigin,
+					float bubbleSize, float bubbleRange ) { // BFP - Charging smoke and bubble particles
+	int			distance = 300;
+	vec3_t		end;
+	trace_t		trace;
+	vec3_t		chargeSmokePos;
+	int			waterContents;
+
+	// BFP - Monster gamemode, increase the distance for the particles if the player is the monster
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		distance = 600;
+	}
+	
+	// send a trace down from the player to the ground
+	VectorCopy( cent->lerpOrigin, end );
+	end[2] -= distance;
+
+	trap_CM_BoxTrace( &trace, cent->lerpOrigin, end, mins, maxs, 0, MASK_PLAYERSOLID );
+
+	VectorCopy( trace.endpos, chargeSmokePos );
+	chargeSmokePos[2] += chargeSmokeUpOrigin; // put a bit above
+
+	waterContents = CG_PointContents( trace.endpos, -1 ); // detect if the player is entirely under water
+	if ( !( cent->currentState.eFlags & EF_KI_BOOST )
+	&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE
+	&& !( waterContents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+#if 0 /* if the player isn't moving */
+	&& !cent->currentState.pos.trDelta[0] 
+	&& !cent->currentState.pos.trDelta[1] 
+	&& !cent->currentState.pos.trDelta[2] 
+#endif
+	&& ( trace.fraction < 1.0f || cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
+		// if stepping a mover
+		if ( !( trace.fraction <= 0.75f )
+		&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
+			chargeSmokePos[2] += 280;
+			// BFP - Monster gamemode, increase the charge smoke pos distance if the player is the monster
+			if ( cent->currentState.eFlags & EF_MONSTER ) {
+				chargeSmokePos[2] += 230;
+			}
+		}
+		CG_ParticleChargeSmoke( cent, cgs.media.particleSmokeShader, chargeSmokePos, chargeSmokeSize, chargeSmokeRadialVel, chargeSmokeBaseRadius );
+	}
+
+	// water surface
+	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+	|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
+	|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
+	|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB
+	|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // apply on ki charging status too
+		trace_t	waterTrace;
+
+		// tracing the water surface
+		trap_CM_BoxTrace( &waterTrace, cent->lerpOrigin, end, mins, maxs, 0, CONTENTS_WATER );
+
+		waterTrace.endpos[2] -= 20; // put a bit down to make the bubbles move
+		if ( cent->currentState.eFlags & EF_MONSTER ) { // BFP - Monster gamemode, put a bit more down the bubbles
+			waterTrace.endpos[2] -= 10;
+		}
+		if ( ( waterContents & CONTENTS_WATER ) 
+		&& waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+		}
+	}
+}
+
+/*
+===============
 CG_PlayerShadow
 
 Returns the Z component of the surface being shadowed
@@ -1999,7 +2076,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	// BFP - Shadow distance variable isn't constant anymore
 	int			shadow_distance = 128;
 	vec3_t		end, mins = {-15, -15, 0}, maxs = {15, 15, 2};
-	trace_t		trace, waterTrace; // BFP - Trace for the water
+	trace_t		trace;
 	float		alpha;
 	int			contents, waterContents; // BFP - To detect if there is water or lava
 	float		radius = 24.0f; // BFP - Shadow radius
@@ -2059,89 +2136,74 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 	end[2] -= shadow_distance;
 
 	trap_CM_BoxTrace( &trace, cent->lerpOrigin, end, mins, maxs, 0, MASK_PLAYERSOLID );
-	// BFP - Tracing the water surface
-	trap_CM_BoxTrace( &waterTrace, cent->lerpOrigin, end, mins, maxs, 0, CONTENTS_WATER );
 
 	// BFP - Dash smoke and bubble particles when using ki boost on the ground or above the water
 	contents = CG_PointContents( trace.endpos, -1 );
 	if ( ( cent->currentState.eFlags & EF_AURA ) || ( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
-		if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB
-			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // apply on ki charging status too
-			if ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
+		if ( ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB
+		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) // apply on ki charging status too
+			&& ( !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) 
 			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-			&& ( trace.fraction <= 0.70f
-			// If the player is stepping a mover:
-			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) {
-				// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
-				vec3_t	dashSmokePos;
-				VectorCopy( trace.endpos, dashSmokePos );
+		&& ( trace.fraction <= 0.70f
+		// If the player is stepping a mover:
+		|| cent->currentState.groundEntityNum != ENTITYNUM_NONE ) ) ) {
+			// BFP - Apply dash smoke particle for the trail, if the function were used directly, it would generate too many particles than we expected
+			vec3_t	dashSmokePos;
+			VectorCopy( trace.endpos, dashSmokePos );
 
-				// if stepping a mover
-				if ( !( trace.fraction <= 0.70f )
-				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
-					dashSmokePos[2] += 100;
-				}
-				CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, dashSmokePos, dashSmokeSize, dashSmokeVelDisp, dashSmokeUpVel, dashSmokeAccel );
+			// if stepping a mover
+			if ( !( trace.fraction <= 0.70f )
+			&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
+				dashSmokePos[2] += 100;
 			}
-
-			waterTrace.endpos[2] -= 20; // BFP - Put a bit down to make the bubbles move
-			if ( ( contents & CONTENTS_WATER ) 
-			&& waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
-			}
+			CG_ParticleDashSmoke( cent, cgs.media.particleSmokeShader, dashSmokePos, dashSmokeSize, dashSmokeVelDisp, dashSmokeUpVel, dashSmokeAccel );
 		}
 
+		// BFP - Charging smoke and bubble particles
+		CG_ChargeSmokeBubbles( cent, mins, maxs, 
+					chargeSmokeSize, chargeSmokeRadialVel, 
+					chargeSmokeBaseRadius, chargeSmokeUpOrigin, 
+					bubbleSize, bubbleRange );
+
 		waterContents = CG_PointContents( cent->lerpOrigin, -1 ); // BFP - Detect if the player is entirely under water
+		// BFP - Antigrav rock particles on ki charging status
 		if ( !( cent->currentState.eFlags & EF_KI_BOOST )
-		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) { // BFP - Antigrav rock particles on ki charging status
-			if ( !( waterContents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
+		&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE
+		&& !( waterContents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) )
 #if 0 /* if the player isn't moving */
-			&& !cent->currentState.pos.trDelta[0] 
-			&& !cent->currentState.pos.trDelta[1] 
-			&& !cent->currentState.pos.trDelta[2] 
+		&& !cent->currentState.pos.trDelta[0] 
+		&& !cent->currentState.pos.trDelta[1] 
+		&& !cent->currentState.pos.trDelta[2] 
 #endif
-			&& ( trace.fraction <= 0.75f
-			// If the player is stepping a mover:
-			|| cent->currentState.groundEntityNum != ENTITYNUM_NONE )
-			&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
-				// BFP - Spawn randomly the antigrav rock shaders with the particles
-				int		shaderIndex = rand() % 3;
-				vec3_t	antigravRockPos;
-				vec3_t	chargeSmokePos;
-				VectorCopy( trace.endpos, antigravRockPos );
+		&& ( trace.fraction <= 0.75f
+		// If the player is stepping a mover:
+		|| cent->currentState.groundEntityNum != ENTITYNUM_NONE )
+		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
+			// BFP - Spawn randomly the antigrav rock shaders with the particles
+			int		shaderIndex = rand() % 3;
+			vec3_t	antigravRockPos;
+			VectorCopy( trace.endpos, antigravRockPos );
 
-				// if stepping a mover
-				if ( !( trace.fraction <= 0.75f )
-				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
-					antigravRockPos[2] += 100;
+			// if stepping a mover
+			if ( !( trace.fraction <= 0.75f )
+			&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
+				antigravRockPos[2] += 100;
+			}
+			switch ( shaderIndex ) {
+				case 0: {
+					CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+					break;
 				}
-				switch ( shaderIndex ) {
-					case 0: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
-						break;
-					}
-					case 1: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
-						break;
-					}
-					default: {
-						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
-					}
+				case 1: {
+					CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+					break;
 				}
-				VectorCopy( trace.endpos, chargeSmokePos );
-				chargeSmokePos[2] += chargeSmokeUpOrigin; // put a bit above
-
-				// if stepping a mover
-				if ( !( trace.fraction <= 0.75f )
-				&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
-					chargeSmokePos[2] += 100;
+				default: {
+					CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
 				}
-				CG_ParticleChargeSmoke( cent, cgs.media.particleSmokeShader, chargeSmokePos, chargeSmokeSize, chargeSmokeRadialVel, chargeSmokeBaseRadius );
 			}
 		}
 	}

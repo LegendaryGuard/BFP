@@ -265,6 +265,12 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	}
 	// else if ...
 #endif
+
+	// BFP - Don't draw if the particles are very far
+	if ( Distance( cg.snap->ps.origin, org ) > 20000 ) {
+		return;
+	}
+
 	if (p->type == P_SPRITE)
 	{
 		vec3_t	rr, ru;
