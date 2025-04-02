@@ -133,6 +133,17 @@ void QDECL G_Error( const char *fmt, ... ) {
 	trap_Error( text );
 }
 
+void G_BroadcastServerCommand( int ignoreClient, const char *command ) {
+	int i;
+	for ( i = 0; i < level.maxclients; ++i ) {
+		if ( i == ignoreClient )
+			continue;
+		if ( level.clients[ i ].pers.connected == CON_CONNECTED ) {
+			trap_SendServerCommand( i, command );
+		}
+	}
+}
+
 /*
 ================
 G_FindTeams

@@ -166,7 +166,7 @@ qboolean	G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, v
 
 	// may have pushed them off an edge
 	if ( check->s.groundEntityNum != pusher->s.number ) {
-		check->s.groundEntityNum = -1;
+		check->s.groundEntityNum = ENTITYNUM_NONE;
 	}
 
 	block = G_TestEntityPosition( check );
@@ -191,7 +191,7 @@ qboolean	G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, v
 	VectorCopy( (pushed_p-1)->angles, check->s.apos.trBase );
 	block = G_TestEntityPosition (check);
 	if ( !block ) {
-		check->s.groundEntityNum = -1;
+		check->s.groundEntityNum = ENTITYNUM_NONE;
 		pushed_p--;
 		return qtrue;
 	}
@@ -318,6 +318,10 @@ qboolean G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **
 	// see if any solid entities are inside the final position
 	for ( e = 0 ; e < listedEntities ; e++ ) {
 		check = &g_entities[ entityList[ e ] ];
+
+		if ( !check->inuse || ( check->health <= 0 && check->takedamage ) ) {
+			continue;
+		}
 
 		// only push items and players
 		if ( check->s.eType != ET_ITEM && check->s.eType != ET_PLAYER && !check->physicsObject ) {
@@ -793,26 +797,29 @@ Touch_DoorTriggerSpectator
 ================
 */
 static void Touch_DoorTriggerSpectator( gentity_t *ent, gentity_t *other, trace_t *trace ) {
-	int i, axis;
-	vec3_t origin, dir, angles;
+	int axis;
+	vec3_t origin;
+	float	len, doorMin, doorMax;
+
+	VectorCopy( other->s.origin, origin );
 
 	axis = ent->count;
-	VectorClear(dir);
-	if (fabs(other->s.origin[axis] - ent->r.absmax[axis]) <
-		fabs(other->s.origin[axis] - ent->r.absmin[axis])) {
-		origin[axis] = ent->r.absmin[axis] - 10;
-		dir[axis] = -1;
+	doorMax = other->s.origin[axis] - ent->r.absmax[axis];
+	doorMin = other->s.origin[axis] - ent->r.absmin[axis];
+
+	if ( fabs(doorMax) < fabs(doorMin) ) {
+		origin[axis] = ent->r.absmin[axis] - 1;
+		len = doorMax + 120;
+	} else {
+		origin[axis] = ent->r.absmax[axis] + 1;
+		len = 120 - doorMin;
 	}
-	else {
-		origin[axis] = ent->r.absmax[axis] + 10;
-		dir[axis] = 1;
+
+	if ( len >= 40 ) {
+		return;
 	}
-	for (i = 0; i < 3; i++) {
-		if (i == axis) continue;
-		origin[i] = (ent->r.absmin[i] + ent->r.absmax[i]) * 0.5;
-	}
-	vectoangles(dir, angles);
-	TeleportPlayer(other, origin, angles );
+
+	TeleportPlayer( other, origin, NULL );
 }
 
 /*
@@ -846,6 +853,10 @@ void Think_SpawnNewDoorTrigger( gentity_t *ent ) {
 	gentity_t		*other;
 	vec3_t		mins, maxs;
 	int			i, best;
+
+	if (!ent) {
+		return;
+	}
 
 	// set all of the slaves as shootable
 	for ( other = ent ; other ; other = other->teamchain ) {
@@ -913,8 +924,13 @@ void SP_func_door (gentity_t *ent) {
 	vec3_t	size;
 	float	lip;
 
-	ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/doors/dr1_strt.wav");
-	ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/doors/dr1_end.wav");
+	if ( ent->spawnflags & 32 ) {
+		ent->sound1to2 = ent->sound2to1 = 0;
+		ent->soundPos1 = ent->soundPos2 = 0;
+	} else {
+		ent->sound1to2 = ent->sound2to1 = G_SoundIndex("sound/movers/doors/dr1_strt.wav");
+		ent->soundPos1 = ent->soundPos2 = G_SoundIndex("sound/movers/doors/dr1_end.wav");
+	}
 
 	ent->blocked = Blocked_Door;
 

@@ -65,13 +65,6 @@ takes away all the activators powerups.
 Used to drop flight powerups into death puts.
 */
 void Use_target_remove_powerups( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
-	// BFP - NOTE: Originally, on BFP, they used PMF flags to keep the statuses,
-	// as long as these weren't affected from that,
-	// when the powerups variable is being reset entering in a target_remove_powerups zone.
-	// BFP original solution was ugly, because the client side visual of CG_PlayerAngles
-	// didn't handle the positions of the legs.
-	// The EF flags solution is better than the original one.
-
 	if( !activator->client ) {
 		return;
 	}
@@ -127,6 +120,8 @@ void SP_target_delay( gentity_t *ent ) {
 The activator is given this many points.
 */
 void Use_Target_Score (gentity_t *ent, gentity_t *other, gentity_t *activator) {
+	if ( !activator )
+		return;
 	AddScore( activator, ent->r.currentOrigin, ent->count );
 }
 
@@ -145,7 +140,7 @@ void SP_target_score( gentity_t *ent ) {
 If "private", only the activator gets the message.  If no checks, all clients get the message.
 */
 void Use_Target_Print (gentity_t *ent, gentity_t *other, gentity_t *activator) {
-	if ( activator->client && ( ent->spawnflags & 4 ) ) {
+	if ( activator && activator->client && ( ent->spawnflags & 4 ) ) {
 		trap_SendServerCommand( activator-g_entities, va("cp \"%s\"", ent->message ));
 		return;
 	}
@@ -160,7 +155,7 @@ void Use_Target_Print (gentity_t *ent, gentity_t *other, gentity_t *activator) {
 		return;
 	}
 
-	trap_SendServerCommand( -1, va("cp \"%s\"", ent->message ));
+	G_BroadcastServerCommand( -1, va("cp \"%s\"", ent->message ));
 }
 
 void SP_target_print( gentity_t *ent ) {
@@ -190,7 +185,7 @@ void Use_Target_Speaker (gentity_t *ent, gentity_t *other, gentity_t *activator)
 		else
 			ent->s.loopSound = ent->noise_index;	// start it
 	}else {	// normal sound
-		if ( ent->spawnflags & 8 ) {
+		if ( ent->spawnflags & 8 && activator ) {
 			G_AddEvent( activator, EV_GENERAL_SOUND, ent->noise_index );
 		} else if (ent->spawnflags & 4) {
 			G_AddEvent( ent, EV_GLOBAL_SOUND, ent->noise_index );
@@ -211,7 +206,7 @@ void SP_target_speaker( gentity_t *ent ) {
 		G_Error( "target_speaker without a noise key at %s", vtos( ent->s.origin ) );
 	}
 
-	// force all client reletive sounds to be "activator" speakers that
+	// force all client relative sounds to be "activator" speakers that
 	// play on the entity that activates it
 	if ( s[0] == '*' ) {
 		ent->spawnflags |= 8;
@@ -232,9 +227,10 @@ void SP_target_speaker( gentity_t *ent ) {
 
 
 	// check for prestarted looping sound
-	if ( ent->spawnflags & 1 ) {
+	if ( ent->spawnflags & 1 )
 		ent->s.loopSound = ent->noise_index;
-	}
+	else
+		ent->s.loopSound = 0;
 
 	ent->use = Use_Target_Speaker;
 
@@ -350,7 +346,7 @@ void SP_target_laser (gentity_t *self)
 void target_teleporter_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
 	gentity_t	*dest;
 
-	if (!activator->client)
+	if ( !activator || !activator->client )
 		return;
 	dest = 	G_PickTarget( self->target );
 	if (!dest) {
@@ -380,11 +376,12 @@ The activator can be forced to be from a certain team.
 if RANDOM is checked, only one of the targets will be fired, not all of them
 */
 void target_relay_use (gentity_t *self, gentity_t *other, gentity_t *activator) {
-	if ( ( self->spawnflags & 1 ) && activator->client 
+
+	if ( ( self->spawnflags & 1 ) && activator && activator->client 
 		&& activator->client->sess.sessionTeam != TEAM_RED ) {
 		return;
 	}
-	if ( ( self->spawnflags & 2 ) && activator->client 
+	if ( ( self->spawnflags & 2 ) && activator && activator->client 
 		&& activator->client->sess.sessionTeam != TEAM_BLUE ) {
 		return;
 	}
@@ -411,6 +408,8 @@ void SP_target_relay (gentity_t *self) {
 Kills the activator.
 */
 void target_kill_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {
+	if ( !activator )
+		return;
 	G_Damage ( activator, NULL, NULL, NULL, NULL, 100000, DAMAGE_NO_PROTECTION, MOD_TELEFRAG);
 }
 
