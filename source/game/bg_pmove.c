@@ -1906,16 +1906,21 @@ static void PM_Footsteps( void ) {
 		return;
 	}
 
+	// BFP - Avoid when charging
+	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
+		return;
+	}
+
+	// BFP - Handle torso melee animation
+	if ( ( pm->cmd.buttons & BUTTON_MELEE ) || ( pm->ps->pm_flags & PMF_MELEE ) || pm->meleeHit ) {
+		PM_TorsoStatusAnim( TORSO_MELEE_READY );
+	}
+
 	// BFP - Avoid when flying (for melee strike animation, that's applied)
 	if ( pm->ps->eFlags & EF_FLIGHT ) {
 		// BFP - Melee strike legs animation, don't apply if it's playing the starting jump animation in the flight status
 		PM_ContinueMeleeStrikeLegsAnim( pm->ps->pm_time <= 0 );
-		return;
-	}
-
-	// BFP - Avoid when charging
-	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
-		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		return;
 	}
 
