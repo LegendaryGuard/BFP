@@ -31,7 +31,7 @@ ifeq ($(COMPILE_PLATFORM),cygwin)
 endif
 
 ifndef PLATFORM
-PLATFORM=$(COMPILE_PLATFORM)
+  PLATFORM=$(COMPILE_PLATFORM)
 endif
 export PLATFORM
 
@@ -53,7 +53,11 @@ endif
 # SETUP AND BUILD
 #############################################################################
 
-PK3 = pak9.pk3
+ifndef DESTDIR
+  DESTDIR = .
+endif
+
+PK3 = $(DESTDIR)/pak9.pk3
 MOUNTDIR = source
 
 QADIR = $(MOUNTDIR)/game

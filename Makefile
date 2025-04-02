@@ -60,9 +60,9 @@ ifneq ($(PLATFORM),$(COMPILE_PLATFORM))
 else
   CROSS_COMPILING=0
 
-  ifneq ($(ARCH),$(COMPILE_ARCH))
-    CROSS_COMPILING=1
-  endif
+ifneq ($(ARCH),$(COMPILE_ARCH))
+  CROSS_COMPILING=1
+endif
 endif
 export CROSS_COMPILING
 
@@ -237,10 +237,6 @@ endif # DLL
 
 TARGETS =
 
-ifndef FULLBINEXT
-  FULLBINEXT=.$(ARCH)$(BINEXT)
-endif
-
 ifndef SHLIBNAME
   SHLIBNAME=$(ARCH).$(SHLIBEXT)
 endif
@@ -368,6 +364,29 @@ makedirs:
 	@if [ ! -d $(B)/cgame ];then $(MKDIR) $(B)/cgame;fi
 	@if [ ! -d $(B)/game ];then $(MKDIR) $(B)/game;fi
 	@if [ ! -d $(B)/ui ];then $(MKDIR) $(B)/ui;fi
+
+
+install: 
+	$(if $(DESTDIR), , $(error DESTDIR is not set! Use 'make install DESTDIR=/your/path'))
+	@$(MAKE) release
+	@echo "Installing in $(DESTDIR)..."
+	cp $(BR)/cgame$(SHLIBNAME) $(DESTDIR)/cgame$(SHLIBNAME)
+	cp $(BR)/qagame$(SHLIBNAME) $(DESTDIR)/qagame$(SHLIBNAME)
+	cp $(BR)/ui$(SHLIBNAME) $(DESTDIR)/ui$(SHLIBNAME)
+	@echo "*************************************************************************************"
+	@echo "     Files compiled with release-$(PLATFORM)-$(SHLIBNAME) are successfully installed!      "
+	@echo "*************************************************************************************"
+
+install_debug: 
+	$(if $(DESTDIR), , $(error DESTDIR is not set! Use 'make install_debug DESTDIR=/your/path'))
+	@$(MAKE) debug
+	@echo "Installing in $(DESTDIR)..."
+	cp $(BD)/cgame$(SHLIBNAME) $(DESTDIR)/cgame$(SHLIBNAME)
+	cp $(BD)/qagame$(SHLIBNAME) $(DESTDIR)/qagame$(SHLIBNAME)
+	cp $(BD)/ui$(SHLIBNAME) $(DESTDIR)/ui$(SHLIBNAME)
+	@echo "*************************************************************************************"
+	@echo "     Files compiled with debug-$(PLATFORM)-$(SHLIBNAME) are successfully installed!      "
+	@echo "*************************************************************************************"
 
 #############################################################################
 ## BASEQ3 CGAME

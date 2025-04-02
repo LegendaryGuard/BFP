@@ -77,17 +77,19 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 ![BFP_ZEQ2_history](https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147557-7954d397-3df4-4cf7-b9c3-d62e393658ab.png)
 
-Started: 1999 <br/> 
+Started: [1998](https://goldenhammersoftware.blogspot.com/2010/07/big-mountain-snowboarding-history-and.html) <br/> 
 Ended: 2002
 
 Bid For Power is a total conversion for QuakeIII that plays nothing like the original game. Players take control of Ki-powered superheros and battle it out in a mostly aerial fight. The game is highlighted by the work of a great art team and an original style, and the gameplay is extremely fast paced. It can be difficult to keep up with until you get the hang of it.
+
+The project was started on Quake 2, that's where they were getting organized playing Quake and learn some programming there.
 
 The source code is said to have started from SDK 1.17 point release after the release of Quake 3 Arena (December 2, 1999). It continued to be updated, including the addition of `cg_particles.c` in 1.29, until 1.31. 
 More info can be found in [Quake 3 Arena changelog version history](https://discourse.ioquake.org/t/quake-3-changelog-version-history/375).
 
 The original source code appears to be lost, but the assets and some docs are available in various places. Nonetheless, not all sources are accessible.
 
-### Old dev journals (1999 - 2002)
+### Old dev journals (1998 - 2002)
 
 The original URLs can be slower to load, so it's recommended to use markdown edition ones.
 
@@ -141,7 +143,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
 - explosion dynamic lights are back (these were broken after RC/beta versions)
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
-- g_allowSpectatorChat cvar is functional, spectators can't send messages if the cvar is disabled
+- `g_allowSpectatorChat` cvar is functional, spectators can't send messages if the cvar is disabled
 - spectator mode can toggle ki boost as if the player is flying
 - particle aura is almost implemented
 - while charging ki near water, bubble particles appear
@@ -158,6 +160,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - the player monster is labeled 'MON' on the scoreboard so teammates can identify them quickly
   - the player monster has a larger floating sprite chat
   - the player monster has a larger shadow effect similar to regular players
+  - the player monster has a large dynamic light when charging or using ki
   - the player monster's ki trails are larger than other players'
   - the player monster generates bigger bubbles, smoke, and antigrav rock particles when charging/using ki boost
   - player monster's first-person and first-person vis mode viewpoints work properly
@@ -359,6 +362,11 @@ The information in the map file can be useful for debugging and performance anal
     make -f MakefileQVM clean
     ```
 
+    Optionally, you can set the destination directory, so the pk3 file will appear on this directory:
+    ```sh
+    make -f MakefileQVM DESTDIR=/your/path/q3/baseq3mod
+    ```
+
     * #### _Building QVM (using .bat)_: 
 
     1. The alternative to execute and get the compiled qvms with `build.bat` requires [`wine` package](https://www.winehq.org/). So, in that part, needs the i386 package:
@@ -409,6 +417,16 @@ The information in the map file can be useful for debugging and performance anal
     ```
 
     ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `PLATFORM=windows` (compiles dlls), `PLATFORM=linux` (compiles shared libraries (.so files)) ...
+
+    * To compile and copy release builds at the destination directory, `DESTDIR` parameter is mandatory:
+    ```sh
+    make install DESTDIR=/your/path/q3/baseq3mod # compiles release builds and copy the builds to the destination directory (you can also put ARCH=x86 PLATFORM=windows if you want)
+    ```
+
+    * To compile and copy debug builds at the destination directory, `DESTDIR` parameter is mandatory:
+    ```sh
+    make install DESTDIR=/your/path/q3/baseq3mod # compiles debug builds and copy the builds to the destination directory (you can also put ARCH=x86 PLATFORM=windows if you want)
+    ```
 
 <br/>
 
@@ -461,6 +479,10 @@ The images, screenshots, and URLs, even in the docs, included in this repository
 Nobody owns the "Bid For Power" name. Bid For Power was founded by Chris James and likely ended up in the palm of Yrgol's hand (although Yrgol doesn't own the assets). The owner, the maintainer and the contributors of the repository don't own this name. <br/>
 This does not give any single person or a group of people to sell the name, basically it belongs to the original community. <br/>
 The Bid For Power team may provide sufficient security against any claims or improper use of the name.
+
+### Disclaimer
+
+The game elements such as characters, and events depicted in this game are fictitious. Any resemblance to actual persons, living or deceased, or real events is purely coincidental.
 
 # Credits
 
