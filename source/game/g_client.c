@@ -905,6 +905,9 @@ void ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( ent->oldModel, originalPlayerModel, sizeof( ent->oldModel ) );
 	}
 
+	// BFP - Send powerlevel data to all clients
+	ClientSendPowerlevelInfo();
+
 	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
 }

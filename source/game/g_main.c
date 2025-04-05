@@ -1432,8 +1432,6 @@ Once a frame, check for changes in survival player state
 =============
 */
 void CheckSurvival( void ) {
-	int i, oldestTime = level.time, oldestClient = -1;
-
 	if ( level.numPlayingClients == 0 ) {
 		return;
 	}
@@ -1464,16 +1462,6 @@ void CheckSurvival( void ) {
     }
 
 	if ( level.warmupTime == 0 ) {
-		return;
-	}
-
-	// if we don't have two players, go back to "waiting for players"
-	if ( level.numPlayingClients != 2 ) {
-		if ( level.warmupTime != -1 ) {
-			level.warmupTime = -1;
-			trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
-			G_LogPrintf( "Warmup:\n" );
-		}
 		return;
 	}
 
