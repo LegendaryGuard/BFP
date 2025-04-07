@@ -965,9 +965,6 @@ static void ClientBecomeMonster( gentity_t *ent ) { // BFP - Monster gamemode fu
 
 	ent->client->ps.eFlags |= EF_MONSTER;
 
-	// update collision
-	//trap_LinkEntity( ent );
-
 	trap_SendServerCommand( -1, va("print \"%s is the monster\n\"", ent->client->pers.netname) );
 }
 

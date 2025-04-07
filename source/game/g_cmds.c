@@ -1267,11 +1267,11 @@ static const char *gameNames[] = {
 	"Free For All",
 	"Tournament",
 	"Single Player",
+	"Survival",
+	"Monster",
 	"Team Deathmatch",
-	"Capture the Flag",
-	"One Flag CTF",
-	"Overload",
-	"Harvester"
+	"Team Last Man Standing",
+	"Capture the Flag"
 };
 
 /*
@@ -1327,7 +1327,7 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 	} else if ( !Q_stricmp( arg1, "g_noFlight" ) ) { // BFP - No flight
 	} else {
 		trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string.\n\"" );
-		trap_SendServerCommand( ent-g_entities, "print \"Vote commands are: map_restart, nextmap, map <mapname>, g_gametype <n>, kick <player>, clientkick <clientnum>, g_doWarmup, timelimit <time>, fraglimit <frags>, g_basePL <0/1>, g_hitStun <0/1>, g_allowSpectatorChat <0/1>, g_meleeOnly <0/1>, g_noFlight <0/1>.\n\"" );
+		trap_SendServerCommand( ent-g_entities, "print \"Vote commands are: map_restart, nextmap, map <mapname>, g_gametype <n>, kick <player>, clientkick <clientnum>, g_doWarmup, timelimit <time>, fraglimit <frags>, g_basePL <base pl>, g_hitStun <0/1>, g_allowSpectatorChat <0/1>, g_meleeOnly <0/1>, g_noFlight <0/1>.\n\"" );
 		return;
 	}
 
