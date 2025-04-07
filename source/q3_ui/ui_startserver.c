@@ -100,6 +100,7 @@ static const char *gametype_items[] = {
 	"Monster",					// BFP - Monster
 	"Capture the Flag",
 	"Team Deathmatch",
+	"Team Last Man Standing",	// BFP - Team Last Man Standing
 	0
 };
 
@@ -109,7 +110,8 @@ static int gametype_remap[] = {
 	GT_SURVIVAL,	// "Survival"
 	GT_MONSTER,		// "Monster"
 	GT_CTF,			// "Capture the Flag"
-	GT_TEAM		// "Team Deathmatch"
+	GT_TEAM,		// "Team Deathmatch"
+	GT_TLMS			// "Team Last Man Standing"
 };
 static int gametype_remap2[] = {	// Take a look on gametype_items indexes
 	0,	// GT_FFA (0)			->	"Free For All"
@@ -118,6 +120,7 @@ static int gametype_remap2[] = {	// Take a look on gametype_items indexes
 	2,	// GT_SURVIVAL (3)		->	"Survival"
 	3,	// GT_MONSTER (4)		->	"Monster"
 	5,	// GT_TEAM (5)			->	"Team Deathmatch"
+	6,	// GT_TLMS (6)			->	"Team Last Man Standing"
 	4	// GT_CTF (7)			->	"Capture the Flag"
 };
 
@@ -176,6 +179,12 @@ static int GametypeBits( char *string ) {
 
 		if( Q_stricmp( token, "ctf" ) == 0 ) {
 			bits |= 1 << GT_CTF;
+			continue;
+		}
+
+		// BFP - Team Last Man Standing
+		if( Q_stricmp( token, "lms" ) == 0 || Q_stricmp( token, "tlms" ) == 0 ) {
+			bits |= 1 << GT_TLMS;
 			continue;
 		}
 	}

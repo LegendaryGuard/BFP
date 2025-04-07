@@ -117,6 +117,8 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 			// always spawn as spectator in team games
 			sess->sessionTeam = TEAM_SPECTATOR;	
 		}
+		// BFP - Team Last Man Standing, keep selected team
+		client->selectedTeam = sess->sessionTeam;
 	} else {
 		value = Info_ValueForKey( userinfo, "team" );
 		if ( value[0] == 's' ) {

@@ -105,6 +105,7 @@ typedef enum {
 	//-- team games go after this --
 
 	GT_TEAM,			// team deathmatch
+	GT_TLMS,			// BFP - Team Last Man Standing "lms" / "tlms":	g_gametype 6
 	GT_CTF,				// capture the flag
 	GT_MAX_GAME_TYPE
 } gametype_t;

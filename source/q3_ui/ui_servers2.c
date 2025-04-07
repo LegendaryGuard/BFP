@@ -119,7 +119,7 @@ static const char *servertype_items[] = {
 	"Survival", // BFP - Survival gametype
 	"Monster", // BFP - Monster gametype
 	"Team Deathmatch",
-	"Last Man Standing", // BFP - TODO: LMS gametype, remove TODO and this comment if it has been added successfully
+	"Team Last Man Standing", // BFP - Team Last Man Standing gametype
 	"Capture the Flag",
 	0
 };
@@ -142,7 +142,7 @@ static char* gamenames[] = {
 	"survival",	// survival
 	"oozaru",	// giant monkey
 	"tdm",	// team deathmatch
-	"lms",	// last man standing
+	"lms",	// team last man standing
 	"ctf",	// capture the flag
 #else
 // BFP - 12 gametypes from Q3 and mods

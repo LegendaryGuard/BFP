@@ -61,7 +61,8 @@ void AddScore( gentity_t *ent, vec3_t origin, int score ) {
 	ScorePlum(ent, origin, score);
 	//
 	ent->client->ps.persistant[PERS_SCORE] += score;
-	if ( g_gametype.integer == GT_TEAM )
+	if ( g_gametype.integer == GT_TEAM
+	|| g_gametype.integer == GT_TLMS ) // BFP - Team Last Man Standing
 		level.teamScores[ ent->client->ps.persistant[PERS_TEAM] ] += score;
 	CalculateRanks();
 }
@@ -569,6 +570,138 @@ static void CheckMonsterGamemodeRules( gentity_t *self, gentity_t *attacker, int
 }
 
 /*
+=================================
+TeamLastManStanding_CheckDeadTeam
+=================================
+*/
+static qboolean TeamLastManStanding_CheckDeadTeam( team_t team ) { // BFP - Function for Team Last Man Standing gamemode
+	int i;
+
+	for ( i = 0; i < level.numConnectedClients; ++i ) {
+		gclient_t *cl = &level.clients[i];
+		if ( cl->sess.sessionTeam == team && cl->ps.pm_type != PM_DEAD ) {
+			return qfalse;
+		}
+	}
+	return qtrue;
+}
+
+/*
+=======================================
+TeamLastManStanding_RespawnAllDeadTeams
+=======================================
+*/
+static void TeamLastManStanding_RespawnAllDeadTeams( void ) { // BFP - Function for Team Last Man Standing gamemode
+	int i;
+
+	for ( i = 0; i < level.numConnectedClients; ++i ) {
+		gentity_t *ent = &g_entities[i];
+		if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR
+		&& ent->client->forceToSpectate ) {
+			ent->client->forceToSpectate = qfalse;
+			if ( ent->client->selectedTeam == TEAM_RED ) {
+				SetTeam( ent, "r" );
+				ClientSpawn( ent );
+			} else if ( ent->client->selectedTeam == TEAM_BLUE ) {
+				SetTeam( ent, "b" );
+				ClientSpawn( ent );
+			}
+			ent->client->sess.sessionTeam = ent->client->selectedTeam;
+		}
+	}
+}
+
+/*
+==============================
+CheckTeamLastManStandingWarmup
+==============================
+*/
+static void CheckTeamLastManStandingWarmup( void ) { // BFP - Function for Team Last Man Standing gamemode
+	if ( g_warmup.integer <= 0 ) {
+		return;
+	}
+
+	// if the warmup is changed at the console, restart it
+	if ( g_warmup.modificationCount != level.warmupModificationCount ) {
+		level.warmupModificationCount = g_warmup.modificationCount;
+		level.warmupTime = -1;
+	}
+
+	// fudge by -1 to account for extra delays
+	level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+	trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
+}
+
+/*
+==============================
+CheckTeamLastManStandingRules
+==============================
+*/
+static void CheckTeamLastManStandingRules( gentity_t *self, gentity_t *attacker, int meansOfDeath ) { // BFP - Team Last Man Standing rules
+	qboolean selfClient = ( self && self->client );
+	qboolean attackerClient = ( attacker && attacker->client );
+
+	// BFP - NOTE: Force to spectate the current dead players in the match, 
+	// the dead player spectators can't join, the playing players can't switch teams and going to spectate.
+	// Once, the match gets all dead players (these who are marked and forced to spectate), 
+	// respawns all dead players, the game finishes until hits the fraglimit/timelimit.
+	// The players who were beginning to connect and are news in the match, they can join if they wish, 
+	// but after there's no turn back (that applies the explanation from before).
+	// Originally on BFP, the dead players can join in the match, so that's invalid and it's against the rules.
+
+	if ( g_gametype.integer != GT_TLMS ) {
+		return;
+	}
+
+	// force to spectate the player who is touching something mortal during the warmup
+	if ( level.warmupTime > 0
+	&& selfClient
+	&& meansOfDeath == MOD_TRIGGER_HURT || meansOfDeath == MOD_CRUSH ) {
+		// if the score points didn't decrease, decrease it for balance sake!
+		ScorePlum( self, self->r.currentOrigin, -1 );
+		--self->client->ps.persistant[PERS_SCORE];
+		CalculateRanks();
+	}
+
+	// check dead teams
+	if ( TeamLastManStanding_CheckDeadTeam( TEAM_RED ) ) {
+		CheckTeamLastManStandingWarmup();
+		TeamLastManStanding_RespawnAllDeadTeams();
+		// respawn the 2 last players in the match: the victim and the attacker
+		if ( selfClient ) {
+			respawn( self );
+		}
+		if ( attackerClient ) {
+			respawn( attacker );
+		}
+
+		return;
+	}
+
+	if ( TeamLastManStanding_CheckDeadTeam( TEAM_BLUE ) ) {
+		CheckTeamLastManStandingWarmup();
+		TeamLastManStanding_RespawnAllDeadTeams();
+		// respawn the 2 last players in the match: the victim and the attacker
+		if ( selfClient ) {
+			respawn( self );
+		}
+		if ( attackerClient ) {
+			respawn( attacker );
+		}
+
+		return;
+	}
+
+	if ( selfClient ) {
+		self->client->forceToSpectate = qtrue;
+		// keep the selected team, otherwise won't spawn correctly
+		self->client->selectedTeam = self->client->sess.sessionTeam;
+		SetTeam( self, "s" );
+		self->client->sess.sessionTeam = TEAM_SPECTATOR;
+	}
+}
+
+/*
 ==================
 player_die
 ==================
@@ -818,6 +951,9 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	// BFP - Monster gamemode rules
 	CheckMonsterGamemodeRules( self, attacker, meansOfDeath );
+
+	// BFP - Team Last Man Standing rules
+	CheckTeamLastManStandingRules( self, attacker, meansOfDeath );
 }
 
 

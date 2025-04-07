@@ -19,7 +19,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 - [ ] Attacksets (configurable for cfgs)
 - [ ] Cvars as described on old docs
-- [ ] Gametype: Last Man Standing (`g_gametype 6`)
 - [ ] Power Struggles (when two beam attacks collide)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
 - [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
@@ -36,6 +35,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Breakable map entities ("func_breakable")~~
 - [x] ~~Gametype: Survival (`g_gametype 3`)~~
 - [x] ~~Gametype: Monster (`g_gametype 4`)~~
+- [x] ~~Gametype: Team Last Man Standing (`g_gametype 6`)~~
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
 - [x] ~~Instant character model changing~~
 - [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
@@ -167,6 +167,10 @@ You'll notice some differences and things that the original Bid For Power didn't
   - player monster's third-person camera has improved focus (similar to BFP's standard third-person view but scaled for giant characters)
   - `g_monster` cvar enables the monster/big monkey feature (that happened in the RC/beta versions)
   - available in the UI, maps marked as `monster` besides `oozaru` can be viewed in the UI
+- team last man standing has the following in-game differences compared to the original:
+  - players cannot switch teams after joining a team (on original BFP, the dead player -who was forced to spectate- can join during the match, that was against the rules)
+  - players cannot voluntarily switch to spectator after joining a team
+  - players attempting to switch teams/spectate receive centerprint messages
 - some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
 - file size differences between the QVM and the original BFP QVM can be quite significant
 - kiCharge, boostCost and blockCost cvars work differently

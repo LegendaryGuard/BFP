@@ -724,6 +724,25 @@ void Cmd_Team_f( gentity_t *ent ) {
 
 	trap_Argv( 1, s, sizeof( s ) );
 
+	// BFP - Team Last Man Standing, show a centerprint message to switching teams when the player were fragged and forced to spectate
+	if ( g_gametype.integer == GT_TLMS
+	&& ent->client->forceToSpectate ) {
+		trap_SendServerCommand( ent->client->ps.clientNum, 
+			"cp \"You are eliminated!\nWait until the round ends to respawn with your team!\n\"" );
+		return;
+	}
+
+	// BFP - Team Last Man Standing, show a centerprint message to switching teams when joined
+	if ( g_gametype.integer == GT_TLMS
+	&& ( ent->client->sess.sessionTeam == TEAM_RED || ent->client->sess.sessionTeam == TEAM_BLUE )
+	&& ent->client->sess.sessionTeam != TEAM_SPECTATOR
+	&& !ent->client->forceToSpectate ) {
+		trap_SendServerCommand( ent->client->ps.clientNum,
+			"cp \"You cannot switch teams during the round!\n\""
+		);
+		return;
+	}
+
 	SetTeam( ent, s );
 
 	// BFP - No switch team time delay

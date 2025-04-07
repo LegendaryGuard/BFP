@@ -1,17 +1,10 @@
 # BFP CVARS
 
-#### Cvar Gametypes:
-
-- g_gametype 6 = lms (last man standing)
-- g_gametype 7 = ctf (capture the flag) // originally, in Q3, this number is 4
-
-... and maybe more, look in [cvar_bfp_list.txt](docs/cvar_bfp_list.txt)
-
+For more, look in [cvar_bfp_list.txt](docs/cvar_bfp_list.txt)
 
 ## DONE BUT NOT IN CGAME:
 
 - cg_stfu [0/1]: disable character voices when firing attacks.
-
 
 ## COMPLETED:
 
@@ -78,3 +71,5 @@
 - [x] ~~g_gametype 3 = survival (survival)~~
 - [x] ~~g_gametype 4 = oozaru/monster (oozaru)~~
 - [x] ~~g_gametype 5 - tdm (team deathmatch)~~ (already in Q3. Originally, in Q3, this number is 3)
+- [x] ~~g_gametype 6 = lms (team last man standing)~~
+- [x] ~~g_gametype 7 = ctf (capture the flag)~~ (already in Q3. Originally, in Q3, this number is 4)

@@ -1119,6 +1119,11 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		}
 	}
 
+	// BFP - Team Last Man Standing
+	if ( g_gametype.integer == GT_TLMS ) {
+		client->forceToSpectate = qfalse;
+	}
+
 	// don't do the "xxx connected" messages if they were caried over from previous level
 	if ( firstTime ) {
 		trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " connected\n\"", client->pers.netname) );
@@ -1237,6 +1242,9 @@ void ClientSpawn(gentity_t *ent) {
 	gentity_t	*spawnPoint;
 	int		flags;
 	int		savedPing;
+	// BFP - Team Last Man Standing, save force to spectate and selected team
+	qboolean	savedForcedToSpectate;
+	team_t	savedSelectedTeam;
 //	char	*savedAreaBits;
 	int		accuracy_hits, accuracy_shots;
 	int		eventSequence;
@@ -1303,6 +1311,10 @@ void ClientSpawn(gentity_t *ent) {
 
 	saved = client->pers;
 	savedSess = client->sess;
+	// BFP - Team Last Man Standing, save force to spectate and selected team
+	savedForcedToSpectate = client->forceToSpectate;
+	savedSelectedTeam = client->selectedTeam;
+
 	savedPing = client->ps.ping;
 //	savedAreaBits = client->areabits;
 	accuracy_hits = client->accuracy_hits;
@@ -1316,6 +1328,10 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->pers = saved;
 	client->sess = savedSess;
+	// BFP - Team Last Man Standing, keep force to spectate and selected team
+	client->forceToSpectate = savedForcedToSpectate;
+	client->selectedTeam = savedSelectedTeam;
+
 	client->ps.ping = savedPing;
 //	client->areabits = savedAreaBits;
 	client->accuracy_hits = accuracy_hits;
@@ -1382,6 +1398,15 @@ void ClientSpawn(gentity_t *ent) {
 	if ( g_maxSpawnPL.integer > 0 && client->ps.persistant[PERS_POWERLEVEL] > g_maxSpawnPL.integer ) {
 		client->ps.persistant[PERS_POWERLEVEL] = g_maxSpawnPL.integer;
 	}
+
+	// BFP - Team Last Man Standing, the powerlevel always starts at the maximum and reset spectating reason
+	if ( g_gametype.integer == GT_TLMS ) {
+		client->ps.persistant[PERS_POWERLEVEL] = 1000;
+	}
+	if ( client->forceToSpectate <= 0 ) {
+		client->forceToSpectate = qfalse;
+	}
+
 	// BFP - Send powerlevel data to all clients
 	ClientSendPowerlevelInfo();
 	

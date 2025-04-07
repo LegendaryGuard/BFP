@@ -377,6 +377,17 @@ qboolean CG_DrawOldScoreboard( void ) {
 			y += (n2 * lineHeight) + BIGCHAR_HEIGHT;
 			maxClients -= n2;
 		}
+
+		// BFP - Team Last Man Standing, a second entry drawn... to identify the gametype, maybe?
+		if ( cgs.gametype == GT_TLMS ) {
+			y += lineHeight/2;
+			n1 = CG_TeamScoreboard( y, TEAM_RED, fade, 0, lineHeight );
+			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n1 * lineHeight + bottomBorderSize, 0.33f, TEAM_RED );
+			y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
+			n2 = CG_TeamScoreboard( y, TEAM_BLUE, fade, 0, lineHeight );
+			CG_DrawTeamBackground( 0, y - topBorderSize, 640, n2 * lineHeight + bottomBorderSize, 0.33f, TEAM_BLUE );
+			y += (n2 * lineHeight) + BIGCHAR_HEIGHT;
+		}
 		n1 = CG_TeamScoreboard( y, TEAM_SPECTATOR, fade, maxClients, lineHeight );
 		y += (n1 * lineHeight) + BIGCHAR_HEIGHT;
 

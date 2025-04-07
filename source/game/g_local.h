@@ -323,6 +323,10 @@ struct gclient_s {
 	int			switchTeamTime;		// time the player switched teams
 #endif
 
+	// BFP - Team Last Man Standing, force to spectate and selected team
+	qboolean	forceToSpectate;
+	team_t		selectedTeam;
+
 	// timeResidual is used to handle events that happen every second
 	// like health / armor countdowns and regeneration
 	int			timeResidual;

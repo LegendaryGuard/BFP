@@ -1319,7 +1319,8 @@ void CheckTournament( void ) {
 		return;
 	}
 	
-	if ( g_gametype.integer == GT_SURVIVAL ) { // BFP - Survival
+	if ( g_gametype.integer == GT_SURVIVAL // BFP - Survival
+	|| g_gametype.integer == GT_TLMS ) { // BFP - Team Last Man Standing
 		return;
 	}
 
@@ -1473,6 +1474,69 @@ void CheckSurvival( void ) {
 
 	// if all players have arrived, start the countdown
 	if ( level.warmupTime < 0 && level.numPlayingClients == 2 ) {
+		// fudge by -1 to account for extra delays
+		level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+		trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
+	}
+}
+
+/*
+=============
+CheckTeamLastManStanding
+
+Once a frame, check for changes in Team Last Man Standing player state
+=============
+*/
+void CheckTeamLastManStanding( void ) { // BFP - Team Last Man Standing
+	int redPlayers = TeamCount( -1, TEAM_RED );
+	int bluePlayers = TeamCount( -1, TEAM_BLUE );
+
+	if ( g_gametype.integer != GT_TLMS ) {
+		return;
+	}
+
+	// if we don't have both team players, go back to "waiting for players"
+	if ( redPlayers < 1 || bluePlayers < 1 ) {
+		if ( level.warmupTime != -1 ) {
+			level.warmupTime = -1;
+			trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
+			G_LogPrintf( "Warmup:\n" );
+		}
+		return;
+	}
+
+	// hit the fraglimit/timelimit
+	if ( level.teamScores[TEAM_BLUE] >= g_fraglimit.integer
+	|| level.teamScores[TEAM_RED] >= g_fraglimit.integer ) {
+		level.warmupTime = -1;
+		trap_SetConfigstring( CS_WARMUP, "0" );
+		return;
+	}
+
+	if ( ( g_timelimit.integer && !level.warmupTime )
+	&& ( level.time - level.startTime >= g_timelimit.integer*60000 ) ) {
+		level.warmupTime = 0;
+		return;
+	}
+
+	if ( level.warmupTime > 0 && level.time > level.warmupTime ) {
+		// warmup period has ended
+		level.warmupTime = 0;
+		trap_SetConfigstring( CS_WARMUP, "0" );
+	}
+
+	if ( level.warmupTime == 0 ) {
+		return;
+	}
+
+	// if the warmup is changed at the console, restart it
+	if ( g_warmup.modificationCount != level.warmupModificationCount ) {
+		level.warmupModificationCount = g_warmup.modificationCount;
+		level.warmupTime = -1;
+	}
+
+	// if both team players have arrived, start the countdown
+	if ( level.warmupTime < 0 && level.numPlayingClients >= 2 ) {
 		// fudge by -1 to account for extra delays
 		level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
 		trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
@@ -1778,6 +1842,9 @@ void G_RunFrame( int levelTime ) {
 
 	// BFP - Survival
 	CheckSurvival();
+
+	// BFP - Team Last Man Standing
+	CheckTeamLastManStanding();
 
 	// see if it is time to end the level
 	CheckExitRules();
