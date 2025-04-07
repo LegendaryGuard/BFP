@@ -70,6 +70,7 @@ typedef struct {
 	menutext_s		banner;
 
 	menulist_s		gametype;
+	menutext_s		gametypedesc; // BFP - Gametype description
 	menubitmap_s	mappics[MAX_MAPSPERPAGE];
 	menubitmap_s	mapbuttons[MAX_MAPSPERPAGE];
 	menubitmap_s	arrows;
@@ -122,6 +123,22 @@ static int gametype_remap2[] = {	// Take a look on gametype_items indexes
 	5,	// GT_TEAM (5)			->	"Team Deathmatch"
 	6,	// GT_TLMS (6)			->	"Team Last Man Standing"
 	4	// GT_CTF (7)			->	"Capture the Flag"
+};
+static char* gametype_description[] = { // BFP - Gametype description
+	// "Free For All"
+	"Basic deathmatch game but with use of all the attacks and characters. Players are allowed to perform 20 different attacks as well as overpower opponents by engaging in power struggles.",
+	// "Tournament"
+	"Players fight 1 vs 1 battles while others wait as spectators.",
+	// "Survival"
+	"Faster paced tournament-style game. Two players fight. When one player dies, he is removed from the fight and the spectator who has been waiting longest enters the game. The winner does not get healed in between rounds, and the scores of spectators are visible. The first player to reach the fraglimit is the winner, and the map restarts in order to set the spawn power level back to the g_basePL setting.",
+	// "Monster"
+	"A deathmatch but with an extra: a monster who has more ki and health than the rest of the players. The one with the most frags wins.",
+	// "Capture the Flag"
+	"Two teams compete to capture both flags and return them to their bases for points.",
+	// "Team Deathmatch"
+	"Two teams to fight on a deathmatch but with use of all the attacks and characters.",
+	// "Team Last Man Standing"
+	"The players in a last man standing game start with all available attacks. Once a player is killed, he must wait until the end of the round before restarting."
 };
 
 static void UI_ServerOptionsMenu( qboolean multiplayer );
@@ -415,6 +432,79 @@ static void StartServer_LevelshotDraw( void *self ) {
 
 
 /*
+==================================
+StartServer_GametypeDescriptionScrollDraw
+==================================
+*/
+static void StartServer_GametypeDescriptionScrollDraw( void *self ) { // BFP - Gametype description scroll
+	static int	previousGametype = -1;
+	static int	currentDescWidth = 0;
+	static int	descStartTime = 0;
+
+	const char	*desc = gametype_description[s_startserver.gametype.curvalue];
+
+	int			offset;
+	const int	SCROLLSPEED = 140;
+	int			elapsedTime;
+	int			xPos;
+	const int	YPOS = 383;
+
+	// update text width and timer when gametype changes
+	if ( s_startserver.gametype.curvalue != previousGametype ) {
+		// BFP - NOTE: When adding a new gametype and its own description, 
+		// first debug using:
+#if 0
+			currentDescWidth = UI_ProportionalStringWidth( desc );
+			Com_Printf( "currentDescWidth: %d\n", currentDescWidth );
+			if ( s_startserver.gametype.curvalue == GT_NEWGT ) {
+				currentDescWidth = value; // value to adjust
+			}
+#endif
+		// and set the value when the last character ends up off-screen,
+		// adding the new GT_* in the switch with the new value. 
+		// Make sure what number of GT_* while assigning in s_startserver.gametype.curvalue
+
+		// handle proportional strings to keep the scroll animation correctly
+		switch ( s_startserver.gametype.curvalue ) {
+		case GT_FFA:
+			currentDescWidth = 2106;
+			break;
+		case GT_TOURNAMENT:
+			currentDescWidth = 1125;
+			break;
+		case ( GT_SURVIVAL - 1 ):
+			currentDescWidth = 3890;
+			break;
+		case ( GT_MONSTER - 1 ):
+			currentDescWidth = 1700;
+			break;
+		case ( GT_CTF - 3 ):
+			currentDescWidth = 1302;
+			break;
+		case GT_TEAM:
+			currentDescWidth = 1302;
+			break;
+		case GT_TLMS:
+			currentDescWidth = 1904;
+			break;
+		}
+
+		descStartTime = uis.realtime;
+		previousGametype = s_startserver.gametype.curvalue;
+	}
+
+	// calculate scroll offset
+	elapsedTime = uis.realtime - descStartTime;
+	offset = ( elapsedTime * SCROLLSPEED / 1000 ) % currentDescWidth;
+
+	// determine starting x position (right edge of screen)
+	xPos = 640 - offset;
+
+	UI_DrawString( xPos, YPOS, desc, UI_LEFT|UI_SMALLFONT, text_color_highlight );
+}
+
+
+/*
 =================
 StartServer_MenuInit
 =================
@@ -466,6 +556,11 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.gametype.generic.x		= 320 - 24;
 	s_startserver.gametype.generic.y		= 368;
 	s_startserver.gametype.itemnames		= gametype_items;
+
+	// BFP - Gametype description
+	s_startserver.gametypedesc.generic.type		= MTYPE_PTEXT;
+	s_startserver.gametypedesc.string			= ""; // handle string, without that, DLL/SO crashes
+	s_startserver.gametypedesc.generic.ownerdraw = StartServer_GametypeDescriptionScrollDraw;
 
 	for (i=0; i<MAX_MAPSPERPAGE; i++)
 	{
@@ -568,6 +663,7 @@ static void StartServer_MenuInit( void ) {
 	Menu_AddItem( &s_startserver.menu, &s_startserver.banner );
 
 	Menu_AddItem( &s_startserver.menu, &s_startserver.gametype );
+	Menu_AddItem( &s_startserver.menu, &s_startserver.gametypedesc ); // BFP - Gametype description
 	for (i=0; i<MAX_MAPSPERPAGE; i++)
 	{
 		Menu_AddItem( &s_startserver.menu, &s_startserver.mappics[i] );

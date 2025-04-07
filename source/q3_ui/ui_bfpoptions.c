@@ -74,7 +74,7 @@ static const char *auratype_items[] = {
 static const char *viewpoint_items[] = {
 	"Third Person",
 	"First Person",
-	"First Person Vis",
+	"First Person Vis Mode",
 	NULL
 };
 
@@ -274,7 +274,7 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 			BFPOptions_Viewpoint_Setup( 0, 0 );
 			break;
 
-		case 2: // First Person Vis
+		case 2: // First Person Vis Mode
 			BFPOptions_Viewpoint_Setup( 0, 1 );
 			break;
 		}

@@ -84,7 +84,7 @@ Bid For Power is a total conversion for QuakeIII that plays nothing like the ori
 
 The project was started on Quake 2, that's where they were getting organized playing Quake and learn some programming there.
 
-The source code is said to have started from SDK 1.17 point release after the release of Quake 3 Arena (December 2, 1999). It continued to be updated, including the addition of `cg_particles.c` in 1.29, until 1.31. 
+The source code is said to have started from SDK 1.15c released on January 14, 2000. It continued to be updated, including the addition of `cg_particles.c` in 1.29, until 1.31. 
 More info can be found in [Quake 3 Arena changelog version history](https://discourse.ioquake.org/t/quake-3-changelog-version-history/375).
 
 The original source code appears to be lost, but the assets and some docs are available in various places. Nonetheless, not all sources are accessible.
@@ -139,6 +139,7 @@ The highest priority goal is to copy and recreate the complete logical structure
 You'll notice some differences and things that the original Bid For Power didn't have/were forgotten, incomplete or poorly made such as:
 - some adjusted UI buttons
 - BFP OPTIONS menu is upgraded, big explosions and smoke options are back (these were removed after RC/beta versions), also shell and ring options are available and these are options are interactive with explosion type option. Sprite and particle aura types are available on aura type option
+- in the first GAME SERVER menu has a horizontal scrolling description about the selected gametype
 - SERVER INFO menu displays all server info (on original BFP, the info was badly displayed and nothing was shown) and it has pagination
 - DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
 - explosion dynamic lights are back (these were broken after RC/beta versions)
