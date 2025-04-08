@@ -3170,28 +3170,22 @@ void PmoveSingle (pmove_t *pmove) {
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
 		// BFP - TODO: Set to the first selected weapon
-		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+		// pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 	}
 
-	{
-		char		buf[128];
+	// BFP - No flight
+	if ( pm->noFlight ) {
+		pm->cmd.buttons &= ~BUTTON_ENABLEFLIGHT;
+		pm->ps->eFlags &= ~EF_FLIGHT;
+	}
 
-		// BFP - No flight
-		trap_Cvar_VariableStringBuffer( "g_noFlight", buf, sizeof( buf ) );
-		if ( atoi( buf ) ) {
-			pm->cmd.buttons &= ~BUTTON_ENABLEFLIGHT;
-			pm->ps->eFlags &= ~EF_FLIGHT;
-		}
-
-		// BFP - Melee only
-		trap_Cvar_VariableStringBuffer( "g_meleeOnly", buf, sizeof( buf ) );
-		if ( atoi( buf ) ) {
-			pm->cmd.buttons &= ~BUTTON_ATTACK;
-			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
-			pm->ps->eFlags &= ~EF_FIRING;
-		}
+	// BFP - Melee only
+	if ( pm->meleeOnly ) {
+		pm->cmd.buttons &= ~BUTTON_ATTACK;
+		pm->ps->pm_flags &= ~PMF_KI_ATTACK;
+		pm->ps->eFlags &= ~EF_FIRING;
 	}
 
 	// set the firing flag for continuous beam weapons

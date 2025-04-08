@@ -196,6 +196,9 @@ typedef struct {
 	qboolean	noFootsteps;		// if the game is setup for no footsteps by the server
 	qboolean	meleeHit;			// BFP - before: gauntletHit - true if a melee attack would actually hit something
 
+	qboolean	noFlight;			// BFP - No flight
+	qboolean	meleeOnly;			// BFP - Melee only
+
 	int			framecount;
 
 	// results (out)

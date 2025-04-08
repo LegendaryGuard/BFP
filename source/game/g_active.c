@@ -1109,6 +1109,18 @@ void ClientThink_real( gentity_t *ent ) {
 		FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 	}
 
+	// BFP - No flight
+	pm.noFlight = qfalse;
+	if ( g_noFlight.integer > 0 ) {
+		pm.noFlight = qtrue;
+	}
+
+	// BFP - Melee only
+	pm.meleeOnly = qfalse;
+	if ( g_meleeOnly.integer > 0 ) {
+		pm.meleeOnly = qtrue;
+	}
+
 	// BFP - No force gesture anim
 #if 0
 	if ( ent->flags & FL_FORCE_GESTURE ) {

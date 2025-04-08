@@ -568,6 +568,27 @@ void CG_PredictPlayerState( void ) {
 		// when it actually inflicts damage (on Q3 comment says the same, but with gauntlet :P)
 		cg_pmove.meleeHit = qfalse;
 
+		// BFP - Melee only and no flight pmove handling
+		{
+			int	gValue;
+			const char	*info;
+		
+			info = CG_ConfigString( CS_SERVERINFO );
+			// BFP - Melee only
+			cg_pmove.meleeOnly = qfalse;
+			gValue = atoi( Info_ValueForKey( info, "g_meleeOnly" ) );
+			if ( gValue > 0 ) {
+				cg_pmove.meleeOnly = qtrue;
+			}
+
+			// BFP - No flight
+			cg_pmove.noFlight = qfalse;
+			gValue = atoi( Info_ValueForKey( info, "g_noFlight" ) );
+			if ( gValue > 0 ) {
+				cg_pmove.noFlight = qtrue;
+			}
+		}
+
 		if ( cg_pmove.pmove_fixed ) {
 			cg_pmove.cmd.serverTime = ((cg_pmove.cmd.serverTime + pmove_msec.integer-1) / pmove_msec.integer) * pmove_msec.integer;
 		}
