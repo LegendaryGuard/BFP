@@ -725,7 +725,7 @@ typedef struct bot_settings_s
 int BotAISetup( int restart );
 int BotAIShutdown( int restart );
 int BotAILoadMap( int restart );
-int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean restart);
+qboolean BotAISetupClient( int client, struct bot_settings_s *settings, qboolean restart );
 int BotAIShutdownClient( int client, qboolean restart );
 int BotAIStartFrame( int time );
 void BotTestAAS(vec3_t origin);

@@ -62,13 +62,11 @@ qboolean EntityIsDead(aas_entityinfo_t *entinfo);
 qboolean EntityIsInvisible(aas_entityinfo_t *entinfo);
 //returns true if the entity is shooting
 qboolean EntityIsShooting(aas_entityinfo_t *entinfo);
-// set a user info key/value pair
-void BotSetUserInfo(bot_state_t *bs, char *key, char *value);
 // set the team status (offense, defense etc.)
 void BotSetTeamStatus(bot_state_t *bs);
 //returns the name of the client
 char *ClientName(int client, char *name, int size);
-//returns an simplyfied client name
+//returns a simplified client name
 char *EasyClientName(int client, char *name, int size);
 //returns the skin used by the client
 char *ClientSkin(int client, char *skin, int size);
@@ -151,10 +149,10 @@ bot_waypoint_t *BotCreateWayPoint(char *name, vec3_t origin, int areanum);
 //find a waypoint with the given name
 bot_waypoint_t *BotFindWayPoint(bot_waypoint_t *waypoints, char *name);
 //strstr but case insensitive
-char *stristr(char *str, char *charset);
+const char *stristr(const char *str, const char *charset);
 //returns the number of the client with the given name
-int ClientFromName(char *name);
-int ClientOnSameTeamFromName(bot_state_t *bs, char *name);
+int ClientFromName( const char *name );
+int ClientOnSameTeamFromName( bot_state_t *bs, const char *name );
 //
 int BotPointAreaNum(vec3_t origin);
 //
@@ -169,7 +167,7 @@ void BotMapScripts(bot_state_t *bs);
 #define CTF_SKIN_BLUETEAM	"blue"
 
 extern int gametype;		//game type
-extern int maxclients;		//maximum number of clients
+extern char mapname[ MAX_QPATH ];
 
 extern vmCvar_t bot_grapple;
 extern vmCvar_t bot_rocketjump;

@@ -61,7 +61,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 typedef struct voiceCommand_s
 {
 	char *cmd;
-	void (*func)(bot_state_t *bs, int client, int mode);
+	void(*func)(bot_state_t *bs, int client, int mode);
 } voiceCommand_t;
 
 /*
@@ -480,15 +480,15 @@ int BotVoiceChatCommand(bot_state_t *bs, int mode, char *voiceChat) {
 
 	Q_strncpyz(buf, voiceChat, sizeof(buf));
 	cmd = buf;
-	for (ptr = cmd; *cmd && *cmd > ' '; cmd++);
+	for (/*ptr = cmd*/; *cmd && *cmd > ' '; cmd++);
 	while (*cmd && *cmd <= ' ') *cmd++ = '\0';
-	voiceOnly = atoi(ptr);
+	//voiceOnly = atoi(ptr);
 	for (ptr = cmd; *cmd && *cmd > ' '; cmd++);
 	while (*cmd && *cmd <= ' ') *cmd++ = '\0';
 	clientNum = atoi(ptr);
-	for (ptr = cmd; *cmd && *cmd > ' '; cmd++);
+	for (/*ptr = cmd*/; *cmd && *cmd > ' '; cmd++);
 	while (*cmd && *cmd <= ' ') *cmd++ = '\0';
-	color = atoi(ptr);
+	//color = atoi(ptr);
 
 	if (!BotSameTeam(bs, clientNum)) {
 		return qfalse;

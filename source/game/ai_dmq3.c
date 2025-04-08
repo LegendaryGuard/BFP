@@ -72,7 +72,7 @@ bot_waypoint_t *botai_freewaypoints;
 
 //NOTE: not using a cvars which can be updated because the game should be reloaded anyway
 int gametype;		//game type
-int maxclients;		//maximum number of clients
+//int maxclients;	//maximum number of clients
 
 vmCvar_t bot_grapple;
 vmCvar_t bot_rocketjump;
@@ -107,14 +107,15 @@ int blue_numaltroutegoals;
 BotSetUserInfo
 ==================
 */
-void BotSetUserInfo(bot_state_t *bs, char *key, char *value) {
+static void BotSetUserInfo( bot_state_t *bs, const char *key, const char *value ) {
 	char userinfo[MAX_INFO_STRING];
 
-	trap_GetUserinfo(bs->client, userinfo, sizeof(userinfo));
-	Info_SetValueForKey(userinfo, key, value);
-	trap_SetUserinfo(bs->client, userinfo);
+	trap_GetUserinfo( bs->client, userinfo, sizeof( userinfo ) );
+	Info_SetValueForKey( userinfo, key, value );
+	trap_SetUserinfo( bs->client, userinfo );
 	ClientUserinfoChanged( bs->client );
 }
+
 
 /*
 ==================
@@ -708,91 +709,96 @@ int BotPointAreaNum(vec3_t origin) {
 	return 0;
 }
 
+
 /*
 ==================
 ClientName
 ==================
 */
-char *ClientName(int client, char *name, int size) {
-	char buf[MAX_INFO_STRING];
+char *ClientName( int client, char *name, int size ) {
+	char buf[ MAX_INFO_STRING ];
 
-	if (client < 0 || client >= MAX_CLIENTS) {
-		BotAI_Print(PRT_ERROR, "ClientName: client out of range\n");
-		return "[client out of range]";
+	if ( (unsigned) client >= MAX_CLIENTS ) {
+		BotAI_Print( PRT_ERROR, "ClientName: client out of range\n" );
+		Q_strncpyz( name, "[client out of range]", size );
+		return name;
 	}
-	trap_GetConfigstring(CS_PLAYERS+client, buf, sizeof(buf));
-	strncpy(name, Info_ValueForKey(buf, "n"), size-1);
-	name[size-1] = '\0';
+
+	trap_GetConfigstring( CS_PLAYERS + client, buf, sizeof( buf ) );
+	Q_strncpyz( name, Info_ValueForKey( buf, "n" ), size );
 	Q_CleanStr( name );
+
 	return name;
 }
+
 
 /*
 ==================
 ClientSkin
 ==================
 */
-char *ClientSkin(int client, char *skin, int size) {
-	char buf[MAX_INFO_STRING];
+char *ClientSkin( int client, char *skin, int size ) {
+	char buf[ MAX_INFO_STRING ];
 
-	if (client < 0 || client >= MAX_CLIENTS) {
+	if ( (unsigned) client >= MAX_CLIENTS ) {
 		BotAI_Print(PRT_ERROR, "ClientSkin: client out of range\n");
 		return "[client out of range]";
 	}
-	trap_GetConfigstring(CS_PLAYERS+client, buf, sizeof(buf));
-	strncpy(skin, Info_ValueForKey(buf, "model"), size-1);
-	skin[size-1] = '\0';
+
+	trap_GetConfigstring( CS_PLAYERS + client, buf, sizeof( buf ) );
+	Q_strncpyz( skin, Info_ValueForKey( buf, "model" ), size );
+
 	return skin;
 }
+
 
 /*
 ==================
 ClientFromName
 ==================
 */
-int ClientFromName(char *name) {
+int ClientFromName( const char *name ) {
 	int i;
-	char buf[MAX_INFO_STRING];
-	static int maxclients;
+	char buf[ MAX_INFO_STRING ];
 
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
-		trap_GetConfigstring(CS_PLAYERS+i, buf, sizeof(buf));
+	for ( i = 0; i < level.maxclients; i++ ) {
+		trap_GetConfigstring( CS_PLAYERS + i, buf, sizeof( buf ) );
 		Q_CleanStr( buf );
-		if (!Q_stricmp(Info_ValueForKey(buf, "n"), name)) return i;
+		if ( !Q_stricmp( Info_ValueForKey( buf, "n" ), name ) )
+			return i;
 	}
 	return -1;
 }
+
 
 /*
 ==================
 ClientOnSameTeamFromName
 ==================
 */
-int ClientOnSameTeamFromName(bot_state_t *bs, char *name) {
-	int i;
+int ClientOnSameTeamFromName( bot_state_t *bs, const char *name ) {
 	char buf[MAX_INFO_STRING];
-	static int maxclients;
+	int i;
 
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
-		if (!BotSameTeam(bs, i))
+	for ( i = 0; i < level.maxclients; i++ ) {
+		if ( !BotSameTeam( bs, i ) )
 			continue;
-		trap_GetConfigstring(CS_PLAYERS+i, buf, sizeof(buf));
+		trap_GetConfigstring( CS_PLAYERS + i, buf, sizeof( buf ) );
 		Q_CleanStr( buf );
-		if (!Q_stricmp(Info_ValueForKey(buf, "n"), name)) return i;
+		if ( !Q_stricmp( Info_ValueForKey( buf, "n" ), name ) )
+			return i;
 	}
+
 	return -1;
 }
+
 
 /*
 ==================
 stristr
 ==================
 */
-char *stristr(char *str, char *charset) {
+const char *stristr(const char *str, const char *charset) {
 	int i;
 
 	while(*str) {
@@ -805,6 +811,7 @@ char *stristr(char *str, char *charset) {
 	return NULL;
 }
 
+
 /*
 ==================
 EasyClientName
@@ -815,23 +822,23 @@ char *EasyClientName(int client, char *buf, int size) {
 	char *str1, *str2, *ptr, c;
 	char name[128];
 
-	strcpy(name, ClientName(client, name, sizeof(name)));
+	ClientName( client, name, sizeof( name ) );
 	for (i = 0; name[i]; i++) name[i] &= 127;
 	//remove all spaces
-	for (ptr = strstr(name, " "); ptr; ptr = strstr(name, " ")) {
-		memmove(ptr, ptr+1, (int)strlen(ptr+1)+1);
+	for (ptr = strchr(name, ' '); ptr; ptr = strchr(name, ' ')) {
+		memmove(ptr, ptr+1, strlen(ptr+1)+1);
 	}
 	//check for [x] and ]x[ clan names
-	str1 = strstr(name, "[");
-	str2 = strstr(name, "]");
+	str1 = strchr(name, '[');
+	str2 = strchr(name, ']');
 	if (str1 && str2) {
-		if (str2 > str1) memmove(str1, str2+1, (int)strlen(str2+1)+1);
-		else memmove(str2, str1+1, (int)strlen(str1+1)+1);
+		if (str2 > str1) memmove(str1, str2+1, strlen(str2+1)+1);
+		else memmove(str2, str1+1, strlen(str1+1)+1);
 	}
 	//remove Mr prefix
 	if ((name[0] == 'm' || name[0] == 'M') &&
 			(name[1] == 'r' || name[1] == 'R')) {
-		memmove(name, name+2, (int)strlen(name+2)+1);
+		memmove(name, name+2, strlen(name+2)+1);
 	}
 	//only allow lower case alphabet characters
 	ptr = name;
@@ -846,11 +853,12 @@ char *EasyClientName(int client, char *buf, int size) {
 			ptr++;
 		}
 		else {
-			memmove(ptr, ptr+1, (int)strlen(ptr + 1)+1);
+			memmove(ptr, ptr+1, strlen(ptr + 1)+1);
 		}
 	}
-	strncpy(buf, name, size-1);
-	buf[size-1] = '\0';
+	
+	Q_strncpyz( buf, name, size );
+
 	return buf;
 }
 
@@ -1421,7 +1429,7 @@ int BotWantsToCamp(bot_state_t *bs) {
 	//if the bot isn't healthy anough
 	if (BotAggression(bs) < 50) return qfalse;
 	//the bot should have at least have the rocket launcher, the railgun or the bfg10k with some ammo
-	if ((bs->inventory[INVENTORY_ROCKETLAUNCHER] <= 0 || bs->inventory[INVENTORY_ROCKETS < 10]) &&
+	if ((bs->inventory[INVENTORY_ROCKETLAUNCHER] <= 0 || bs->inventory[INVENTORY_ROCKETS] < 10) &&
 		(bs->inventory[INVENTORY_RAILGUN] <= 0 || bs->inventory[INVENTORY_SLUGS] < 10) &&
 		(bs->inventory[INVENTORY_BFG10K] <= 0 || bs->inventory[INVENTORY_BFGAMMO] < 10)) {
 		return qfalse;
@@ -1677,21 +1685,20 @@ BotSameTeam
 ==================
 */
 int BotSameTeam(bot_state_t *bs, int entnum) {
-	char info1[1024], info2[1024];
 
-	if (bs->client < 0 || bs->client >= MAX_CLIENTS) {
+	extern gclient_t g_clients[ MAX_CLIENTS ];
+
+	if ( (unsigned) bs->client >= MAX_CLIENTS ) {
 		//BotAI_Print(PRT_ERROR, "BotSameTeam: client out of range\n");
 		return qfalse;
 	}
-	if (entnum < 0 || entnum >= MAX_CLIENTS) {
+	if ( (unsigned) entnum >= MAX_CLIENTS ) {
 		//BotAI_Print(PRT_ERROR, "BotSameTeam: client out of range\n");
 		return qfalse;
 	}
 	if ( gametype >= GT_TEAM ) {
-		trap_GetConfigstring(CS_PLAYERS+bs->client, info1, sizeof(info1));
-		trap_GetConfigstring(CS_PLAYERS+entnum, info2, sizeof(info2));
-		//
-		if (atoi(Info_ValueForKey(info1, "t")) == atoi(Info_ValueForKey(info2, "t"))) return qtrue;
+		if ( g_clients[bs->client].sess.sessionTeam == g_clients[entnum].sess.sessionTeam )
+			return qtrue;
 	}
 	return qfalse;
 }
@@ -1742,6 +1749,8 @@ float BotEntityVisible(int viewer, vec3_t eye, vec3_t viewangles, float fov, int
 
 	//calculate middle of bounding box
 	BotEntityInfo(ent, &entinfo);
+	if (!entinfo.valid)
+		return 0;
 	VectorAdd(entinfo.mins, entinfo.maxs, middle);
 	VectorScale(middle, 0.5, middle);
 	VectorAdd(entinfo.origin, middle, middle);
@@ -1861,11 +1870,13 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		cursquaredist = 0;
 	}
 	//
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 
 		if (i == bs->client) continue;
 		//if it's the current enemy
 		if (i == curenemy) continue;
+		//if the enemy has targeting disabled
+		if (g_entities[i].flags & FL_NOTARGET) continue;
 		//
 		BotEntityInfo(i, &entinfo);
 		//
@@ -1940,7 +1951,7 @@ int BotTeamFlagCarrierVisible(bot_state_t *bs) {
 	float vis;
 	aas_entityinfo_t entinfo;
 
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		if (i == bs->client)
 			continue;
 		//
@@ -1973,7 +1984,7 @@ int BotTeamFlagCarrier(bot_state_t *bs) {
 	int i;
 	aas_entityinfo_t entinfo;
 
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		if (i == bs->client)
 			continue;
 		//
@@ -2003,7 +2014,7 @@ int BotEnemyFlagCarrierVisible(bot_state_t *bs) {
 	float vis;
 	aas_entityinfo_t entinfo;
 
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		if (i == bs->client)
 			continue;
 		//
@@ -2042,7 +2053,7 @@ void BotVisibleTeamMatesAndEnemies(bot_state_t *bs, int *teammates, int *enemies
 		*teammates = 0;
 	if (enemies)
 		*enemies = 0;
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		if (i == bs->client)
 			continue;
 		//
@@ -2266,10 +2277,10 @@ void BotAimAtEnemy(bot_state_t *bs) {
 				//if hitpoint is not vertically too far from the ground target
 				if (fabs(trace.endpos[2] - groundtarget[2]) < 50) {
 					VectorSubtract(trace.endpos, groundtarget, dir);
-					//if the hitpoint is near anough the ground target
+					//if the hitpoint is near enough the ground target
 					if (VectorLengthSquared(dir) < Square(60)) {
 						VectorSubtract(trace.endpos, start, dir);
-						//if the hitpoint is far anough from the bot
+						//if the hitpoint is far enough from the bot
 						if (VectorLengthSquared(dir) > Square(100)) {
 							//check if the bot is visible from the ground target
 							trace.endpos[2] += 1;
@@ -2291,7 +2302,7 @@ void BotAimAtEnemy(bot_state_t *bs) {
 		//
 		VectorCopy(bs->lastenemyorigin, bestorigin);
 		bestorigin[2] += 8;
-		//if the bot is skilled anough
+		//if the bot is skilled enough
 		if (aim_skill > 0.5) {
 			//do prediction shots around corners
 			if (wi.number == WP_BFG ||
@@ -2374,6 +2385,7 @@ void BotCheckAttack(bot_state_t *bs) {
 	weaponinfo_t wi;
 	bsp_trace_t trace;
 	aas_entityinfo_t entinfo;
+	weapon_t weapon;
 	vec3_t mins = {-8, -8, -8}, maxs = {8, 8, 8};
 
 	// BFP - TODO: When the bot receives a hit stun, try to act like they use short-range teleport to escape from this stun status
@@ -2443,7 +2455,7 @@ void BotCheckAttack(bot_state_t *bs) {
 	VectorMA(start, -12, forward, start);
 	BotAI_Trace(&trace, start, mins, maxs, end, bs->entitynum, MASK_SHOT);
 	//if the entity is a client
-	if (trace.ent > 0 && trace.ent <= MAX_CLIENTS) {
+	if (trace.ent >= 0 && trace.ent < MAX_CLIENTS) {
 		if (trace.ent != attackentity) {
 			//if a teammate is hit
 			if (BotSameTeam(bs, trace.ent))
@@ -2463,6 +2475,12 @@ void BotCheckAttack(bot_state_t *bs) {
 			//FIXME: check if a teammate gets radial damage
 		}
 	}
+
+	weapon = bs->cur_ps.weapon;
+	if ( weapon >= WP_MACHINEGUN && weapon <= WP_BFG && !bs->cur_ps.ammo[ weapon ] ) {
+		return;
+	}
+
 	//if fire has to be release to activate weapon
 	if (wi.flags & WFL_FIRERELEASED) {
 		if (bs->flags & BFL_ATTACKED) {
@@ -2481,17 +2499,10 @@ BotMapScripts
 ==================
 */
 void BotMapScripts(bot_state_t *bs) {
-	char info[1024];
-	char mapname[128];
 	int i, shootbutton;
 	float aim_accuracy;
 	aas_entityinfo_t entinfo;
 	vec3_t dir;
-
-	trap_GetServerinfo(info, sizeof(info));
-
-	strncpy(mapname, Info_ValueForKey( info, "mapname" ), sizeof(mapname)-1);
-	mapname[sizeof(mapname)-1] = '\0';
 
 	if (!Q_stricmp(mapname, "q3tourney6")) {
 		vec3_t mins = {700, 204, 672}, maxs = {964, 468, 680};
@@ -2508,7 +2519,7 @@ void BotMapScripts(bot_state_t *bs) {
 		}
 		shootbutton = qfalse;
 		//if an enemy is below this bounding box then shoot the button
-		for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+		for (i = 0; i < level.maxclients; i++) {
 
 			if (i == bs->client) continue;
 			//
@@ -2775,7 +2786,8 @@ BotFuncDoorGoal
 int BotFuncDoorActivateGoal(bot_state_t *bs, int bspent, bot_activategoal_t *activategoal) {
 	int modelindex, entitynum;
 	char model[MAX_INFO_STRING];
-	vec3_t mins, maxs, origin, angles;
+	vec3_t mins, maxs, origin;
+	//vec3_t angles;
 
 	//shoot at the shootable door
 	trap_AAS_ValueForBSPEpairKey(bspent, "model", model, sizeof(model));
@@ -2784,7 +2796,7 @@ int BotFuncDoorActivateGoal(bot_state_t *bs, int bspent, bot_activategoal_t *act
 	modelindex = atoi(model+1);
 	if (!modelindex)
 		return qfalse;
-	VectorClear(angles);
+	//VectorClear(angles);
 	entitynum = BotModelMinsMaxs(modelindex, ET_MOVER, 0, mins, maxs);
 	//door origin
 	VectorAdd(mins, maxs, origin);
@@ -2810,7 +2822,8 @@ BotTriggerMultipleGoal
 int BotTriggerMultipleActivateGoal(bot_state_t *bs, int bspent, bot_activategoal_t *activategoal) {
 	int i, areas[10], numareas, modelindex, entitynum;
 	char model[128];
-	vec3_t start, end, mins, maxs, angles;
+	vec3_t start, end, mins, maxs;
+	//vec3_t angles;
 	vec3_t origin, goalorigin;
 
 	activategoal->shoot = qfalse;
@@ -2822,7 +2835,7 @@ int BotTriggerMultipleActivateGoal(bot_state_t *bs, int bspent, bot_activategoal
 	modelindex = atoi(model+1);
 	if (!modelindex)
 		return qfalse;
-	VectorClear(angles);
+	//VectorClear(angles);
 	entitynum = BotModelMinsMaxs(modelindex, 0, CONTENTS_TRIGGER, mins, maxs);
 	//trigger origin
 	VectorAdd(mins, maxs, origin);
@@ -2956,8 +2969,8 @@ int BotIsGoingToActivateEntity(bot_state_t *bs, int entitynum) {
 ==================
 BotGetActivateGoal
 
-  returns the number of the bsp entity to activate
-  goal->entitynum will be set to the game entity to activate
+returns the number of the bsp entity to activate
+goal->entitynum will be set to the game entity to activate
 ==================
 */
 //#define OBSTACLEDEBUG
@@ -2970,7 +2983,8 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 	char targetname[10][128];
 	aas_entityinfo_t entinfo;
 	aas_areainfo_t areainfo;
-	vec3_t origin, angles, absmins, absmaxs;
+	vec3_t origin, absmins, absmaxs;
+	//vec3_t angles;
 
 	memset(activategoal, 0, sizeof(bot_activategoal_t));
 	BotEntityInfo(entitynum, &entinfo);
@@ -2984,7 +2998,7 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 		return 0;
 	}
 	trap_AAS_ValueForBSPEpairKey(ent, "classname", classname, sizeof(classname));
-	if (!classname) {
+	if (!*classname) {
 		BotAI_Print(PRT_ERROR, "BotGetActivateGoal: entity with model %s has no classname\n", model);
 		return 0;
 	}
@@ -3014,7 +3028,7 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 		if (*model) {
 			modelindex = atoi(model+1);
 			if (modelindex) {
-				VectorClear(angles);
+				//VectorClear(angles);
 				BotModelMinsMaxs(modelindex, ET_MOVER, 0, absmins, absmaxs);
 				//
 				numareas = trap_AAS_BBoxAreas(absmins, absmaxs, areas, MAX_ACTIVATEAREAS*2);
@@ -3086,9 +3100,9 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 				continue;
 			// if the bot tries to activate this button already
 			if ( bs->activatestack && bs->activatestack->inuse &&
-				 bs->activatestack->goal.entitynum == activategoal->goal.entitynum &&
-				 bs->activatestack->time > FloatTime() &&
-				 bs->activatestack->start_time < FloatTime() - 2)
+				bs->activatestack->goal.entitynum == activategoal->goal.entitynum &&
+				bs->activatestack->time > FloatTime() &&
+				bs->activatestack->start_time < FloatTime() - 2)
 				continue;
 			// if the bot is in a reachability area
 			if ( trap_AAS_AreaReachability(bs->areanum) ) {
@@ -3111,9 +3125,9 @@ int BotGetActivateGoal(bot_state_t *bs, int entitynum, bot_activategoal_t *activ
 				continue;
 			// if the bot tries to activate this trigger already
 			if ( bs->activatestack && bs->activatestack->inuse &&
-				 bs->activatestack->goal.entitynum == activategoal->goal.entitynum &&
-				 bs->activatestack->time > FloatTime() &&
-				 bs->activatestack->start_time < FloatTime() - 2)
+				bs->activatestack->goal.entitynum == activategoal->goal.entitynum &&
+				bs->activatestack->time > FloatTime() &&
+				bs->activatestack->start_time < FloatTime() - 2)
 				continue;
 			// if the bot is in a reachability area
 			if ( trap_AAS_AreaReachability(bs->areanum) ) {
@@ -3237,7 +3251,7 @@ open, which buttons to activate etc.
 */
 void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 	int movetype, bspent;
-	vec3_t hordir, start, end, mins, maxs, sideward, angles, up = {0, 0, 1};
+	vec3_t hordir, start, /*end, mins, maxs,*/ sideward, angles, up = {0, 0, 1};
 	aas_entityinfo_t entinfo;
 	bot_activategoal_t activategoal;
 
@@ -3258,7 +3272,7 @@ void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 #ifdef OBSTACLEDEBUG
 	ClientName(bs->client, netname, sizeof(netname));
 	BotAI_Print(PRT_MESSAGE, "%s: I'm blocked by model %d\n", netname, entinfo.modelindex);
-#endif // OBSTACLEDEBUG
+#endif
 	// if blocked by a bsp model and the bot wants to activate it
 	if (activate && entinfo.modelindex > 0 && entinfo.modelindex <= max_bspmodelindex) {
 		// find the bsp entity which should be activated in order to get the blocking entity out of the way
@@ -3301,9 +3315,9 @@ void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 	// the bot might be able to crouch through
 	VectorCopy(bs->origin, start);
 	start[2] += 18;
-	VectorMA(start, 5, hordir, end);
-	VectorSet(mins, -16, -16, -24);
-	VectorSet(maxs, 16, 16, 4);
+	//VectorMA(start, 5, hordir, end);
+	//VectorSet(mins, -16, -16, -24);
+	//VectorSet(maxs, 16, 16, 4);
 	//
 	//bsptrace = AAS_Trace(start, mins, maxs, end, bs->entitynum, MASK_PLAYERSOLID);
 	//if (bsptrace.fraction >= 1) movetype = MOVE_CROUCH;
@@ -3312,7 +3326,7 @@ void BotAIBlocked(bot_state_t *bs, bot_moveresult_t *moveresult, int activate) {
 	//
 	if (bs->flags & BFL_AVOIDRIGHT) VectorNegate(sideward, sideward);
 	// try to crouch straight forward?
-	if (movetype != MOVE_CROUCH || !trap_BotMoveInDirection(bs->ms, hordir, 400, movetype)) {
+	if (!trap_BotMoveInDirection(bs->ms, hordir, 400, movetype)) {
 		// perform the movement
 		if (!trap_BotMoveInDirection(bs->ms, sideward, 400, movetype)) {
 			// flip the avoid direction flag
@@ -3581,7 +3595,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		}
 		case EV_GLOBAL_SOUND:
 		{
-			if (state->eventParm < 0 || state->eventParm > MAX_SOUNDS) {
+			if (state->eventParm < 0 || state->eventParm >= MAX_SOUNDS) {
 				BotAI_Print(PRT_ERROR, "EV_GLOBAL_SOUND: eventParm (%d) out of range\n", state->eventParm);
 				break;
 			}
@@ -3652,7 +3666,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		{
 			//if this sound is played on the bot
 			if (state->number == bs->client) {
-				if (state->eventParm < 0 || state->eventParm > MAX_SOUNDS) {
+				if (state->eventParm < 0 || state->eventParm >= MAX_SOUNDS) {
 					BotAI_Print(PRT_ERROR, "EV_GENERAL_SOUND: eventParm (%d) out of range\n", state->eventParm);
 					break;
 				}
@@ -3710,6 +3724,7 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 		case EV_USE_ITEM12:
 		case EV_USE_ITEM13:
 		case EV_USE_ITEM14:
+		case EV_USE_ITEM15:
 			break;
 	}
 }
@@ -4026,8 +4041,7 @@ void BotSetupDeathmatchAI(void) {
 	int ent, modelnum;
 	char model[128];
 
-	gametype = trap_Cvar_VariableIntegerValue("g_gametype");
-	maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
+	gametype = trap_Cvar_VariableIntegerValue( "g_gametype" );
 
 	trap_Cvar_Register(&bot_rocketjump, "bot_rocketjump", "1", 0);
 	trap_Cvar_Register(&bot_grapple, "bot_grapple", "0", 0);

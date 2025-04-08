@@ -217,53 +217,56 @@ float BotGetTime(bot_match_t *match) {
 	return 0;
 }
 
+
 /*
 ==================
 FindClientByName
 ==================
 */
-int FindClientByName(char *name) {
+int FindClientByName( const char *name ) {
+	char buf[ MAX_INFO_STRING ];
 	int i;
-	char buf[MAX_INFO_STRING];
-	static int maxclients;
 
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
-		ClientName(i, buf, sizeof(buf));
-		if (!Q_stricmp(buf, name)) return i;
+	for ( i = 0; i < level.maxclients; i++ ) {
+		ClientName( i, buf, sizeof( buf ) );
+		if ( !Q_stricmp( buf, name ) ) 
+			return i; // exact match
 	}
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
-		ClientName(i, buf, sizeof(buf));
-		if (stristr(buf, name)) return i;
+
+	for ( i = 0; i < level.maxclients ; i++ ) {
+		ClientName(i, buf, sizeof( buf ) );
+		if ( stristr( buf, name ) )
+			return i; // partial match
 	}
+
 	return -1;
 }
+
 
 /*
 ==================
 FindEnemyByName
 ==================
 */
-int FindEnemyByName(bot_state_t *bs, char *name) {
-	int i;
+int FindEnemyByName( bot_state_t *bs, const char *name ) {
 	char buf[MAX_INFO_STRING];
-	static int maxclients;
+	int i;
 
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		if (BotSameTeam(bs, i)) continue;
 		ClientName(i, buf, sizeof(buf));
 		if (!Q_stricmp(buf, name)) return i;
 	}
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+
+	for (i = 0; i < level.maxclients; i++) {
 		if (BotSameTeam(bs, i)) continue;
 		ClientName(i, buf, sizeof(buf));
 		if (stristr(buf, name)) return i;
 	}
+
 	return -1;
 }
+
 
 /*
 ==================
@@ -273,15 +276,11 @@ NumPlayersOnSameTeam
 int NumPlayersOnSameTeam(bot_state_t *bs) {
 	int i, num;
 	char buf[MAX_INFO_STRING];
-	static int maxclients;
-
-	if (!maxclients)
-		maxclients = trap_Cvar_VariableIntegerValue("sv_maxclients");
 
 	num = 0;
-	for (i = 0; i < maxclients && i < MAX_CLIENTS; i++) {
+	for (i = 0; i < level.maxclients; i++) {
 		trap_GetConfigstring(CS_PLAYERS+i, buf, MAX_INFO_STRING);
-		if (strlen(buf)) {
+		if (buf[0]) {
 			if (BotSameTeam(bs, i+1)) num++;
 		}
 	}
@@ -1038,8 +1037,7 @@ void BotMatch_JoinSubteam(bot_state_t *bs, bot_match_t *match) {
 	//get the sub team name
 	trap_BotMatchVariable(match, TEAMNAME, teammate, sizeof(teammate));
 	//set the sub team name
-	strncpy(bs->subteam, teammate, 32);
-	bs->subteam[31] = '\0';
+	Q_strncpyz( bs->subteam, teammate, sizeof( bs->subteam ) );
 	//
 	trap_BotMatchVariable(match, NETNAME, netname, sizeof(netname));
 	BotAI_BotInitialChat(bs, "joinedteam", teammate, NULL);
@@ -1210,8 +1208,8 @@ void BotMatch_Suicide(bot_state_t *bs, bot_match_t *match) {
 	trap_EA_Command(bs->client, "kill");
 	//
 	trap_BotMatchVariable(match, NETNAME, netname, sizeof(netname));
-	client = ClientFromName(netname);
 	//
+	client = ClientFromName(netname);
 	BotVoiceChat(bs, client, VOICECHAT_TAUNT);
 	// trap_EA_Action(bs->client, ACTION_AFFIRMATIVE);
 }
@@ -1230,8 +1228,7 @@ void BotMatch_StartTeamLeaderShip(bot_state_t *bs, bot_match_t *match) {
 	if (match->subtype & ST_I) {
 		//get the team mate that will be the team leader
 		trap_BotMatchVariable(match, NETNAME, teammate, sizeof(teammate));
-		strncpy(bs->teamleader, teammate, sizeof(bs->teamleader));
-		bs->teamleader[sizeof(bs->teamleader)] = '\0';
+		Q_strncpyz( bs->teamleader, teammate, sizeof( bs->teamleader ) );
 	}
 	//chats for someone else
 	else {
