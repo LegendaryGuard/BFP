@@ -65,12 +65,7 @@ int tolower( int c );
 int toupper( int c );
 
 double atof( const char *string );
-double _atof( const char **stringPtr );
 int atoi( const char *string );
-int _atoi( const char **stringPtr );
-
-int vsprintf( char *buffer, const char *fmt, va_list argptr );
-int sscanf( const char *buffer, const char *fmt, ... );
 
 // Memory functions
 void *memmove( void *dest, const void *src, size_t count );
@@ -88,5 +83,3 @@ double tan( double x );
 int abs( int n );
 double fabs( double x );
 double acos( double x );
-float pow( float x, float y ); // BFP - Unpack music, memory management for ui_mp3decoder
-

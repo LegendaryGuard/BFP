@@ -120,10 +120,10 @@ void initLayer3( int down_sample_sblimit )
   int i, j, k, l;
 
   for( i = -256; i < 118 + 4 ; i++ )
-    gainpow2[ i + 256 ] = pow( (float)2.0, -0.25 * (float)( i + 210 ) );
+    gainpow2[ i + 256 ] = mp3dec_pow( (float)2.0, -0.25 * (float)( i + 210 ) );
 
   for( i = 0; i < 8207; i++ )
-    ispow[ i ] = pow( (float)i, (float)4.0 / 3.0 );
+    ispow[ i ] = mp3dec_pow( (float)i, (float)4.0 / 3.0 );
 
   for ( i = 0; i < 8; i++ )
   {
@@ -191,15 +191,15 @@ void initLayer3( int down_sample_sblimit )
 
     for( j = 0 ; j < 2; j++ )
     {
-      float base = pow( 2.0, -0.25 * ( j + 1.0 ) );
+      float base = mp3dec_pow( 2.0, -0.25 * ( j + 1.0 ) );
       float p1 = 1.0, p2 = 1.0;
       
       if( i > 0 )
       {
         if( i & 1 )
-          p1 = pow( base, ( i + 1.0 ) * 0.5 );
+          p1 = mp3dec_pow( base, ( i + 1.0 ) * 0.5 );
         else
-          p2 = pow( base, i * 0.5 );
+          p2 = mp3dec_pow( base, i * 0.5 );
       }
       pow1_1[ j ][ i ] = p1;
       pow2_1[ j ][ i ] = p2;

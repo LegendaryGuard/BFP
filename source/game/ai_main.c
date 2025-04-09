@@ -97,7 +97,7 @@ void QDECL BotAI_Print( int type, const char *fmt, ... ) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsprintf(str, fmt, ap);
+	Q_vsprintf(str, fmt, ap);
 	va_end(ap);
 
 	switch(type) {
@@ -1117,7 +1117,7 @@ void BotReadSessionData(bot_state_t *bs) {
 	var = va( "botsession%i", bs->client );
 	trap_Cvar_VariableStringBuffer( var, s, sizeof(s) );
 
-	sscanf(s,
+	Q_sscanf(s,
 			"%i %i %i %i %i %i %i %i"
 			" %f %f %f"
 			" %f %f %f"

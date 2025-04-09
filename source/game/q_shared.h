@@ -1460,3 +1460,9 @@ typedef enum _flag_status {
 #define LERP( a, b, w ) ( ( a ) * ( 1.0f - ( w ) ) + ( b ) * ( w ) )
 #endif
 #endif	// __Q_SHARED_H
+
+
+int Q_vsprintf( char *buffer, const char *fmt, va_list argptr );
+int Q_sscanf( const char *buffer, const char *fmt, ... );
+
+float mp3dec_pow( float x, float y ); // BFP - Unpack music, memory management for ui_mp3decoder

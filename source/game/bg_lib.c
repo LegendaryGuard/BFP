@@ -38,14 +38,6 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
-#endif
-static const char rcsid[] =
-#endif /* LIBC_SCCS and not lint */
-
-// bk001127 - needed for DLL's
 #if !defined( Q3_VM )
 typedef int		 cmp_t(const void *, const void *);
 #endif
@@ -54,7 +46,7 @@ static char* med3(char *, char *, char *, cmp_t *);
 static void	 swapfunc(char *, char *, int, int);
 
 #ifndef min
-#define min(a, b)	(a) < (b) ? a : b
+#define min(a, b)	((a) < (b) ? a : b)
 #endif
 
 /*
@@ -68,7 +60,7 @@ static void	 swapfunc(char *, char *, int, int);
 		register TYPE	t = *pi;		\
 		*pi++ = *pj;				\
 		*pj++ = t;				\
-        } while (--i > 0);				\
+		} while (--i > 0);				\
 }
 
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
@@ -101,8 +93,8 @@ med3(a, b, c, cmp)
 	cmp_t *cmp;
 {
 	return cmp(a, b) < 0 ?
-	       (cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a ))
-              :(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
+		(cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a ))
+			:(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
 }
 
 void
@@ -119,7 +111,7 @@ loop:	SWAPINIT(a, es);
 	if (n < 7) {
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
 			for (pl = pm; pl > (char *)a && cmp(pl - es, pl) > 0;
-			     pl -= es)
+				pl -= es)
 				swap(pl, pl - es);
 		return;
 	}
@@ -166,7 +158,7 @@ loop:	SWAPINIT(a, es);
 	if (swap_cnt == 0) {  /* Switch to insertion sort */
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)
 			for (pl = pm; pl > (char *)a && cmp(pl - es, pl) > 0;
-			     pl -= es)
+				pl -= es)
 				swap(pl, pl - es);
 		return;
 	}
@@ -192,10 +184,9 @@ loop:	SWAPINIT(a, es);
 
 // this file is excluded from release builds because of intrinsics
 
-// bk001211 - gcc errors on compiling strcpy:  parse error before `__extension__'
 #if defined ( Q3_VM )
 
-int strlen( const char *string ) {
+size_t strlen( const char *string ) {
 	const char	*s;
 
 	s = string;
@@ -214,7 +205,8 @@ char *strcat( char *strDestination, const char *strSource ) {
 		s++;
 	}
 	while ( *strSource ) {
-		*s++ = *strSource++;
+		*s = *strSource;
+		s++; strSource++;
 	}
 	*s = 0;
 	return strDestination;
@@ -225,7 +217,8 @@ char *strcpy( char *strDestination, const char *strSource ) {
 
 	s = strDestination;
 	while ( *strSource ) {
-		*s++ = *strSource++;
+		*s = *strSource;
+		s++; strSource++;
 	}
 	*s = 0;
 	return strDestination;
@@ -248,7 +241,10 @@ char *strchr( const char *string, int c ) {
 		}
 		string++;
 	}
-	return (char *)0;
+	if(c)
+		return NULL;
+	else
+		return (char *) string;
 }
 
 char *strstr( const char *string, const char *strCharSet ) {
@@ -267,12 +263,7 @@ char *strstr( const char *string, const char *strCharSet ) {
 	}
 	return (char *)0;
 }
-#endif // bk001211
 
-// bk001120 - presumably needed for Mac
-//#if !defined(_MSC_VER) && !defined(__linux__)
-// bk001127 - undid undo
-#if defined ( Q3_VM )
 int tolower( int c ) {
 	if ( c >= 'A' && c <= 'Z' ) {
 		c += 'a' - 'A';
@@ -280,16 +271,12 @@ int tolower( int c ) {
 	return c;
 }
 
-
 int toupper( int c ) {
 	if ( c >= 'a' && c <= 'z' ) {
 		c += 'A' - 'a';
 	}
 	return c;
 }
-
-#endif
-//#ifndef _MSC_VER
 
 void *memmove( void *dest, const void *src, size_t count ) {
 	int		i;
@@ -305,7 +292,7 @@ void *memmove( void *dest, const void *src, size_t count ) {
 	}
 	return dest;
 }
-
+#endif
 
 #if 0
 
@@ -332,11 +319,12 @@ char *strncpy( char *strDest, const char *strSource, size_t count ) {
 
 	s = strDest;
 	while ( *strSource && count ) {
-		*s++ = *strSource++;
+		*s = *strSource;
+		s++; strSource++;
 		count--;
 	}
 	while ( count-- ) {
-		*s++ = 0;
+		*s = '\0'; s++;
 	}
 	return strDest;
 }
@@ -764,6 +752,7 @@ double atan2( double y, double x ) {
 double tan( double x ) {
 	return sin(x) / cos(x);
 }
+#endif
 
 // BFP - Unpack music, memory management for ui_mp3decoder
 /*
@@ -902,10 +891,10 @@ static float __scalbnf( float x, int n )
 
 /*
 ==================
-pow
+mp3dec_pow
 ==================
 */
-float pow( float x, float y )
+float mp3dec_pow( float x, float y )
 {
   float z, ax, z_h, z_l, p_h, p_l;
   float y1, t1, t2, r, s, t, u, v, w;
@@ -1157,8 +1146,17 @@ float pow( float x, float y )
   return s * z;
 }
 
-#endif
+// BFP - End of the implementation of unpack music, memory management for ui_mp3decoder
+//==================================================================================
 
+
+int Q_strlen( const char *s ) 
+{
+	const char *b = s;
+	while ( *s != '\0' ) 
+		s++;
+	return s - b;
+}
 
 static int randSeed = 0;
 
@@ -1205,7 +1203,7 @@ double atof( const char *string ) {
 	c = string[0];
 	if ( c != '.' ) {
 		do {
-			c = *string++;
+			c = *string; string++;
 			if ( c < '0' || c > '9' ) {
 				break;
 			}
@@ -1222,7 +1220,7 @@ double atof( const char *string ) {
 
 		fraction = 0.1;
 		do {
-			c = *string++;
+			c = *string; string++;
 			if ( c < '0' || c > '9' ) {
 				break;
 			}
@@ -1274,7 +1272,7 @@ double _atof( const char **stringPtr ) {
 	value = 0;
 	if ( string[0] != '.' ) {
 		do {
-			c = *string++;
+			c = *string; string++;
 			if ( c < '0' || c > '9' ) {
 				break;
 			}
@@ -1289,7 +1287,7 @@ double _atof( const char **stringPtr ) {
 
 		fraction = 0.1;
 		do {
-			c = *string++;
+			c = *string; string++;
 			if ( c < '0' || c > '9' ) {
 				break;
 			}
@@ -1306,9 +1304,6 @@ double _atof( const char **stringPtr ) {
 	return value * sign;
 }
 
-
-// bk001120 - presumably needed for Mac
-//#if !defined ( _MSC_VER ) && ! defined ( __linux__ )
 
 // bk001127 - undid undo
 #if defined ( Q3_VM )
@@ -1344,7 +1339,7 @@ int atoi( const char *string ) {
 	// read digits
 	value = 0;
 	do {
-		c = *string++;
+		c = *string; string++;
 		if ( c < '0' || c > '9' ) {
 			break;
 		}
@@ -1357,8 +1352,17 @@ int atoi( const char *string ) {
 	return value * sign;
 }
 
+int abs( int n ) {
+	return n < 0 ? -n : n;
+}
 
-int _atoi( const char **stringPtr ) {
+double fabs( double x ) {
+	return x < 0 ? -x : x;
+}
+#endif
+
+static int _atoi( const char **stringPtr ) 
+{
 	int		sign;
 	int		value;
 	int		c;
@@ -1366,16 +1370,12 @@ int _atoi( const char **stringPtr ) {
 
 	string = *stringPtr;
 
-	// skip whitespace
-	while ( *string <= ' ' ) {
-		if ( !*string ) {
-			return 0;
-		}
-		string++;
-	}
+	if ( !*string )
+		return 0;
 
 	// check sign
-	switch ( *string ) {
+	switch ( *string ) 
+	{
 	case '+':
 		string++;
 		sign = 1;
@@ -1391,14 +1391,18 @@ int _atoi( const char **stringPtr ) {
 
 	// read digits
 	value = 0;
-	do {
-		c = *string++;
-		if ( c < '0' || c > '9' ) {
+	do 
+	{
+		c = *string;
+		if ( c < '0' || c > '9' ) 
+		{
 			break;
 		}
 		c -= '0';
 		value = value * 10 + c;
-	} while ( 1 );
+		string++;
+	} 
+	while ( 1 );
 
 	// not handling 10e10 notation...
 
@@ -1406,15 +1410,6 @@ int _atoi( const char **stringPtr ) {
 
 	return value * sign;
 }
-
-int abs( int n ) {
-	return n < 0 ? -n : n;
-}
-
-double fabs( double x ) {
-	return x < 0 ? -x : x;
-}
-
 
 
 //=========================================================
@@ -1429,60 +1424,68 @@ double fabs( double x ) {
 #define SHORTINT	0x00000040		/* short integer */
 #define ZEROPAD		0x00000080		/* zero (as opposed to blank) pad */
 #define FPT			0x00000100		/* floating point number */
+#define REDUCE		0x00000200		/* extension: do not emit anything if value is zero */
 
 #define to_digit(c)		((c) - '0')
 #define is_digit(c)		((unsigned)to_digit(c) <= 9)
 #define to_char(n)		((n) + '0')
 
-void AddInt( char **buf_p, int val, int width, int flags ) {
+static void AddInt( char **buf_p, int val, int width, int flags ) {
 	char	text[32];
-	int		digits;
-	int		signedVal;
+	int		digits = 0;
+    unsigned int uval;
 	char	*buf;
 
-	digits = 0;
-	signedVal = val;
-	if ( val < 0 ) {
-		val = -val;
-	}
+	if ( flags & REDUCE && val == 0 )
+		return;
+	
+	uval = (val < 0) ? -val : val;
 	do {
-		text[digits++] = '0' + val % 10;
-		val /= 10;
-	} while ( val );
+		text[digits] = '0' + (uval % 10);
+		digits++;
+		uval /= 10;
+	} while ( uval > 0 );
 
-	if ( signedVal < 0 ) {
-		text[digits++] = '-';
+	if ( val < 0 ) {
+		text[digits] = '-';
+		digits++;
 	}
 
 	buf = *buf_p;
 
 	if( !( flags & LADJUST ) ) {
 		while ( digits < width ) {
-			*buf++ = ( flags & ZEROPAD ) ? '0' : ' ';
+			*buf = ( flags & ZEROPAD ) ? '0' : ' ';
+			buf++;
 			width--;
 		}
 	}
 
-	while ( digits-- ) {
-		*buf++ = text[digits];
+	while ( digits-- > 0 ) {
+		*buf = text[digits]; buf++;
 		width--;
 	}
 
 	if( flags & LADJUST ) {
-		while ( width-- ) {
-			*buf++ = ( flags & ZEROPAD ) ? '0' : ' ';
+		while ( width > 0 ) {
+			*buf = ( flags & ZEROPAD ) ? '0' : ' ';
+			buf++;
+			width--;
 		}
 	}
 
 	*buf_p = buf;
 }
 
-void AddFloat( char **buf_p, float fval, int width, int prec ) {
+static void AddFloat( char **buf_p, float fval, int width, int prec, int reduce ) {
 	char	text[32];
 	int		digits;
 	float	signedVal;
 	char	*buf;
 	int		val;
+
+	if ( reduce && fval == 0.0f )
+		return;
 
 	// get the sign
 	signedVal = fval;
@@ -1494,50 +1497,65 @@ void AddFloat( char **buf_p, float fval, int width, int prec ) {
 	digits = 0;
 	val = (int)fval;
 	do {
-		text[digits++] = '0' + val % 10;
+		text[digits] = '0' + val % 10;
+		digits++;
 		val /= 10;
 	} while ( val );
 
 	if ( signedVal < 0 ) {
-		text[digits++] = '-';
+		text[digits] = '-';
+		digits++;
 	}
 
 	buf = *buf_p;
 
+	// fix precisiion
+	if ( prec > (int)( sizeof(text) - 2 ) ) {
+		prec = sizeof(text) - 2;
+	}
+
+	if ( prec < 0 ) {
+		prec = 6;
+	}
+
+	if ( prec ) {
+		width -= prec + 1;
+	}
+	// end
+
 	while ( digits < width ) {
-		*buf++ = ' ';
+		*buf = ' ';	buf++;
 		width--;
 	}
 
-	while ( digits-- ) {
-		*buf++ = text[digits];
+	while ( digits-- > 0 ) {
+		*buf = text[digits]; buf++;
 	}
 
 	*buf_p = buf;
 
-	if (prec < 0)
-		prec = 6;
 	// write the fraction
 	digits = 0;
 	while (digits < prec) {
 		fval -= (int) fval;
 		fval *= 10.0;
 		val = (int) fval;
-		text[digits++] = '0' + val % 10;
+		text[digits] = '0' + val % 10;
+		digits++;
 	}
 
 	if (digits > 0) {
 		buf = *buf_p;
-		*buf++ = '.';
+		*buf = '.';	buf++;
 		for (prec = 0; prec < digits; prec++) {
-			*buf++ = text[prec];
+			*buf = text[prec]; buf++;
 		}
 		*buf_p = buf;
 	}
 }
 
 
-void AddString( char **buf_p, char *string, int width, int prec ) {
+static void AddString( char **buf_p, const char *string, int width, int prec ) {
 	int		size;
 	char	*buf;
 
@@ -1556,50 +1574,50 @@ void AddString( char **buf_p, char *string, int width, int prec ) {
 		}
 	}
 	else {
-		size = strlen( string );
+		size = Q_strlen( string );
 	}
 
 	width -= size;
 
 	while( size-- ) {
-		*buf++ = *string++;
+		*buf = *string;
+		buf++; string++;
 	}
 
 	while( width-- > 0 ) {
-		*buf++ = ' ';
+		*buf = ' '; buf++;
 	}
 
 	*buf_p = buf;
 }
 
 /*
-vsprintf
+Q_vsprintf
 
 I'm not going to support a bunch of the more arcane stuff in here
-just to keep it simpler.  For example, the '*' and '$' are not
+just to keep it simpler.  For example, the '$' is not
 currently supported.  I've tried to make it so that it will just
 parse and ignore formats we don't support.
+
+returns: number of char written without ending '\0'
 */
-int vsprintf( char *buffer, const char *fmt, va_list argptr ) {
-	int		*arg;
+int Q_vsprintf( char *buffer, const char *fmt, va_list ap ) {
 	char	*buf_p;
 	char	ch;
 	int		flags;
 	int		width;
 	int		prec;
 	int		n;
-	char	sign;
 
 	buf_p = buffer;
-	arg = (int *)argptr;
 
 	while( qtrue ) {
 		// run through the format string until we hit a '%' or '\0'
-		for ( ch = *fmt; (ch = *fmt) != '\0' && ch != '%'; fmt++ ) {
-			*buf_p++ = ch;
+		for ( /*ch = *fmt */; (ch = *fmt) != '\0' && ch != '%'; fmt++ ) {
+			*buf_p = ch; buf_p++;
 		}
 		if ( ch == '\0' ) {
-			goto done;
+			break;
 		}
 
 		// skip over the '%'
@@ -1609,22 +1627,28 @@ int vsprintf( char *buffer, const char *fmt, va_list argptr ) {
 		flags = 0;
 		width = 0;
 		prec = -1;
-		sign = '\0';
-
 rflag:
-		ch = *fmt++;
+		ch = *fmt; fmt++;
 reswitch:
 		switch( ch ) {
+		//case ' ':
 		case '-':
 			flags |= LADJUST;
 			goto rflag;
 		case '.':
-			n = 0;
-			while( is_digit( ( ch = *fmt++ ) ) ) {
-				n = 10 * n + ( ch - '0' );
+			if ( *fmt == '*' ) {
+				fmt++;
+				n = va_arg( ap, int );
+				prec = n < 0 ? -1 : n;
+				goto rflag;
+			} else {
+				n = 0;
+				while( is_digit( ( ch = *fmt++ ) ) ) {
+					n = 10 * n + ( ch - '0' );
+				}
+				prec = n < 0 ? -1 : n;
+				goto reswitch;
 			}
-			prec = n < 0 ? -1 : n;
-			goto reswitch;
 		case '0':
 			flags |= ZEROPAD;
 			goto rflag;
@@ -1640,78 +1664,152 @@ reswitch:
 			n = 0;
 			do {
 				n = 10 * n + ( ch - '0' );
-				ch = *fmt++;
+				ch = *fmt; fmt++;
 			} while( is_digit( ch ) );
 			width = n;
 			goto reswitch;
+		case '*':
+			width = va_arg( ap, int );
+			goto rflag;
 		case 'c':
-			*buf_p++ = (char)*arg;
-			arg++;
+			*buf_p = (char)va_arg( ap, int ); buf_p++;
 			break;
 		case 'd':
 		case 'i':
-			AddInt( &buf_p, *arg, width, flags );
-			arg++;
+			AddInt( &buf_p, va_arg( ap, int ), width, flags );
 			break;
 		case 'f':
-			AddFloat( &buf_p, *(double *)arg, width, prec );
-#ifdef __LCC__
-			arg += 1;	// everything is 32 bit in my compiler
-#else
-			arg += 2;
-#endif
+			AddFloat( &buf_p, va_arg( ap, double ), width, prec, flags & REDUCE );
 			break;
 		case 's':
-			AddString( &buf_p, (char *)*arg, width, prec );
-			arg++;
+			AddString( &buf_p, va_arg( ap, char * ), width, prec );
 			break;
 		case '%':
-			*buf_p++ = ch;
+			*buf_p = ch; buf_p++;
 			break;
+		 // edawn extension:
+		case 'R':
+			flags |= REDUCE;
+			goto rflag;
 		default:
-			*buf_p++ = (char)*arg;
-			arg++;
+			*buf_p = va_arg( ap, char ); buf_p++;
 			break;
-		}
-	}
+		} // switch ( ch )
+	} // while ( qtrue )
 
-done:
-	*buf_p = 0;
+	*buf_p = '\0';
 	return buf_p - buffer;
 }
 
-/* this is really crappy */
-int sscanf( const char *buffer, const char *fmt, ... ) {
-	int		cmd;
-	int		**arg;
-	int		count;
 
-	arg = (int **)&fmt + 1;
+static void _atos( const char **stringPtr, char *buffer, int delimiter, int width ) 
+{
+	int i = 0;
+	const char	*string;
+
+	string = *stringPtr;
+
+	if ( !delimiter ) 
+	{
+		// skip whitespace
+		while ( *string && *string != ' ' && *string != '\t' && width-- > 0 ) 
+		{
+			buffer[i] = *string;
+			string++;
+			i++;
+		}
+		buffer[i] = '\0';
+	} 
+	else while ( *string && *string != delimiter && width-- > 0 ) 
+	{
+		buffer[i] = *string;
+		string++;
+	}
+    buffer[i] = '\0';
+
+	*stringPtr = string;
+}
+
+
+int Q_sscanf( const char *buffer, const char *fmt, ... ) 
+{
+	va_list ap;
+	int count;
+	int width;
+	int cmd;
+	const char *p;
+
+	va_start( ap, fmt );
 	count = 0;
 
-	while ( *fmt ) {
-		if ( fmt[0] != '%' ) {
+	while ( *fmt ) 
+	{
+		// single whitespace char validates any quantity of whitespace characters 
+		// extracted from the stream (including none)
+		if ( *fmt == ' ' || *fmt == '\t' || *fmt == '\n' ) 
+		{
+			while ( *buffer == ' ' || *buffer == '\t' || *buffer == '\n' )
+				buffer++;
+			fmt++;
+		}
+
+		if ( *fmt != '%' ) 
+		{
+			if ( *fmt != *buffer ) 
+				break;
+
+			buffer++;
 			fmt++;
 			continue;
 		}
 
-		cmd = fmt[1];
-		fmt += 2;
+		width = fmt[1];
+		fmt++; // %
+		if ( width >= '0' && width <= '9' ) 
+		{
+			width -= '0'; // valid width;
+			fmt++;	// ['0'..'9']
+			cmd = *fmt;
+		}
+		else 
+		{
+			cmd = width;
+			width = 1024; // some assumption
+		}
 
-		switch ( cmd ) {
+		p = buffer;
+
+		fmt++; // switch to delimiter?
+
+		//printf( "cmd=%c buffer=%s width=%i delim='%c'\n", cmd, buffer, width, *fmt );
+
+		switch ( cmd ) 
+		{
 		case 'i':
 		case 'd':
 		case 'u':
-			**arg = _atoi( &buffer );
+			*(va_arg(ap, int *)) = _atoi( &buffer );
 			break;
 		case 'f':
-			*(float *)*arg = _atof( &buffer );
+			*(va_arg(ap, float *)) = _atof( &buffer );
 			break;
+		case 'c':
+			*(va_arg(ap, char *)) = *buffer; buffer++;
+			break;
+		case 's':
+			_atos( &buffer, va_arg(ap, char *), *fmt, width );
+			break;
+		default:
+			return count;
 		}
-		arg++;
+
+		if ( p != buffer )
+			count++;
+		else
+			break;
 	}
+	va_end( ap );
 
 	return count;
 }
 
-#endif
