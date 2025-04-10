@@ -61,16 +61,14 @@ void G_WriteClientSessionData( gclient_t *client ) {
 
 /*
 ================
-G_ReadSessionData
+G_ReadClientSessionData
 
 Called on a reconnect
 ================
 */
-void G_ReadSessionData( gclient_t *client ) {
+void G_ReadClientSessionData( gclient_t *client ) {
 	char	s[MAX_STRING_CHARS];
 	const char	*var;
-
-	// bk001205 - format
 	int teamLeader;
 	int spectatorState;
 	int sessionTeam;
@@ -79,19 +77,22 @@ void G_ReadSessionData( gclient_t *client ) {
 	trap_Cvar_VariableStringBuffer( var, s, sizeof(s) );
 
 	Q_sscanf( s, "%i %i %i %i %i %i %i",
-		&sessionTeam,                 // bk010221 - format
+		&sessionTeam,
 		&client->sess.spectatorTime,
-		&spectatorState,              // bk010221 - format
+		&spectatorState,
 		&client->sess.spectatorClient,
 		&client->sess.wins,
 		&client->sess.losses,
-		&teamLeader                   // bk010221 - format
+		&teamLeader
 		);
 
-	// bk001205 - format issues
 	client->sess.sessionTeam = (team_t)sessionTeam;
 	client->sess.spectatorState = (spectatorState_t)spectatorState;
 	client->sess.teamLeader = (qboolean)teamLeader;
+
+	if ( (unsigned)client->sess.sessionTeam >= TEAM_NUM_TEAMS ) {
+		client->sess.sessionTeam = TEAM_SPECTATOR;
+	}
 }
 
 
@@ -102,26 +103,40 @@ G_InitSessionData
 Called on a first-time connect
 ================
 */
-void G_InitSessionData( gclient_t *client, char *userinfo ) {
+void G_InitSessionData( gclient_t *client, const char *team, qboolean isBot ) {
 	clientSession_t	*sess;
-	const char		*value;
 
 	sess = &client->sess;
 
 	// initial team determination
 	if ( g_gametype.integer >= GT_TEAM ) {
-		if ( g_teamAutoJoin.integer ) {
-			sess->sessionTeam = PickTeam( -1 );
-			BroadcastTeamChange( client, -1 );
+		if ( team[0] == 's' || team[0] == 'S' ) {
+			// a willing spectator, not a waiting-in-line
+			sess->sessionTeam = TEAM_SPECTATOR;
 		} else {
-			// always spawn as spectator in team games
-			sess->sessionTeam = TEAM_SPECTATOR;	
+			if ( g_teamAutoJoin.integer & 2 ) {
+				sess->sessionTeam = PickTeam( -1 );
+			} else {
+				// always spawn as spectator in team games
+				if ( isBot == qfalse ) {
+					sess->sessionTeam = TEAM_SPECTATOR;	
+				} else  {
+					// bind player to specified team
+					if ( team[0] == 'r' || team[0] == 'R' ) {
+						sess->sessionTeam = TEAM_RED;
+					} else if ( team[0] == 'b' || team[0] == 'B' ) {
+						sess->sessionTeam = TEAM_BLUE;
+					} else {
+						// or choose new
+						sess->sessionTeam = PickTeam( -1 );
+					}
+				}
+			}
 		}
 		// BFP - Team Last Man Standing, keep selected team
 		client->selectedTeam = sess->sessionTeam;
 	} else {
-		value = Info_ValueForKey( userinfo, "team" );
-		if ( value[0] == 's' ) {
+		if ( team[0] == 's' || team[0] == 'S' ) {
 			// a willing spectator, not a waiting-in-line
 			sess->sessionTeam = TEAM_SPECTATOR;
 		} else {
@@ -129,11 +144,14 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 			default:
 			case GT_FFA:
 			case GT_SINGLE_PLAYER:
-				if ( g_maxGameClients.integer > 0 && 
-					level.numNonSpectatorClients >= g_maxGameClients.integer ) {
+				if ( g_maxGameClients.integer > 0 && level.numNonSpectatorClients >= g_maxGameClients.integer ) {
 					sess->sessionTeam = TEAM_SPECTATOR;
 				} else {
-					sess->sessionTeam = TEAM_FREE;
+					// BFP - As for ec-/baseq3a, this makes the players moving to spectators like a real game, but that's a nice improvement
+					//if ( g_teamAutoJoin.integer & 1 || isBot || g_gametype.integer == GT_SINGLE_PLAYER )
+						sess->sessionTeam = TEAM_FREE;
+					// else
+					//	sess->sessionTeam = TEAM_SPECTATOR;
 				}
 				break;
 			case GT_TOURNAMENT:
@@ -141,7 +159,11 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 				if ( level.numNonSpectatorClients >= 2 ) {
 					sess->sessionTeam = TEAM_SPECTATOR;
 				} else {
-					sess->sessionTeam = TEAM_FREE;
+					// BFP - As for ec-/baseq3a, this makes the players moving to spectators like a real game, but that's a nice improvement
+					// if ( g_teamAutoJoin.integer & 1 || isBot )
+						sess->sessionTeam = TEAM_FREE;
+					// else
+					//	sess->sessionTeam = TEAM_SPECTATOR;
 				}
 				break;
 			case GT_SURVIVAL: // BFP - Survival
@@ -153,9 +175,7 @@ void G_InitSessionData( gclient_t *client, char *userinfo ) {
 	}
 
 	sess->spectatorState = SPECTATOR_FREE;
-	sess->spectatorTime = level.time;
-
-	G_WriteClientSessionData( client );
+	sess->spectatorTime = 0;
 }
 
 

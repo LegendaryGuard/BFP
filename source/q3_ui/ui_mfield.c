@@ -39,7 +39,7 @@ void MField_Draw( mfield_t *edit, int x, int y, int style, vec4_t color ) {
 	char	str[MAX_STRING_CHARS];
 
 	drawLen = edit->widthInChars;
-	len     = (int)strlen( edit->buffer ) + 1;
+	len     = strlen( edit->buffer ) + 1;
 
 	// guarantee that cursor will be visible
 	if ( len <= drawLen ) {
@@ -96,12 +96,12 @@ void MField_Draw( mfield_t *edit, int x, int y, int style, vec4_t color ) {
 
 	if (style & UI_CENTER)
 	{
-		len = (int)strlen(str);
+		len = strlen(str);
 		x = x - len*charw/2;
 	}
 	else if (style & UI_RIGHT)
 	{
-		len = (int)strlen(str);
+		len = strlen(str);
 		x = x - len*charw;
 	}
 	
@@ -120,7 +120,7 @@ void MField_Paste( mfield_t *edit ) {
 	trap_GetClipboardData( pasteBuffer, 64 );
 
 	// send as if typed, so insert / overstrike works properly
-	pasteLen = (int)strlen( pasteBuffer );
+	pasteLen = strlen( pasteBuffer );
 	for ( i = 0 ; i < pasteLen ; i++ ) {
 		MField_CharEvent( edit, pasteBuffer[i] );
 	}
@@ -145,7 +145,7 @@ void MField_KeyDownEvent( mfield_t *edit, int key ) {
 		return;
 	}
 
-	len = (int)strlen( edit->buffer );
+	len = strlen( edit->buffer );
 
 	if ( key == K_DEL || key == K_KP_DEL ) {
 		if ( edit->cursor < len ) {
@@ -217,7 +217,7 @@ void MField_CharEvent( mfield_t *edit, int ch ) {
 		return;
 	}
 
-	len = (int)strlen( edit->buffer );
+	len = strlen( edit->buffer );
 
 	if ( ch == 'h' - 'a' + 1 )	{	// ctrl-h is backspace
 		if ( edit->cursor > 0 ) {
@@ -249,11 +249,11 @@ void MField_CharEvent( mfield_t *edit, int ch ) {
 	//
 	// ignore any other non printable chars
 	//
-	if ( ch < 32 ) {
+	if ( ch < ' ' ) {
 		return;
 	}
 
-	if ( !trap_Key_GetOverstrikeMode() ) {	
+	if ( trap_Key_GetOverstrikeMode() ) {
 		if ((edit->cursor == MAX_EDIT_LINE - 1) || (edit->maxchars && edit->cursor >= edit->maxchars))
 			return;
 	} else {
@@ -273,7 +273,7 @@ void MField_CharEvent( mfield_t *edit, int ch ) {
 	}
 
 	if ( edit->cursor == len + 1) {
-		edit->buffer[edit->cursor] = 0;
+		edit->buffer[edit->cursor] = '\0';
 	}
 }
 
@@ -283,7 +283,7 @@ MField_Clear
 ==================
 */
 void MField_Clear( mfield_t *edit ) {
-	edit->buffer[0] = 0;
+	edit->buffer[0] = '\0';
 	edit->cursor = 0;
 	edit->scroll = 0;
 }
@@ -312,7 +312,7 @@ void MenuField_Init( menufield_s* m ) {
 	}	
 
 	if (m->generic.name) {
-		l = ((int)strlen( m->generic.name )+1) * w;		
+		l = (strlen( m->generic.name )+1) * w;		
 	}
 	else {
 		l = 0;
@@ -334,7 +334,7 @@ void MenuField_Draw( menufield_s *f )
 	int		x;
 	int		y;
 	int		w;
-	// int		h; // SMALLCHAR_HEIGHT or BIGCHAR_HEIGHT
+	//int		h;
 	int		style;
 	qboolean focus;
 	float	*color;
@@ -345,11 +345,13 @@ void MenuField_Draw( menufield_s *f )
 	if (f->generic.flags & QMF_SMALLFONT)
 	{
 		w = SMALLCHAR_WIDTH;
+		//h = SMALLCHAR_HEIGHT;
 		style = UI_SMALLFONT;
 	}
 	else
 	{
 		w = BIGCHAR_WIDTH;
+		//h = BIGCHAR_HEIGHT;
 		style = UI_BIGFONT;
 	}	
 
@@ -392,6 +394,11 @@ sfxHandle_t MenuField_Key( menufield_s* m, int* key )
 	int keycode;
 
 	keycode = *key;
+
+	if ( m->field.skipKey ) {
+		m->field.skipKey = qfalse;
+		return (0);
+	}
 
 	switch ( keycode )
 	{

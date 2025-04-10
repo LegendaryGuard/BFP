@@ -28,6 +28,8 @@ static vec3_t	playerMins = {-15, -15, -24};
 static vec3_t	playerMaxs = {15, 15, 32};
 #define	MAX_SPAWN_POINTS	128
 
+static char	ban_reason[MAX_CVAR_VALUE_STRING];
+
 /*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32) initial
 potential spawning position for deathmatch games.
 The first time a player enters the game, they will be at an 'initial' spot.
@@ -602,88 +604,6 @@ static void ForceClientSkin( gclient_t *client, char *model, const char *skin ) 
 
 /*
 ===========
-ClientCheckName
-============
-*/
-static void ClientCleanName( const char *in, char *out, int outSize ) {
-	int		len, colorlessLen;
-	char	ch;
-	char	*p;
-	int		spaces;
-
-	//save room for trailing null byte
-	outSize--;
-
-	len = 0;
-	colorlessLen = 0;
-	p = out;
-	*p = 0;
-	spaces = 0;
-
-	while( 1 ) {
-		ch = *in++;
-		if( !ch ) {
-			break;
-		}
-
-		// don't allow leading spaces
-		if( !*p && ch == ' ' ) {
-			continue;
-		}
-
-		// check colors
-		if( ch == Q_COLOR_ESCAPE ) {
-			// solo trailing carat is not a color prefix
-			if( !*in ) {
-				break;
-			}
-
-			// don't allow black in a name, period
-			if( ColorIndex(*in) == 0 ) {
-				in++;
-				continue;
-			}
-
-			// make sure room in dest for both chars
-			if( len > outSize - 2 ) {
-				break;
-			}
-
-			*out++ = ch;
-			*out++ = *in++;
-			len += 2;
-			continue;
-		}
-
-		// don't allow too many consecutive spaces
-		if( ch == ' ' ) {
-			spaces++;
-			if( spaces > 3 ) {
-				continue;
-			}
-		}
-		else {
-			spaces = 0;
-		}
-
-		if( len > outSize - 1 ) {
-			break;
-		}
-
-		*out++ = ch;
-		colorlessLen++;
-		len++;
-	}
-	*out = 0;
-
-	// don't allow empty names
-	if( *p == 0 || colorlessLen == 0 ) {
-		Q_strncpyz( p, "UnnamedPlayer", outSize );
-	}
-}
-
-/*
-===========
 ClientSendPowerlevelInfo
 ============
 */
@@ -714,7 +634,7 @@ The game can override any of the settings and call trap_SetUserinfo
 if desired.
 ============
 */
-void ClientUserinfoChanged( int clientNum ) {
+qboolean ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
 	int		teamTask, teamLeader, team;
 	// BFP - No handicap for health
@@ -744,8 +664,17 @@ void ClientUserinfoChanged( int clientNum ) {
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 
 	// check for malformed or illegal info strings
-	if ( !Info_Validate(userinfo) ) {
-		strcpy (userinfo, "\\name\\badinfo");
+	if ( !Info_Validate( userinfo ) ) {
+		Q_strcpy( ban_reason, "bad userinfo" );
+		if ( client && client->pers.connected != CON_DISCONNECTED )
+			trap_DropClient( clientNum, ban_reason );
+		return qfalse;
+	}
+
+	if ( client->pers.connected == CON_DISCONNECTED ) {
+		// we just checked if connecting player can join server
+		// so quit now as some important data like player team is still not set
+		return qtrue;
 	}
 
 	// check for local client
@@ -765,7 +694,7 @@ void ClientUserinfoChanged( int clientNum ) {
 	// set name
 	Q_strncpyz ( oldname, client->pers.netname, sizeof( oldname ) );
 	s = Info_ValueForKey (userinfo, "name");
-	ClientCleanName( s, client->pers.netname, sizeof(client->pers.netname) );
+	BG_CleanName( s, client->pers.netname, sizeof( client->pers.netname ), "UnnamedPlayer" );
 
 	if ( client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
@@ -910,6 +839,8 @@ void ClientUserinfoChanged( int clientNum ) {
 
 	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
+
+	return qtrue;
 }
 
 /*
@@ -1024,14 +955,40 @@ to the server machine, but qfalse on map changes and tournement
 restarts.
 ============
 */
-char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
+const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	char		*value;
 //	char		*areabits;
 	gclient_t	*client;
 	char		userinfo[MAX_INFO_STRING];
 	gentity_t	*ent;
+	qboolean	isAdmin = qfalse;
+
+	if ( clientNum >= level.maxclients ) {
+		return "Bad connection slot.";
+	}
 
 	ent = &g_entities[ clientNum ];
+	ent->client = level.clients + clientNum;
+
+	if ( firstTime ) {
+		// cleanup previous data manually
+		// because client may silently (re)connect without ClientDisconnect in case of crash for example
+		if ( level.clients[ clientNum ].pers.connected != CON_DISCONNECTED )
+			ClientDisconnect( clientNum );
+
+		// remove old entity from the world
+		trap_UnlinkEntity( ent );
+		ent->r.contents = 0;
+		ent->s.eType = ET_INVISIBLE;
+		ent->s.eFlags = 0;
+		ent->s.modelindex = 0;
+		ent->s.clientNum = clientNum;
+		ent->s.number = clientNum;
+		ent->takedamage = qfalse;
+	}
+
+	ent->r.svFlags &= ~SVF_BOT;
+	ent->inuse = qfalse;
 
 	trap_GetUserinfo( clientNum, userinfo, sizeof( userinfo ) );
 
@@ -1039,20 +996,24 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
  	// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=500
  	// recommanding PB based IP / GUID banning, the builtin system is pretty limited
  	// check to see if they are on the banned IP list
-	value = Info_ValueForKey (userinfo, "ip");
-	if ( G_FilterPacket( value ) ) {
+	value = Info_ValueForKey( userinfo, "ip" );
+
+	if ( !strcmp( value, "localhost" ) && !isBot )
+		isAdmin = qtrue;
+
+	if ( !isAdmin && G_FilterPacket( value ) ) {
 		return "You are banned from this server.";
 	}
 
-  // we don't check password for bots and local client
-  // NOTE: local client <-> "ip" "localhost"
-  //   this means this client is not running in our current process
-	if ( !( ent->r.svFlags & SVF_BOT ) && (strcmp(value, "localhost") != 0)) {
+	// we don't check password for bots and local client
+	// NOTE: local client <-> "ip" "localhost"
+	// this means this client is not running in our current process
+	if ( !isBot && !isAdmin ) {
 		// check for a password
-		value = Info_ValueForKey (userinfo, "password");
-		if ( g_password.string[0] && Q_stricmp( g_password.string, "none" ) &&
-			strcmp( g_password.string, value) != 0) {
-			return "Invalid password";
+		if ( g_password.string[0] && Q_stricmp( g_password.string, "none" ) ) {
+			value = Info_ValueForKey( userinfo, "password" );
+			if ( strcmp( g_password.string, value ) )
+				return "Invalid password";
 		}
 	}
 
@@ -1075,25 +1036,9 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		client->ps.eFlags |= EF_MONSTER;
 	}
 
-	client->pers.connected = CON_CONNECTING;
-
-	// read or initialize the session data
-	if ( firstTime || level.newSession ) {
-		G_InitSessionData( client, userinfo );
+	if ( !ClientUserinfoChanged( clientNum ) ) {
+		return ban_reason;
 	}
-	G_ReadSessionData( client );
-
-	if( isBot ) {
-		ent->r.svFlags |= SVF_BOT;
-		ent->inuse = qtrue;
-		if( !G_BotConnect( clientNum, !firstTime ) ) {
-			return "BotConnectfailed";
-		}
-	}
-
-	// get and distribute relevent paramters
-	G_LogPrintf( "ClientConnect: %i\n", clientNum );
-	ClientUserinfoChanged( clientNum );
 
 	// BFP - Survival
 	if ( g_gametype.integer == GT_SURVIVAL ) {
@@ -1121,14 +1066,34 @@ char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		client->forceToSpectate = qfalse;
 	}
 
+	// read or initialize the session data
+	if ( firstTime || level.newSession ) {
+		value = Info_ValueForKey( userinfo, "team" );
+		G_InitSessionData( client, value, isBot );
+		G_WriteClientSessionData( client );
+	}
+
+	G_ReadClientSessionData( client );
+
+	if( isBot ) {
+		if( !G_BotConnect( clientNum, !firstTime ) ) {
+			return "BotConnectfailed";
+		}
+		ent->r.svFlags |= SVF_BOT;
+		client->sess.spectatorClient = clientNum;
+	}
+	ent->inuse = qtrue;
+
+	// get and distribute relevant paramters
+	G_LogPrintf( "ClientConnect: %i\n", clientNum );
+
+	client->pers.connected = CON_CONNECTING;
+
+	ClientUserinfoChanged( clientNum );
+
 	// don't do the "xxx connected" messages if they were caried over from previous level
 	if ( firstTime ) {
 		trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " connected\n\"", client->pers.netname) );
-	}
-
-	if ( g_gametype.integer >= GT_TEAM &&
-		client->sess.sessionTeam != TEAM_SPECTATOR ) {
-		BroadcastTeamChange( client, -1 );
 	}
 
 	// count current clients and rank for scoreboard

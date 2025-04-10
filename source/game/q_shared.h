@@ -860,7 +860,7 @@ void Parse1DMatrix (char **buf_p, int x, float *m);
 void Parse2DMatrix (char **buf_p, int y, int x, float *m);
 void Parse3DMatrix (char **buf_p, int z, int y, int x, float *m);
 
-void	QDECL Com_sprintf (char *dest, int size, const char *fmt, ...);
+int	QDECL Com_sprintf (char *dest, int size, const char *fmt, ...);
 
 
 // mode parm for FS_FOpenFile
@@ -878,6 +878,8 @@ typedef enum {
 } fsOrigin_t;
 
 //=============================================
+
+extern const byte locase[ 256 ];
 
 int Q_isprint( int c );
 int Q_islower( int c );
@@ -930,7 +932,7 @@ float	LittleFloat (const float *l);
 
 void	Swap_Init (void);
 */
-char	* QDECL va(char *format, ...);
+char	* QDECL va( const char *format, ... );
 
 //=============================================
 
@@ -938,12 +940,11 @@ char	* QDECL va(char *format, ...);
 // key / value info strings
 //
 char *Info_ValueForKey( const char *s, const char *key );
-void Info_RemoveKey( char *s, const char *key );
-void Info_RemoveKey_big( char *s, const char *key );
-void Info_SetValueForKey( char *s, const char *key, const char *value );
-void Info_SetValueForKey_Big( char *s, const char *key, const char *value );
+qboolean Info_SetValueForKey( char *s, const char *key, const char *value );
+qboolean Info_SetValueForKey_Big( char *s, const char *key, const char *value );
 qboolean Info_Validate( const char *s );
-void Info_NextPair( const char **s, char *key, char *value );
+qboolean Info_ValidateKeyValue( const char *s );
+const char *Info_NextPair( const char *s, char *key, char *value );
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
 void	QDECL Com_Error( int level, const char *error, ... );
@@ -1462,7 +1463,27 @@ typedef enum _flag_status {
 #endif	// __Q_SHARED_H
 
 
+// custom functions
+int BG_sprintf( char *buf, const char *format, ... );
 int Q_vsprintf( char *buffer, const char *fmt, va_list argptr );
+
+char *Q_stristr( const char * str1, const char * str2 );
+
+char *strtok( char *strToken, const char *strDelimit );
+char *EncodedString( const char *str );
+char *DecodedString( const char *str );
+
+void BG_CleanName( const char *in, char *out, int outSize, const char *blankString );
+char *BG_StripColor( char *string );
+
+void Q_strcpy( char *dst, const char *src );
+char *Q_stradd( char *dst, const char *src );
 int Q_sscanf( const char *buffer, const char *fmt, ... );
+
+int replace_s( char * str1, char * str2, char * src, int max_len );
+qboolean replace1( const char match, const char replace, char *str );
+
+qboolean  BigEndian( void );
+
 
 float mp3dec_pow( float x, float y ); // BFP - Unpack music, memory management for ui_mp3decoder

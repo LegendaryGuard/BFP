@@ -115,6 +115,10 @@ static cvarTable_t		cvarTable[] = {
 };
 
 
+// bk001129 - made static to avoid aliasing
+static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
+
+
 /*
 =================
 UI_RegisterCvars
@@ -124,7 +128,7 @@ void UI_RegisterCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
 
-	for ( i = 0, cv = cvarTable ; i < ARRAY_LEN( cvarTable ) ; i++, cv++ ) {
+	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
 		trap_Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
 	}
 }
@@ -138,7 +142,53 @@ void UI_UpdateCvars( void ) {
 	int			i;
 	cvarTable_t	*cv;
 
-	for ( i = 0, cv = cvarTable ; i < ARRAY_LEN( cvarTable ) ; i++, cv++ ) {
+	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
 		trap_Cvar_Update( cv->vmCvar );
+	}
+}
+
+
+/*
+=================
+UI_VideoCheck
+=================
+*/
+void UI_VideoCheck( int time ) 
+{
+	if ( abs( time - uis.lastVideoCheck ) > 1000 ) {
+		
+		int oldWidth, oldHeight;
+		oldWidth = uis.glconfig.vidWidth;
+		oldHeight = uis.glconfig.vidHeight;
+
+		trap_GetGlconfig( &uis.glconfig );
+
+		if ( uis.glconfig.vidWidth != oldWidth || uis.glconfig.vidHeight != oldHeight ) {
+			uis.biasY = 0.0;
+			uis.biasX = 0.0;
+			// for 640x480 virtualized screen
+			if ( uis.glconfig.vidWidth * 480 > uis.glconfig.vidHeight * 640 ) {
+				// wide screen, scale by height
+				uis.scale = uis.glconfig.vidHeight * (1.0/480.0);
+				uis.biasX = 0.5 * ( uis.glconfig.vidWidth - ( uis.glconfig.vidHeight * (640.0/480.0) ) );
+			} else {
+				// no wide screen, scale by width
+				uis.scale = uis.glconfig.vidWidth * (1.0/640.0);
+				uis.biasY = 0.5 * ( uis.glconfig.vidHeight - ( uis.glconfig.vidWidth * (480.0/640) ) );
+			}
+
+			uis.screenXmin = 0.0 - (uis.biasX / uis.scale);
+			uis.screenXmax = 640.0 + (uis.biasX / uis.scale);
+
+			uis.screenYmin = 0.0 - (uis.biasY / uis.scale);
+			uis.screenYmax = 480.0 + (uis.biasY / uis.scale);
+
+			uis.cursorScaleR = 1.0 / uis.scale;
+			if ( uis.cursorScaleR < 0.5 ) {
+				uis.cursorScaleR = 0.5;
+			}
+		}
+
+		uis.lastVideoCheck = time;
 	}
 }

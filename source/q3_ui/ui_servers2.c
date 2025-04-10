@@ -34,6 +34,7 @@ MULTIPLAYER MENU (SERVER BROWSER)
 
 #define MAX_GLOBALSERVERS		128
 #define MAX_PINGREQUESTS		32
+#define MAX_PINGLISTSIZE		MAX_PINGREQUESTS*8
 #define MAX_ADDRESSLENGTH		64
 #define MAX_HOSTNAMELENGTH		22
 #define MAX_MAPNAMELENGTH		16
@@ -226,7 +227,9 @@ typedef struct {
 	menubitmap_s		create;
 	menubitmap_s		go;
 
-	pinglist_t			pinglist[MAX_PINGREQUESTS];
+	menufield_s			filter;
+
+	pinglist_t			pinglist[MAX_PINGLISTSIZE];
 	table_t				table[MAX_LISTBOXITEMS];
 	char*				items[MAX_LISTBOXITEMS];
 	int					numqueriedservers;
@@ -239,6 +242,8 @@ typedef struct {
 	int					refreshtime;
 	char				favoriteaddresses[MAX_FAVORITESERVERS][MAX_ADDRESSLENGTH];
 	int					numfavoriteaddresses;
+
+	char				serverfilter[ MAX_EDIT_LINE ];
 } arenaservers_t;
 
 static arenaservers_t	g_arenaservers;
@@ -1320,6 +1325,11 @@ static sfxHandle_t ArenaServers_MenuKey( int key ) {
 		ArenaServers_SaveChanges();
 	}
 
+	if ( key == '/' && Menu_ItemAtCursor( &g_arenaservers.menu ) == (menucommon_s *)&g_arenaservers.list ) {
+		Menu_SetCursorToItem( (menuframework_s *)&g_arenaservers, &g_arenaservers.filter );
+		g_arenaservers.filter.field.skipKey = qtrue;
+		return menu_in_sound;
+	}
 
 	return Menu_DefaultKey( &g_arenaservers.menu, key );
 }

@@ -42,11 +42,11 @@ static void UI_ReadableSize ( char *buf, int bufsize, int value )
 {
 	if (value > 1024*1024*1024 ) { // gigs
 		Com_sprintf( buf, bufsize, "%d", value / (1024*1024*1024) );
-		Com_sprintf( buf+(int)strlen(buf), bufsize-(int)strlen(buf), ".%02d GB", 
+		Com_sprintf( buf+strlen(buf), bufsize-strlen(buf), ".%02d GB", 
 			(value % (1024*1024*1024))*100 / (1024*1024*1024) );
 	} else if (value > 1024*1024 ) { // megs
 		Com_sprintf( buf, bufsize, "%d", value / (1024*1024) );
-		Com_sprintf( buf+(int)strlen(buf), bufsize-(int)strlen(buf), ".%02d MB", 
+		Com_sprintf( buf+strlen(buf), bufsize-strlen(buf), ".%02d MB", 
 			(value % (1024*1024))*100 / (1024*1024) );
 	} else if (value > 1024 ) { // kilos
 		Com_sprintf( buf, bufsize, "%d KB", value / 1024 );
@@ -73,16 +73,19 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 	static char etaText[]	= "Estimated time left:";
 	static char xferText[]	= "Transfer rate:";
 
-	int downloadSize, downloadCount, downloadTime;
-	char dlSizeBuf[64], totalSizeBuf[64], xferRateBuf[64], dlTimeBuf[64];
+	int downloadSize, downloadCount, downloadTime, percentage;
+	char dlSizeBuf[64], totalSizeBuf[64], xferRateBuf[64], dlTimeBuf[64], buf[64];
 	int xferRate;
-	int width, leftWidth;
+	int width, leftWidth, div;
 	int style = UI_LEFT|UI_SMALLFONT|UI_DROPSHADOW;
 	const char *s;
 
-	downloadSize = trap_Cvar_VariableValue( "cl_downloadSize" );
-	downloadCount = trap_Cvar_VariableValue( "cl_downloadCount" );
-	downloadTime = trap_Cvar_VariableValue( "cl_downloadTime" );
+	trap_Cvar_VariableStringBuffer( "cl_downloadSize", buf, sizeof( buf ) );
+	downloadSize = atoi( buf );
+	trap_Cvar_VariableStringBuffer( "cl_downloadCount", buf, sizeof( buf ) );
+	downloadCount = atoi( buf ); 
+	trap_Cvar_VariableStringBuffer( "cl_downloadTime", buf, sizeof( buf ) );
+	downloadTime = atoi( buf );
 
 #if 0 // bk010104
 	fprintf( stderr, "\n\n-----------------------------------------------\n");
@@ -105,7 +108,17 @@ static void UI_DisplayDownloadInfo( const char *downloadName ) {
 	UI_DrawProportionalString( 8, 224, xferText, style, color_white );
 
 	if (downloadSize > 0) {
-		s = va( "%s (%d%%)", downloadName, downloadCount * 100 / downloadSize );
+		if ( downloadCount > 21474836 ) {// x100 could cause overflow!
+			div = downloadSize >> 8;
+			if ( div )
+				percentage = (downloadCount >> 8) * 100 / div;
+			else
+				percentage = 0;
+		} else
+			percentage = downloadCount * 100 / downloadSize;
+		if ( percentage > 100 ) 
+			percentage = 100;
+		s = va( "%s (%d%%)", downloadName, percentage );
 	} else {
 		s = downloadName;
 	}
@@ -181,6 +194,8 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	char			*s;
 	uiClientState_t	cstate;
 	char			info[MAX_INFO_VALUE];
+
+	UI_VideoCheck( trap_Milliseconds() );
 
 	Menu_Cache();
 

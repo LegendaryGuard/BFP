@@ -196,7 +196,7 @@ static void ServerInfo_MenuDraw( void )
 	lineIndex = 0;
 
 	while ( s ) {
-		Info_NextPair( &s, key, value );
+		Info_NextPair( s, key, value );
 		if ( !key[0] ) {
 			break;
 		}
@@ -383,7 +383,7 @@ void UI_ServerInfoMenu( void )
 	s_serverinfo.numlines = 0;
 	s = s_serverinfo.info;
 	while ( s ) {
-		Info_NextPair( &s, key, value );
+		Info_NextPair( s, key, value );
 		if ( !key[0] ) {
 			break;
 		}

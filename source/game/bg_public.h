@@ -837,3 +837,9 @@ qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTim
 #define MAX_BOTS			1024
 #define MAX_BOTS_TEXT		8192
 
+
+// calculated by modulus.c for appropriate dividers:
+#define TMOD_004	4272943
+#define TMOD_075	2292106
+#define TMOD_1000	5730265
+#define TMOD_2000	5730265

@@ -341,7 +341,7 @@ void Bitmap_Draw( menubitmap_s *b )
 			}
 			else
 				color = pulse_color;
-			color[3] = 0.5+0.5*sin(uis.realtime/PULSE_DIVISOR);
+			color[3] = 0.5+0.5*sin( ( uis.realtime % TMOD_075) / PULSE_DIVISOR );
 
 			trap_R_SetColor( color );
 			UI_DrawHandlePic( x, y, w, h, b->focusshader );
@@ -372,7 +372,7 @@ static void Action_Init( menuaction_s *a )
 
 	// calculate bounds
 	if (a->generic.name)
-		len = (int)strlen(a->generic.name);
+		len = strlen(a->generic.name);
 	else
 		len = 0;
 
@@ -438,7 +438,7 @@ static void RadioButton_Init( menuradiobutton_s *rb )
 
 	// calculate bounds
 	if (rb->generic.name)
-		len = (int)strlen(rb->generic.name);
+		len = strlen(rb->generic.name);
 	else
 		len = 0;
 
@@ -549,7 +549,7 @@ static void Slider_Init( menuslider_s *s )
 
 	// calculate bounds
 	if (s->generic.name)
-		len = (int)strlen(s->generic.name);
+		len = strlen(s->generic.name);
 	else
 		len = 0;
 
@@ -766,7 +766,7 @@ static void SpinControl_Init( menulist_s *s ) {
 	const char* str;
 
 	if (s->generic.name)
-		len = (int)strlen(s->generic.name) * SMALLCHAR_WIDTH;
+		len = strlen(s->generic.name) * SMALLCHAR_WIDTH;
 	else
 		len = 0;
 
@@ -775,7 +775,7 @@ static void SpinControl_Init( menulist_s *s ) {
 	len = s->numitems = 0;
 	while ( (str = s->itemnames[s->numitems]) != 0 )
 	{
-		l = (int)strlen(str);
+		l = strlen(str);
 		if (l > len)
 			len = l;
 
@@ -930,6 +930,7 @@ sfxHandle_t ScrollList_Key( menulist_s *l, int key )
 	int	cursory;
 	int	column;
 	int	index;
+	int	time;
 
 	switch (key)
 	{
@@ -954,6 +955,22 @@ sfxHandle_t ScrollList_Key( menulist_s *l, int key )
 						l->oldvalue = l->curvalue;
 						l->curvalue = l->top + index;
 
+						// doubleclick
+						if ( l->generic.dblclick ) {
+							if ( l->oldvalue == l->curvalue ) {
+								if  ( l->mouse1time ) {
+									time = trap_Milliseconds();
+									if ( time - l->mouse1time < 250 ) {
+										//Com_Printf("doubleclick\n");
+										l->generic.dblclick( l );
+										l->mouse1time = 0;
+										return (menu_in_sound);
+									}
+								}
+							} 
+							l->mouse1time = trap_Milliseconds();
+						}
+						
 						if (l->oldvalue != l->curvalue && l->generic.callback)
 						{
 							l->generic.callback( l, QM_GOTFOCUS );
@@ -1047,6 +1064,60 @@ sfxHandle_t ScrollList_Key( menulist_s *l, int key )
 			}
 			return (menu_buzz_sound);
 
+		case K_MWHEELUP:
+			if ( !l->scroll )
+				return (menu_null_sound);
+
+			if (l->curvalue > 0)
+			{
+				l->oldvalue = l->curvalue;
+				l->curvalue -= l->scroll;
+				if (l->curvalue < 0) {
+					l->curvalue = 0;
+					l->top = 0;
+				}
+				if ( l->curvalue < l->top )
+					l->top -= l->height;
+
+				if (l->top < 0)
+					l->top = 0;
+
+				if (l->generic.callback)
+					l->generic.callback( l, QM_GOTFOCUS );
+
+				return (menu_move_sound);
+			}
+			return (menu_buzz_sound);
+
+		case K_MWHEELDOWN:
+			if ( !l->scroll )
+				return (menu_null_sound);
+
+			if (l->curvalue < l->numitems-1)
+			{
+				l->oldvalue = l->curvalue;
+				l->curvalue += l->scroll;
+
+				if (l->curvalue > l->numitems-1)
+					l->curvalue = l->numitems-1;
+
+				if ( l->curvalue - l->top > l->height - 1 ) {
+					l->top = l->top + l->height;
+					if ( l->numitems - l->top < l->height * l->columns ) {
+						l->top = l->numitems - l->height * l->columns;
+					}
+				}
+
+				if (l->top < 0)
+					l->top = 0;
+
+				if (l->generic.callback)
+					l->generic.callback( l, QM_GOTFOCUS );
+
+				return (menu_move_sound);
+			}
+			return (menu_buzz_sound);
+		
 		case K_KP_UPARROW:
 		case K_UPARROW:
 			if( l->curvalue == 0 ) {
@@ -1554,7 +1625,7 @@ Menu_ItemAtCursor
 void *Menu_ItemAtCursor( menuframework_s *m )
 {
 	if ( m->cursor < 0 || m->cursor >= m->nitems )
-		return 0;
+		return NULL;
 
 	return m->items[m->cursor];
 }
@@ -1636,11 +1707,11 @@ sfxHandle_t Menu_DefaultKey( menuframework_s *m, int key )
 	{
 #ifndef NDEBUG
 		case K_F11:
-			uis.debug ^= 1;
+			trap_Cmd_ExecuteText( EXEC_APPEND, "screenshot\n" );
 			break;
 
 		case K_F12:
-			trap_Cmd_ExecuteText(EXEC_APPEND, "screenshot\n");
+			uis.debug ^= 1;
 			break;
 #endif
 		case K_KP_UPARROW:
@@ -1722,7 +1793,12 @@ void Menu_Cache( void )
 	uis.rb_off          = trap_R_RegisterShaderNoMip( "menu/art/switch_off" );
 
 	uis.whiteShader = trap_R_RegisterShaderNoMip( "white" );
-	uis.menuBackShader	= trap_R_RegisterShaderNoMip( "menuback" );
+	if ( uis.glconfig.hardwareType == GLHW_RAGEPRO ) {
+		// the blend effect turns to shit with the normal 
+		uis.menuBackShader	= trap_R_RegisterShaderNoMip( "menubackRagePro" );
+	} else {
+		uis.menuBackShader	= trap_R_RegisterShaderNoMip( "menuback" );
+	}
 	uis.menuBackNoLogoShader = trap_R_RegisterShaderNoMip( "menubacknologo" );
 
 	menu_in_sound	= trap_S_RegisterSound( "sound/misc/menu1.wav", qfalse );

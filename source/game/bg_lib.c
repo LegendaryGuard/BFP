@@ -832,10 +832,10 @@ ivln2_l =  7.0526075433e-06; /* 0x36eca570 =1/ln2 tail*/
 
 /*
 ==================
-copysignf
+Q_copysignf
 ==================
 */
-static float copysignf( float x, float y )
+static float Q_copysignf( float x, float y )
 {
   unsigned int ix, iy;
   
@@ -847,10 +847,10 @@ static float copysignf( float x, float y )
     
 /*
 ==================
-__scalbnf
+Q__scalbnf
 ==================
 */
-static float __scalbnf( float x, int n )
+static float Q__scalbnf( float x, int n )
 {
   int k, ix;
   
@@ -873,16 +873,16 @@ static float __scalbnf( float x, int n )
   k = k + n;
   
   if( n > 50000 || k > 0xfe )
-    return huge * copysignf( huge, x ); /* overflow  */
+    return huge * Q_copysignf( huge, x ); /* overflow  */
   if ( n < -50000 )
-    return tiny * copysignf( tiny, x );  /*underflow*/
+    return tiny * Q_copysignf( tiny, x );  /*underflow*/
   if( k > 0 )        /* normal result */
   {
     SET_FLOAT_WORD( x, ( ix & 0x807fffff ) | ( k << 23 ) );
     return x;
   }
   if( k <= -25 )
-    return tiny * copysignf( tiny, x );  /*underflow*/
+    return tiny * Q_copysignf( tiny, x );  /*underflow*/
     
   k += 25;        /* subnormal result */
   SET_FLOAT_WORD( x, ( ix & 0x807fffff ) | ( k << 23 ) );
@@ -1139,7 +1139,7 @@ float mp3dec_pow( float x, float y )
   j += (n << 23 );
   
   if( ( j >> 23 ) <= 0 )
-    z = __scalbnf( z, n );  /* subnormal output */
+    z = Q__scalbnf( z, n );  /* subnormal output */
   else
     SET_FLOAT_WORD( z, j );
     
@@ -1150,12 +1150,476 @@ float mp3dec_pow( float x, float y )
 //==================================================================================
 
 
+
+int replace_s( char * str1, char * str2, char * src, int max_len ) 
+{
+	int count = 0; // replace count
+	int len1, len2, d;
+	char *match, *s0, *s1, *s2, *max;
+
+	match = strstr( src, str1 );
+
+	if ( !match )
+		return count;
+
+	len1 = (int)strlen( str1 );
+	len2 = (int)strlen( str2 );
+	d = len2-len1;
+
+	if ( d > 0 ) // expand and replace mode
+	{
+		max = src + max_len;
+		src += strlen( src );
+
+		do  
+		{
+			// expand source string
+			s1 = src;
+			src += d;
+			if ( src >= max )
+				return count;
+			s2 = src;
+
+			s0 = match + len1;
+
+			while ( s1 >= s0 ) {
+				*s2-- = *s1--;
+			}
+
+			// replace match
+			s2 = str2;
+			while ( *s2 ) {
+				*match = *s2; match++; s2++;
+			}
+			match = strstr ( match, str1 );
+
+			count++;
+		}
+		while ( match );
+
+		return count;
+	} 
+	else
+	if ( d < 0 ) // shrink and replace mode
+	{
+		do 
+		{
+			// shrink source string
+			s1 = match + len1;
+			s2 = match + len2;
+			while ( (*s2++ = *s1++) != 0 );
+
+			//replace match
+			s2 = str2;
+			while ( *s2 ) {
+				*match = *s2;
+				match++; s2++;
+			}
+
+			match = strstr ( match, str1 );
+
+			count++;
+		} 
+		while ( match );
+
+		return count;
+	}
+	else
+	do  // just replace match
+	{
+		s2 = str2;
+		while ( *s2 ) {
+			*match = *s2;
+			match++; s2++;
+		}
+
+		match = strstr ( match, str1 );
+		count++;
+	} 
+	while ( match );
+
+	return count;
+}
+
+
+qboolean replace1( const char match, const char replace, char *str )
+{
+	qboolean	res = qfalse;
+
+	if ( !str ) 
+		return res;
+
+	while ( *str ) {
+		if ( *str == match ) {
+			*str = replace;
+			res = qtrue;
+		}
+		str++;
+	}
+
+	return res;
+}
+
+
+char *strtok( char *strToken, const char *strDelimit ) {
+	static char		*lastStr = NULL;
+
+	const char		*delimit = strDelimit;
+	int				loop = 1;
+
+	// check some state
+	if( !strToken )
+		strToken = lastStr; // use the last string given then
+
+	// if there are no delimiters or no string to work with, bail
+	if( !strToken /*|| !strDelimit */ )
+		return NULL;
+
+	// first up we want to skip all delimiters at the start
+	// and mark our place to return
+	while( *strToken && loop )
+	{
+		loop = 0;
+
+		// check all delimiters, we must find _one_ to continue the outside loop
+		for( delimit = strDelimit ; *delimit ; delimit++ )
+		{
+			if( *strToken == *delimit )
+			{
+				strToken++;
+				loop = 1;
+				break;
+			}
+		}
+	}
+
+	// strToken now points to the first non-delimiter found
+	// now we want to find the next delimiter to terminate on
+	for( loop=1, lastStr=strToken ; *lastStr && loop ; lastStr++ )
+	{
+		// check all delimiters
+		for( delimit=strDelimit ; *delimit ; delimit++ )
+		{
+			if( *delimit == *lastStr )
+			{
+				loop = 0;
+				break;
+			}
+		}
+	}
+
+	// if the loop aborted then the token needs termination
+	if( !loop )
+	{
+		*(lastStr-1) = '\0';
+
+		if ( '\0' == *lastStr )
+			lastStr = NULL;
+	}
+	else
+	{
+		lastStr = NULL; // clean up for the next call
+	}
+
+	return strToken;
+}
+
+
+char *BG_StripColor( char *string ) {
+	char	*d;
+	char	*s;
+	int		c;
+
+	s = string;
+	d = string;
+	while ((c = *s) != 0 ) 
+	{
+		if ( Q_IsColorString( s ) )
+			s++;
+		else {
+			*d = c; d++;
+		}
+		s++;
+	}
+	*d = '\0';
+	return string;
+}
+
+
+char *EncodedString( const char *in ) 
+{
+	static const char hextab[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
+	static char	buf[16384];
+	unsigned	int		 c;
+	char		*out;
+	
+	if ( !in ) {
+		buf[0] = '\0';
+		return buf;
+	}
+
+	out = buf;
+
+	while ( ( c = *in++ ) != '\0' ) {
+		if ( c == '#' ) {
+			*out++ = '#';
+			*out++ = '#';
+		} else 
+		if ( c > 127 || c == '%' ) {
+			*out++ = '#';
+			*out++ = hextab [ (c & 0xF0) >> 4 ];
+			*out++ = hextab [ (c & 0x0F) ];
+		} else {
+			*out++ = c;
+		}
+	}
+	*out = '\0';
+	return (char *)buf;
+}
+
+
+static int hex2dec ( char chr ) {
+	switch ( chr ) {
+		case '0':  return 0;
+		case '1':  return 1;
+		case '2':  return 2;
+		case '3':  return 3;
+		case '4':  return 4;
+		case '5':  return 5;
+		case '6':  return 6;
+		case '7':  return 7;
+		case '8':  return 8;
+		case '9':  return 9;
+		case 'a':  return 10;
+		case 'A':  return 10;
+		case 'b':  return 11;
+		case 'B':  return 11;
+		case 'c':  return 12;
+		case 'C':  return 12;
+		case 'd':  return 13;
+		case 'D':  return 13;
+		case 'e':  return 14;
+		case 'E':  return 14;
+		case 'f':  return 15;
+		case 'F':  return 15;
+	}
+	return 0;
+}
+
+
+char *DecodedString( const char *in ) 
+{
+	static char	buf[16384];
+	char		*out, c1, c2;
+
+	if ( !in ) {
+		buf[0] = '\0';
+		return (char *)buf;
+	}
+
+	out = buf;
+
+	while ( *in ) {
+		// new encoding
+		if ( *in == '#' && (c1 = *(in+1)) != 0 && (c2 = *(in+2)) != 0 &&
+		    (( c1 >= '0' && c1 <= '9' ) || ( c1 >= 'a' && c1 <= 'f' )) &&
+		    (( c2 >= '0' && c2 <= '9' ) || ( c2 >= 'a' && c2 <= 'f' ))) {
+			*out++ = hex2dec( c1 ) * 16 + hex2dec( c2 );
+			in += 3;
+		} else if ( *in == '#' && *(in+1) == '#' )  {
+			*out++ = '#';
+			in += 2;
+		} else {
+			*out++ = *in++;
+		}
+	}
+
+	*out = '\0';
+
+	return (char *)buf;
+}
+
+
+// a bit faster string compare function
+int BG_stricmp( const char *s1, const char *s2 ) {
+	int	c1, c2;
+	do {
+		c1 = locase[(unsigned char)*s1]; s1++;
+		c2 = locase[(unsigned char)*s2]; s2++;
+		if (c1 != c2) 
+			return ((c1 < c2) ? -1 : 1);
+	}  while ( c1 );
+	return 0;		// strings are equal
+}
+
+
+char *Q_stristr( const char * str1, const char * str2 )
+{
+	char *cp = (char *) str1;
+	char *s1, *s2;
+
+	if ( !*str2 )
+		return( (char *)str1 );
+
+	while ( *cp )
+	{
+		s1 = cp;
+		s2 = (char *) str2;
+
+		while ( *s1 && locase[(unsigned char)*s1] == locase[(unsigned char)*s2] )
+		{
+			s1++;
+			s2++;
+		}
+
+		if ( !*s2 )
+			return( cp );
+
+		cp++;
+	}
+
+	return( NULL );
+}
+
+
+/*
+===========
+BG_CleanName
+============
+*/
+void BG_CleanName( const char *in, char *out, int outSize, const char *blankString ) {
+	int		len, colorlessLen;
+	char	ch;
+	char	*p;
+	int		spaces;
+
+	//save room for trailing null byte
+	outSize--;
+
+	len = 0;
+	colorlessLen = 0;
+	p = out;
+	*p = '\0';
+	spaces = 0;
+
+	while( 1 ) {
+		ch = *in++;
+		if( !ch ) {
+			break;
+		}
+
+		// don't allow leading spaces
+		if( *p == '\0' && ch <= ' ' ) {
+			continue;
+		}
+
+		// check colors
+		if( ch == Q_COLOR_ESCAPE ) {
+			// solo trailing carat is not a color prefix
+			if( !*in ) {
+				break;
+			}
+
+			// don't allow black in a name, period
+			if( ColorIndex(*in) == 0 ) {
+				in++;
+				continue;
+			}
+
+			// make sure room in dest for both chars
+			if( len > outSize - 2 ) {
+				break;
+			}
+
+			*out++ = ch;
+			*out++ = *in++;
+			len += 2;
+			continue;
+		}
+
+		// let's keep it in printable range
+		if ( ch < ' ' || ch > 126 ) {
+			continue;
+		}
+
+		// don't allow too many consecutive spaces
+		if( ch == ' ' ) {
+			spaces++;
+			if( spaces > 2 ) {
+				continue;
+			}
+		}
+		else {
+			spaces = 0;
+		}
+
+		if( len > outSize - 1 ) {
+			break;
+		}
+
+		*out++ = ch;
+		colorlessLen++;
+		len++;
+	}
+	*out = '\0';
+
+	if ( blankString ) {
+		// don't allow empty names
+		if( *p == '\0' || colorlessLen == 0 ) {
+			Q_strncpyz( p, blankString, outSize );
+		}
+	}
+}
+
+
+/*
+===================
+Q_strcpy
+
+string copy, without any checks
+===================
+*/
+void Q_strcpy( char *dst, const char *src ) 
+{
+	char c;
+	while ( (c = *src) != '\0' ) 
+	{
+		*dst = c; dst++; src++;
+	}
+	*dst = '\0';
+}
+
+
+char *Q_stradd( char *dst, const char *src ) 
+{
+	char c;
+	while ( (c = *src) != '\0' ) 
+	{
+		*dst = c;
+		dst++;
+		src++;
+	}
+	*dst = '\0';
+	return dst;
+}
+
 int Q_strlen( const char *s ) 
 {
 	const char *b = s;
 	while ( *s != '\0' ) 
 		s++;
 	return s - b;
+}
+
+qboolean BigEndian( void ) 
+{
+	const char *s = { "123" };
+	int  *i;
+	i = (void*)s;
+	if ( *i != 0x00333231 )
+		return qtrue;
+	else
+		return qfalse;
 }
 
 static int randSeed = 0;

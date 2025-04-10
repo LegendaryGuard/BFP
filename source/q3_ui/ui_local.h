@@ -126,6 +126,7 @@ typedef struct
 	void (*callback)( void *self, int event );
 	void (*statusbar)( void *self );
 	void (*ownerdraw)( void *self );
+	void (*dblclick)( void *self );
 } menucommon_s;
 
 typedef struct {
@@ -134,6 +135,7 @@ typedef struct {
 	int		widthInChars;
 	char	buffer[MAX_EDIT_LINE];
 	int		maxchars;
+	qboolean skipKey; // skip single key event
 } mfield_t;
 
 typedef struct
@@ -161,6 +163,8 @@ typedef struct
 	int curvalue;
 	int	numitems;
 	int	top;
+	int	scroll;
+	int mouse1time;
 		
 	const char **itemnames;
 
@@ -248,6 +252,11 @@ extern char	*ui_medalNames[];
 extern char	*ui_medalPicNames[];
 extern char	*ui_medalSounds[];
 #endif
+
+//
+// ui_main.c
+//
+extern void UI_VideoCheck( int time );
 
 //
 // ui_mfield.c
@@ -495,8 +504,8 @@ qboolean UI_RegisterClientModelname( playerInfo_t *pi, const char *modelSkinName
 typedef struct {
 	int					frametime;
 	int					realtime;
-	int					cursorx;
-	int					cursory;
+	float				cursorx;
+	float				cursory;
 	int					menusp;
 	menuframework_s*	activemenu;
 	menuframework_s*	stack[MAX_MENUDEPTH];
@@ -512,10 +521,22 @@ typedef struct {
 	qhandle_t			cursor;
 	qhandle_t			rb_on;
 	qhandle_t			rb_off;
+
 	float				scale;
-	float				bias;
+	float				biasX;
+	float				biasY;
+
+	float				cursorScaleR;		// clamped 1/scale for mouse
+
+	float				screenXmin;
+	float				screenXmax;
+
+	float				screenYmin;
+	float				screenYmax;
+
 	qboolean			demoversion;
 	qboolean			firstdraw;
+	int					lastVideoCheck;
 } uiStatic_t;
 
 extern void			UI_Init( void );
@@ -611,7 +632,7 @@ void			trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void			trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void			trap_FS_FCloseFile( fileHandle_t f );
 int				trap_FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
-int				trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
+int				trap_FS_Seek( fileHandle_t f, long offset, fsOrigin_t origin );
 qhandle_t		trap_R_RegisterModel( const char *name );
 qhandle_t		trap_R_RegisterSkin( const char *name );
 qhandle_t		trap_R_RegisterShaderNoMip( const char *name );
@@ -643,6 +664,8 @@ int				trap_LAN_GetServerCount( int source );
 void			trap_LAN_GetServerAddressString( int source, int n, char *buf, int buflen );
 void			trap_LAN_GetServerInfo( int source, int n, char *buf, int buflen );
 int				trap_LAN_GetPingQueueCount( void );
+void			trap_LAN_SaveCachedServers( void );
+void			trap_LAN_LoadCachedServers( void );
 int				trap_LAN_ServerStatus( const char *serverAddress, char *serverStatus, int maxLen );
 void			trap_LAN_ClearPing( int n );
 void			trap_LAN_GetPing( int n, char *buf, int buflen, int *pingtime );
@@ -651,7 +674,7 @@ int				trap_MemoryRemaining( void );
 void			trap_GetCDKey( char *buf, int buflen );
 void			trap_SetCDKey( char *buf );
 
-qboolean               trap_VerifyCDKey( const char *key, const char *chksum); // bk001208 - RC4
+qboolean		trap_VerifyCDKey( const char *key, const char *chksum); // bk001208 - RC4
 
 void			trap_SetPbClStatus( int status );
 

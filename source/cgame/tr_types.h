@@ -148,22 +148,26 @@ typedef enum {
 	TC_S3TC
 } textureCompression_t;
 
-	
-// <artem>
-// glDriverType_t is not used by the engine and quake3 game anymore.
-// Single value (GLDRV_ICD) is left only for compatibility with other mods.
 typedef enum {
-	GLDRV_ICD // driver is integrated with window system
+	GLDRV_ICD,					// driver is integrated with window system
+								// WARNING: there are tests that check for
+								// > GLDRV_ICD for minidriverness, so this
+								// should always be the lowest value in this
+								// enum set
+	GLDRV_STANDALONE,			// driver is a non-3Dfx standalone driver
+	GLDRV_VOODOO				// driver is a 3Dfx standalone driver
 } glDriverType_t;
-// </artem>
 
-// <artem>
-// glHardwareType_t is not used by the engine and quake3 game anymore.
-// Single value (GLHW_GENERIC) is left only for compatibility with other mods.
 typedef enum {
-	GLHW_GENERIC // where everthing works the way it should
+	GLHW_GENERIC,			// where everthing works the way it should
+	GLHW_3DFX_2D3D,			// Voodoo Banshee or Voodoo3, relevant since if this is
+							// the hardware type then there can NOT exist a secondary
+							// display adapter
+	GLHW_RIVA128,			// where you can't interpolate alpha
+	GLHW_RAGEPRO,			// where you can't modulate alpha on alpha textures
+	GLHW_PERMEDIA2			// where you don't have src*dst
 } glHardwareType_t;
-// </artem>
+
 
 typedef struct {
 	char					renderer_string[MAX_STRING_CHARS];

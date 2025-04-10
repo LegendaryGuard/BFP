@@ -654,9 +654,9 @@ void G_BroadcastServerCommand( int ignoreClient, const char *command );
 //
 // g_client.c
 //
-char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot );
+const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot );
 void ClientSendPowerlevelInfo( void ); // BFP - Send player status info
-void ClientUserinfoChanged( int clientNum );
+qboolean ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );
 void ClientBegin( int clientNum );
 void ClientCommand( int clientNum );
@@ -685,11 +685,12 @@ void Svcmd_GameMem_f( void );
 //
 // g_session.c
 //
-void G_ReadSessionData( gclient_t *client );
-void G_InitSessionData( gclient_t *client, char *userinfo );
+void G_ReadClientSessionData( gclient_t *client );
+void G_InitSessionData( gclient_t *client, const char *team, qboolean isBot );
 
 void G_InitWorldSession( void );
 void G_WriteSessionData( void );
+void G_WriteClientSessionData( gclient_t *client );
 
 //
 // g_arenas.c
@@ -754,7 +755,7 @@ void	trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void	trap_FS_Write( const void *buffer, int len, fileHandle_t f );
 void	trap_FS_FCloseFile( fileHandle_t f );
 int		trap_FS_GetFileList( const char *path, const char *extension, char *listbuf, int bufsize );
-int		trap_FS_Seek( fileHandle_t f, long offset, int origin ); // fsOrigin_t
+int		trap_FS_Seek( fileHandle_t f, long offset, fsOrigin_t origin );
 void	trap_SendConsoleCommand( int exec_when, const char *text );
 void	trap_Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *value, int flags );
 void	trap_Cvar_Update( vmCvar_t *cvar );
