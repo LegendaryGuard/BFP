@@ -611,6 +611,41 @@ static qboolean PM_CheckJump( void ) {
 }
 
 /*
+===================
+PM_Drifting
+
+Drifting movements
+===================
+*/
+static void PM_Drifting( void ) { // BFP - Drifting
+	vec3_t	drift;
+	float	forwardSpeed = DotProduct( pm->ps->velocity, pml.forward );
+	float	rightSpeed = DotProduct( pm->ps->velocity, pml.right );
+	float	driftFactor = 0.0003;
+
+	// apply directional drift when keys are released
+	if ( pm->cmd.rightmove == 0 && fabs( rightSpeed ) > 0.0f
+	&& pm->ps->velocity[2] < 0 ) {
+		driftFactor = 0.001;
+		VectorScale( pml.up, driftFactor * fabs( rightSpeed ), drift );
+		VectorAdd( pm->ps->velocity, drift, pm->ps->velocity );
+	}
+
+	if ( pm->cmd.forwardmove == 0 && fabs( forwardSpeed ) > 50.0f ) {
+		// drift a bit more when slowing down
+		if ( fabs( forwardSpeed ) < 100.0f ) {
+			driftFactor = 0.008;
+		}
+		if ( forwardSpeed > 0 ) { // left
+			VectorScale( pml.right, driftFactor * fabs( forwardSpeed ) * pml.right[1], drift );
+		} else { // right
+			VectorScale( pml.right, -driftFactor * fabs( forwardSpeed )  * pml.right[1], drift );
+		}
+		VectorAdd( pm->ps->velocity, drift, pm->ps->velocity );
+	}
+}
+
+/*
 =============
 PM_CheckWaterSpot
 =============
@@ -851,7 +886,7 @@ static void PM_WaterMove( void ) {
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& ( pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0 || pm->cmd.upmove != 0 ) ) {
 		// BFP - Ki boost speed is dependent on powerlevel
-		wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 );
+		wishspeed *= 2.5 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 );
 	}
 
 	PM_Accelerate (wishdir, wishspeed, pm_wateraccelerate);
@@ -868,6 +903,8 @@ static void PM_WaterMove( void ) {
 	}
 
 	PM_SlideMove( qfalse );
+
+	PM_Drifting(); // BFP - Drifting
 }
 
 /*
@@ -945,10 +982,28 @@ static void PM_FlyMove( void ) {
 	} else {
 		for ( i = 0; i < 3; i++ ) {
 			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove + scale * pml.up[i]*pm->cmd.upmove;
+			// BFP - Keep moving up if forward/backward, left/right and up directional keys are pressed
+			if ( pm->cmd.forwardmove != 0 && pm->cmd.rightmove != 0 && pm->cmd.upmove != 0 ) {
+				wishvel[i] += 12;
+			}
 		}
-		// BFP - Keep moving up if forward/backward, left/right and up directional keys are pressed
-		if ( pm->cmd.forwardmove != 0 && pm->cmd.rightmove != 0 && pm->cmd.upmove != 0 ) {
-			wishvel[2] += 12;
+
+		// BFP - Going up/down a bit down when moving left/right depending how the player looks
+		if ( !( pm->ps->pm_flags & PMF_BLOCK ) 
+		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+
+			// handle downward push when moving left/right without upmove
+			if ( pm->cmd.rightmove != 0 && pm->cmd.upmove <= 0 ) {
+				vec3_t downPush;
+				int pushAmount = 100;
+
+				if ( pm->ps->weaponstate == WEAPON_BEAMFIRING ) {
+					pushAmount = 80;
+				}
+
+				VectorScale( pml.up, -pushAmount, downPush );
+				VectorAdd( wishvel, downPush, wishvel );
+			}
 		}
 	}
 
@@ -960,34 +1015,27 @@ static void PM_FlyMove( void ) {
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING ) { // BFP - Don't increase speed when beam firing
 			// BFP - Ki boost speed is dependent on powerlevel
-			wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // increase the speed a bit
-		}
-
-		// BFP - Going up/down a bit down when moving left/right
-		if ( pm->cmd.rightmove > 0 ) {
-			if ( pm->cmd.upmove <= 0 ) {
-				// move a bit down
-				if ( pm->ps->weaponstate == WEAPON_BEAMFIRING ) { // BFP - Low descent speed when beam firing
-					pm->ps->velocity[2] -= 2;
-				} else {
-					pm->ps->velocity[2] -= 12;
-				}
-			}
-		} else if ( pm->cmd.rightmove < 0 ) {
-			if ( pm->cmd.upmove <= 0 ) {
-				// move a bit down
-				if ( pm->ps->weaponstate == WEAPON_BEAMFIRING ) { // BFP - Low descent speed when beam firing
-					pm->ps->velocity[2] -= 2; 
-				} else {
-					pm->ps->velocity[2] -= 12;
-				}
-			}
+			wishspeed *= 2.5 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // increase the speed a bit
 		}
 	}
+
+// BFP - Debugging view and origin
+#if 0
+	Com_Printf( "----------------------------------------------------------------------------------------------------------\n" );
+	for ( i = 0; i < 3; i++ ) {
+		Com_Printf( "^1pm->ps->origin[%d]: %f - ", i, pm->ps->origin[i] );
+		Com_Printf( "^3pml.forward[%d]: %f - ", i, pml.forward[i] );
+		Com_Printf( "^6pml.right[%d]: %f - ", i, pml.right[i] );
+		Com_Printf( "^4pml.up[%d]: %f\n", i, pml.up[i] );
+	}
+#endif
+
 
 	PM_Accelerate (wishdir, wishspeed, pm_flyaccelerate);
 
 	PM_StepSlideMove( qfalse );
+
+	PM_Drifting(); // BFP - Drifting
 }
 
 
@@ -2956,6 +3004,12 @@ PM_Animate
 */
 
 static void PM_Animate( void ) {
+
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+		return;
+	}
+
 	if ( pm->cmd.buttons & BUTTON_GESTURE ) {
 		if ( pm->ps->torsoTimer == 0 ) {
 			PM_StartTorsoAnim( TORSO_GESTURE );
@@ -3170,7 +3224,7 @@ void PmoveSingle (pmove_t *pmove) {
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
 		// BFP - TODO: Set to the first selected weapon
-		// pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 	}
