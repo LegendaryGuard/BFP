@@ -1012,9 +1012,12 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		p->endtime = timenonscaled + turbtime;
 		p->height = p->width = (rand() % 1) + size;
 
-		p->org[0] += (crandom() * range);
-		p->org[1] += (crandom() * range);
-		p->org[2] += (rand() % (int)20);
+		// BFP - Monster gamemode, player monster bubble particles has different spawning origin
+		if ( cgs.gametype == GT_MONSTER
+		&& ( cent->currentState.eFlags & EF_MONSTER ) ) {
+			p->org[0] += (crandom() * range);
+			p->org[1] += (crandom() * range);
+		}
 
 		VectorSet( p->vel, 
 				(rand() % 521) - 250,
@@ -1033,10 +1036,14 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	}
 	else
 	{
+		// spawn in one point
+		float angle = random() * M_PI * 2;
+		float radius = random() * range * 1.5;
+
 		p->type = P_BUBBLE;
 
-		p->org[0] += (crandom() * range);
-		p->org[1] += (crandom() * range);
+		p->org[0] += cos( angle ) * radius;
+		p->org[1] += sin( angle ) * radius;
 		p->org[2] += (crandom() * 5);
 
 		VectorSet( p->vel, 
@@ -1048,7 +1055,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		VectorSet( p->accel, 
 				crandom() * 10, 
 				crandom() * 10, 
-				900 );
+				1000 );
 	}
 
 	p->snum = 3 - (crandom() * 6); // used to randomize where the bubbles stop when these touches the surface

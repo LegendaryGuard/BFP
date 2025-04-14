@@ -2677,7 +2677,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 			VectorCopy( legs.origin, bubbleOrigin );
 			trap_CM_BoxTrace( &trace, start, bubbleOrigin, NULL, NULL, 0, CONTENTS_WATER );
 
-			bubbleOrigin[2] += -15; // put the origin below the character's feet
+			bubbleOrigin[2] += -17; // put the origin below the character's feet
 
 			// BFP - Monster gamemode, player monster bubble particle size, range and position
 			if ( cent->currentState.eFlags & EF_MONSTER ) {
@@ -2689,6 +2689,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
+				bubbleOrigin[2] += 6; // put the origin near the player origin point
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
 				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
