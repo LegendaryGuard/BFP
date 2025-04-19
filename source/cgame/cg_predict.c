@@ -253,6 +253,129 @@ static void CG_InterpolatePlayerState( qboolean grabAngles ) {
 
 }
 
+
+int				eventStack;
+entity_event_t	events[ MAX_PREDICTED_EVENTS ];
+int				eventParms[ MAX_PREDICTED_EVENTS ];
+int				eventParm2[ MAX_PREDICTED_EVENTS ]; // client entity index
+
+void CG_AddFallDamage( int damage );
+
+/*
+===================
+CG_StoreEvents
+
+Save events that may be dropped during prediction
+===================
+*/
+void CG_StoreEvent( entity_event_t evt, int eventParm, int entityNum ) 
+{
+	if ( eventStack >= MAX_PREDICTED_EVENTS )
+		return;
+
+	if ( evt == EV_FALL_FAR ) {
+		CG_AddFallDamage( 10 );
+	} else if ( evt == EV_FALL_MEDIUM ) {
+		CG_AddFallDamage( 5 );
+	}
+
+	events[ eventStack ] = evt;
+	eventParms[ eventStack ] = eventParm;
+	eventParm2[ eventStack ] = entityNum;
+	eventStack++;
+}
+
+
+/*
+===================
+CG_PlayDroppedEvents
+===================
+*/
+void CG_PlayDroppedEvents( playerState_t *ps, playerState_t *ops ) {
+	centity_t	*cent;
+	entity_event_t oldEvent;
+	int i, oldParam;
+
+	if ( ps == ops ) {
+		return;
+	}
+
+	if ( eventStack <= MAX_PS_EVENTS ) {
+		return;
+	}
+
+	cent = &cg.predictedPlayerEntity;
+
+	oldEvent = cent->currentState.event;
+	oldParam = cent->currentState.eventParm;
+
+	for ( i = 0; i < eventStack - MAX_PS_EVENTS ; i++ ) {
+		cent->currentState.event = events[ i ];
+		cent->currentState.eventParm = eventParms[ i ];
+		if ( cg_showmiss.integer ) 
+		{
+			CG_Printf( "Playing dropped event: %s %i", eventnames[ events[ i ] ], eventParms[ i ] );
+		}
+		CG_EntityEvent( cent, cent->lerpOrigin, eventParm2[ i ] );
+		cg.eventSequence++;
+	}
+
+	cent->currentState.event = oldEvent;
+	cent->currentState.eventParm = oldParam;
+}
+
+
+static int CG_CheckArmor( int damage ) {
+	int				save;
+	int				count;
+
+	count = cg.predictedPlayerState.stats[STAT_ARMOR];
+
+	save = ceil( damage * ARMOR_PROTECTION );
+
+	if (save >= count)
+		save = count;
+
+	if ( !save )
+		return 0;
+	
+	cg.predictedPlayerState.stats[STAT_ARMOR] -= save;
+
+	return save;
+}
+
+
+void CG_AddFallDamage( int damage ) 
+{
+	int take, asave;
+
+	if ( cg.predictedPlayerState.powerups[ PW_BATTLESUIT ] )
+		return;
+
+	if ( cg.predictedPlayerState.clientNum != cg.snap->ps.clientNum || cg.snap->ps.pm_flags & PMF_FOLLOW ) {
+		return;
+	}
+
+	take = damage;
+
+	asave = CG_CheckArmor( take );
+
+	take -= asave;
+
+	cg.predictedPlayerState.stats[STAT_HEALTH] -= take;
+
+#if 0
+	CG_Printf( "take: %i asave:%i health:%i armor:%i\n", take, asave, 
+		cg.predictedPlayerState.stats[STAT_HEALTH], cg.predictedPlayerState.stats[STAT_ARMOR] );
+#endif
+
+	cg.predictedPlayerState.damagePitch = 255;
+	cg.predictedPlayerState.damageYaw = 255;
+	//cg.predictedPlayerState.damageEvent++;
+	cg.predictedPlayerState.damageCount = take + asave;
+}
+
+
 /*
 ===================
 CG_TouchItem
@@ -291,7 +414,7 @@ static void CG_TouchItem( centity_t *cent ) {
 	}
 
 	// grab it
-	BG_AddPredictableEventToPlayerstate( EV_ITEM_PICKUP, cent->currentState.modelindex , &cg.predictedPlayerState);
+	BG_AddPredictableEventToPlayerstate( EV_ITEM_PICKUP, cent->currentState.modelindex , &cg.predictedPlayerState, cent - cg_entities );
 
 	// remove it from the frame so it won't be drawn
 	cent->currentState.eFlags |= EF_NODRAW;

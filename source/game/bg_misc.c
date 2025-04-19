@@ -895,7 +895,7 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) 
 		VectorMA( tr->trBase, deltaTime, tr->trDelta, result );
 		break;
 	case TR_SINE:
-		deltaTime = ( atTime - tr->trTime ) / (float) tr->trDuration;
+		deltaTime = ( ( atTime - tr->trTime ) % tr->trDuration ) / (float) tr->trDuration;
 		phase = sin( deltaTime * M_PI * 2 );
 		VectorMA( tr->trBase, phase, tr->trDelta, result );
 		break;
@@ -915,7 +915,7 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) 
 		result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;		// FIXME: local gravity...
 		break;
 	default:
-		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trTime );
+		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trType );
 		break;
 	}
 }
@@ -958,7 +958,7 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 		result[2] -= DEFAULT_GRAVITY * deltaTime;		// FIXME: local gravity...
 		break;
 	default:
-		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trTime );
+		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trType );
 		break;
 	}
 }
@@ -1062,7 +1062,13 @@ Handles the sequence numbers
 ===============
 */
 
-void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps ) {
+#ifdef CGAME
+void CG_StoreEvent( entity_event_t ev, int eventParm, int entityNum );
+#endif
+
+void	trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
+
+void BG_AddPredictableEventToPlayerstate( entity_event_t newEvent, int eventParm, playerState_t *ps, int entityNum ) {
 
 #ifdef _DEBUG
 	{
@@ -1077,6 +1083,11 @@ void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerSta
 		}
 	}
 #endif
+
+#ifdef CGAME
+	CG_StoreEvent( newEvent, eventParm, entityNum );
+#endif
+	
 	ps->events[ps->eventSequence & (MAX_PS_EVENTS-1)] = newEvent;
 	ps->eventParms[ps->eventSequence & (MAX_PS_EVENTS-1)] = eventParm;
 	ps->eventSequence++;
@@ -1116,7 +1127,7 @@ void BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad ) {
 		} else {
 			effectNum = 1;
 		}
-		BG_AddPredictableEventToPlayerstate( EV_JUMP_PAD, effectNum, ps );
+		BG_AddPredictableEventToPlayerstate( EV_JUMP_PAD, effectNum, ps, -1 );
 	}
 	// remember hitting this jumppad this frame
 	ps->jumppad_ent = jumppad->number;

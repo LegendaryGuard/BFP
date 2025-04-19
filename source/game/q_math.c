@@ -496,8 +496,12 @@ void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal )
 	float inv_denom;
 
 	inv_denom =  DotProduct( normal, normal );
+	if ( Q_fabs( inv_denom ) == 0.0f ) {
+		VectorCopy( p, dst );
+		return;
+	}
 #ifndef Q3_VM
-	assert( Q_fabs(inv_denom) != 0.0f ); // bk010122 - zero vectors get here
+	//assert( Q_fabs(inv_denom) != 0.0f ); // zero vectors get here
 #endif
 	inv_denom = 1.0f / inv_denom;
 
@@ -563,11 +567,6 @@ float Q_rsqrt( float number )
 	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
 //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 
-#ifndef Q3_VM
-#ifdef __linux__
-	assert( !isnan(y) ); // bk010122 - FPE?
-#endif
-#endif
 	return y;
 }
 
@@ -792,7 +791,6 @@ void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs ) {
 
 
 vec_t VectorNormalize( vec3_t v ) {
-	// NOTE: TTimo - Apple G4 altivec source uses double?
 	float	length, ilength;
 
 	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
@@ -977,7 +975,7 @@ void PerpendicularVector( vec3_t dst, const vec3_t src )
 {
 	int	pos;
 	int i;
-	float minelem = 1.0F;
+	float f, minelem = 1.0F;
 	vec3_t tempvec;
 
 	/*
@@ -985,10 +983,11 @@ void PerpendicularVector( vec3_t dst, const vec3_t src )
 	*/
 	for ( pos = 0, i = 0; i < 3; i++ )
 	{
-		if ( fabs( src[i] ) < minelem )
+		f = fabs( src[i] );
+		if ( f < minelem )
 		{
 			pos = i;
-			minelem = fabs( src[i] );
+			minelem = f;
 		}
 	}
 	tempvec[0] = tempvec[1] = tempvec[2] = 0.0F;

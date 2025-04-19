@@ -28,12 +28,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "g_local.h"
 
 
-#define POOLSIZE	(256 * 1024)
+#define POOLSIZE	(768 * 1024)
 
 static char		memoryPool[POOLSIZE];
 static int		allocPoint;
 
-void *G_Alloc( int size ) {
+void *G_Alloc( size_t size ) {
 	char	*p;
 
 	if ( g_debugAlloc.integer ) {
@@ -41,7 +41,7 @@ void *G_Alloc( int size ) {
 	}
 
 	if ( allocPoint + size > POOLSIZE ) {
-	  G_Error( "G_Alloc: failed on allocation of %i bytes\n", size ); // bk010103 - was %u, but is signed
+		G_Error( "G_Alloc: failed on allocation of %i bytes", size );
 		return NULL;
 	}
 

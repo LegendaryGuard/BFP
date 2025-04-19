@@ -603,14 +603,14 @@ static void ForceClientSkin( gclient_t *client, char *model, const char *skin ) 
 */
 
 /*
-===========
+============
 ClientSendPowerlevelInfo
 ============
 */
 void ClientSendPowerlevelInfo( void ) { // BFP - Send player's powerlevel info
 	int		i = 0;
 
-	while ( i < level.numConnectedClients ) {
+	while ( i < level.maxclients ) {
 		gentity_t	*ent = &g_entities[level.sortedClients[i]];
 
 		trap_SendServerCommand( -1,
@@ -851,10 +851,10 @@ Get the average powerlevel when there are another players with
 different powerlevels.
 ============
 */
-static short ClientGetAveragePowerlevel( void ) { // BFP - Average powerlevel
-	short	i = 0;
-	short	totalPowerLevel = 0;
-	short	activeClients = 0;
+static int ClientGetAveragePowerlevel( void ) { // BFP - Average powerlevel
+	int		i = 0;
+	int		totalPowerLevel = 0;
+	int		activeClients = 0;
 
 	while ( i < level.numConnectedClients ) {
 		gentity_t *ent = &g_entities[level.sortedClients[i]];

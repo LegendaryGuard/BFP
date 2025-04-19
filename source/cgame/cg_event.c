@@ -427,19 +427,27 @@ also called by CG_CheckPlayerstateEvents
 ==============
 */
 #define	DEBUGNAME(x) if(cg_debugEvents.integer){CG_Printf(x"\n");}
-void CG_EntityEvent( centity_t *cent, vec3_t position ) {
+void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	entityState_t	*es;
-	int				event;
+	entity_event_t	event;
 	vec3_t			dir;
 	const char		*s;
 	int				clientNum;
 	clientInfo_t	*ci;
+	vec3_t			vec;
+	float			fovOffset;
+	centity_t		*ce;
 
 	es = &cent->currentState;
 	event = es->event & ~EV_EVENT_BITS;
 
+	if ( (unsigned) event >= EV_MAX ) {
+		CG_Error( "Unknown event: %i", event );
+		return;
+	}
+
 	if ( cg_debugEvents.integer ) {
-		CG_Printf( "ent:%3i  event:%3i ", es->number, event );
+		CG_Printf( "ent:%3i  event:%3i %s", es->number, event, eventnames[ event ] );
 	}
 
 	if ( !event ) {
@@ -448,7 +456,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	}
 
 	clientNum = es->clientNum;
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
+	if ( (unsigned) clientNum >= MAX_CLIENTS ) {
 		clientNum = 0;
 	}
 	ci = &cgs.clientinfo[ clientNum ];
@@ -464,6 +472,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				cgs.media.footsteps[ ci->footsteps ][rand()&3] );
 		}
 		break;
+
 	case EV_FOOTSTEP_METAL:
 		DEBUGNAME("EV_FOOTSTEP_METAL");
 		if (cg_footsteps.integer) {
@@ -471,6 +480,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				cgs.media.footsteps[ FOOTSTEP_METAL ][rand()&3] );
 		}
 		break;
+
 	case EV_FOOTSPLASH:
 		DEBUGNAME("EV_FOOTSPLASH");
 		if (cg_footsteps.integer) {
@@ -478,6 +488,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				cgs.media.footsteps[ FOOTSTEP_SPLASH ][rand()&3] );
 		}
 		break;
+
 	case EV_FOOTWADE:
 		DEBUGNAME("EV_FOOTWADE");
 		if (cg_footsteps.integer) {
@@ -485,6 +496,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				cgs.media.footsteps[ FOOTSTEP_SPLASH ][rand()&3] );
 		}
 		break;
+
 	case EV_SWIM:
 		DEBUGNAME("EV_SWIM");
 		if (cg_footsteps.integer) {
@@ -492,7 +504,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				cgs.media.footsteps[ FOOTSTEP_SPLASH ][rand()&3] );
 		}
 		break;
-
 
 	case EV_FALL_SHORT:
 		DEBUGNAME("EV_FALL_SHORT");
@@ -503,6 +514,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			cg.landTime = cg.time;
 		}
 		break;
+
 	case EV_FALL_MEDIUM:
 		DEBUGNAME("EV_FALL_MEDIUM");
 		// BFP - Use normal land sound instead
@@ -515,6 +527,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			cg.landTime = cg.time;
 		}
 		break;
+
 	case EV_FALL_FAR:
 		DEBUGNAME("EV_FALL_FAR");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.wav" ) );
@@ -584,7 +597,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 
 		// boing sound at origin, jump sound on player
 		trap_S_StartSound ( cent->lerpOrigin, -1, CHAN_VOICE, cgs.media.jumpPadSound );
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) ); // BFP - Normal jump sound
+		// pain event with fast sequential jump just creates sound distortion
+		if ( cg.time - cent->pe.painTime > 50 )
+			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.wav" ) );
 		break;
 
 	case EV_JUMP:
@@ -604,10 +619,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_WATER_TOUCH");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrInSound );
 		break;
+
 	case EV_WATER_LEAVE:
 		DEBUGNAME("EV_WATER_LEAVE");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrOutSound );
 		break;
+
 	case EV_WATER_UNDER:
 		DEBUGNAME("EV_WATER_UNDER");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrUnSound );
@@ -661,6 +678,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
 		}
 		break;
+
 	case EV_WATER_CLEAR:
 		DEBUGNAME("EV_WATER_CLEAR");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.wav" ) );
@@ -677,6 +695,17 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			if ( index < 1 || index >= bg_numItems ) {
 				break;
 			}
+
+			if ( entityNum >= 0 ) {
+				// our predicted entity
+				ce = cg_entities + entityNum;
+				if ( ce->delaySpawn > cg.time && ce->delaySpawnPlayed ) {
+					break; // delay item pickup
+				}
+			} else {
+				ce = NULL;
+			}
+
 			item = &bg_itemlist[ index ];
 
 			// powerups and team items will have a separate global sound, this one
@@ -692,6 +721,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			if ( es->number == cg.snap->ps.clientNum ) {
 				CG_ItemPickup( index );
 			}
+
+			if ( ce ) {
+				ce->delaySpawnPlayed = qtrue;
+			}
 		}
 		break;
 
@@ -706,6 +739,17 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			if ( index < 1 || index >= bg_numItems ) {
 				break;
 			}
+
+			if ( entityNum >= 0 ) {
+				// our predicted entity
+				ce = cg_entities + entityNum;
+				if ( ce->delaySpawn > cg.time && ce->delaySpawnPlayed ) {
+					break;
+				}
+			} else {
+				ce = NULL;
+			}
+
 			item = &bg_itemlist[ index ];
 			// powerup pickups are global
 			if( item->pickup_sound ) {
@@ -715,6 +759,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			// show icon and name on status bar
 			if ( es->number == cg.snap->ps.clientNum ) {
 				CG_ItemPickup( index );
+			}
+
+			if ( ce ) {
+				ce->delaySpawnPlayed = qtrue;
 			}
 		}
 		break;
@@ -729,10 +777,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			CG_OutOfAmmoChange();
 		}
 		break;
+
 	case EV_CHANGE_WEAPON:
 		DEBUGNAME("EV_CHANGE_WEAPON");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.selectSound );
 		break;
+
 	case EV_FIRE_WEAPON:
 		DEBUGNAME("EV_FIRE_WEAPON");
 		CG_FireWeapon( cent );
@@ -868,6 +918,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_USE_ITEM14");
 		CG_UseItem( cent );
 		break;
+	case EV_USE_ITEM15:
+		DEBUGNAME("EV_USE_ITEM15");
+		CG_UseItem( cent );
+		break;
 
 	//=================================================================
 
@@ -890,6 +944,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		DEBUGNAME("EV_ITEM_POP");
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.respawnSound );
 		break;
+
 	case EV_ITEM_RESPAWN:
 		DEBUGNAME("EV_ITEM_RESPAWN");
 		cent->miscTime = cg.time;	// scale up from this
@@ -904,6 +959,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.hgrenb2aSound );
 		}
 		break;
+
 	case EV_SCOREPLUM:
 		DEBUGNAME("EV_SCOREPLUM");
 		CG_ScorePlum( cent->currentState.otherEntityNum, cent->lerpOrigin, cent->currentState.time );
@@ -1000,19 +1056,19 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			DEBUGNAME("EV_GLOBAL_TEAM_SOUND");
 			switch( es->eventParm ) {
 				case GTS_RED_CAPTURE: // CTF: red team captured the blue flag, 1FCTF: red team captured the neutral flag
-					if ( cgs.clientinfo[cg.clientNum].team == TEAM_RED )
+					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED )
 						CG_AddBufferedSound( cgs.media.captureYourTeamSound );
 					else
 						CG_AddBufferedSound( cgs.media.captureOpponentSound );
 					break;
 				case GTS_BLUE_CAPTURE: // CTF: blue team captured the red flag, 1FCTF: blue team captured the neutral flag
-					if ( cgs.clientinfo[cg.clientNum].team == TEAM_BLUE )
+					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE )
 						CG_AddBufferedSound( cgs.media.captureYourTeamSound );
 					else
 						CG_AddBufferedSound( cgs.media.captureOpponentSound );
 					break;
 				case GTS_RED_RETURN: // CTF: blue flag returned, 1FCTF: never used
-					if ( cgs.clientinfo[cg.clientNum].team == TEAM_RED )
+					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED )
 						CG_AddBufferedSound( cgs.media.returnYourTeamSound );
 					else
 						CG_AddBufferedSound( cgs.media.returnOpponentSound );
@@ -1020,7 +1076,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 					CG_AddBufferedSound( cgs.media.blueFlagReturnedSound );
 					break;
 				case GTS_BLUE_RETURN: // CTF red flag returned, 1FCTF: neutral flag returned
-					if ( cgs.clientinfo[cg.clientNum].team == TEAM_BLUE )
+					if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE )
 						CG_AddBufferedSound( cgs.media.returnYourTeamSound );
 					else
 						CG_AddBufferedSound( cgs.media.returnOpponentSound );
@@ -1033,10 +1089,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 					if ( cg.snap->ps.powerups[PW_BLUEFLAG] ) {
 					}
 					else {
-					if (cgs.clientinfo[cg.clientNum].team == TEAM_BLUE) {
+						if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE) {
 						 	CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
 						}
-						else if (cgs.clientinfo[cg.clientNum].team == TEAM_RED) {
+						else if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED) {
  							CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
 						}
 					}
@@ -1045,10 +1101,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 					// if this player picked up the flag then a sound is played in CG_CheckLocalSounds
 					if ( cg.snap->ps.powerups[PW_REDFLAG] ) {
 					} else {
-						if (cgs.clientinfo[cg.clientNum].team == TEAM_RED) {
+						if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_RED) {
 							CG_AddBufferedSound( cgs.media.enemyTookYourFlagSound );
 						}
-						else if (cgs.clientinfo[cg.clientNum].team == TEAM_BLUE) {
+						else if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_BLUE) {
 							CG_AddBufferedSound( cgs.media.yourTeamTookEnemyFlagSound );
 						}
 					}
@@ -1092,7 +1148,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 				CG_CustomSound( es->number, va("*death%i.wav", event - EV_DEATH1 + 1) ) );
 		break;
 
-
 	case EV_OBITUARY:
 		DEBUGNAME("EV_OBITUARY");
 		CG_Obituary( es );
@@ -1109,6 +1164,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.quadSound );
 		break;
+
 	case EV_POWERUP_BATTLESUIT:
 		DEBUGNAME("EV_POWERUP_BATTLESUIT");
 		if ( es->number == cg.snap->ps.clientNum ) {
@@ -1151,7 +1207,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		CG_Error( "Unknown event: %i", event );
 		break;
 	}
-
 }
 
 
@@ -1190,6 +1245,6 @@ void CG_CheckEvents( centity_t *cent ) {
 	BG_EvaluateTrajectory( &cent->currentState.pos, cg.snap->serverTime, cent->lerpOrigin );
 	CG_SetEntitySoundPosition( cent );
 
-	CG_EntityEvent( cent, cent->lerpOrigin );
+	CG_EntityEvent( cent, cent->lerpOrigin, -1 );
 }
 

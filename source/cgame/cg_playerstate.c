@@ -206,15 +206,17 @@ void CG_Respawn( void ) {
 	cg.weaponSelect = cg.snap->ps.weapon;
 }
 
-extern char *eventnames[];
 
 /*
 ==============
 CG_CheckPlayerstateEvents
 ==============
 */
-void CG_CheckPlayerstateEvents( playerState_t *ps, playerState_t *ops ) {
-	int			i;
+extern int		eventStack;
+extern int		eventParm2[ MAX_PREDICTED_EVENTS ];
+
+static void CG_CheckPlayerstateEvents( const playerState_t *ps, const playerState_t *ops ) {
+	int			i, n;
 	int			event;
 	centity_t	*cent;
 
@@ -222,10 +224,12 @@ void CG_CheckPlayerstateEvents( playerState_t *ps, playerState_t *ops ) {
 		cent = &cg_entities[ ps->clientNum ];
 		cent->currentState.event = ps->externalEvent;
 		cent->currentState.eventParm = ps->externalEventParm;
-		CG_EntityEvent( cent, cent->lerpOrigin );
+		CG_EntityEvent( cent, cent->lerpOrigin, -1 );
 	}
 
 	cent = &cg.predictedPlayerEntity; // cg_entities[ ps->clientNum ];
+	n = eventStack - MAX_PS_EVENTS;
+	if ( n < 0 ) n  = 0;
 	// go through the predictable events buffer
 	for ( i = ps->eventSequence - MAX_PS_EVENTS ; i < ps->eventSequence ; i++ ) {
 		// if we have a new predictable event
@@ -235,9 +239,12 @@ void CG_CheckPlayerstateEvents( playerState_t *ps, playerState_t *ops ) {
 			|| (i > ops->eventSequence - MAX_PS_EVENTS && ps->events[i & (MAX_PS_EVENTS-1)] != ops->events[i & (MAX_PS_EVENTS-1)]) ) {
 
 			event = ps->events[ i & (MAX_PS_EVENTS-1) ];
+			if ( event == EV_NONE ) // ignore empty events
+				continue;
 			cent->currentState.event = event;
 			cent->currentState.eventParm = ps->eventParms[ i & (MAX_PS_EVENTS-1) ];
-			CG_EntityEvent( cent, cent->lerpOrigin );
+
+			CG_EntityEvent( cent, cent->lerpOrigin, eventParm2[ n++ ] );
 
 			cg.predictableEvents[ i & (MAX_PREDICTED_EVENTS-1) ] = event;
 
@@ -252,11 +259,13 @@ CG_CheckChangedPredictableEvents
 ==================
 */
 void CG_CheckChangedPredictableEvents( playerState_t *ps ) {
-	int i;
+	int i, n;
 	int event;
 	centity_t	*cent;
 
 	cent = &cg.predictedPlayerEntity;
+	n = eventStack - MAX_PS_EVENTS;
+	if ( n < 0 ) n  = 0;
 	for ( i = ps->eventSequence - MAX_PS_EVENTS ; i < ps->eventSequence ; i++ ) {
 		//
 		if (i >= cg.eventSequence) {
@@ -270,7 +279,7 @@ void CG_CheckChangedPredictableEvents( playerState_t *ps ) {
 				event = ps->events[ i & (MAX_PS_EVENTS-1) ];
 				cent->currentState.event = event;
 				cent->currentState.eventParm = ps->eventParms[ i & (MAX_PS_EVENTS-1) ];
-				CG_EntityEvent( cent, cent->lerpOrigin );
+				CG_EntityEvent( cent, cent->lerpOrigin, eventParm2[ n++ ] );
 
 				cg.predictableEvents[ i & (MAX_PREDICTED_EVENTS-1) ] = event;
 

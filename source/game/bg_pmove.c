@@ -54,7 +54,7 @@ PM_AddEvent
 ===============
 */
 void PM_AddEvent( int newEvent ) {
-	BG_AddPredictableEventToPlayerstate( newEvent, 0, pm->ps );
+	BG_AddPredictableEventToPlayerstate( newEvent, 0, pm->ps, -1 );
 }
 
 /*
@@ -624,22 +624,22 @@ static void PM_Drifting( void ) { // BFP - Drifting
 	float	driftFactor = 0.0003;
 
 	// apply directional drift when keys are released
-	if ( pm->cmd.rightmove == 0 && fabs( rightSpeed ) > 0.0f
+	if ( pm->cmd.rightmove == 0 && Q_fabs( rightSpeed ) > 0.0f
 	&& pm->ps->velocity[2] < 0 ) {
 		driftFactor = 0.001;
-		VectorScale( pml.up, driftFactor * fabs( rightSpeed ), drift );
+		VectorScale( pml.up, driftFactor * Q_fabs( rightSpeed ), drift );
 		VectorAdd( pm->ps->velocity, drift, pm->ps->velocity );
 	}
 
-	if ( pm->cmd.forwardmove == 0 && fabs( forwardSpeed ) > 50.0f ) {
+	if ( pm->cmd.forwardmove == 0 && Q_fabs( forwardSpeed ) > 50.0f ) {
 		// drift a bit more when slowing down
-		if ( fabs( forwardSpeed ) < 100.0f ) {
+		if ( Q_fabs( forwardSpeed ) < 100.0f ) {
 			driftFactor = 0.008;
 		}
 		if ( forwardSpeed > 0 ) { // left
-			VectorScale( pml.right, driftFactor * fabs( forwardSpeed ) * pml.right[1], drift );
+			VectorScale( pml.right, driftFactor * Q_fabs( forwardSpeed ) * pml.right[1], drift );
 		} else { // right
-			VectorScale( pml.right, -driftFactor * fabs( forwardSpeed )  * pml.right[1], drift );
+			VectorScale( pml.right, -driftFactor * Q_fabs( forwardSpeed )  * pml.right[1], drift );
 		}
 		VectorAdd( pm->ps->velocity, drift, pm->ps->velocity );
 	}
@@ -1114,7 +1114,7 @@ static void PM_AirMove( void ) {
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
 	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
-		VectorNormalize( pm->ps->velocity );
+		PM_Accelerate (pm->ps->velocity, VectorNormalize( pm->ps->velocity ), pm_airaccelerate);
 		return;
 	}
 

@@ -54,12 +54,12 @@ void AddRemap(const char *oldShader, const char *newShader, float timeOffset) {
 	}
 }
 
-const char *BuildShaderStateConfig( void ) {
+const char *BuildShaderStateConfig(void) {
 	static char	buff[MAX_STRING_CHARS*4];
 	char out[(MAX_QPATH * 2) + 5];
 	int i;
   
-	memset(buff, 0, sizeof(buff));
+	memset( buff, 0, sizeof( buff ) );
 	for (i = 0; i < remapCount; i++) {
 		Com_sprintf(out, (MAX_QPATH * 2) + 5, "%s=%s:%5.2f@", remappedShaders[i].oldShader, remappedShaders[i].newShader, remappedShaders[i].timeOffset);
 		Q_strcat( buff, sizeof( buff ), out);
@@ -81,7 +81,7 @@ G_FindConfigstringIndex
 
 ================
 */
-int G_FindConfigstringIndex( char *name, int start, int max, qboolean create ) {
+int G_FindConfigstringIndex( const char *name, int start, int max, qboolean create ) {
 	int		i;
 	char	s[MAX_STRING_CHARS];
 
@@ -113,11 +113,11 @@ int G_FindConfigstringIndex( char *name, int start, int max, qboolean create ) {
 }
 
 
-int G_ModelIndex( char *name ) {
+int G_ModelIndex( const char *name ) {
 	return G_FindConfigstringIndex (name, CS_MODELS, MAX_MODELS, qtrue);
 }
 
-int G_SoundIndex( char *name ) {
+int G_SoundIndex( const char *name ) {
 	return G_FindConfigstringIndex (name, CS_SOUNDS, MAX_SOUNDS, qtrue);
 }
 
@@ -131,13 +131,13 @@ G_TeamCommand
 Broadcasts a command to only a specific team
 ================
 */
-void G_TeamCommand( team_t team, char *cmd ) {
+void G_TeamCommand( team_t team, const char *cmd ) {
 	int		i;
 
 	for ( i = 0 ; i < level.maxclients ; i++ ) {
 		if ( level.clients[i].pers.connected == CON_CONNECTED ) {
 			if ( level.clients[i].sess.sessionTeam == team ) {
-				trap_SendServerCommand( i, va("%s", cmd ));
+				trap_SendServerCommand( i, cmd );
 			}
 		}
 	}
@@ -158,6 +158,7 @@ NULL will be returned if the end of the list is reached.
 */
 gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match)
 {
+	const gentity_t *to;
 	char	*s;
 
 	if (!from)
@@ -165,7 +166,9 @@ gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match)
 	else
 		from++;
 
-	for ( ; from < &g_entities[level.num_entities] ; from++)
+	to = &g_entities[ level.num_entities ];
+
+	for ( ; from < to ; from++ )
 	{
 		if (!from->inuse)
 			continue;
@@ -189,11 +192,11 @@ Selects a random entity from among the targets
 */
 #define MAXCHOICES	32
 
-gentity_t *G_PickTarget (char *targetname)
+gentity_t *G_PickTarget( const char *targetname )
 {
-	gentity_t	*ent = NULL;
-	int		num_choices = 0;
 	gentity_t	*choice[MAXCHOICES];
+	gentity_t	*ent;
+	int			num_choices;
 
 	if (!targetname)
 	{
@@ -201,13 +204,15 @@ gentity_t *G_PickTarget (char *targetname)
 		return NULL;
 	}
 
+	ent = NULL;
+	num_choices = 0;
 	while(1)
 	{
 		ent = G_Find (ent, FOFS(targetname), targetname);
 		if (!ent)
 			break;
 		choice[num_choices++] = ent;
-		if (num_choices == MAXCHOICES)
+		if ( num_choices >= MAXCHOICES )
 			break;
 	}
 
@@ -234,13 +239,14 @@ match (string)self.target and call their .use function
 */
 void G_UseTargets( gentity_t *ent, gentity_t *activator ) {
 	gentity_t		*t;
+	float		f; 
 	
 	if ( !ent ) {
 		return;
 	}
 
 	if (ent->targetShaderName && ent->targetShaderNewName) {
-		float f = level.time * 0.001;
+		f = level.time * 0.001;
 		AddRemap(ent->targetShaderName, ent->targetShaderNewName, f);
 		trap_SetConfigstring(CS_SHADERSTATE, BuildShaderStateConfig());
 	}
@@ -371,6 +377,7 @@ void G_InitGentity( gentity_t *e ) {
 	e->r.ownerNum = ENTITYNUM_NONE;
 }
 
+
 /*
 =================
 G_Spawn
@@ -387,23 +394,23 @@ angles and bad trails.
 =================
 */
 gentity_t *G_Spawn( void ) {
-	int			i, force;
+	int			i, timeout;
 	gentity_t	*e;
 
-	e = NULL;	// shut up warning
-	i = 0;		// shut up warning
-	for ( force = 0 ; force < 2 ; force++ ) {
+	e = NULL; // shut up warning
+	// try to release oldest items first
+	for ( timeout = 1000 ; timeout >= 0 ; timeout -= 250 ) {
 		// if we go through all entities and can't find one to free,
 		// override the normal minimum times before use
-		e = &g_entities[MAX_CLIENTS];
-		for ( i = MAX_CLIENTS ; i<level.num_entities ; i++, e++) {
+		e = &g_entities[ MAX_CLIENTS ];
+		for ( i = MAX_CLIENTS ; i < level.num_entities; i++, e++ ) {
 			if ( e->inuse ) {
 				continue;
 			}
 
 			// the first couple seconds of server time can involve a lot of
 			// freeing and allocating, so relax the replacement policy
-			if ( !force && e->freetime > level.startTime + 2000 && level.time - e->freetime < 1000 ) {
+			if ( e->freetime > level.startTime + 2000 && level.time - e->freetime < timeout ) {
 				continue;
 			}
 
@@ -411,10 +418,12 @@ gentity_t *G_Spawn( void ) {
 			G_InitGentity( e );
 			return e;
 		}
-		if ( i != MAX_GENTITIES ) {
+
+		if ( level.num_entities < ENTITYNUM_MAX_NORMAL ) {
 			break;
 		}
 	}
+
 	if ( i == ENTITYNUM_MAX_NORMAL ) {
 		for (i = 0; i < MAX_GENTITIES; i++) {
 			G_Printf("%4i: %s\n", i, g_entities[i].classname);
@@ -432,6 +441,7 @@ gentity_t *G_Spawn( void ) {
 	G_InitGentity( e );
 	return e;
 }
+
 
 /*
 =================
@@ -473,6 +483,7 @@ void G_FreeEntity( gentity_t *ed ) {
 	ed->freetime = level.time;
 	ed->inuse = qfalse;
 }
+
 
 /*
 =================
@@ -556,11 +567,11 @@ client side: jumppads and item pickups
 Adds an event+parm and twiddles the event counter
 ===============
 */
-void G_AddPredictableEvent( gentity_t *ent, int event, int eventParm ) {
+void G_AddPredictableEvent( gentity_t *ent, entity_event_t event, int eventParm ) {
 	if ( !ent->client ) {
 		return;
 	}
-	BG_AddPredictableEventToPlayerstate( event, eventParm, &ent->client->ps );
+	BG_AddPredictableEventToPlayerstate( event, eventParm, &ent->client->ps, -1 );
 }
 
 

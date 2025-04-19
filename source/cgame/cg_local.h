@@ -174,6 +174,9 @@ typedef struct centity_s {
 	int				dustTrailTime;
 	int				miscTime;
 
+	int				delaySpawn;
+	qboolean		delaySpawnPlayed;
+
 	int				snapShotTime;	// last time this entity was found in a snapshot
 
 	playerEntity_t	pe;
@@ -991,6 +994,7 @@ typedef struct {
 	float			screenXScale;		// derived from glconfig
 	float			screenYScale;
 	float			screenXBias;
+	float			screenYBias;
 
 	int				serverCommandSequence;	// reliable command stream counter
 	int				processedSnapshotNum;// the number of snapshots cgame has requested
@@ -1086,6 +1090,8 @@ extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
 	#include "cg_cvar.h"
 #undef EXTERN_CG_CVAR
 
+extern const char		*eventnames[EV_MAX];
+
 //
 // cg_main.c
 //
@@ -1136,8 +1142,7 @@ void CG_AdjustFrom640( float *x, float *y, float *w, float *h );
 void CG_FillRect( float x, float y, float width, float height, const float *color );
 void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader );
 void CG_DrawString( float x, float y, const char *string, 
-				   float charWidth, float charHeight, const float *modulate );
-
+					const vec4_t setColor, float charWidth, float charHeight, int maxChars, int flags );
 
 void CG_DrawStringExt( int x, int y, const char *string, const float *setColor, 
 		qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars );
@@ -1149,7 +1154,7 @@ void CG_DrawSmallStringColor( int x, int y, const char *s, vec4_t color );
 int CG_DrawStrlen( const char *str );
 
 float	*CG_FadeColor( int startMsec, int totalMsec );
-float *CG_TeamColor( int team );
+const float *CG_TeamColor( team_t team );
 void CG_TileClear( void );
 void CG_ColorForHealth( vec4_t hcolor );
 void CG_GetColorForHealth( int health, int armor, vec4_t hcolor );
@@ -1158,6 +1163,21 @@ void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t
 void CG_DrawRect( float x, float y, float width, float height, float size, const float *color );
 void CG_DrawSides(float x, float y, float w, float h, float size);
 void CG_DrawTopBottom(float x, float y, float w, float h, float size);
+
+#define USE_NEW_FONT_RENDERER
+
+// flags for CG_DrawString
+enum {
+	DS_SHADOW      = 0x1,
+	DS_FORCE_COLOR = 0x2,
+	DS_PROPORTIONAL = 0x4,
+	DS_CENTER = 0x8,	// alignment
+	DS_RIGHT  = 0x10	// alignment
+};
+#ifdef USE_NEW_FONT_RENDERER
+void CG_LoadFonts( void );
+void CG_SelectFont( int index );
+#endif
 
 
 //
@@ -1229,7 +1249,7 @@ void CG_LoadDeferredPlayers( void );
 //
 void CG_CheckEvents( centity_t *cent );
 const char	*CG_PlaceString( int rank );
-void CG_EntityEvent( centity_t *cent, vec3_t position );
+void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum );
 void CG_PainEvent( centity_t *cent, int health );
 
 

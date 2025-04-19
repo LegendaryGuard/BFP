@@ -889,6 +889,10 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	cgs.screenXScale = cgs.glconfig.vidWidth / 640.0;
 	cgs.screenYScale = cgs.glconfig.vidHeight / 480.0;
 
+#ifdef USE_NEW_FONT_RENDERER
+	CG_LoadFonts();
+#endif
+
 	// get the gamestate from the client system
 	trap_GetGameState( &cgs.gameState );
 

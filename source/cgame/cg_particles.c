@@ -526,7 +526,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				else // bouncing
 				{
 					if ( trace.plane.normal[2] < 0.7 ) { // if it's on a slope
-						if ( fabs( p->vel[2] ) < 1 ) {
+						if ( Q_fabs( p->vel[2] ) < 1 ) {
 							VectorClear( p->accel );
 							VectorClear( p->vel );
 							p->height = p->width *= 0.9; // make it tinier when that happens
@@ -1076,22 +1076,11 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 	start[2] += 10;
 
 	// decelerate
-	for (i = 0; i < 2; ++i) {
-		p->vel[i] *= 0.99;
-
-		// if the velocity is very small, clamp it to zero
-		if (fabs(p->vel[i]) < 1) {
-			p->vel[i] = 0;
-		}
+	if ( Q_fabs(p->vel[0]) > 0 ) {
+		p->vel[0] *= 0.995;
 	}
-
-	for (i = 0; i < 2; ++i) {
-		p->accel[i] *= 0.99;
-
-		// if the acceleration is very small, clamp it to zero
-		if (fabs(p->accel[i]) < 1) {
-			p->accel[i] = 0;
-		}
+	if ( Q_fabs(p->vel[1]) > 0 ) {
+		p->vel[1] *= 0.995;
 	}
 
 	// trace down to find the surface

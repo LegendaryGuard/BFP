@@ -102,7 +102,11 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 
 	// load the file
 	len = trap_FS_FOpenFile( filename, &f, FS_READ );
+	if ( f == FS_INVALID_HANDLE ) {
+		return qfalse;
+	}
 	if ( len <= 0 ) {
+		trap_FS_FCloseFile( f );
 		return qfalse;
 	}
 	if ( len >= sizeof( text ) - 1 ) {
@@ -110,7 +114,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		return qfalse;
 	}
 	trap_FS_Read( text, len, f );
-	text[len] = 0;
+	text[len] = '\0';
 	trap_FS_FCloseFile( f );
 
 	// parse the text
@@ -127,12 +131,12 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	while ( 1 ) {
 		prev = text_p;	// so we can unget
 		token = COM_Parse( &text_p );
-		if ( !token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		if ( !Q_stricmp( token, "footsteps" ) ) {
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				break;
 			}
 			if ( !Q_stricmp( token, "default" ) || !Q_stricmp( token, "normal" ) ) {
@@ -152,7 +156,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		} else if ( !Q_stricmp( token, "headoffset" ) ) {
 			for ( i = 0 ; i < 3 ; i++ ) {
 				token = COM_Parse( &text_p );
-				if ( !token ) {
+				if ( !token[0] ) {
 					break;
 				}
 				ci->headOffset[i] = atof( token );
@@ -160,7 +164,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 			continue;
 		} else if ( !Q_stricmp( token, "sex" ) ) {
 			token = COM_Parse( &text_p );
-			if ( !token ) {
+			if ( !token[0] ) {
 				break;
 			}
 			if ( token[0] == 'f' || token[0] == 'F' ) {
@@ -184,14 +188,14 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 			text_p = prev;	// unget the token
 			break;
 		}
-		Com_Printf( "unknown token '%s' is %s\n", token, filename );
+		Com_Printf( "unknown token '%s' in %s\n", token, filename );
 	}
 
 	// read information for each frame
 	for ( i = 0 ; i < MAX_ANIMATIONS ; i++ ) {
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			if( i >= TORSO_GETFLAG && i <= TORSO_NEGATIVE ) {
 				animations[i].firstFrame = animations[TORSO_GESTURE].firstFrame;
 				animations[i].frameLerp = animations[TORSO_GESTURE].frameLerp;
@@ -214,7 +218,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		}
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].numFrames = atoi( token );
@@ -228,13 +232,13 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		}
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		animations[i].loopFrames = atoi( token );
 
 		token = COM_Parse( &text_p );
-		if ( !*token ) {
+		if ( !token[0] ) {
 			break;
 		}
 		fps = atof( token );
@@ -246,7 +250,7 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 	}
 
 	if ( i != MAX_ANIMATIONS ) {
-		CG_Printf( "Error parsing animation file: %s", filename );
+		CG_Printf( "Error parsing animation file: %s\n", filename );
 		return qfalse;
 	}
 
@@ -294,13 +298,20 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 CG_FileExists
 ==========================
 */
-static qboolean	CG_FileExists(const char *filename) {
+static qboolean	CG_FileExists( const char *filename ) {
 	int len;
+	fileHandle_t	f;
 
-	len = trap_FS_FOpenFile( filename, 0, FS_READ );
-	if (len>0) {
+	len = trap_FS_FOpenFile( filename, &f, FS_READ );
+
+	if ( f != FS_INVALID_HANDLE ) {
+		trap_FS_FCloseFile( f );
+	}
+
+	if ( len > 0 ) {
 		return qtrue;
 	}
+
 	return qfalse;
 }
 

@@ -365,19 +365,16 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->ammoModel = trap_R_RegisterModel( ammo->world_model[0] );
 	}
 
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension( path, path );
-	strcat( path, "_flash.md3" );
+	COM_StripExtension( item->world_model[0], path, sizeof(path) );
+	Q_strcat( path, sizeof(path), "_flash.md3" );
 	weaponInfo->flashModel = trap_R_RegisterModel( path );
 
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension( path, path );
-	strcat( path, "_barrel.md3" );
+	COM_StripExtension( item->world_model[0], path, sizeof(path) );
+	Q_strcat( path, sizeof(path), "_barrel.md3" );
 	weaponInfo->barrelModel = trap_R_RegisterModel( path );
 
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension( path, path );
-	strcat( path, "_hand.md3" );
+	COM_StripExtension( item->world_model[0], path, sizeof(path) );
+	Q_strcat( path, sizeof(path), "_hand.md3" );
 	weaponInfo->handsModel = trap_R_RegisterModel( path );
 
 	if ( !weaponInfo->handsModel ) {
@@ -463,6 +460,11 @@ void CG_RegisterWeapon( int weaponNum ) {
 		// BFP - No plasma trail (cg_oldPlasma > 0)
 		// weaponInfo->missileTrailFunc = CG_PlasmaTrail;
 		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/plasma/lasfly.wav", qfalse );
+
+		// plasmagun dlight
+		weaponInfo->missileDlight = 200;
+		MAKERGB( weaponInfo->missileDlightColor, 0.2f, 0.2f, 1.0f );
+
 		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/plasma/hyprbf1a.wav", qfalse );
 		cgs.media.plasmaExplosionShader = trap_R_RegisterShader( "plasmaExplosion" );
@@ -480,7 +482,12 @@ void CG_RegisterWeapon( int weaponNum ) {
 
 	case WP_BFG:
 		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/bfg/bfg_hum.wav", qfalse );
-		MAKERGB( weaponInfo->flashDlightColor, 1, 0.7f, 1 );
+
+		// bfg dlight
+		weaponInfo->missileDlight = 200;
+		MAKERGB( weaponInfo->missileDlightColor, 0.2f, 1.0f, 0.2f );
+
+		MAKERGB( weaponInfo->flashDlightColor, 1.0f, 0.7f, 1.0f );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/bfg/bfg_fire.wav", qfalse );
 		cgs.media.bfgExplosionShader = trap_R_RegisterShader( "bfgExplosion" );
 		weaponInfo->missileModel = trap_R_RegisterModel( "models/weaphits/bfg.md3" );
