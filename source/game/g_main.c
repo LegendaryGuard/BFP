@@ -1341,6 +1341,12 @@ void CheckTournament( void ) {
 			return;
 		}
 
+		if ( level.warmupTime > 0 && level.time > level.warmupTime ) {
+			// warmup period has ended
+			level.warmupTime = 0;
+			trap_SetConfigstring( CS_WARMUP, "0" );
+		}
+
 		if ( level.warmupTime == 0 ) {
 			return;
 		}
@@ -1352,12 +1358,10 @@ void CheckTournament( void ) {
 		}
 
 		// if all players have arrived, start the countdown
-		if ( level.warmupTime < 0 ) {
-			if ( level.numPlayingClients == 2 ) {
-				// fudge by -1 to account for extra delays
-				level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
-				trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
-			}
+		if ( level.warmupTime < 0 && level.numPlayingClients == 2 ) {
+			// fudge by -1 to account for extra delays
+			level.warmupTime = level.time + ( g_warmup.integer - 1 ) * 1000;
+			trap_SetConfigstring( CS_WARMUP, va("%i", level.warmupTime) );
 			return;
 		}
 
@@ -1457,9 +1461,9 @@ void CheckSurvival( void ) {
 	}
 
 	if ( level.warmupTime > 0 && level.time > level.warmupTime ) {
-        // warmup period has ended
-        level.warmupTime = 0;
-        trap_SetConfigstring( CS_WARMUP, "0" );
+		// warmup period has ended
+		level.warmupTime = 0;
+		trap_SetConfigstring( CS_WARMUP, "0" );
     }
 
 	if ( level.warmupTime == 0 ) {
