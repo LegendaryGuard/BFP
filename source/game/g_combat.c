@@ -259,39 +259,6 @@ void CheckAlmostCapture( gentity_t *self, gentity_t *attacker ) {
 }
 
 /*
-==================
-CheckAlmostScored
-==================
-*/
-void CheckAlmostScored( gentity_t *self, gentity_t *attacker ) {
-	gentity_t	*ent;
-	vec3_t		dir;
-	char		*classname;
-
-	// if the player was carrying cubes
-	if ( self->client->ps.generic1 ) {
-		if ( self->client->sess.sessionTeam == TEAM_BLUE ) {
-			classname = "team_redobelisk";
-		}
-		else {
-			classname = "team_blueobelisk";
-		}
-		ent = G_Find(NULL, FOFS(classname), classname);
-		// if we found the destination obelisk
-		if ( ent ) {
-			// if the player was *very* close
-			VectorSubtract( self->client->ps.origin, ent->s.origin, dir );
-			if ( VectorLength(dir) < 200 ) {
-				self->client->ps.persistant[PERS_PLAYEREVENTS] ^= PLAYEREVENT_HOLYSHIT;
-				if ( attacker->client ) {
-					attacker->client->ps.persistant[PERS_PLAYEREVENTS] ^= PLAYEREVENT_HOLYSHIT;
-				}
-			}
-		}
-	}
-}
-
-/*
 ======================
 GainPowerlevelKiHealth
 ======================
@@ -322,20 +289,20 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	if ( !alreadyTier1 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
-		G_AddEvent( attacker, EV_TIER_1, 0 );
+		BG_AddPredictableEventToPlayerstate( EV_TIER_1, 0, &attacker->client->ps, -1 );
 	} else if ( !alreadyTier2 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
-		G_AddEvent( attacker, EV_TIER_2, 0 );
+		BG_AddPredictableEventToPlayerstate( EV_TIER_2, 0, &attacker->client->ps, -1 );
 	} else if ( !alreadyTier3 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
-		G_AddEvent( attacker, EV_TIER_3, 0 );
+		BG_AddPredictableEventToPlayerstate( EV_TIER_3, 0, &attacker->client->ps, -1 );
 	} else if ( !alreadyTransformed && attacker->client->ps.persistant[PERS_POWERLEVEL] > 999 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->ps.pm_flags |= PMF_ULTIMATE_TIER;
 		attacker->client->tierUnlockedTime = level.time + 5000;
-		G_AddEvent( attacker, EV_TIER_4, 0 );
+		BG_AddPredictableEventToPlayerstate( EV_TIER_4, 0, &attacker->client->ps, -1 );
 	}
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000
 		attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
@@ -726,8 +693,6 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	if ( attacker != NULL ) {
 		// check for an almost capture
 		CheckAlmostCapture( self, attacker );
-		// check for a player that almost brought in cubes
-		CheckAlmostScored( self, attacker );
 	}
 
 // BFP - no hook

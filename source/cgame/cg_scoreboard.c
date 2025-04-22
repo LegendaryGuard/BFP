@@ -119,21 +119,29 @@ static void CG_DrawClientScore( int y, score_t *score, float *color, float fade,
 					CG_DrawPic( iconx, y, 16, 16, cgs.media.botSkillShaders[ ci->botSkill - 1 ] );
 				}
 			}
-		} else if ( ci->handicap < 100 ) {
+		}
+	// BFP - No handicap
+#if 0
+		else if ( ci->handicap < 100 ) {
 			Com_sprintf( string, sizeof( string ), "%i", ci->handicap );
 			if ( cgs.gametype == GT_TOURNAMENT )
 				CG_DrawSmallStringColor( iconx, y - SMALLCHAR_HEIGHT/2, string, color );
 			else
 				CG_DrawSmallStringColor( iconx, y, string, color );
 		}
+#endif
 
 		// draw the wins / losses
 		if ( cgs.gametype == GT_TOURNAMENT ) {
 			Com_sprintf( string, sizeof( string ), "%i/%i", ci->wins, ci->losses );
+	// BFP - No handicap
+#if 0
 			if( ci->handicap < 100 && !ci->botSkill ) {
 				CG_DrawSmallStringColor( iconx, y + SMALLCHAR_HEIGHT/2, string, color );
 			}
-			else {
+			else 
+#endif
+			{
 				CG_DrawSmallStringColor( iconx, y, string, color );
 			}
 		}

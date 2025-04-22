@@ -762,6 +762,8 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	const char	*s;
 	int			clientNum;
 	char		teamname[MAX_QPATH];
+	// BFP - Monster gamemode, slash to truncate the skinName in modelName
+	char		*slash;
 
 	teamname[0] = 0;
 	modelloaded = qtrue;
@@ -806,6 +808,11 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	// BFP - Monster gamemode, get original model name to keep the player sounds
 	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 ) {
 		dir = ci->originalModelName;
+		// truncate skinName (e.g. modelName/red --> modelName), otherwise it will get loading errors
+		slash = strchr( dir, '/' );
+		if ( slash ) {
+			*slash = '\0';
+		}
 	}
 	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
 
@@ -1003,17 +1010,23 @@ void CG_NewClientInfo( int clientNum ) {
 	v = Info_ValueForKey(configstring, "n");
 	Q_strncpyz( newInfo.name, v, sizeof( newInfo.name ) );
 
+	// BFP - No color1
+#if 0
 	// colors
 	v = Info_ValueForKey( configstring, "c1" );
 	CG_ColorFromString( v, newInfo.color1 );
+#endif
 
 	// bot skill
 	v = Info_ValueForKey( configstring, "skill" );
 	newInfo.botSkill = atoi( v );
 
+	// BFP - No handicap
+#if 0
 	// handicap
 	v = Info_ValueForKey( configstring, "hc" );
 	newInfo.handicap = atoi( v );
+#endif
 
 	// wins
 	v = Info_ValueForKey( configstring, "w" );
@@ -1078,7 +1091,7 @@ void CG_NewClientInfo( int clientNum ) {
 		v = Info_ValueForKey( configstring, "omodel" );
 		Q_strncpyz( newInfo.originalModelName, v, sizeof( newInfo.originalModelName ) );
 		slash = strchr( newInfo.originalModelName, '/' );
-		if ( !slash ) {
+		if ( !slash || !Q_stricmp( newInfo.modelName, MONSTER_NAME ) ) {
 			// modelName didn not include a skin name
 			Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
 		} else {

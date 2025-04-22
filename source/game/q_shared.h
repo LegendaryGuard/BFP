@@ -1138,6 +1138,9 @@ typedef enum {
 #define	ENTITYNUM_MAX_NORMAL	(MAX_GENTITIES-2)
 
 
+// BFP - Monster gamemode, monster model name macro
+#define	MONSTER_NAME		"oozaru"
+
 #define	MAX_MODELS			256		// these are sent over the net as 8 bits
 #define	MAX_SOUNDS			256		// so they cannot be blindly increased
 

@@ -622,6 +622,8 @@ static void G_AddBot( const char *name, float skill, const char *team, int delay
 	Info_SetValueForKey( userinfo, "snaps", "30" );
 	Info_SetValueForKey( userinfo, "skill", va("%1.2f", skill) );
 
+	// BFP - No handicap
+#if 0
 	if ( skill >= 1 && skill < 2 ) {
 		Info_SetValueForKey( userinfo, "handicap", "50" );
 	}
@@ -631,6 +633,7 @@ static void G_AddBot( const char *name, float skill, const char *team, int delay
 	else if ( skill >= 3 && skill < 4 ) {
 		Info_SetValueForKey( userinfo, "handicap", "90" );
 	}
+#endif
 
 	key = "model";
 	model = Info_ValueForKey( botinfo, key );
@@ -657,6 +660,8 @@ static void G_AddBot( const char *name, float skill, const char *team, int delay
 	}
 	Info_SetValueForKey( userinfo, "sex", s );
 
+	// BFP - No color1 and color2
+#if 0
 	key = "color1";
 	s = Info_ValueForKey( botinfo, key );
 	if ( !*s ) {
@@ -670,6 +675,7 @@ static void G_AddBot( const char *name, float skill, const char *team, int delay
 		s = "5";
 	}
 	Info_SetValueForKey( userinfo, key, s );
+#endif
 
 	s = Info_ValueForKey(botinfo, "aifile");
 	if (!*s ) {

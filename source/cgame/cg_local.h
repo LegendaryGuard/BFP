@@ -313,7 +313,8 @@ typedef struct {
 
 	int				botSkill;		// 0 = not bot, 1-5 = bot
 
-	vec3_t			color1;
+	// BFP - No color1
+	// vec3_t			color1;
 
 	int				score;			// updated by score servercmds
 	int				location;		// location index for team mode
@@ -437,14 +438,6 @@ typedef struct {
 } powerupInfo_t;
 
 
-#define MAX_SKULLTRAIL		10
-
-typedef struct {
-	vec3_t positions[MAX_SKULLTRAIL];
-	int numpositions;
-} skulltrail_t;
-
-
 #define MAX_REWARDSTACK		10
 #define MAX_SOUNDBUFFER		20
 
@@ -553,9 +546,6 @@ typedef struct {
 	int				spectatorPaintX2;										// current paint x
 	int				spectatorOffset;										// current offset from start
 	int				spectatorPaintLen; 									// current offset from start
-
-	// skull trails
-	skulltrail_t	skulltrails[MAX_CLIENTS];
 
 	// centerprinting
 	int			centerPrintTime;

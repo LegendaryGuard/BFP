@@ -54,9 +54,15 @@ void CG_RailTrail ( clientInfo_t *ci, vec3_t start, vec3_t end ) { // BFP - BFP 
 	re->origin[2] -= 8;
 	re->oldorigin[2] -= 8;
 
+	// BFP - No color1
+#if 0
 	le->color[0] = ci->color1[0] * 0.75;
 	le->color[1] = ci->color1[1] * 0.75;
 	le->color[2] = ci->color1[2] * 0.75;
+#endif
+	le->color[0] = 0.75;
+	le->color[1] = 0;
+	le->color[2] = 0;
 	le->color[3] = 1.0f;
 
 	AxisClear( re->axis );
@@ -83,9 +89,15 @@ void CG_RailTrail ( clientInfo_t *ci, vec3_t start, vec3_t end ) { // BFP - BFP 
 	re->origin[2] -= 8;
 	re->oldorigin[2] -= 8;
 
+	// BFP - No color1
+#if 0
 	le->color[0] = ci->color1[0] * 0.75;
 	le->color[1] = ci->color1[1] * 0.75;
 	le->color[2] = ci->color1[2] * 0.75;
+#endif
+	le->color[0] = 0.75;
+	le->color[1] = 0;
+	le->color[2] = 0;
 	le->color[3] = 1.0f;
 
 	AxisClear( re->axis );
