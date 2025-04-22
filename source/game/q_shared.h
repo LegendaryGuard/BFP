@@ -1345,6 +1345,8 @@ typedef struct entityState_s {
 	int		modelindex;
 	int		modelindex2;
 	int		clientNum;		// 0 to (MAX_CLIENTS - 1), for players and corpses
+
+	// BFP - This "frame" is used to send the powerlevel info to cgame
 	int		frame;
 
 	int		solid;			// for client side prediction, trap_linkentity sets this properly

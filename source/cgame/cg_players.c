@@ -2390,7 +2390,11 @@ aura color is determined by the tier.
 */
 static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 	qhandle_t	auraShader = cgs.media.auraRedTinyShader;
-	int			powerlevel = cgs.clientinfo[state->clientNum].powerlevel;
+	int			powerlevel = state->frame;
+
+	if ( state->clientNum == cg.snap->ps.clientNum ) { // fixes a weird bug when trying to see the powerlevel of itself
+		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
+	}
 
 	// red
 	if ( cg_lightweightAuras.integer <= 0
@@ -2561,6 +2565,13 @@ Also called by CG_Missile for quad rockets, but nobody can tell...
 ===============
 */
 void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int team ) {
+	// BFP - Powerlevel
+	int powerlevel = state->frame;
+
+	if ( state->clientNum == cg.snap->ps.clientNum ) { // fixes a weird bug when trying to see the powerlevel of itself
+		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
+	}
+
 	if ( state->powerups & ( 1 << PW_INVIS ) ) {
 		ent.customShader = cgs.media.invisShader;
 		trap_R_AddRefEntityToScene( &ent );
@@ -2572,7 +2583,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 
 	// BFP - Render ultimate perma-glow when already transformed
 	if ( cg_permaglowUltimate.integer > 0 
-	&& cgs.clientinfo[state->clientNum].powerlevel >= 1000 ) {
+	&& powerlevel >= 1000 ) {
 		ent.customShader = cgs.media.ultimateAuraShader;
 		if ( ent.customShader ) {
 			trap_R_AddRefEntityToScene( &ent );
@@ -2666,8 +2677,12 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 	refEntity_t		aura2; // secondary aura
 	vec3_t			auraInverseRotation; // for aura inverse rotation
 	vec3_t			kiTrailOrigin;
-	int				powerlevel = ci->powerlevel;
+	int				powerlevel = cent->currentState.frame;
 	const int		KI_TRAIL_ZPOS = 5;
+
+	if ( clientNum == cg.snap->ps.clientNum ) { // fixes a weird bug when trying to see the powerlevel of itself
+		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
+	}
 
 	memset( &aura, 0, sizeof(aura) );
 	memset( &aura2, 0, sizeof(aura2) );
@@ -2925,7 +2940,10 @@ void CG_Player( centity_t *cent ) {
 	ci = &cgs.clientinfo[ clientNum ];
 	
 	// BFP - Powerlevel for the aura
-	powerlevel = ci->powerlevel;
+	powerlevel = cent->currentState.frame;
+	if ( clientNum == cg.snap->ps.clientNum ) { // fixes a weird bug when trying to see the powerlevel of itself
+		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
+	}
 
 	// BFP - Ki trail shader set
 	// red

@@ -74,23 +74,6 @@ static void CG_ParseScores( void ) {
 
 /*
 =================
-CG_ParsePlayerPowerlevel
-=================
-*/
-static void CG_ParsePlayerPowerlevel( void ) { // BFP - Get player powerlevel info
-	int clientNum = atoi( CG_Argv( 1 ) );
-	int powerlevel = atoi( CG_Argv( 2 ) );
-
-	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
-		return;
-	}
-
-	cgs.clientinfo[clientNum].powerlevel = powerlevel;
-}
-
-
-/*
-=================
 CG_ParseTeamInfo
 
 =================
@@ -881,12 +864,6 @@ static void CG_ServerCommand( void ) {
 
 	if ( !strcmp( cmd, "scores" ) ) {
 		CG_ParseScores();
-		return;
-	}
-
-	// BFP - Get player powerlevel info
-	if ( !strcmp( cmd, "powerlevel" ) ) {
-		CG_ParsePlayerPowerlevel();
 		return;
 	}
 

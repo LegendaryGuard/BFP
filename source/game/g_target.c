@@ -222,7 +222,8 @@ void SP_target_speaker( gentity_t *ent ) {
 	// a repeating speaker can be done completely client side
 	ent->s.eType = ET_SPEAKER;
 	ent->s.eventParm = ent->noise_index;
-	ent->s.frame = ent->wait * 10;
+	// BFP - Replaced to send powerlevel info to cgame
+	// ent->s.frame = ent->wait * 10;
 	ent->s.clientNum = ent->random * 10;
 
 

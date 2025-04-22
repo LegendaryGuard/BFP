@@ -1515,7 +1515,7 @@ int BotAIStartFrame(int time) {
 			state.groundent = ent->s.groundEntityNum;
 			state.modelindex = ent->s.modelindex;
 			state.modelindex2 = ent->s.modelindex2;
-			state.frame = ent->s.frame;
+			// state.frame = ent->s.frame;
 			state.event = ent->s.event;
 			state.eventParm = ent->s.eventParm;
 			state.powerups = ent->s.powerups;

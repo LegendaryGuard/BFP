@@ -655,7 +655,6 @@ void G_BroadcastServerCommand( int ignoreClient, const char *command );
 // g_client.c
 //
 const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot );
-void ClientSendPowerlevelInfo( void ); // BFP - Send player status info
 qboolean ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );
 void ClientBegin( int clientNum );

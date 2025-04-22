@@ -307,8 +307,9 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000
 		attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
 	}
-	// BFP - Send powerlevel data to all clients
-	ClientSendPowerlevelInfo();
+
+	// BFP - Send powerlevel info to cgame reusing frame from entityState_t struct
+	attacker->s.frame = attacker->client->ps.persistant[PERS_POWERLEVEL];
 
 	// BFP - Add more maximum ki
 	currentKiPercentage = ( (float)attacker->client->ps.ammo[WP_KI] / (float)attacker->client->ps.stats[STAT_MAX_KI] );

@@ -163,7 +163,10 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	ci = &cgs.clientinfo[ clientNum ];
 
 	// BFP - Powerlevel
-	powerlevel = ci->powerlevel;
+	powerlevel = cg_entities[clientNum].currentState.frame;
+	if ( clientNum == cg.snap->ps.clientNum ) { // fixes a weird bug when trying to see the powerlevel of itself
+		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
+	}
 
 	// BFP - Ultimate tier head model and skin
 	tierHeadModel = ci->headModel;
@@ -2124,7 +2127,7 @@ static void CG_DrawCrosshairNames( void ) {
 
 	// BFP - Draw name and powerlevel from the other player
 	namePowerlevel = cgs.clientinfo[ cg.crosshairClientNum ].name;
-	powerlevel = cgs.clientinfo[ cg.crosshairClientNum ].powerlevel;
+	powerlevel = cg_entities[ cg.crosshairClientNum ].currentState.frame;
 	w = CG_DrawStrlen( namePowerlevel ) * BIGCHAR_WIDTH;
 	CG_DrawBigString( 320 - w / 2, 170, namePowerlevel, color[3] * 0.5f );
 	trap_R_SetColor( NULL );

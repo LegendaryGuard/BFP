@@ -603,27 +603,6 @@ static void ForceClientSkin( gclient_t *client, char *model, const char *skin ) 
 */
 
 /*
-============
-ClientSendPowerlevelInfo
-============
-*/
-void ClientSendPowerlevelInfo( void ) { // BFP - Send player's powerlevel info
-	int		i = 0;
-
-	while ( i < level.maxclients ) {
-		gentity_t	*ent = &g_entities[level.sortedClients[i]];
-
-		trap_SendServerCommand( -1,
-			va( "powerlevel %d %d",
-				ent->client->ps.clientNum,
-				ent->client->ps.persistant[PERS_POWERLEVEL]
-			)
-		);
-		++i;
-	}
-}
-
-/*
 ===========
 ClientUserInfoChanged
 
@@ -835,8 +814,8 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( ent->oldModel, originalPlayerModel, sizeof( ent->oldModel ) );
 	}
 
-	// BFP - Send powerlevel data to all clients
-	ClientSendPowerlevelInfo();
+	// BFP - Send powerlevel info to cgame reusing frame from entityState_t struct
+	ent->s.frame = client->ps.persistant[PERS_POWERLEVEL];
 
 	// this is not the userinfo, more like the configstring actually
 	G_LogPrintf( "ClientUserinfoChanged: %i %s\n", clientNum, s );
@@ -1370,8 +1349,8 @@ void ClientSpawn(gentity_t *ent) {
 		client->forceToSpectate = qfalse;
 	}
 
-	// BFP - Send powerlevel data to all clients
-	ClientSendPowerlevelInfo();
+	// BFP - Send powerlevel info to cgame reusing frame from entityState_t struct
+	ent->s.frame = client->ps.persistant[PERS_POWERLEVEL];
 	
 	// BFP - Max health start
 	client->ps.stats[STAT_MAX_HEALTH] = 1 + client->ps.persistant[PERS_POWERLEVEL];
