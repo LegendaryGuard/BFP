@@ -441,6 +441,7 @@ The information in the map file can be useful for debugging and performance anal
 
 #### Added source code files:
 
+- bg_events.h
 - cg_cvar.h
 - cg_trails.c
 - g_cvar.h
