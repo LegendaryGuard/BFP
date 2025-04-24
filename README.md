@@ -18,6 +18,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 ### Pending:
 
 - [ ] Attacksets (configurable for cfgs)
+- [ ] BFP bots logic (handling the flight, ki boost, ki charge, use of ki attacks, melee, ...)
 - [ ] Cvars as described on old docs
 - [ ] Power Struggles (when two beam attacks collide)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
@@ -30,7 +31,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Auras~~
 - [x] ~~Balanced player physics movements (different from the original BFP, but balanced for gameplay)~~
 - [x] ~~Bind key to recover ki energy~~
-- [x] ~~Bind key to toggle speed (ki boost). HINT: HASTE POWERUP~~
+- [x] ~~Bind key to toggle speed (ki boost)~~
 - [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
 - [x] ~~Breakable map entities ("func_breakable")~~
 - [x] ~~Gametype: Survival (`g_gametype 3`)~~
@@ -38,7 +39,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Gametype: Team Last Man Standing (`g_gametype 6`)~~
 - [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
 - [x] ~~Instant character model changing~~
-- [x] ~~Ki trails (use ki to move, cg_kiTrail >10 )~~
+- [x] ~~Ki trails~~
 - [x] ~~Melee feature~~
 - [x] ~~Remove some items like powerups and health pickups~~
 - [x] ~~Powerlevel and Power Tiers indicated on old docs~~
@@ -47,7 +48,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] ~~Replace ammo to ki energy stamina~~
 - [x] ~~Short-Range Teleport - Zanzoken (when pressing 2 times left or right)~~
 - [x] ~~Third person traceable crosshair~~
-- [x] ~~Toggeable flight (bind key). Hint: FLIGHT POWERUP~~
+- [x] ~~Toggeable flight (bind key)~~
 - [x] ~~Transformations (related to Power Tiers)~~
 
 
@@ -158,7 +159,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - water movement handling is different from original BFP, but it works similarly
 - survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own preffix, dies and respawns during warmup, the warmup resets. So, that's unfair)
 - monster/oozaru gamemode has the following in-game differences compared to the original:
-  - the player monster is labeled 'MON' on the scoreboard so teammates can identify them quickly
+  - the player monster is labeled 'MON' on the scoreboard
   - the player monster has a larger floating sprite chat
   - the player monster has a larger shadow effect similar to regular players
   - the player monster has a large dynamic light when charging or using ki
@@ -167,14 +168,17 @@ You'll notice some differences and things that the original Bid For Power didn't
   - player monster's first-person and first-person vis mode viewpoints work properly
   - player monster's third-person camera has improved focus (similar to BFP's standard third-person view but scaled for giant characters)
   - `g_monster` cvar enables the monster/big monkey feature (that happened in the RC/beta versions)
-  - available in the UI, maps marked as `monster` besides `oozaru` can be viewed in the UI
+  - available in the UI, maps marked as `monster` besides `oozaru` can be viewed in the GAME SERVER menu
 - team last man standing has the following in-game differences compared to the original:
   - players cannot switch teams after joining a team (on original BFP, the dead player -who was forced to spectate- can join during the match, that was against the rules)
   - players cannot voluntarily switch to spectator after joining a team
   - players attempting to switch teams/spectate receive centerprint messages
+  - maps marked as `tlms` besides `lms` can be viewed in the GAME SERVER menu
 - some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
 - file size differences between the QVM and the original BFP QVM can be quite significant
 - kiCharge, boostCost and blockCost cvars work differently
+- configstrings in CS_PLAYERS like "c1" and "hc" are removed to be optimized, handicap is disabled logically because it isn't used at all
+- some Q3e patches are applied, like events and function stuff...
 - ...
 
 Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
