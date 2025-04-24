@@ -141,9 +141,9 @@ static char* gamenames[] = {
 	"1v1",	// tournament
 	"sp",	// single player
 	"survival",	// survival
-	"oozaru",	// giant monkey
+	"monster",	// monster
 	"tdm",	// team deathmatch
-	"lms",	// team last man standing
+	"tlms",	// team last man standing
 	"ctf",	// capture the flag
 #else
 // BFP - 12 gametypes from Q3 and mods
