@@ -2622,7 +2622,7 @@ static void PM_KiConsumption( int addTime, int kiConsume ) { // BFP - Ki consump
 		pm->ps->ammo[WP_KI] -= kiConsume;
 		pm->ps->weaponTime += addTime;
 	} else { // not enough ki
-		pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
+		pm->ps->pm_flags &= ~PMF_READY_KI_ATTACK;
 	}
 }
 
@@ -2637,7 +2637,7 @@ static void PM_ChargeKiAttackState( int minCharge, int maxCharge, int addTime, i
 		++pm->ps->stats[STAT_KI_ATTACK_CHARGE];
 	}
 	if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= minCharge ) {
-		pm->ps->stats[STAT_READY_KI_ATTACK] = qtrue;
+		pm->ps->pm_flags |= PMF_READY_KI_ATTACK;
 	}
 	PM_KiConsumption( addTime, kiConsume );
 }
@@ -2669,7 +2669,7 @@ static void PM_Weapon( void ) {
 
 	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
 	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
-		pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
+		pm->ps->pm_flags &= ~PMF_READY_KI_ATTACK;
 		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 		pm->ps->weaponTime = 0;
 		return;
@@ -2756,7 +2756,7 @@ static void PM_Weapon( void ) {
 	// BFP - Weapon states, Q3 doesn't have this way
 	switch( pm->ps->weaponstate ) {
 	case WEAPON_READY:
-		pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
+		pm->ps->pm_flags &= ~PMF_READY_KI_ATTACK;
 		if ( pm->ps->weaponTime <= 0 ) {
 			pm->ps->weaponTime = 0;
 			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
@@ -2773,6 +2773,8 @@ static void PM_Weapon( void ) {
 				case WP_GRENADE_LAUNCHER:
 				case WP_PLASMAGUN:
 				case WP_BFG:
+					// initial charge time, keep in mind to keep that when starting to use the ki attack
+					pm->ps->weaponTime += 1000;
 					pm->ps->weaponstate = WEAPON_CHARGING;
 					break;
 				case WP_SHOTGUN: // add time to handle ki explosion wave animation
@@ -2783,7 +2785,7 @@ static void PM_Weapon( void ) {
 					PM_AddEvent( EV_FIRE_WEAPON );
 					pm->ps->weaponstate = WEAPON_FIRING;
 					break;
-				case WP_LIGHTNING: // only play once this sound for ki attacks like eyebeam
+				case WP_LIGHTNING: // shoot and play once this muzzle sound for ki attacks like eyebeam
 					PM_AddEvent( EV_FIRE_WEAPON );
 					pm->ps->weaponstate = WEAPON_FIRING;
 					break;
@@ -2813,7 +2815,7 @@ static void PM_Weapon( void ) {
 		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
 			// BFP - When the ki attack is fully charged, enter beam firing state
 			// or enter dividing ki ball firing state if it's a dividing ki ball
-			pm->ps->stats[STAT_READY_KI_ATTACK] = qfalse;
+			pm->ps->pm_flags &= ~PMF_READY_KI_ATTACK;
 			// no fully charged, skip...
 			// BFP - TODO: Apply minCharge in that condition also
 			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] < 2 ) {
@@ -2902,6 +2904,8 @@ static void PM_Weapon( void ) {
 		case WP_GAUNTLET:
 		case WP_LIGHTNING:
 			if ( pm->ps->weaponTime <= 0 ) {
+				// keep shooting
+				PM_AddEvent( EV_FIRE_WEAPON );
 				addTime = 50;
 				pm->ps->ammo[WP_KI] -= 70;
 			}

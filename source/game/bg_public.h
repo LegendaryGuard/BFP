@@ -176,8 +176,7 @@ typedef enum {
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
 #define PMF_FLIGHT_ACTIVE	8192	// BFP - Flight active status
 #define PMF_ULTIMATE_TIER	16384	// BFP - Ultimate tier status
-// BFP - You can reuse the following flags, so change the macro name if going to be used
-// #define PMF_SOMEFLAG		32768	// some pm_flag
+#define PMF_READY_KI_ATTACK	32768	// BFP - Ready ki attack notification
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
@@ -234,8 +233,6 @@ void Pmove (pmove_t *pmove);
 typedef enum {
 	STAT_HEALTH,
 	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
-	STAT_READY_KI_ATTACK,			// BFP - Ready ki attack notification
-	STAT_HITSTUN_TIME,				// BFP - Hit stun time
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
