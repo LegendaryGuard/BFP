@@ -178,7 +178,6 @@ qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 ) {
 
 
 static char ctfFlagStatusRemap[] = { '0', '1', '*', '*', '2' };
-static char oneFlagStatusRemap[] = { '0', '1', '2', '3', '4' };
 
 static void Team_SetFlagStatus( team_t team, flagStatus_t status ) {
 	qboolean modified = qfalse;
@@ -198,13 +197,6 @@ static void Team_SetFlagStatus( team_t team, flagStatus_t status ) {
 		}
 		break;
 
-	case TEAM_FREE:	// One Flag CTF
-		if ( teamgame.flagStatus != status ) {
-			teamgame.flagStatus = status;
-			modified = qtrue;
-		}
-		break;
-
 	default:
 		return;
 	}
@@ -216,9 +208,6 @@ static void Team_SetFlagStatus( team_t team, flagStatus_t status ) {
 			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
 			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
 			st[2] = '\0';
-		} else {	// GT_1FCTF
-			st[0] = oneFlagStatusRemap[teamgame.flagStatus];
-			st[1] = '\0';
 		}
 
 		trap_SetConfigstring( CS_FLAGSTATUS, st );
