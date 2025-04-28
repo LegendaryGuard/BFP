@@ -183,30 +183,10 @@ void body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int d
 
 // these are just for logging, the client prints its own messages
 char	*modNames[] = {
-	"MOD_UNKNOWN",
-	"MOD_SHOTGUN",
-	"MOD_GAUNTLET",
-	"MOD_MACHINEGUN",
-	"MOD_GRENADE",
-	"MOD_GRENADE_SPLASH",
-	"MOD_ROCKET",
-	"MOD_ROCKET_SPLASH",
-	"MOD_PLASMA",
-	"MOD_PLASMA_SPLASH",
-	"MOD_RAILGUN",
-	"MOD_LIGHTNING",
-	"MOD_BFG",
-	"MOD_BFG_SPLASH",
-	"MOD_WATER",
-	"MOD_SLIME",
-	"MOD_LAVA",
-	"MOD_CRUSH",
-	"MOD_TELEFRAG",
-	"MOD_FALLING",
-	"MOD_SUICIDE",
-	"MOD_TARGET_LASER",
-	"MOD_TRIGGER_HURT",
-	"MOD_GRAPPLE"
+	// BFP - Means of death are declared in bg_meansofdeath.h file
+#define MOD_STRINGS
+	#include "bg_meansofdeath.h"
+#undef MOD_STRINGS
 };
 
 /*
