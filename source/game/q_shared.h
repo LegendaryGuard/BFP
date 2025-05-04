@@ -80,39 +80,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef Q3_VM
 
 #include "bg_lib.h"
+#define DLLEXPORT
 
-typedef int intptr_t;
+#else
 
-#elif defined __linux__ || __FreeBSD__ // BFP - Linux and FreeBSD support
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <ctype.h>
+#include <limits.h>
 
-// BFP - Don't use this:
-// typedef int intptr_t;
-// BFP - Use this instead, to remove 'cast to pointer' compiler warnings
+#ifndef _WIN32
 #include <stdint.h>
+#define DLLEXPORT __attribute__((visibility ("default")))
+#else
+#define DLLEXPORT __declspec(dllexport)
+#endif // _WIN32
 
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
-#include <limits.h>
-
-#else // BFP - MinGW support
-
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
-#include <limits.h>
-
-#endif
+#endif // !Q3_VM
 
 #ifdef _WIN32
 

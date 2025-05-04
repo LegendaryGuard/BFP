@@ -2156,7 +2156,7 @@ reswitch:
 			flags |= REDUCE;
 			goto rflag;
 		default:
-			*buf_p = va_arg( ap, char ); buf_p++;
+			*buf_p = (char)va_arg( ap, int ); buf_p++;
 			break;
 		} // switch ( ch )
 	} // while ( qtrue )
