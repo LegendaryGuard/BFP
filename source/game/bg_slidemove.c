@@ -232,7 +232,10 @@ PM_StepSlideMove
 */
 void PM_StepSlideMove( qboolean gravity ) {
 	vec3_t		start_o, start_v;
+#define SLIDE_DOWN_VECTOR 0
+#if SLIDE_DOWN_VECTOR
 	vec3_t		down_o, down_v;
+#endif
 	trace_t		trace;
 //	float		down_dist, up_dist;
 //	vec3_t		delta, delta2;
@@ -256,8 +259,10 @@ void PM_StepSlideMove( qboolean gravity ) {
 		return;
 	}
 
+#if SLIDE_DOWN_VECTOR
 	VectorCopy (pm->ps->origin, down_o);
 	VectorCopy (pm->ps->velocity, down_v);
+#endif
 
 	VectorCopy (start_o, up);
 	up[2] += STEPSIZE;
@@ -289,7 +294,7 @@ void PM_StepSlideMove( qboolean gravity ) {
 		PM_ClipVelocity( pm->ps->velocity, trace.plane.normal, pm->ps->velocity, OVERCLIP );
 	}
 
-#if 0
+#if SLIDE_DOWN_VECTOR
 	// if the down trace can trace back to the original position directly, don't step
 	pm->trace( &trace, pm->ps->origin, pm->mins, pm->maxs, start_o, pm->ps->clientNum, pm->tracemask);
 	if ( trace.fraction == 1.0 ) {

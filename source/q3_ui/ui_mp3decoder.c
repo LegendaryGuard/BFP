@@ -1223,7 +1223,7 @@ static decoderError_t III_dequantize_sample( float xr[ SBLIMIT ][ SSLIMIT ], int
     /* 
      * zero part
      */
-    for( i = ( &xr[ SBLIMIT ][ 0 ] - xrpnt ) >> 1; i; i-- )
+    for( i = ( (xr[0] + SBLIMIT * SSLIMIT) - xrpnt ) >> 1; i; i-- )
     {
       *xrpnt++ = 0.0;
       *xrpnt++ = 0.0;
@@ -2617,31 +2617,40 @@ static decoderError_t decodeMP3( mpegPacket_t *mp, char *in, int isize, char *ou
   if( osize < 4608 )
   {
     Com_Printf( "mp3dec: not enough data to decode\n" );
+    gmp = NULL;
     return DE_ERR;
   }
 
   if( in )
   {
-    if( addBuffer( mp, in, isize ) == NULL)
+    if( addBuffer( mp, in, isize ) == NULL) {
+      gmp = NULL;
       return DE_ERR;
+    }
   }
 
   /* First decode header */
   if( mp->framesize == 0 )
   {
-    if( mp->bsize < 4 )
+    if( mp->bsize < 4 ) {
+      gmp = NULL;
       return DE_NEED_MORE_DATA;
+    }
       
     readHead( mp );
     
-    if( decodeHeader( &mp->fr, mp->header ) != DE_OK )
+    if( decodeHeader( &mp->fr, mp->header ) != DE_OK ) {
+      gmp = NULL;
       return DE_ERR;
+    }
       
     mp->framesize = mp->fr.framesize;
   }
 
-  if( mp->fr.framesize > mp->bsize )
+  if( mp->fr.framesize > mp->bsize ) {
+    gmp = NULL;
     return DE_NEED_MORE_DATA;
+  }
 
   wordpointer = mp->bsspace[ mp->bsnum ] + 512;
   mp->bsnum = ( mp->bsnum + 1 ) & 0x1;
@@ -2671,12 +2680,14 @@ static decoderError_t decodeMP3( mpegPacket_t *mp, char *in, int isize, char *ou
   if( mp->fr.error_protection )
     getbits( 16 );
     
-  if( doLayer3( &mp->fr, (unsigned char *)out, done ) != DE_OK )
+  if( doLayer3( &mp->fr, (unsigned char *)out, done ) != DE_OK ) {
+    gmp = NULL;
     return DE_ERR;
+  }
 
   mp->fsizeold = mp->framesize;
   mp->framesize = 0;
-
+  gmp = NULL;
   return DE_OK;
 }
 
@@ -2756,11 +2767,11 @@ static void wavWriteHeader( fileHandle_t wavFh, long int size, unsigned int bits
   wave.common.wBitsPerSample = bits;
   wave.common.dwSamplesPerSec = rate;
 
-  strncpy( (char *)wave.riff.id, "RIFF", 4 );
+  Q_strncpyz( (char *)wave.riff.id, "RIFF", 4 );
   wave.riff.len = size - 8;
-  strncpy( (char *)wave.riff.wave_id, "WAVE", 4 );
+  Q_strncpyz( (char *)wave.riff.wave_id, "WAVE", 4 );
 
-  strncpy( (char *)wave.format.id, "fmt ", 4 );
+  Q_strncpyz( (char *)wave.format.id, "fmt ", 4 );
   wave.format.len = 16;
 
   wave.common.wFormatTag = WAVE_FORMAT_PCM;
@@ -2771,14 +2782,14 @@ static void wavWriteHeader( fileHandle_t wavFh, long int size, unsigned int bits
   wave.common.wBlockAlign = wave.common.wChannels * 
     ( wave.common.wBitsPerSample >> 3 );
 
-  strncpy( (char *)wave.data.id, "data", 4 );
+  Q_strncpyz( (char *)wave.data.id, "data", 4 );
 
   wave.data.len = size - 44;
 
-  strncpy( (char *)buf, (char *)wave.riff.id, 4 );
+  Q_strncpyz( (char *)buf, (char *)wave.riff.id, 4 );
   WRITE_U32( buf + 4, wave.riff.len );
-  strncpy( (char *)buf + 8,  (char *)wave.riff.wave_id, 4 );
-  strncpy( (char *)buf + 12, (char *)wave.format.id, 4 );
+  Q_strncpyz( (char *)buf + 8,  (char *)wave.riff.wave_id, 4 );
+  Q_strncpyz( (char *)buf + 12, (char *)wave.format.id, 4 );
   WRITE_U32( buf + 16, wave.format.len );
   WRITE_U16( buf + 20, wave.common.wFormatTag );
   WRITE_U16( buf + 22, wave.common.wChannels );
@@ -2786,7 +2797,7 @@ static void wavWriteHeader( fileHandle_t wavFh, long int size, unsigned int bits
   WRITE_U32( buf + 28, wave.common.dwAvgBytesPerSec );
   WRITE_U16( buf + 32, wave.common.wBlockAlign );
   WRITE_U16( buf + 34, wave.common.wBitsPerSample );
-  strncpy( (char *)buf + 36, (char *)wave.data.id, 4 );
+  Q_strncpyz( (char *)buf + 36, (char *)wave.data.id, 4 );
   WRITE_U32( buf + 40, wave.data.len );
 
   //seek to beginning of file

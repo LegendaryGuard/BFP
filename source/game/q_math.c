@@ -553,8 +553,10 @@ void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out )
 /*
 ** float q_rsqrt( float number )
 */
+#define ORIGINAL_QRSQRT 0
 float Q_rsqrt( float number )
 {
+#if ORIGINAL_QRSQRT
 	long i;
 	float x2, y;
 	const float threehalfs = 1.5F;
@@ -568,6 +570,24 @@ float Q_rsqrt( float number )
 //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 
 	return y;
+#else /* BFP - No compiler warnings version */
+	const float threehalfs = 1.5F;
+	float x2, y;
+	union {
+		float f;
+		long  i;
+	} conv; // union for safe type-punning
+
+	y  = number;
+	x2 = number * 0.5F;
+	conv.f = y;
+	conv.i = 0x5f3759df - ( conv.i >> 1 );      // what the fuck?
+	y  = conv.f;
+	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+	return y;
+#endif
 }
 
 float Q_fabs( float f ) {

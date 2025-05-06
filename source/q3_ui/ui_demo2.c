@@ -644,9 +644,6 @@ Demos_MenuInit
 ===============
 */
 static void Demos_MenuInit( void ) {
-	int		i;
-	int		len;
-	char	*demoname, extension[32];
 
 	memset( &s_demos, 0 ,sizeof(demos_t) );
 	s_demos.menu.key = UI_DemosMenu_Key;

@@ -1067,7 +1067,6 @@ void CG_BubblesWaterHandling( cparticle_t *p, vec3_t org ) {
 	trace_t		trace;
 	vec3_t		start, end;
 	int			contents;
-	int			i;
 
 	VectorCopy( org, end );
 	end[2] -= 1;

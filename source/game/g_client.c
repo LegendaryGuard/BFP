@@ -615,7 +615,7 @@ if desired.
 */
 qboolean ClientUserinfoChanged( int clientNum ) {
 	gentity_t *ent;
-	int		teamTask, teamLeader, team;
+	team_t		team;
 	// BFP - No handicap for health
 	// int		health;
 	char	*s;

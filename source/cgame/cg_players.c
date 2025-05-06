@@ -254,11 +254,12 @@ static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) 
 		return qfalse;
 	}
 
+	// BFP - memcpy is not necessary, that can be removed
 	// crouch backward animation
-	memcpy(&animations[LEGS_WALKCR], &animations[LEGS_WALKCR], sizeof(animation_t)); // BFP - Crouch backwards animation tweak
+	// memcpy(&animations[LEGS_WALKCR], &animations[LEGS_WALKCR], sizeof(animation_t)); // BFP - Crouch backwards animation tweak
 	animations[LEGS_WALKCR].reversed = qfalse; // BFP - Make the duck walking forward only
 	// walk backward animation
-	memcpy(&animations[LEGS_WALK], &animations[LEGS_WALK], sizeof(animation_t)); // BFP - Walk backwards animation tweak
+	// memcpy(&animations[LEGS_WALK], &animations[LEGS_WALK], sizeof(animation_t)); // BFP - Walk backwards animation tweak
 	animations[LEGS_WALK].reversed = qfalse; // BFP - Make the walk moving forward only
 	// flag moving fast
 	animations[FLAG_RUN].firstFrame = 0;
@@ -315,6 +316,8 @@ static qboolean	CG_FileExists( const char *filename ) {
 	return qfalse;
 }
 
+// BFP - No CG_FindClientModelFile, remove in the future?
+#if 0
 /*
 ==========================
 CG_FindClientModelFile
@@ -389,6 +392,7 @@ static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t
 
 	return qfalse;
 }
+#endif
 
 /*
 ==========================
@@ -720,6 +724,8 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	return qtrue;
 }
 
+	// BFP - No color1
+#if 0
 /*
 ====================
 CG_ColorFromString
@@ -747,6 +753,7 @@ static void CG_ColorFromString( const char *v, vec3_t color ) {
 		color[0] = 1.0f;
 	}
 }
+#endif
 
 /*
 ===================

@@ -85,7 +85,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	char		attackerName[32];
 	// BFP - No gender variable for MOD messages
 	// gender_t	gender;
-	clientInfo_t	*ci;
 
 	target = ent->otherEntityNum;
 	attacker = ent->otherEntityNum2;
@@ -94,7 +93,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	if ( target < 0 || target >= MAX_CLIENTS ) {
 		CG_Error( "CG_Obituary: target out of range" );
 	}
-	ci = &cgs.clientinfo[target];
 
 	if ( attacker < 0 || attacker >= MAX_CLIENTS ) {
 		attacker = ENTITYNUM_WORLD;
@@ -433,8 +431,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	const char		*s;
 	int				clientNum;
 	clientInfo_t	*ci;
-	vec3_t			vec;
-	float			fovOffset;
 	centity_t		*ce;
 
 	es = &cent->currentState;

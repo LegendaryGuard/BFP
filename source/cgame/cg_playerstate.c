@@ -311,7 +311,9 @@ CG_CheckLocalSounds
 ==================
 */
 void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
-	int			highScore, health, armor, reward;
+	int			highScore, reward;
+	// BFP - Unused in Q3? What?
+	// int			health, armor;
 	sfxHandle_t sfx;
 
 	// don't play the sounds if the player just changed teams
@@ -322,8 +324,10 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	// hit changes
 	if ( ps->persistant[PERS_HITS] > ops->persistant[PERS_HITS] ) {
 		cg.opponentHitBlendTime = cg.time + 0.5f; // BFP - For crosshair opponent hit effect
-		armor  = ps->persistant[PERS_ATTACKEE_ARMOR] & 0xff;
-		health = ps->persistant[PERS_ATTACKEE_ARMOR] >> 8;
+		// BFP - Unused in Q3? What?
+		// armor  = ps->persistant[PERS_ATTACKEE_ARMOR] & 0xff;
+		// health = ps->persistant[PERS_ATTACKEE_ARMOR] >> 8;
+
 		// BFP - Play hit sound
 		if ( cg_playHitSound.integer > 0 ) {
 			trap_S_StartLocalSound( cgs.media.hitSound, CHAN_LOCAL_SOUND );
