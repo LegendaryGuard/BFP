@@ -395,6 +395,32 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 		return;
 	}
 
+	// BFP - First person vis mode
+	if ( cg_drawOwnModel.integer >= 1 ) {
+		vec3_t			forward, up;
+
+		if ( !parentModel ) {
+			goto _q3fpscam;
+		}
+
+		VectorClear( cg.refdefViewAngles );
+		
+		if ( CG_GetTagOrientationFromPlayerEntityParentModel( cent, parent, parentModel, "tag_eyes", &tagOrient ) ) {
+			VectorCopy( tagOrient.origin, cg.refdef.vieworg );
+			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+			return;
+		}
+
+		// if tag_eyes doesn't exist, set to tag_head
+		if ( CG_GetTagOrientationFromPlayerEntityParentModel( cent, parent, parentModel, "tag_head", &tagOrient ) ) {
+			VectorCopy( tagOrient.origin, cg.refdef.vieworg );
+			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+			return;
+		}
+	}
+
+_q3fpscam:
+
 	// add angles based on weapon kick
 	VectorAdd (angles, cg.kick_angles, angles);
 
@@ -467,25 +493,6 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 	}
 
 	origin[2] += bob;
-	
-	// BFP - First person vis mode
-	// pivot the eye based on a neck length
-#if 1
-	if ( cg_drawOwnModel.integer >= 1 ) {
-#define	NECK_LENGTH		8
-		vec3_t			forward, up;
-
-		VectorClear( cg.refdefViewAngles );
-		
-		if ( CG_GetTagOrientationFromPlayerEntityParentModel( cent, parent, parentModel, "tag_head", &tagOrient ) ) {
-			VectorCopy( tagOrient.origin, cg.refdef.vieworg );
-			cg.refdef.vieworg[2] -= NECK_LENGTH;
-			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
-			VectorMA( cg.refdef.vieworg, -1, forward, cg.refdef.vieworg );
-			VectorMA( cg.refdef.vieworg, NECK_LENGTH, up, cg.refdef.vieworg );
-		}
-	}
-#endif
 
 	// add fall height
 	delta = cg.time - cg.landTime;

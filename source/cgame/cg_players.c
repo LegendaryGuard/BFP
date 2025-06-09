@@ -2936,6 +2936,8 @@ void CG_Player( centity_t *cent ) {
 	qhandle_t		kiTrailShader;
 	// BFP - Powerlevel for the aura
 	int				powerlevel = -1;
+	// BFP - Save head for first person vis mode
+	refEntity_t savedHead;
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -3139,6 +3141,7 @@ void CG_Player( centity_t *cent ) {
 	head.renderfx = renderfx;
 
 	// BFP - First person vis mode doesn't have head model to be displayed
+	savedHead = head;
 	if ( cg_drawOwnModel.integer >= 1 && cg_thirdPerson.integer <= 0
 	&& clientNum == cg.snap->ps.clientNum
 	&& !( cent->currentState.eFlags & EF_DEAD ) ) {
@@ -3166,14 +3169,6 @@ void CG_Player( centity_t *cent ) {
 		trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&80), 1.0, 1.0, 0.2f );
 	}
 
-	//
-	// add the gun / barrel / flash
-	//
-	CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
-
-	// add powerups floating behind the player
-	CG_PlayerPowerups( cent, &torso );
-	
 	// BFP - First person camera setup
 	if ( cg_thirdPerson.integer <= 0 
 	&& clientNum == cg.snap->ps.clientNum ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
@@ -3182,7 +3177,8 @@ void CG_Player( centity_t *cent ) {
 		if ( !( cent->currentState.eFlags & EF_DEAD ) ) {
 			// BFP - Set dead origin where the player was alive when First person vis mode is being used
 			VectorCopy( cg.refdef.vieworg, deadOriginDrawOwnModel );
-			CG_OffsetFirstPersonView( cent, &torso, ci->torsoModel );
+			CG_PositionRotatedEntityOnTag( &savedHead, &savedHead, ci->headModel, "tag_eyes");
+			CG_OffsetFirstPersonView( cent, &savedHead, ci->headModel );
 		} else if ( cg.snap->ps.stats[STAT_HEALTH] <= 0
 		&& ( cent->currentState.eFlags & EF_DEAD )
 		&& cg_drawOwnModel.integer >= 1 ) { // BFP - Death camera only for First person vis
@@ -3190,6 +3186,14 @@ void CG_Player( centity_t *cent ) {
 			cg.refdefViewAngles[YAW] = cg.snap->ps.stats[STAT_DEAD_YAW];
 		}
 	}
+
+	//
+	// add the gun / barrel / flash
+	//
+	CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
+
+	// add powerups floating behind the player
+	CG_PlayerPowerups( cent, &torso );
 }
 
 /*
