@@ -604,7 +604,7 @@ static void CheckTeamLastManStandingRules( gentity_t *self, gentity_t *attacker,
 	// force to spectate the player who is touching something mortal during the warmup
 	if ( level.warmupTime > 0
 	&& selfClient
-	&& meansOfDeath == MOD_TRIGGER_HURT || meansOfDeath == MOD_CRUSH ) {
+	&& ( meansOfDeath == MOD_TRIGGER_HURT || meansOfDeath == MOD_CRUSH ) ) {
 		// if the score points didn't decrease, decrease it for balance sake!
 		ScorePlum( self, self->r.currentOrigin, -1 );
 		--self->client->ps.persistant[PERS_SCORE];
@@ -1091,11 +1091,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
 		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
-		// BFP - Lose altitude while flying/floating underwater
-		if ( targ->client->ps.velocity[2] > 0
-		&& ( targ->health - (take - asave) ) > 0 ) {
-			targ->client->ps.velocity[2] = -targ->client->ps.velocity[2];
-		}
 
 		// set the timer so that the other client can't cancel
 		// out the movement immediately
@@ -1168,6 +1163,13 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// save some from armor
 	asave = CheckArmor (targ, take, dflags);
 	take -= asave;
+
+	// BFP - Lose altitude while flying/floating underwater
+	if ( knockback && targ->client
+	&& targ->client->ps.velocity[2] > 0
+	&& ( targ->health - (take - asave) ) > 0 ) {
+		targ->client->ps.velocity[2] = -targ->client->ps.velocity[2];
+	}
 
 	if ( g_debugDamage.integer ) {
 		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,
