@@ -788,11 +788,16 @@ qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (
 	vec3_t	right, up, start, direction;
 	int		startRightRange = ( range < 0 ) ? -10 : 10;
 
+	// BFP - Don't allow bots use zanzoken
+	if ( ent->r.svFlags & SVF_BOT ) {
+		return qfalse;
+	}
+
 	// set diagonal direction, included the up vector for upward detection
 	AngleVectors( ent->client->ps.viewangles, NULL, right, up );
 
 	// upward detection, avoid if the player is touching the surface above
-	VectorMA( ent->client->ps.origin, 10, up, start );
+	VectorMA( ent->client->ps.origin, 25, up, start );
 	VectorMA( start, 100, up, direction );
 
 	trap_Trace( &tr, start, ent->r.mins, ent->r.maxs, direction, ent->s.number, MASK_PLAYERSOLID );
@@ -810,10 +815,11 @@ qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (
 	}
 
 	// TELEPORT!
+	tr.endpos[2] += 25; // place the position a bit up
 	VectorCopy( tr.endpos, ent->client->ps.origin );
 
 	// sound event
-	G_AddEvent( ent, EV_ZANZOKEN, 0 );
+	BG_AddPredictableEventToPlayerstate( EV_ZANZOKEN, 0, &ent->client->ps, -1 );
 
 	return qtrue;
 }
@@ -827,11 +833,15 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 	const int	ZANZOKEN_NUMBER_TIMES_ALLOWED = 20, 
 				ZANZOKEN_ABUSE_DELAY = 2000,
 				MAX_ZANZOKEN_PRESS_TIME = 240;
+	
+	if ( ent->client->ps.weaponstate == WEAPON_BEAMFIRING
+	|| ent->client->ps.weaponstate == WEAPON_KIEXPLOSIONWAVE
+	|| ent->client->ps.weaponstate == WEAPON_STUN ) {
+		return;
+	}
 
 	// zanzoken cannot be used with ki charging status and using explosion wave even while being stun after using explosion wave
-	if ( !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) 
-	&& ( ent->client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
-		&& ent->client->ps.weaponstate != WEAPON_STUN ) ) {
+	if ( !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
 		// restriction: stop abusing zanzoken technique all time
 		if ( ent->client->zanzokenNumberTimesAllowed >= ZANZOKEN_NUMBER_TIMES_ALLOWED ) {
 			ent->client->zanzokenNumberTimesAllowed = 0;
@@ -858,7 +868,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 
 		// once pressed and having one moment to press again, zanzoken will be possible at these milliseconds
 		if ( !ucmd->rightmove 
-		&& level.time - ent->client->zanzokenPressTime > 100
+		&& level.time - ent->client->zanzokenPressTime > 50
 		&& level.time - ent->client->zanzokenPressTime <= MAX_ZANZOKEN_PRESS_TIME
 		&& !ent->client->zanzokenNow ) {
 			ent->client->zanzokenNow = qtrue;
@@ -875,9 +885,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 			return;
 		}
 
-		// BFP - TODO: Zanzoken ki consume looks relative to powerlevel and the maximum ki quantity 
-		// (so, if it's 8160 as ki max quantity, then consumes 408)
-		if ( ent->client->ps.ammo[WP_KI] > 408
+		if ( ent->client->ps.ammo[WP_KI] > ( ent->client->ps.stats[STAT_MAX_KI] * 0.05 )
 		&& ucmd->rightmove
 		&& ent->client->zanzokenNow ) {
 			int	range = ( ucmd->rightmove > 0 ) ? 500 : -500;
@@ -913,7 +921,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 				}
 				ent->client->ps.pm_flags &= ~PMF_BLOCK;
 				// consumes 5% of ki
-				ent->client->ps.ammo[WP_KI] -= ( ent->client->ps.stats[STAT_MAX_KI] / 20 );
+				ent->client->ps.ammo[WP_KI] -= ( ent->client->ps.stats[STAT_MAX_KI] * 0.05 );
 				ent->client->zanzokenPressTime = 0;
 				ent->client->zanzokenNow = qfalse;
 				ent->client->zanzokenLeft = qfalse;
