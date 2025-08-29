@@ -681,6 +681,99 @@ void Weapon_HookThink (gentity_t *ent)
 }
 #endif
 
+// BFP - BFP Beam attack
+/*
+======================================================================
+
+BFP BEAM
+
+======================================================================
+*/
+
+void Weapon_BFPBeam_Fire ( gentity_t *ent ) // BFP - BFP Beam fire
+{
+	if ( !ent->client->fireHeld && !ent->client->hook )
+		fire_bfpbeam ( ent, muzzle, forward );
+
+	ent->client->fireHeld = qtrue;
+}
+
+void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
+{
+	ent->parent->client->hook = NULL;
+	G_FreeEntity( ent );
+}
+
+void Weapon_BFPBeamThink ( gentity_t *ent ) // BFP - BFP Beam think
+{
+	gentity_t *owner = &g_entities[ent->r.ownerNum];
+	vec3_t ownerViewPos, previousOrigin, newVelocity;
+	trace_t trace;
+	float beamSpeed = 2000;
+
+	// BFP - TODO: Beam struggle: 2 beams collide 
+
+	VectorCopy( owner->client->ps.origin, ownerViewPos );
+	ownerViewPos[2] += owner->client->ps.viewheight;
+	AngleVectors( owner->client->ps.viewangles, forward, NULL, NULL );
+
+	VectorCopy( ent->r.currentOrigin, previousOrigin );
+
+	VectorScale( forward, beamSpeed, newVelocity );
+	VectorCopy( newVelocity, ent->s.pos.trDelta );
+
+	VectorCopy( ownerViewPos, ent->s.pos.trBase );
+
+	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
+
+	trap_Trace( &trace, ownerViewPos, NULL, NULL, ent->r.currentOrigin, 
+				ent->r.ownerNum, MASK_SHOT | MASK_SOLID );
+
+	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
+		Weapon_BFPBeamFree( ent );
+		if ( owner->client ) {
+			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+			owner->client->ps.weaponstate = WEAPON_READY;
+			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		}
+		return;
+	}
+
+	if ( trace.fraction < 1.0 ) {
+		VectorCopy( trace.endpos, ent->r.currentOrigin );
+		G_MissileImpact( ent, &trace );
+		if ( owner->client ) {
+			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+			owner->client->ps.weaponstate = WEAPON_READY;
+			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		}
+		return;
+	}
+
+	trap_Trace( &trace, previousOrigin, NULL, NULL,
+				ent->r.currentOrigin, ent->r.ownerNum, MASK_SHOT | MASK_SOLID );
+
+	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
+		Weapon_BFPBeamFree( ent );
+		if ( owner->client ) {
+			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+			owner->client->ps.weaponstate = WEAPON_READY;
+			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		}
+		return;
+	}
+
+	if ( trace.fraction < 1.0 ) {
+		VectorCopy( trace.endpos, ent->r.currentOrigin );
+		G_MissileImpact( ent, &trace );
+		if ( owner->client ) {
+			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+			owner->client->ps.weaponstate = WEAPON_READY;
+			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		}
+	}
+}
+
 /*
 ======================================================================
 
@@ -856,12 +949,10 @@ void FireWeapon( gentity_t *ent ) {
 	case WP_BFG:
 		BFG_Fire( ent );
 		break;
-// BFP - no hook
-#if 0
+// BFP - Using that as BFP Beam
 	case WP_GRAPPLING_HOOK:
-		Weapon_GrapplingHook_Fire( ent );
+		Weapon_BFPBeam_Fire( ent );
 		break;
-#endif
 	default:
 // FIXME		G_Error( "Bad ent->s.weapon" );
 		break;

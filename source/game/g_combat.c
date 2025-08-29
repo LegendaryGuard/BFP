@@ -676,12 +676,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		CheckAlmostCapture( self, attacker );
 	}
 
-// BFP - no hook
-#if 0
+	// BFP - BFP Beam handling
 	if (self->client && self->client->hook) {
-		Weapon_HookFree(self->client->hook);
+		// Weapon_HookFree(self->client->hook);
+		Weapon_BFPBeamFree( self->client->hook );
 	}
-#endif
+
 	self->client->ps.pm_type = PM_DEAD;
 
 	if ( attacker ) {

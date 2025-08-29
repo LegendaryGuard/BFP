@@ -26,10 +26,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ================
-HandleDivideKiBall
+G_DivideProjectile_Fire
 ================
 */
-static void HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - WP_PLASMAGUN would be that dividing ball, when pressing the attack key again, divides by the number of balls depending on the ki attack charge points had
+static void G_DivideProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir ) {
+	gentity_t	*m;
+	float s_quadFactor = 1;
+
+	if ( ent->client->ps.powerups[PW_QUAD] ) {
+		s_quadFactor = g_quadfactor.value;
+	}
+
+	m = fire_plasma( ent, start, dir );
+	m->damage *= s_quadFactor;
+	m->splashDamage *= s_quadFactor;
+	m->enabledivide = qtrue; // handle divided ki ball, otherwise crashes (in DLL/SO)
+
+//	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
+}
+
+/*
+================
+G_HandleDivideKiBall
+================
+*/
+static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - WP_PLASMAGUN would be that dividing ball, when pressing the attack key again, divides by the number of balls depending on the ki attack charge points had
 	vec3_t	dir, angles;
 	int		i;
 	int		chargePoints = client->divideBallKiCharged;
@@ -92,16 +113,28 @@ static void HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - W
 		return;
 	}
 
-	for ( i = 0; i < projectiles_to_spawn; ++i ) {
-		gentity_t *proj = NULL;
-		VectorCopy( ent->s.angles, angles );
+	{
+		// this is for the new spawning projectiles, 
+		// so, the owner is protected from projectile collisions and 
+		// only can be damaged by explosion
+		gentity_t *owner = NULL;
+		if ( ent->r.ownerNum < MAX_CLIENTS && ent->r.ownerNum >= 0 ) {
+			owner = &g_entities[ent->r.ownerNum];
+		}
+		
+		if ( !owner || !owner->client ) {
+			owner = &g_entities[client->ps.clientNum];
+		}
 
-		angles[YAW] += yawAdjustments[i];
-		angles[PITCH] += pitchAdjustments[i];
+		for ( i = 0; i < projectiles_to_spawn; ++i ) {
+			VectorCopy( ent->s.angles, angles );
 
-		AngleVectors( angles, dir, NULL, NULL );
-		proj = fire_plasma( ent, ent->r.currentOrigin, dir );
-		VectorCopy( proj->s.angles, angles );
+			angles[YAW] += yawAdjustments[i];
+			angles[PITCH] += pitchAdjustments[i];
+
+			AngleVectors( angles, dir, NULL, NULL );
+			G_DivideProjectile_Fire( owner, ent->r.currentOrigin, dir );
+		}
 	}
 
 	client->ps.pm_flags &= ~PMF_KI_ATTACK;
@@ -177,12 +210,75 @@ void G_ExplodeMissile( gentity_t *ent ) {
 
 /*
 ================
+G_BFPBeamImpact
+================
+*/
+static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) {
+	gentity_t *nent;
+	vec3_t v;
+
+	nent = G_Spawn();
+	if ( other->takedamage && other->client ) {
+
+		G_AddEvent( nent, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
+		nent->s.otherEntityNum = other->s.number;
+
+		ent->enemy = other;
+
+		v[0] = other->r.currentOrigin[0] + ( other->r.mins[0] + other->r.maxs[0] ) * 0.5;
+		v[1] = other->r.currentOrigin[1] + ( other->r.mins[1] + other->r.maxs[1] ) * 0.5;
+		v[2] = other->r.currentOrigin[2] + ( other->r.mins[2] + other->r.maxs[2] ) * 0.5;
+
+		SnapVectorTowards( v, ent->s.pos.trBase );	// save net bandwidth
+	} else {
+		VectorCopy( trace->endpos, v );
+		G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
+		ent->enemy = NULL;
+	}
+
+	SnapVectorTowards( v, ent->s.pos.trBase );	// save net bandwidth
+
+	nent->freeAfterEvent = qtrue;
+	// change over to a normal entity right at the point of impact
+	nent->s.eType = ET_GENERAL;
+
+	G_SetOrigin( ent, v );
+	G_SetOrigin( nent, v );
+
+	trap_LinkEntity( ent );
+	trap_LinkEntity( nent );
+	// BFP - Free trails too
+	// if ( ent->s.weapon == WP_GRAPPLING_HOOK ) {
+		Weapon_BFPBeamFree( ent );
+}
+
+/*
+================
+G_BFPBeamStop
+================
+*/
+static void G_BFPBeamStop( gentity_t *ent ) { // BFP - BFP Beam stop
+	if ( ent && ent->client ) {
+		Weapon_BFPBeamFree( ent );
+		ent->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		ent->client->ps.weaponstate = WEAPON_READY;
+		ent->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+	}
+}
+
+/*
+================
 G_MissileImpact
 ================
 */
 void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	gentity_t		*other;
 	qboolean		hitClient = qfalse;
+
+	// BFP - Don't explode if going to impact outside map boundaries
+	if ( trace->surfaceFlags & SURF_NOIMPACT ) {
+		return;
+	}
 
 	other = &g_entities[trace->entityNum];
 
@@ -248,6 +344,12 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 				ent->s.origin, ent->damage, 
 				0, ent->methodOfDeath);
 		}
+	}
+
+	// BFP - Changed "hook" to "beam" classname
+	if (!strcmp(ent->classname, "beam")) {
+		G_BFPBeamImpact( ent, other, trace );
+		return;
 	}
 
 // BFP - no hook
@@ -377,10 +479,10 @@ void G_RunMissile( gentity_t *ent ) {
 	// BFP - When the player stopped shooting the charged beam/projectile by pressing the attack key
 	// These are sample weapons used as examples for BFP: 
 
-	// WP_BFG would be the beam
+	// WP_GRAPPLING_HOOK would be the beam
 	if ( client 
 	&& client->ps.weaponstate != WEAPON_BEAMFIRING
-	&& ent->s.weapon == WP_BFG ) {
+	&& ent->s.weapon == WP_GRAPPLING_HOOK ) {
 		client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 		G_MissileImpact( ent, &tr );
@@ -401,7 +503,7 @@ void G_RunMissile( gentity_t *ent ) {
 	&& client->ps.weapon == WP_PLASMAGUN
 	&& ent->s.weapon == WP_PLASMAGUN
 	&& !ent->enabledivide ) {
-		HandleDivideKiBall( ent, client );
+		G_HandleDivideKiBall( ent, client );
 		ent->enabledivide = qtrue;
 		G_FreeEntity( ent );
 	}
@@ -411,6 +513,26 @@ void G_RunMissile( gentity_t *ent ) {
 	&& client->ps.weaponstate == WEAPON_DIVIDINGKIBALLFIRING
 	&& ent->s.weapon == WP_PLASMAGUN ) {
 		client->ps.pm_flags |= PMF_KI_ATTACK;
+	}
+
+	// BFP - Beam handling
+	if ( client 
+	&& ent->s.weapon == WP_GRAPPLING_HOOK ) {
+		Weapon_BFPBeamThink( ent );
+
+		// if just died, then stop
+		if ( client->ps.pm_type == PM_DEAD ) {
+			G_BFPBeamStop( ent );
+		}
+
+		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
+			G_BFPBeamStop( ent );
+		}
+
+		if ( tr.fraction != 1 ) {
+			G_BFPBeamStop( ent );
+		}
+		return;
 	}
 
 	if ( tr.fraction != 1 ) {
@@ -480,7 +602,7 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
 	VectorScale( dir, 2000, bolt->s.pos.trDelta );
-	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
+	//SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 
 	VectorCopy (start, bolt->r.currentOrigin);
 
@@ -646,3 +768,41 @@ gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir) {
 	return hook;
 }
 #endif
+
+/*
+=================
+fire_bfpbeam
+=================
+*/
+gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
+	gentity_t	*beam;
+
+	VectorNormalize( dir );
+
+	beam = G_Spawn();
+	beam->classname = "beam";
+	beam->nextthink = level.time + 10000;
+	beam->think = Weapon_BFPBeamFree;
+	beam->s.eType = ET_MISSILE;
+	beam->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+	beam->s.weapon = WP_GRAPPLING_HOOK;
+	beam->r.ownerNum = self->s.number;
+	beam->methodOfDeath = MOD_GRAPPLE;
+	beam->clipmask = MASK_SHOT;
+	beam->parent = self;
+	beam->target_ent = NULL;
+
+	beam->damage = 80;
+	beam->splashDamage = 80;
+	beam->splashRadius = 120;
+
+	beam->s.pos.trType = TR_LINEAR;
+	beam->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+	beam->s.otherEntityNum = self->s.number; // use to match beam in client
+	VectorCopy( start, beam->s.pos.trBase );
+	VectorScale( dir, 800, beam->s.pos.trDelta );
+	SnapVector( beam->s.pos.trDelta );			// save net bandwidth
+	VectorCopy( start, beam->r.currentOrigin );
+
+	return beam;
+}

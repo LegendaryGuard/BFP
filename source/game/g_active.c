@@ -1032,14 +1032,13 @@ void ClientThink_real( gentity_t *ent ) {
 	// set speed
 	client->ps.speed = g_speed.value;
 
-// BFP - no hook
-#if 0
+	// BFP - Remove beam
 	// Let go of the hook if we aren't firing
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
-		Weapon_HookFree(client->hook);
+		// Weapon_HookFree(client->hook);
+		Weapon_BFPBeamFree( client->hook );
 	}
-#endif
 
 	// set up for pmove
 	oldEventSequence = client->ps.eventSequence;
@@ -1172,12 +1171,10 @@ void ClientThink_real( gentity_t *ent ) {
 	}
 	SendPendingPredictableEvents( &ent->client->ps );
 
-// BFP - no hook
-#if 0
+	// BFP - Beam fire hold handling
 	if ( !( ent->client->ps.eFlags & EF_FIRING ) ) {
 		client->fireHeld = qfalse;		// for grapple
 	}
-#endif
 
 	// use the snapped origin for linking so it matches client predicted versions
 	VectorCopy( ent->s.pos.trBase, ent->r.currentOrigin );

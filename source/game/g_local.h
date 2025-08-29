@@ -314,9 +314,10 @@ struct gclient_s {
 	// int			airOutTime;
 
 	int			lastKillTime;		// for multiple kill rewards
-	// BFP - no hook
-	//qboolean	fireHeld;			// used for hook
-	//gentity_t	*hook;				// grapple hook if out
+
+	// BFP - Reuse as BFP Beam attack
+	qboolean	fireHeld;			// used for hook
+	gentity_t	*hook;				// grapple hook if out
 
 	// BFP - No switch team time delay
 #if BFP_NO_SWITCH_TEAM_TIME
@@ -417,7 +418,7 @@ typedef struct {
 	int			teamVoteTime[2];		// level.time vote was called
 	int			teamVoteYes[2];
 	int			teamVoteNo[2];
-	int			numteamVotingClients[2];// set by CalculateRanks
+	int			numteamVotingClients[TEAM_NUM_TEAMS];// set by CalculateRanks
 
 	// spawn variables
 	qboolean	spawning;				// the G_Spawn*() functions are valid
@@ -557,8 +558,14 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir);
 gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir);
-gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir);
+// BFP - no hook
+// gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir);
 
+// BFP - Beam fire
+gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir);
+
+// BFP - Use G_MissileImpact into another files to handle the weapons
+void G_MissileImpact( gentity_t *ent, trace_t *trace );
 
 //
 // g_mover.c
@@ -588,6 +595,11 @@ void SnapVectorTowards( vec3_t v, vec3_t to );
 qboolean CheckMeleeAttack( gentity_t *ent ); // BFP - Melee
 void Weapon_HookFree (gentity_t *ent);
 void Weapon_HookThink (gentity_t *ent);
+
+// BFP - BFP Beam attack
+void Weapon_BFPBeam_Fire ( gentity_t *ent );
+void Weapon_BFPBeamFree ( gentity_t *ent );
+void Weapon_BFPBeamThink ( gentity_t *ent );
 
 
 //

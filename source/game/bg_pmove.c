@@ -152,7 +152,7 @@ priority (int [0-2]), // if 2, it'll act like a overpowered forcefield, if 1 lik
 movementPenalty (int, number of seconds) // enters WEAPON_STUN when the ki attack was being used
 -----
 The following sample testing torso ki attack animations are used with:
-(ultimate_blast)	WP_BFG would be					"beam", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 1, movementPenalty 0
+(ultimate_blast)	WP_GRAPPLING_HOOK would be		"beam", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 1, movementPenalty 0
 (finger_blast)		WP_MACHINEGUN would be			"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
 (ki_blast)			WP_ROCKET_LAUNCHER would be		"missile", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
 (super_homing)		WP_GRENADE_LAUNCHER would be	"missile", chargeAttack 1, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
@@ -161,6 +161,7 @@ The following sample testing torso ki attack animations are used with:
 (homing_special)	WP_PLASMAGUN would be			"rdmissile", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
 (aga)				WP_SHOTGUN would be				"forcefield", chargeAttack 1, chargeAutoFire 1, loopingAnim 1, noAttackAnim 0, priority 2, movementPenalty 2
 (blinding_flash)	would be						"forcefield", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 1, priority 0, movementPenalty 0
+WP_BFG would be like super_homing, just throw the homing ki ball
 
 About "sbeam" attackType would be like a beam that, by holding down the attack key, 
 you direct it wherever you want by moving the cursor. 
@@ -179,7 +180,8 @@ static void PM_KiAttackTorsoAnim( void ) { // BFP - Torso ki attack anims
 		case WP_RAILGUN: { PM_StartTorsoAnim( TORSO_ATTACK3_PREPARE ); break; }
 		case WP_PLASMAGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK3_PREPARE ); break; }
 		case WP_SHOTGUN:
-		case WP_BFG: { PM_ContinueTorsoAnim( TORSO_ATTACK4_PREPARE ); break; }
+		case WP_BFG:
+		case WP_GRAPPLING_HOOK: { PM_ContinueTorsoAnim( TORSO_ATTACK4_PREPARE ); break; }
 		}
 	} else if ( pm->ps->pm_flags & PMF_KI_ATTACK ) {
 		pm->cmd.buttons &= ~BUTTON_GESTURE;
@@ -191,7 +193,8 @@ static void PM_KiAttackTorsoAnim( void ) { // BFP - Torso ki attack anims
 		case WP_PLASMAGUN:
 		case WP_RAILGUN: { PM_ContinueTorsoAnim( TORSO_ATTACK3_STRIKE ); break; }
 		case WP_SHOTGUN:
-		case WP_BFG: { PM_ContinueTorsoAnim( TORSO_ATTACK4_STRIKE ); break; }
+		case WP_BFG:
+		case WP_GRAPPLING_HOOK: { PM_ContinueTorsoAnim( TORSO_ATTACK4_STRIKE ); break; }
 		}
 	}
 }
@@ -2757,6 +2760,9 @@ static void PM_Weapon( void ) {
 	switch( pm->ps->weaponstate ) {
 	case WEAPON_READY:
 		pm->ps->pm_flags &= ~PMF_READY_KI_ATTACK;
+		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
+			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+		}
 		if ( pm->ps->weaponTime <= 0 ) {
 			pm->ps->weaponTime = 0;
 			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
@@ -2768,11 +2774,16 @@ static void PM_Weapon( void ) {
 				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
 				// - WP_SHOTGUN is used as example of ki explosion wave
 				// - WP_PLASMAGUN is used as example of dividing ki ball
-				// - WP_BFG is used as example of ki beam
+				// - WP_GRAPPLING_HOOK is used as example of ki beam
 				switch( pm->ps->weapon ) {
 				case WP_GRENADE_LAUNCHER:
 				case WP_PLASMAGUN:
 				case WP_BFG:
+				case WP_GRAPPLING_HOOK:
+					// handle the charge after firing
+					if ( pm->ps->weaponstate != WEAPON_CHARGING ) {
+						pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+					}
 					// initial charge time, keep in mind to keep that when starting to use the ki attack
 					pm->ps->weaponTime += 1000;
 					pm->ps->weaponstate = WEAPON_CHARGING;
@@ -2797,9 +2808,6 @@ static void PM_Weapon( void ) {
 					break;
 				}
 			}
-		}
-		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
-			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 		}
 
 		break;
@@ -2826,13 +2834,14 @@ static void PM_Weapon( void ) {
 			// handle the animation for the start of beam or ball shoot
 			switch( pm->ps->weapon ) {
 			case WP_GRENADE_LAUNCHER:
+			case WP_BFG:
 				PM_FireChargedState( WEAPON_EXPLODING_KIBALLFIRING );
 				pm->ps->weaponTime += 500;
 				break;
 			case WP_PLASMAGUN:
 				PM_FireChargedState( WEAPON_DIVIDINGKIBALLFIRING );
 				break;
-			case WP_BFG:
+			case WP_GRAPPLING_HOOK:
 				PM_FireChargedState( WEAPON_BEAMFIRING );
 				pm->ps->weaponTime += 500;
 			}
@@ -2849,7 +2858,7 @@ static void PM_Weapon( void ) {
 				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
 				// - WP_SHOTGUN is used as example of ki explosion wave
 				// - WP_PLASMAGUN is used as example of dividing ki ball
-				// - WP_BFG is used as example of ki beam
+				// - WP_GRAPPLING_HOOK is used as example of ki beam
 
 				// BFP - TODO: Also? Apply minCharge and maxCharge from reading bfp_weapon.cfg 
 				switch( pm->ps->weapon ) {
@@ -2860,6 +2869,7 @@ static void PM_Weapon( void ) {
 					PM_ChargeKiAttackState( 2, ATTACK_CHARGE_LIMIT, 1000, 120 );
 					break;
 				case WP_BFG:
+				case WP_GRAPPLING_HOOK:
 					PM_ChargeKiAttackState( 2, ATTACK_CHARGE_LIMIT, 1000, 20 );
 					break;
 				default: 
@@ -3252,6 +3262,8 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->ps->eFlags |= EF_FIRING;
 	} else {
 		pm->ps->eFlags &= ~EF_FIRING;
+		// BFP - Handle attack button when holding to prepare the attack at the start
+		pm->cmd.buttons &= ~BUTTON_ATTACK;
 	}
 
 	// clear the respawned flag if attack and use are cleared

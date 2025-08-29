@@ -1266,7 +1266,7 @@ void ClientSpawn(gentity_t *ent) {
 	}
 	eventSequence = client->ps.eventSequence;
 
-	memset (client, 0, sizeof(*client)); // bk FIXME: Com_Memset?
+	Com_Memset (client, 0, sizeof(*client));
 
 	client->pers = saved;
 	client->sess = savedSess;
@@ -1389,9 +1389,11 @@ void ClientSpawn(gentity_t *ent) {
 		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_BFG );
 		client->ps.ammo[WP_BFG] = 100;
 	
-		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
-		client->ps.ammo[WP_GAUNTLET] = -1;
-		client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+		//client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
+		//client->ps.ammo[WP_GAUNTLET] = -1;
+		//client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
+		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GRAPPLING_HOOK );
+		client->ps.ammo[WP_GRAPPLING_HOOK] = 100;
 	}
 
 	// health will count down towards max_health
