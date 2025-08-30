@@ -475,7 +475,7 @@ The information in the map file can be useful for debugging and performance anal
 
 # Legal
 
-The mod source code is [GPLv3 licensed](./COPYING), the source code contents are based on Quake III Arena which is [GPLv2 licensed](./GPL-2).
+The mod source code is [GPLv2 licensed](./COPYING.txt), the source code contents are based on Quake III Arena.
 
 The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and `ui_mp3decoder.h`) is based on code from various contributors:
 - Copyright (C) 1993 Sun Microsystems
