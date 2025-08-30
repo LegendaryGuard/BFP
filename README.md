@@ -4,7 +4,7 @@ Bid For Power (BFP) source code
 [![Forks](https://img.shields.io/github/forks/LegendaryGuard/BFP)](https://github.com/LegendaryGuard/BFP/forks)
 [![License](https://img.shields.io/github/license/LegendaryGuard/BFP)](#legal)
 [![Build actions](https://img.shields.io/github/actions/workflow/status/LegendaryGuard/BFP/build.yml)](https://github.com/LegendaryGuard/BFP/actions)
-![Visits](https://badges.pufler.dev/visits/LegendaryGuard/BFP)
+![Visits](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2FLegendaryGuard%2FBFP&label=Visits&countColor=%232ccce4&style=flat)
 
 
 A legendary Quake 3 Arena mod from the late 90s to early 2000s.
@@ -475,7 +475,7 @@ The information in the map file can be useful for debugging and performance anal
 
 # Legal
 
-The mod source code is [GPLv2 licensed](./COPYING.txt), the source code contents are based on Quake III Arena.
+The mod source code is [GPLv2 licensed](./COPYING.txt), the contents are based on Quake III Arena.
 
 The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and `ui_mp3decoder.h`) is based on code from various contributors:
 - Copyright (C) 1993 Sun Microsystems
