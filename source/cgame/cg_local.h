@@ -144,6 +144,8 @@ typedef struct {
 	int				chargeSmokeTime;	// BFP - Charge smoke time
 	int				ultTierTransformTime;	// BFP - Ultimate tier transformation time
 
+	vec3_t			muzzleOrigin;	// BFP - Muzzle origin
+
 	// railgun trail spawning
 	vec3_t			railgunImpact;
 	qboolean		railgunFlash;
@@ -814,6 +816,11 @@ typedef struct {
 	qhandle_t	kiTrailBlueShader;
 	qhandle_t	kiTrailYellowShader;
 
+	// BFP - Ki attack beam and projectile shaders (for testing purposes)
+	qhandle_t	SSBSpiralShader;
+	qhandle_t	SSBBeamShader;
+	qhandle_t	PowerWaveBeamShader;
+
 	// scoreboard headers
 	qhandle_t	scoreboardName;
 	qhandle_t	scoreboardPing;
@@ -1273,6 +1280,7 @@ void CG_Bullet( vec3_t origin, int sourceEntityNum, vec3_t normal, qboolean fles
 
 void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
 void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi );
+void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ); // BFP - BFP Beam trail handling
 void CG_AddViewWeapon (playerState_t *ps);
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team );
 void CG_DrawWeaponSelect( void );
@@ -1340,8 +1348,10 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir );
 // cg_trails.c
 //
 void CG_InitTrails( void );
-void CG_ResetKiTrail( int entityNum, vec3_t origin );
+void CG_ResetTrail( const int TRAIL_TYPE, int entityNum, vec3_t origin );
 void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader );
+void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t hShader );
+void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t beamShader, qhandle_t corkscrewShader );
 
 //
 // cg_snapshot.c

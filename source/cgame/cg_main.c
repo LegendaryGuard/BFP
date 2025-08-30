@@ -682,6 +682,11 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.kiTrailRedShader = trap_R_RegisterShader( "powerups/redkitrail" );
 	cgs.media.kiTrailYellowShader = trap_R_RegisterShader( "powerups/yellowkitrail" );
 
+	// BFP - Ki attack beam and projectile shaders (for testing purposes)
+	cgs.media.PowerWaveBeamShader = trap_R_RegisterShader( "PowerWaveBeamShader");
+	cgs.media.SSBSpiralShader = trap_R_RegisterShader( "SSBSpiralShader");
+	cgs.media.SSBBeamShader = trap_R_RegisterShader( "SSBBeamShader");
+
 	memset( cg_items, 0, sizeof( cg_items ) );
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );
 

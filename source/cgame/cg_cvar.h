@@ -77,6 +77,7 @@ CG_CVAR( cg_explosionSmoke, "cg_explosionSmoke", "1", CVAR_ARCHIVE ) // BFP - Ex
 CG_CVAR( cg_lightExplosions, "cg_lightExplosions", "1", CVAR_ARCHIVE ) // BFP - Dynamic explosion lights
 CG_CVAR( cg_flytilt, "cg_flytilt", "1", CVAR_ARCHIVE ) // BFP - Fly tilt
 CG_CVAR( cg_kiTrail, "cg_kiTrail", "50", CVAR_ARCHIVE ) // BFP - Ki trail length
+CG_CVAR( cg_beamTrail, "cg_beamTrail", "50", CVAR_ARCHIVE ) // BFP - Beam trail length
 CG_CVAR( cg_playHitSound, "cg_playHitSound", "0", CVAR_ARCHIVE ) // BFP - Play hit sound
 CG_CVAR( cg_thirdPersonRange, "cg_thirdPersonRange", "110", CVAR_ARCHIVE ) // BFP
 CG_CVAR( cg_thirdPersonAngle, "cg_thirdPersonAngle", "0", CVAR_ARCHIVE ) // BFP

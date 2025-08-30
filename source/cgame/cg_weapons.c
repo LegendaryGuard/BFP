@@ -283,7 +283,6 @@ CG_GrappleTrail
 void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	vec3_t	origin;
 	entityState_t	*es;
-	vec3_t			forward, up;
 	refEntity_t		beam;
 
 	es = &ent->currentState;
@@ -292,11 +291,8 @@ void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	ent->trailTime = cg.time;
 
 	memset( &beam, 0, sizeof( beam ) );
-	//FIXME adjust for muzzle position
-	VectorCopy ( cg_entities[ ent->currentState.otherEntityNum ].lerpOrigin, beam.origin );
-	beam.origin[2] += 26;
-	AngleVectors( cg_entities[ ent->currentState.otherEntityNum ].lerpAngles, forward, NULL, up );
-	VectorMA( beam.origin, -6, up, beam.origin );
+
+	VectorCopy( cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, beam.origin );
 	VectorCopy( origin, beam.oldorigin );
 
 	if (Distance( beam.origin, beam.oldorigin ) < 64 )
@@ -311,6 +307,26 @@ void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	beam.shaderRGBA[2] = 0xff;
 	beam.shaderRGBA[3] = 0xff;
 	trap_R_AddRefEntityToScene( &beam );
+}
+
+
+/*
+==========================
+CG_BFPBeamTrail
+==========================
+*/
+void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Beam trail handling
+	vec3_t	origin;
+	entityState_t	*es;
+
+	es = &ent->currentState;
+
+	BG_EvaluateTrajectory( &es->pos, cg.time, origin );
+	// ent->trailTime = cg.time;
+
+	CG_BeamTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.PowerWaveBeamShader );
+	// to test corkscrew
+	// CG_CorkscrewTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.SSBBeamShader, cgs.media.SSBSpiralShader );
 }
 
 /*
@@ -424,11 +440,12 @@ void CG_RegisterWeapon( int weaponNum ) {
 	case WP_GRAPPLING_HOOK:
 		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
 		weaponInfo->missileModel = trap_R_RegisterModel( "models/ammo/rocket/rocket.md3" );
-		weaponInfo->missileTrailFunc = CG_GrappleTrail;
+		weaponInfo->missileTrailFunc = CG_BFPBeamTrail; // BFP - Use BFP Beam instead CG_GrappleTrail
 		weaponInfo->missileDlight = 200;
 		weaponInfo->wiTrailTime = 2000;
 		weaponInfo->trailRadius = 64;
 		MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
+		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew" );
 		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum.wav", qfalse );
 		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun.wav", qfalse );
 		break;
@@ -831,16 +848,26 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		// continuous flash
 	} else {
 		// impulse flash
-		if ( cg.time - cent->muzzleFlashTime > MUZZLE_FLASH_TIME && !cent->pe.railgunFlash ) {
+		if ( cg.time - cent->muzzleFlashTime > MUZZLE_FLASH_TIME && !cent->pe.railgunFlash
+		&& weaponNum != WP_GRAPPLING_HOOK ) {
 			return;
 		}
 	}
 
 	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right...)
-	CG_PositionRotatedEntityOnTag( parent, parent, parent->hModel, "tag_right" );
+	CG_PositionRotatedEntityOnTag( parent, parent, parent->hModel, "tag_left" );
+	VectorCopy( parent->origin, nonPredictedCent->pe.muzzleOrigin );
 
 	if ( ps || cg.renderingThirdPerson ||
 		cent->currentState.number != cg.predictedPlayerState.clientNum ) {
+		
+		// BFP - NOTE: That avoids adding the muzzle light using the beam,
+		// it would be cool adding a light to the player while charging or firing their ki,
+		// but in a custom way
+		if ( weaponNum == WP_GRAPPLING_HOOK ) {
+			return;
+		}
+
 		// add lightning bolt
 		CG_LightningBolt( nonPredictedCent, parent->origin );
 

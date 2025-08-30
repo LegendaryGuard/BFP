@@ -458,6 +458,8 @@ static void CG_Missile( centity_t *cent ) {
 	CG_AddRefEntityWithPowerups( ent, s1, TEAM_FREE );
 }
 
+// BFP - no hook
+#if 0
 /*
 ===============
 CG_Grapple
@@ -506,6 +508,7 @@ static void CG_Grapple( centity_t *cent ) {
 
 	trap_R_AddRefEntityToScene( &ent );
 }
+#endif
 
 /*
 ===============

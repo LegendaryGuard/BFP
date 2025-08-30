@@ -9,6 +9,7 @@ For more, look in [cvar_bfp_list.txt](docs/cvar_bfp_list.txt)
 ## COMPLETED:
 
 - [x] ~~cg_superdeformed~~
+- [x] ~~cg_beamTrail~~
 - [x] ~~cg_kiTrail~~
 - [x] ~~cg_yrgolroxor~~
 - [x] ~~cg_thirdPersonHeight~~
