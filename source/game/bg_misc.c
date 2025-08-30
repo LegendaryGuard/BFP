@@ -963,11 +963,12 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 	}
 }
 
-char *eventnames[] = {
+const char *eventnames[EV_MAX] = {
 	// BFP - Events are declared in bg_events.h file
 #define EVENT_STRINGS
 	#include "bg_events.h"
 #undef EVENT_STRINGS
+	"NULL"	// avoid -Wpedantic warnings
 };
 
 /*

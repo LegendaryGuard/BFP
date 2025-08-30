@@ -34,4 +34,8 @@ DECLARE_MOD( MOD_KI_ATTACK ),		// BFP - Ki attack kill message
 DECLARE_MOD( MOD_MELEE ),			// BFP - Melee
 DECLARE_MOD( MOD_GRAPPLE )
 
+#ifdef MOD_ENUMS
+	, DECLARE_MOD( MOD_MAX )
+#endif
+
 #undef DECLARE_MOD

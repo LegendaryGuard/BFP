@@ -653,7 +653,8 @@ static void PM_Drifting( void ) { // BFP - Drifting
 PM_CheckWaterSpot
 =============
 */
-static qboolean PM_CheckWaterSpot( vec3_t direction, vec3_t spot, int cont, int horizontalVel, int verticalVel ) { // BFP - Check spot to jump off water
+static qboolean PM_CheckWaterSpot( vec3_t direction, vec3_t spot, int horizontalVel, int verticalVel ) { // BFP - Check spot to jump off water
+	int cont = 0;
 	// BFP - Monster gamemode, use the measures to jump correctly near to the spot
 	float spotDir = 1, spotUnits = 1;
 	if ( pm->ps->eFlags & EF_MONSTER ) {
@@ -686,7 +687,6 @@ PM_CheckWaterJump
 */
 static qboolean	PM_CheckWaterJump( void ) {
 	vec3_t	spot;
-	int		cont;
 	// BFP - Apply for backwards, left and right too, Q3 doesn't have that
 	vec3_t	flatforward, flatbackward, flatleft, flatright;
 	const int WATER_JUMP_HORIZONTAL_VELOCITY = 200, WATER_JUMP_VERTICAL_VELOCITY = 300;
@@ -729,12 +729,12 @@ static qboolean	PM_CheckWaterJump( void ) {
 	}
 
 	// check forward
-	if ( PM_CheckWaterSpot( flatforward, spot, cont, WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+	if ( PM_CheckWaterSpot( flatforward, spot, WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
 		return qtrue;
 	}
 
 	// check backward
-	if ( PM_CheckWaterSpot( flatbackward, spot, cont, -WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+	if ( PM_CheckWaterSpot( flatbackward, spot, -WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
 		return qtrue;
 	}
 
@@ -744,12 +744,12 @@ static qboolean	PM_CheckWaterJump( void ) {
 	}
 
 	// check left
-	if ( PM_CheckWaterSpot( flatleft, spot, cont, -WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+	if ( PM_CheckWaterSpot( flatleft, spot, -WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
 		return qtrue;
 	}
 
 	// check right
-	if ( PM_CheckWaterSpot( flatright, spot, cont, WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
+	if ( PM_CheckWaterSpot( flatright, spot, WATER_JUMP_HORIZONTAL_VELOCITY, WATER_JUMP_VERTICAL_VELOCITY ) ) {
 		return qtrue;
 	}
 

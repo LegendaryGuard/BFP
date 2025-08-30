@@ -232,7 +232,12 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 		SnapVectorTowards( v, ent->s.pos.trBase );	// save net bandwidth
 	} else {
 		VectorCopy( trace->endpos, v );
-		G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
+		// BFP - Detonation check
+		if ( trace->contents & MASK_PLAYERSOLID ) {
+			G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
+		} else {
+			G_AddEvent( nent, EV_MISSILE_DETONATE, 0 );
+		}
 		ent->enemy = NULL;
 	}
 
@@ -244,6 +249,11 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 
 	G_SetOrigin( ent, v );
 	G_SetOrigin( nent, v );
+
+	if ( ent->splashDamage ) {
+		G_RadiusDamage( v, ent->parent, ent->splashDamage, ent->splashRadius, 
+			other, ent->splashMethodOfDeath );
+	}
 
 	trap_LinkEntity( ent );
 	trap_LinkEntity( nent );
@@ -787,7 +797,7 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	beam->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	beam->s.weapon = WP_GRAPPLING_HOOK;
 	beam->r.ownerNum = self->s.number;
-	beam->methodOfDeath = MOD_GRAPPLE;
+	beam->methodOfDeath = MOD_KI_ATTACK;
 	beam->clipmask = MASK_SHOT;
 	beam->parent = self;
 	beam->target_ent = NULL;
@@ -795,6 +805,7 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	beam->damage = 80;
 	beam->splashDamage = 80;
 	beam->splashRadius = 120;
+	beam->splashMethodOfDeath = MOD_KI_ATTACK;
 
 	beam->s.pos.trType = TR_LINEAR;
 	beam->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
