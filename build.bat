@@ -115,6 +115,29 @@ echo.
   echo.
 )
 
+if not "%1" == "" (
+  if not exist "%1" (
+    echo.
+    echo *************************************
+    echo    ERROR: "%1 doesn't exist"
+    echo *************************************
+    echo.
+    goto :quit
+  )
+  if exist pak9.pk3 (
+    echo.
+    move pak9.pk3 "%1"
+    echo    pak9.pk3 has been moved successfully!
+    echo.
+  ) else (
+    echo.
+    echo *************************************
+    echo    ERROR: pak9.pk3 doesn't exist
+    echo *************************************
+    echo.
+  )
+)
+
 :quit
 set ERROR_CGAME_QVM=
 set ERROR_QAGAME_QVM=
