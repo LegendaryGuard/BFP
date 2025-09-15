@@ -1428,6 +1428,15 @@ void CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t 
 			crandom() * 20, 
 			1200 );
 
+	// BFP - Monster gamemode, player monster aura particles are bigger
+	if ( cent->currentState.eFlags & EF_MONSTER ) {
+		p->org[2] -= 50;
+		p->height *= 3.75;
+		p->width *= 3.75;
+		VectorScale( p->vel, 3.75, p->vel );
+		VectorScale( p->accel, 3.75, p->accel );
+	}
+
 	p->link = qfalse;
 }
 

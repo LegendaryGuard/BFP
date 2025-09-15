@@ -2648,17 +2648,16 @@ static void CG_SpriteAura( refEntity_t aura ) { // BFP - Sprite aura
 	// Moreover, the lights are disabled as mentioned previously in CG_DynamicAuraLight function comments
 	// In the future, the shader should be added, not sure what kind of aura is this...
 	float pitchView = cg.refdefViewAngles[PITCH];
-	short i = 0, connectedClients = 1;
+	int i, connectedClients = 1;
 
-	while ( i < MAX_CLIENTS ) {
+	for ( i = 0; i < MAX_CLIENTS; ++i ) {
 		if ( cg_entities[i].currentValid ) {
 			++connectedClients;
 		}
-		++i;
 	}
 	aura.reType = RT_SPRITE;
 	aura.customShader = 0;
-	aura.radius = 75;
+	aura.radius += 75;
 	if ( connectedClients > 1 ) {
 		pitchView = -15;
 	}
@@ -2822,6 +2821,10 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		// BFP - Sprite aura
 		if ( ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) 
 		|| ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer > 0 && clientNum != cg.snap->ps.clientNum ) ) {
+			// BFP - Monster gamemode, player monster sprite aura is bigger
+			if ( cent->currentState.eFlags & EF_MONSTER ) {
+				aura.radius = 325;
+			}
 			CG_SpriteAura( aura );
 			return;
 		}
