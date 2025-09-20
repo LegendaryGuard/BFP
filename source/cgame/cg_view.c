@@ -377,8 +377,8 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 	float			f;
 	vec3_t			predictedVelocity;
 	int				timeDelta;
-#define FPVISMODE_Q3BOBBING_MOVE	0 // BFP - A macro to enable/disable bobbing move like BFP originally does. Disabled by default because looks a little rough
 	orientation_t	tagOrient; // BFP - First person vis mode orientation setup
+#define FPVISMODE_Q3BOBBING_MOVE	0 // BFP - A macro to enable/disable bobbing move like BFP originally does. Disabled by default because looks a little rough
 	
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
 		return;
@@ -430,7 +430,9 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 		}
 	}
 
+#if FPVISMODE_Q3BOBBING_MOVE
 _q3fpscam:
+#endif
 
 	// add angles based on weapon kick
 	VectorAdd (angles, cg.kick_angles, angles);
