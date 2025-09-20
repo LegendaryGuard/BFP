@@ -25,14 +25,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ===================
-CG_AddFlash
+CG_AddFlashMissile
 
-Adds muzzle flash
+Adds muzzle flash or missile shader/model
 ===================
 */
-void CG_AddFlash( int entityNum, const char *flashShader, const char *flashModel, float flashRadius, float flashScaleFactor ) { // BFP - Flash from player weapon tag
-	refEntity_t	flash;
-	memset( &flash, 0, sizeof( flash ) );
+void CG_AddFlashMissile( int entityNum, vec3_t origin, const char *flashMissileShader, const char *flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
+	refEntity_t	flashMissile;
+	memset( &flashMissile, 0, sizeof( flashMissile ) );
 
 	// BFP - TODO: These function parameters can be applied for the following cfg variable calls:
 	// - flashModel [attack index] ["name of model"]: The model used for the weapon flash. 
@@ -50,26 +50,26 @@ void CG_AddFlash( int entityNum, const char *flashShader, const char *flashModel
 	// - firingFlashScaleFactor [attack index] [float]: The scale factor used for the firing flash. 
 	// Used to resize non-sprite flashes.
 
-	VectorCopy( cg_entities[ entityNum ].pe.muzzleOrigin, flash.origin );
+	VectorCopy( origin, flashMissile.origin );
 
-	flash.reType = RT_SPRITE;
-	if ( flashModel && flashModel[0] != '\0' ) {
-		flash.reType = RT_MODEL;
-		flash.hModel = trap_R_RegisterModel( flashModel );
+	flashMissile.reType = RT_SPRITE;
+	if ( flashMissileModel && flashMissileModel[0] != '\0' ) {
+		flashMissile.reType = RT_MODEL;
+		flashMissile.hModel = trap_R_RegisterModel( flashMissileModel );
 	}
-	flash.customShader = trap_R_RegisterShader( flashShader );
+	flashMissile.customShader = trap_R_RegisterShader( flashMissileShader );
 
-	flash.radius = flashRadius;
-	if ( flashScaleFactor <= 0 ) {
-		flashScaleFactor = 1;
+	flashMissile.radius = flashMissileRadius;
+	if ( flashMissileScaleFactor <= 0 ) {
+		flashMissileScaleFactor = 1;
 	}
-	flash.radius *= flashScaleFactor;
+	flashMissile.radius *= flashMissileScaleFactor;
 
-	flash.shaderRGBA[0] = 0xff;
-	flash.shaderRGBA[1] = 0xff;
-	flash.shaderRGBA[2] = 0xff;
-	flash.shaderRGBA[3] = 0xff;
-	trap_R_AddRefEntityToScene( &flash );
+	flashMissile.shaderRGBA[0] = 0xff;
+	flashMissile.shaderRGBA[1] = 0xff;
+	flashMissile.shaderRGBA[2] = 0xff;
+	flashMissile.shaderRGBA[3] = 0xff;
+	trap_R_AddRefEntityToScene( &flashMissile );
 }
 
 
@@ -375,7 +375,9 @@ void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Be
 	// ent->trailTime = cg.time;
 
 	// BFP - NOTE: That's where we apply the flash properties read from client cfg
-	CG_AddFlash( es->otherEntityNum, "ImpactBeamFlashShader", 0, 25, 1 );
+	CG_AddFlashMissile( es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, "ImpactBeamFlashShader", 0, 25, 1 );
+
+	CG_AddFlashMissile( es->number, origin, "ImpactBeamFlashShader", 0, 50, 1 );
 
 	CG_BeamTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.PowerWaveBeamShader );
 	// to test corkscrew
@@ -915,7 +917,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	// BFP - Displaying the muzzle flash to the other player correctly
 	if ( nonPredictedCent->currentState.generic1 & GEN_READY_KI_ATTACK ) {
 		// BFP - NOTE: That's where we apply the flash properties read from client cfg
-		CG_AddFlash( nonPredictedCent - cg_entities, "ImpactBeamFlashShader", 0, 15, 1 );
+		CG_AddFlashMissile( nonPredictedCent - cg_entities, nonPredictedCent->pe.muzzleOrigin, "ImpactBeamFlashShader", 0, 15, 1 );
 	}
 
 	if ( ps || cg.renderingThirdPerson ||

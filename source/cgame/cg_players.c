@@ -2928,24 +2928,27 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 CG_FindAttachMuzzleTag
 ===============
 */
-static void CG_FindAttachMuzzleTag( centity_t *cent, clientInfo_t *ci, refEntity_t *torso, refEntity_t *legs, refEntity_t *head, char *tagName ) { // BFP - Finds the tag to attach the muzzle
+static void CG_FindAttachMuzzleTag( centity_t *cent, clientInfo_t *ci, refEntity_t *torso, refEntity_t *legs, refEntity_t *head, char *attackTagPart, char *attackTagName ) { // BFP - Finds the tag to attach the muzzle
 	orientation_t tagOrient;
 
 	// legs
-	if ( trap_R_LerpTag( &tagOrient, ci->legsModel, legs->oldframe, legs->frame, 1.0 - legs->backlerp, tagName ) ) {
-		CG_AddPlayerWeapon( legs, NULL, cent, ci->team, tagName );
+	if ( attackTagPart && attackTagPart != '\0' && attackTagPart == "legs"
+	&& trap_R_LerpTag( &tagOrient, ci->legsModel, legs->oldframe, legs->frame, 1.0 - legs->backlerp, attackTagName ) ) {
+		CG_AddPlayerWeapon( legs, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// torso
-	if ( trap_R_LerpTag( &tagOrient, ci->torsoModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, tagName )) {
-		CG_AddPlayerWeapon( torso, NULL, cent, ci->team, tagName );
+	if ( attackTagPart && attackTagPart != '\0' && attackTagPart == "torso"
+	&& trap_R_LerpTag( &tagOrient, ci->torsoModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, attackTagName )) {
+		CG_AddPlayerWeapon( torso, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// head
-	if ( trap_R_LerpTag( &tagOrient, ci->headModel, head->oldframe, head->frame, 1.0 - head->backlerp, tagName ) ) {
-		CG_AddPlayerWeapon( head, NULL, cent, ci->team, tagName );
+	if ( attackTagPart && attackTagPart != '\0' && attackTagPart == "head"
+	&& trap_R_LerpTag( &tagOrient, ci->headModel, head->oldframe, head->frame, 1.0 - head->backlerp, attackTagName ) ) {
+		CG_AddPlayerWeapon( head, NULL, cent, ci->team, attackTagName );
 	}
 }
 
@@ -3223,7 +3226,7 @@ void CG_Player( centity_t *cent ) {
 	// CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
 
 	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right, tag_eyes, ...)
-	CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "tag_left" );
+	CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "torso", "tag_left" );
 
 	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );
