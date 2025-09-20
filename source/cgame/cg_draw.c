@@ -2353,7 +2353,7 @@ static void CG_DrawReadyKiAttack( void ) { // BFP - Ready message in the bottom 
 	if ( cg_chargeupAlert.integer <= 0 ) { // if disabled, don't show it
 		return;
 	}
-	if ( cg.predictedPlayerState.pm_flags & PMF_READY_KI_ATTACK ) {
+	if ( cg.predictedPlayerState.generic1 & GEN_READY_KI_ATTACK ) {
 		s = "Ready";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;

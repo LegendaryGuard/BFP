@@ -964,25 +964,28 @@ void BotUpdateInventory(bot_state_t *bs) {
 	//armor
 	bs->inventory[INVENTORY_ARMOR] = bs->cur_ps.stats[STAT_ARMOR];
 	//weapons
-	bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GAUNTLET)) != 0;
-	bs->inventory[INVENTORY_SHOTGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_SHOTGUN)) != 0;
-	bs->inventory[INVENTORY_MACHINEGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_MACHINEGUN)) != 0;
-	bs->inventory[INVENTORY_GRENADELAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRENADE_LAUNCHER)) != 0;
-	bs->inventory[INVENTORY_ROCKETLAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_ROCKET_LAUNCHER)) != 0;
-	bs->inventory[INVENTORY_LIGHTNING] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_LIGHTNING)) != 0;
-	bs->inventory[INVENTORY_RAILGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_RAILGUN)) != 0;
-	bs->inventory[INVENTORY_PLASMAGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_PLASMAGUN)) != 0;
-	bs->inventory[INVENTORY_BFG10K] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_BFG)) != 0;
-	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRAPPLING_HOOK)) != 0;
+	// BFP - Just a test, make the bot get all weapons
+	// before Q3 for each weapon: 
+	// bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GAUNTLET)) != 0;
+	bs->inventory[INVENTORY_GAUNTLET] = 
+	bs->inventory[INVENTORY_SHOTGUN] = 
+	bs->inventory[INVENTORY_MACHINEGUN] = 
+	bs->inventory[INVENTORY_GRENADELAUNCHER] = 
+	bs->inventory[INVENTORY_ROCKETLAUNCHER] = 
+	bs->inventory[INVENTORY_LIGHTNING] = 
+	bs->inventory[INVENTORY_RAILGUN] = 
+	bs->inventory[INVENTORY_PLASMAGUN] = 
+	bs->inventory[INVENTORY_BFG10K] = 
+	bs->inventory[INVENTORY_GRAPPLINGHOOK] = 1;
 	//ammo
-	bs->inventory[INVENTORY_SHELLS] = bs->cur_ps.ammo[WP_SHOTGUN];
-	bs->inventory[INVENTORY_BULLETS] = bs->cur_ps.ammo[WP_MACHINEGUN];
-	bs->inventory[INVENTORY_GRENADES] = bs->cur_ps.ammo[WP_GRENADE_LAUNCHER];
-	bs->inventory[INVENTORY_CELLS] = bs->cur_ps.ammo[WP_PLASMAGUN];
-	bs->inventory[INVENTORY_LIGHTNINGAMMO] = bs->cur_ps.ammo[WP_LIGHTNING];
-	bs->inventory[INVENTORY_ROCKETS] = bs->cur_ps.ammo[WP_ROCKET_LAUNCHER];
-	bs->inventory[INVENTORY_SLUGS] = bs->cur_ps.ammo[WP_RAILGUN];
-	bs->inventory[INVENTORY_BFGAMMO] = bs->cur_ps.ammo[WP_BFG];
+	bs->inventory[INVENTORY_SHELLS] = 
+	bs->inventory[INVENTORY_BULLETS] = 
+	bs->inventory[INVENTORY_GRENADES] = 
+	bs->inventory[INVENTORY_CELLS] = 
+	bs->inventory[INVENTORY_LIGHTNINGAMMO] = 
+	bs->inventory[INVENTORY_ROCKETS] = 
+	bs->inventory[INVENTORY_SLUGS] = 
+	bs->inventory[INVENTORY_BFGAMMO] = 1;
 	//powerups
 	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[STAT_HEALTH];
 	bs->inventory[INVENTORY_TELEPORTER] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
@@ -1191,6 +1194,9 @@ float BotAggression(bot_state_t *bs) {
 			return 70;
 		}
 	}
+
+	// BFP - Some weapon handlings are removed
+
 	//if the enemy is located way higher than the bot
 	if (bs->inventory[ENEMY_HEIGHT] > 200) return 0;
 	//if the bot is very low on health
@@ -1200,27 +1206,15 @@ float BotAggression(bot_state_t *bs) {
 		//if the bot has insufficient armor
 		if (bs->inventory[INVENTORY_ARMOR] < 40) return 0;
 	}
-	//if the bot can use the bfg
-	if (bs->inventory[INVENTORY_BFG10K] > 0 &&
-			bs->inventory[INVENTORY_BFGAMMO] > 7) return 100;
 	//if the bot can use the railgun
 	if (bs->inventory[INVENTORY_RAILGUN] > 0 &&
 			bs->inventory[INVENTORY_SLUGS] > 5) return 95;
-	//if the bot can use the lightning gun
-	if (bs->inventory[INVENTORY_LIGHTNING] > 0 &&
-			bs->inventory[INVENTORY_LIGHTNINGAMMO] > 50) return 90;
 	//if the bot can use the rocketlauncher
 	if (bs->inventory[INVENTORY_ROCKETLAUNCHER] > 0 &&
 			bs->inventory[INVENTORY_ROCKETS] > 5) return 90;
 	//if the bot can use the plasmagun
 	if (bs->inventory[INVENTORY_PLASMAGUN] > 0 &&
 			bs->inventory[INVENTORY_CELLS] > 40) return 85;
-	//if the bot can use the grenade launcher
-	if (bs->inventory[INVENTORY_GRENADELAUNCHER] > 0 &&
-			bs->inventory[INVENTORY_GRENADES] > 10) return 80;
-	//if the bot can use the shotgun
-	if (bs->inventory[INVENTORY_SHOTGUN] > 0 &&
-			bs->inventory[INVENTORY_SHELLS] > 10) return 50;
 	//otherwise the bot is not feeling too good
 	return 0;
 }
@@ -2408,8 +2402,16 @@ void BotCheckAttack(bot_state_t *bs) {
 	if (bs->weaponchange_time > FloatTime() - 0.1) return;
 	//check fire throttle characteristic
 	if (bs->firethrottlewait_time > FloatTime()) return;
-	firethrottle = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_FIRETHROTTLE, 0, 1);
+
+	// BFP - Make the fire throttle wait a bit more, before: 1, now: 7
+	firethrottle = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_FIRETHROTTLE, 0, 7);
+	//Com_Printf( "firethrottle: %f\n", firethrottle );
 	if (bs->firethrottleshoot_time < FloatTime()) {
+		// BFP - When it's ready to attack, fire
+		if ( bs->cur_ps.generic1 & GEN_READY_KI_ATTACK ) {
+			bs->firethrottleshoot_time = FloatTime() + 1 - firethrottle;
+			bs->firethrottlewait_time = 0;
+		}
 		if (random() > firethrottle) {
 			bs->firethrottlewait_time = FloatTime() + firethrottle;
 			bs->firethrottleshoot_time = 0;

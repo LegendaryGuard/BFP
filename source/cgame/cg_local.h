@@ -770,6 +770,9 @@ typedef struct {
 	// BFP - Explosion shell shader
 	qhandle_t	explosionShellShader;
 
+	// BFP - Explosion shader tests
+	qhandle_t	ImpactBeamExplosionShader;
+
 	// weapon effect shaders
 	qhandle_t	railExplosionShader;
 	qhandle_t	plasmaExplosionShader;
@@ -1280,7 +1283,7 @@ void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
 void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi );
 void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ); // BFP - BFP Beam trail handling
 void CG_AddViewWeapon (playerState_t *ps);
-void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team );
+void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team, char *tagName );
 void CG_DrawWeaponSelect( void );
 
 void CG_OutOfAmmoChange( void );	// should this be in pmove?

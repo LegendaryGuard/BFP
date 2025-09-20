@@ -728,11 +728,12 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	// BFP - TODO: Apply explosionModel from bfp attack config, highPolySphereModel is just a test
 	qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
 	localEntity_t *leSphere, *leRing = NULL, *leShell = NULL;
+	float	scale = 1;
 
 	VectorMA( origin, 10, dir, origin );
 
-	// BFP - TODO: Apply explosionShader from bfp attack config, bfgExplosionShader is just a test
-	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, sphereModel, cgs.media.bfgExplosionShader, 1000 );
+	// BFP - TODO: Apply explosionShader from bfp attack config, ImpactBeamExplosionShader is just a test
+	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, sphereModel, cgs.media.ImpactBeamExplosionShader, 1000 );
 	if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
 		leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
 	}
@@ -743,7 +744,6 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 
 	if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
 		const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
-		float	scale = 1;
 		int		numPointsChargedOverMin = 1; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
 		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
 		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
@@ -789,7 +789,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	}
 
 	// BFP - Apply dynamic explosion light values
-	leSphere->light = 700;
+	leSphere->light = 500 * scale;
 	leSphere->lightColor[0] = 1;
 	leSphere->lightColor[1] = 0.75;
 	leSphere->lightColor[2] = 0.0;

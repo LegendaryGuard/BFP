@@ -24,6 +24,56 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cg_local.h"
 
 /*
+===================
+CG_AddFlash
+
+Adds muzzle flash
+===================
+*/
+void CG_AddFlash( int entityNum, const char *flashShader, const char *flashModel, float flashRadius, float flashScaleFactor ) { // BFP - Flash from player weapon tag
+	refEntity_t	flash;
+	memset( &flash, 0, sizeof( flash ) );
+
+	// BFP - TODO: These function parameters can be applied for the following cfg variable calls:
+	// - flashModel [attack index] ["name of model"]: The model used for the weapon flash. 
+	// If this is not set or set to 0 and flashShader is set, the flash shader will be treated as a sprite.
+	
+	// - flashShader [attack index] ["name of shader"]: The shader used for the flash.
+	// - flashRadius [attack index] [int]: Only used for sprite flashes. `flashRadius` is the radius of the flash sprite.
+
+	// - flashScaleFactor [attack index] [float]: The scale factor used for the flash. 
+	// Used to resize non-sprite flashes.
+	
+	// - firingFlashRadius [attack index] [int]: The radius of the firing flash. 
+	// This is used for beam attacks while the beam is firing.
+	
+	// - firingFlashScaleFactor [attack index] [float]: The scale factor used for the firing flash. 
+	// Used to resize non-sprite flashes.
+
+	VectorCopy( cg_entities[ entityNum ].pe.muzzleOrigin, flash.origin );
+
+	flash.reType = RT_SPRITE;
+	if ( flashModel && flashModel[0] != '\0' ) {
+		flash.reType = RT_MODEL;
+		flash.hModel = trap_R_RegisterModel( flashModel );
+	}
+	flash.customShader = trap_R_RegisterShader( flashShader );
+
+	flash.radius = flashRadius;
+	if ( flashScaleFactor <= 0 ) {
+		flashScaleFactor = 1;
+	}
+	flash.radius *= flashScaleFactor;
+
+	flash.shaderRGBA[0] = 0xff;
+	flash.shaderRGBA[1] = 0xff;
+	flash.shaderRGBA[2] = 0xff;
+	flash.shaderRGBA[3] = 0xff;
+	trap_R_AddRefEntityToScene( &flash );
+}
+
+
+/*
 ==========================
 CG_RailTrail
 ==========================
@@ -323,6 +373,9 @@ void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Be
 
 	BG_EvaluateTrajectory( &es->pos, cg.time, origin );
 	// ent->trailTime = cg.time;
+
+	// BFP - NOTE: That's where we apply the flash properties read from client cfg
+	CG_AddFlash( es->otherEntityNum, "ImpactBeamFlashShader", 0, 25, 1 );
 
 	CG_BeamTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.PowerWaveBeamShader );
 	// to test corkscrew
@@ -811,7 +864,8 @@ The main player will have this called for BOTH cases, so effects like light and
 sound should only be done on the world model case.
 =============
 */
-void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team ) {
+// BFP - CG_AddPlayerWeapon now has a new argument called tagName to attach the flash to a tag
+void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team, char *tagName ) {
 	weapon_t	weaponNum;
 	weaponInfo_t	*weapon;
 	centity_t	*nonPredictedCent;
@@ -854,9 +908,15 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		}
 	}
 
-	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right...)
-	CG_PositionRotatedEntityOnTag( parent, parent, parent->hModel, "tag_left" );
+	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right, tag_eyes, ...)
+	CG_PositionRotatedEntityOnTag( parent, parent, parent->hModel, tagName );
 	VectorCopy( parent->origin, nonPredictedCent->pe.muzzleOrigin );
+
+	// BFP - Displaying the muzzle flash to the other player correctly
+	if ( nonPredictedCent->currentState.generic1 & GEN_READY_KI_ATTACK ) {
+		// BFP - NOTE: That's where we apply the flash properties read from client cfg
+		CG_AddFlash( nonPredictedCent - cg_entities, "ImpactBeamFlashShader", 0, 15, 1 );
+	}
 
 	if ( ps || cg.renderingThirdPerson ||
 		cent->currentState.number != cg.predictedPlayerState.clientNum ) {
@@ -968,7 +1028,7 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 	hand.renderfx = RF_DEPTHHACK | RF_FIRST_PERSON | RF_MINLIGHT;
 
 	// add everything onto the hand
-	CG_AddPlayerWeapon( &hand, ps, &cg.predictedPlayerEntity, ps->persistant[PERS_TEAM] );
+	CG_AddPlayerWeapon( &hand, ps, &cg.predictedPlayerEntity, ps->persistant[PERS_TEAM], "" );
 }
 
 /*

@@ -1111,6 +1111,8 @@ int BotSelectActivateWeapon(bot_state_t *bs) {
 	}
 }
 
+
+// BFP - No Team Arena proximity mines bot detection logic
 /*
 ==================
 BotClearPath
@@ -1119,6 +1121,7 @@ try to deactivate obstacles like proximity mines on the bot's path
 ==================
 */
 void BotClearPath(bot_state_t *bs, bot_moveresult_t *moveresult) {
+#if 0
 	int i, bestmine;
 	float dist, bestdist;
 	vec3_t target, dir;
@@ -1217,6 +1220,7 @@ void BotClearPath(bot_state_t *bs, bot_moveresult_t *moveresult) {
 			}
 		}
 	}
+#endif
 }
 
 /*

@@ -176,7 +176,6 @@ typedef enum {
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
 #define PMF_FLIGHT_ACTIVE	8192	// BFP - Flight active status
 #define PMF_ULTIMATE_TIER	16384	// BFP - Ultimate tier status
-#define PMF_READY_KI_ATTACK	32768	// BFP - Ready ki attack notification
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
@@ -300,6 +299,17 @@ typedef enum {
 // BFP - Unused EF flag
 // #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
+
+// BFP - Reusing generic1 integer 8-bit size
+// entityState_t->generic1
+#define	GEN_READY_KI_ATTACK	1
+// #define GEN_FLAG_2		2
+// #define GEN_FLAG_3		4
+// #define GEN_FLAG_4		8
+// #define GEN_FLAG_5		16
+// #define GEN_FLAG_6		32
+// #define GEN_FLAG_7		64
+// #define GEN_FLAG_8		128
 
 // NOTE: may not have more than 16
 typedef enum {
