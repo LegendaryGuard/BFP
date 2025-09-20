@@ -543,6 +543,12 @@ static qboolean PM_CheckJump( void ) {
 		return qfalse;		// don't allow jump until all buttons are up
 	}
 
+	// BFP - With ki charge, the player can't jump. With hit stun, avoids jittering movements
+	if ( ( pm->ps->pm_flags & PMF_HITSTUN )
+	|| ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+		return qfalse;
+	}
+
 	if ( pm->cmd.upmove < 10 ) {
 		// not holding jump
 		return qfalse;
@@ -3156,7 +3162,7 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		return;
 	}
 
-	pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
+	pm->cmd.forwardmove = pm->cmd.rightmove = 0;
 
 	if ( pm->cmd.buttons & ( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
@@ -3193,9 +3199,6 @@ static void PM_HitStun( void ) { // BFP - Hit stun
 	pm->ps->eFlags &= ~EF_FIRING;
 	pm->ps->eFlags &= ~EF_AURA;
 	pm->ps->weaponstate = WEAPON_READY;
-
-	// BFP - NOTE: BFP doesn't handle nothing the button directions when there's hit stun
-	pm->cmd.upmove = 0;
 }
 
 /*
