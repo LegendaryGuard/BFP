@@ -764,7 +764,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( model, MONSTER_NAME, sizeof( model ) );
 	}
 
-	// BFP - NOTE: "omodel" is added for Monster gamemode purposes. 
+	// BFP - NOTE: "omdl" is added for Monster gamemode purposes. 
 	// Historically, on RC versions, the monster model pack went without player sounds 
 	// and the game loaded the selected player model sounds that the user played 
 	// on the other gamemodes
@@ -772,12 +772,12 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	// send over a subset of the userinfo keys so other clients can
 	// print scoreboards, display models, and play custom sounds
 	if ( ent->r.svFlags & SVF_BOT ) {
-		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\w\\%i\\l\\%i\\skill\\%s",
+		s = va("n\\%s\\t\\%i\\model\\%s\\omdl\\%s\\w\\%i\\l\\%i\\skill\\%s",
 			client->pers.netname, team, model, originalPlayerModel, 
 			client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ) );
 	} else {
-		s = va("n\\%s\\t\\%i\\model\\%s\\omodel\\%s\\w\\%i\\l\\%i",
+		s = va("n\\%s\\t\\%i\\model\\%s\\omdl\\%s\\w\\%i\\l\\%i",
 			client->pers.netname, client->sess.sessionTeam, model, originalPlayerModel, 
 			client->sess.wins, client->sess.losses );
 	}

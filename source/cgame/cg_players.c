@@ -1093,9 +1093,9 @@ void CG_NewClientInfo( int clientNum ) {
 		*slash = 0;
 	}
 
-	// BFP - Monster gamemode, get original model name with "omodel" to keep the player sounds
+	// BFP - Monster gamemode, get original model name with "omdl" to keep the player sounds
 	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 ) {
-		v = Info_ValueForKey( configstring, "omodel" );
+		v = Info_ValueForKey( configstring, "omdl" );
 		Q_strncpyz( newInfo.originalModelName, v, sizeof( newInfo.originalModelName ) );
 		slash = strchr( newInfo.originalModelName, '/' );
 		if ( !slash || !Q_stricmp( newInfo.modelName, MONSTER_NAME ) ) {
