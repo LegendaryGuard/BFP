@@ -377,6 +377,7 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 	float			f;
 	vec3_t			predictedVelocity;
 	int				timeDelta;
+#define FPVISMODE_Q3BOBBING_MOVE	0 // BFP - A macro to enable/disable bobbing move like BFP originally does. Disabled by default because looks a little rough
 	orientation_t	tagOrient; // BFP - First person vis mode orientation setup
 	
 	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
@@ -396,26 +397,36 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 	}
 
 	// BFP - First person vis mode
-	if ( cg_drawOwnModel.integer >= 1 ) {
-		vec3_t			forward, up;
-
-		if ( !parentModel ) {
+	if ( cg_drawOwnModel.integer >= 1 && parentModel ) {
+		if ( trap_R_LerpTag( &tagOrient, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, "tag_eyes" ) ) {
+			VectorCopy( parent->origin, cg.refdef.vieworg );
+#if FPVISMODE_Q3BOBBING_MOVE
+			// don't bob/duck while on air, flying or charging
+			if ( ( cg.predictedPlayerState.eFlags & EF_FLIGHT )
+			|| ( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE )
+			|| cg.predictedPlayerState.groundEntityNum == ENTITYNUM_NONE ) {
+				return;
+			}
 			goto _q3fpscam;
-		}
-
-		VectorClear( cg.refdefViewAngles );
-		
-		if ( CG_GetTagOrientationFromPlayerEntityParentModel( cent, parent, parentModel, "tag_eyes", &tagOrient ) ) {
-			VectorCopy( tagOrient.origin, cg.refdef.vieworg );
-			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+#else
 			return;
+#endif
 		}
 
 		// if tag_eyes doesn't exist, set to tag_head
-		if ( CG_GetTagOrientationFromPlayerEntityParentModel( cent, parent, parentModel, "tag_head", &tagOrient ) ) {
-			VectorCopy( tagOrient.origin, cg.refdef.vieworg );
-			AngleVectors( cg.refdefViewAngles, forward, NULL, up );
+		if ( trap_R_LerpTag( &tagOrient, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, "tag_head" ) ) {
+			VectorCopy( parent->origin, cg.refdef.vieworg );
+#if FPVISMODE_Q3BOBBING_MOVE
+			// don't bob/duck while on air, flying or charging
+			if ( ( cg.predictedPlayerState.eFlags & EF_FLIGHT )
+			|| ( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE )
+			|| cg.predictedPlayerState.groundEntityNum == ENTITYNUM_NONE ) {
+				return;
+			}
+			goto _q3fpscam;
+#else
 			return;
+#endif
 		}
 	}
 
@@ -477,7 +488,9 @@ _q3fpscam:
 //===================================
 
 	// add view height
-	origin[2] += cg.predictedPlayerState.viewheight;
+	if ( cg_drawOwnModel.integer < 1 ) { // BFP - For Q3 first person view
+		origin[2] += cg.predictedPlayerState.viewheight;
+	}
 
 	// smooth out duck height changes
 	timeDelta = cg.time - cg.duckTime;

@@ -1224,8 +1224,6 @@ void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t re, entityState_t *state, int team );
 void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
-qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEntity_t *parent, 
-					qhandle_t parentModel, char *tagName, orientation_t *tagOrient ); // BFP - Parent model tag orientation, used for first person vis mode
 
 //
 // cg_predict.c

@@ -3199,37 +3199,6 @@ void CG_Player( centity_t *cent ) {
 	CG_PlayerPowerups( cent, &torso );
 }
 
-/*
-===============
-CG_GetTagOrientationFromPlayerEntityParentModel
-===============
-*/
-qboolean CG_GetTagOrientationFromPlayerEntityParentModel( centity_t *cent, refEntity_t *parent, 
-					qhandle_t parentModel, char *tagName, orientation_t *tagOrient ) { // BFP - Parent model tag orientation, used for first person vis mode
-	int				i;
-	orientation_t	lerped;
-	vec3_t			tempAxis[3];
-
-	if ( cent->currentState.eType != ET_PLAYER || !tagName[0] ) {
-		return qfalse;
-	}
-	
-	// Prepare the destination orientation_t
-	AxisClear( tagOrient->axis );
-
-	// Try to find the tag and return its coordinates
-	if ( trap_R_LerpTag( &lerped, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, tagName ) ) {
-        VectorCopy( parent->origin, tagOrient->origin );
-        for ( i = 0 ; i < 3 ; i++ ) {
-            VectorMA( tagOrient->origin, lerped.origin[i], parent->axis[i], tagOrient->origin );
-        }
-        MatrixMultiply( tagOrient->axis, lerped.axis, tempAxis );
-        MatrixMultiply( tempAxis, parent->axis, tagOrient->axis );
-        return qtrue;
-    }
-	return qfalse;
-}
-
 //=====================================================================
 
 /*
