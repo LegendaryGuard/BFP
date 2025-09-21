@@ -830,103 +830,108 @@ ZanzokenHandling
 =================
 */
 static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handling short-range teleport
-	const int	ZANZOKEN_NUMBER_TIMES_ALLOWED = 20, 
+	const int	ZANZOKEN_NUMBER_TIMES_ALLOWED = 10, 
 				ZANZOKEN_ABUSE_DELAY = 2000,
-				MAX_ZANZOKEN_PRESS_TIME = 240;
-	
-	if ( ent->client->ps.weaponstate == WEAPON_BEAMFIRING
-	|| ent->client->ps.weaponstate == WEAPON_KIEXPLOSIONWAVE
-	|| ent->client->ps.weaponstate == WEAPON_STUN ) {
+				MAX_ZANZOKEN_PRESS_TIME = 240,
+				ZANZOKEN_COOLDOWN = 70;
+	gclient_t	*client = ent->client;
+	int			currentTime = level.time; // use level.time which is not affected by timescale
+
+	if ( client->ps.weaponstate == WEAPON_BEAMFIRING
+	|| client->ps.weaponstate == WEAPON_KIEXPLOSIONWAVE
+	|| client->ps.weaponstate == WEAPON_STUN ) {
 		return;
 	}
 
-	// zanzoken cannot be used with ki charging status and using explosion wave even while being stun after using explosion wave
-	if ( !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
-		// restriction: stop abusing zanzoken technique all time
-		if ( ent->client->zanzokenNumberTimesAllowed >= ZANZOKEN_NUMBER_TIMES_ALLOWED ) {
-			ent->client->zanzokenNumberTimesAllowed = 0;
-			ent->client->zanzokenDelay = level.time;
+	// check if zanzoken is on cooldown
+	if ( client->zanzokenLastUsed > 0
+	&& currentTime - client->zanzokenLastUsed < ZANZOKEN_COOLDOWN ) {
+		return;
+	}
+
+	// zanzoken cannot be used with ki charging status
+	if ( client->ps.pm_flags & PMF_KI_CHARGE ) {
+		return;
+	}
+
+	// restriction: stop abusing zanzoken technique all time
+	if ( client->zanzokenNumberTimesAllowed >= ZANZOKEN_NUMBER_TIMES_ALLOWED ) {
+		client->zanzokenNumberTimesAllowed = 0;
+		client->zanzokenDelay = currentTime;
+		return;
+	}
+
+	if ( client->zanzokenDelay > 0 && currentTime - client->zanzokenDelay <= ZANZOKEN_ABUSE_DELAY ) {
+		return;
+	}
+
+	if ( ucmd->rightmove && client->zanzokenPressTime <= 0 ) {
+		client->zanzokenPressTime = currentTime;
+		client->zanzokenNow = qfalse;
+		// handle directions to avoid pressing the opposite
+		if ( ucmd->rightmove > 0 ) {
+			client->zanzokenLeft = qfalse;
+			client->zanzokenRight = qtrue;
+		} else {
+			client->zanzokenLeft = qtrue;
+			client->zanzokenRight = qfalse;
+		}
+	}
+
+	// once pressed and having one moment to press again, zanzoken will be possible at these milliseconds
+	if ( !ucmd->rightmove && client->zanzokenPressTime > 0 ) {
+		int elapsed = currentTime - client->zanzokenPressTime;
+		
+		if ( elapsed > 50 && elapsed <= MAX_ZANZOKEN_PRESS_TIME && !client->zanzokenNow ) {
+			client->zanzokenNow = qtrue;
+			client->zanzokenNumberTimesAllowed++;
+		}
+
+		if ( elapsed > MAX_ZANZOKEN_PRESS_TIME ) {
+			client->zanzokenNumberTimesAllowed = 0;
+			client->zanzokenPressTime = 0;
+			client->zanzokenNow = qfalse;
+			client->zanzokenLeft = qfalse;
+			client->zanzokenRight = qfalse;
 			return;
 		}
-		if ( ent->client->zanzokenDelay > 0
-		&& level.time - ent->client->zanzokenDelay <= ZANZOKEN_ABUSE_DELAY ) {
+	}
+
+	if ( client->ps.ammo[WP_KI] > ( client->ps.stats[STAT_MAX_KI] * 0.05 )
+	&& ucmd->rightmove && client->zanzokenNow ) {
+		int range = ( ucmd->rightmove > 0 ) ? 500 : -500;
+
+		// handle the directions correctly
+		if ( ( ucmd->rightmove > 0 && !client->zanzokenRight )
+		|| ( ucmd->rightmove < 0 && !client->zanzokenLeft ) ) {
+			client->zanzokenLeft = qfalse;
+			client->zanzokenRight = qfalse;
 			return;
 		}
 
-		if ( ucmd->rightmove && ent->client->zanzokenPressTime <= 0 ) {
-			ent->client->zanzokenPressTime = level.time;
-			ent->client->zanzokenNow = qfalse;
-			// handle directions to avoid pressing the opposite
-			if ( ucmd->rightmove > 0 ) {
-				ent->client->zanzokenLeft = qfalse;
-				ent->client->zanzokenRight = qtrue;
-			} else {
-				ent->client->zanzokenLeft = qtrue;
-				ent->client->zanzokenRight = qfalse;
-			}
-		}
-
-		// once pressed and having one moment to press again, zanzoken will be possible at these milliseconds
-		if ( !ucmd->rightmove 
-		&& level.time - ent->client->zanzokenPressTime > 50
-		&& level.time - ent->client->zanzokenPressTime <= MAX_ZANZOKEN_PRESS_TIME
-		&& !ent->client->zanzokenNow ) {
-			ent->client->zanzokenNow = qtrue;
-			ent->client->zanzokenNumberTimesAllowed++;
-		}
-
-		if ( !ucmd->rightmove 
-		&& level.time - ent->client->zanzokenPressTime > MAX_ZANZOKEN_PRESS_TIME ) {
-			ent->client->zanzokenNumberTimesAllowed = 0;
-			ent->client->zanzokenPressTime = 0;
-			ent->client->zanzokenNow = qfalse;
-			ent->client->zanzokenLeft = qfalse;
-			ent->client->zanzokenRight = qfalse;
+		// put in 1 second delay before the player can 'zanzoken' out of stun
+		if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.pm_time > 2000 ) {
+			client->zanzokenPressTime = 0;
+			client->zanzokenNow = qfalse;
+			client->zanzokenLeft = qfalse;
+			client->zanzokenRight = qfalse;
 			return;
 		}
 
-		if ( ent->client->ps.ammo[WP_KI] > ( ent->client->ps.stats[STAT_MAX_KI] * 0.05 )
-		&& ucmd->rightmove
-		&& ent->client->zanzokenNow ) {
-			int	range = ( ucmd->rightmove > 0 ) ? 500 : -500;
-
-			// handle the directions correctly
-			if ( ucmd->rightmove > 0 && !ent->client->zanzokenRight ) {
-				ent->client->zanzokenLeft = qfalse;
-				ent->client->zanzokenRight = qfalse;
-				return;
+		if ( Zanzoken( ent, range ) ) {
+			// block and stun statuses are removed when using zanzoken
+			if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.pm_time <= 2000 ) {
+				client->ps.pm_flags &= ~PMF_HITSTUN;
+				client->ps.pm_time = 0;
 			}
-			if ( ucmd->rightmove < 0 && !ent->client->zanzokenLeft ) {
-				ent->client->zanzokenLeft = qfalse;
-				ent->client->zanzokenRight = qfalse;
-				return;
-			}
-
-			// put in 1 second delay before the player can 'zanzoken' out of stun
-			if ( ( ent->client->ps.pm_flags & PMF_HITSTUN )
-			&& ent->client->ps.pm_time > 2000 ) {
-				ent->client->zanzokenPressTime = 0;
-				ent->client->zanzokenNow = qfalse;
-				ent->client->zanzokenLeft = qfalse;
-				ent->client->zanzokenRight = qfalse;
-				return;
-			}
-
-			if ( Zanzoken( ent, range ) ) {
-				// block and stun statuses are removed when using zanzoken
-				if ( ( ent->client->ps.pm_flags & PMF_HITSTUN )
-				&& ent->client->ps.pm_time <= 2000 ) {
-					ent->client->ps.pm_flags &= ~PMF_HITSTUN;
-					ent->client->ps.pm_time = 0;
-				}
-				ent->client->ps.pm_flags &= ~PMF_BLOCK;
-				// consumes 5% of ki
-				ent->client->ps.ammo[WP_KI] -= ( ent->client->ps.stats[STAT_MAX_KI] * 0.05 );
-				ent->client->zanzokenPressTime = 0;
-				ent->client->zanzokenNow = qfalse;
-				ent->client->zanzokenLeft = qfalse;
-				ent->client->zanzokenRight = qfalse;
-			}
+			client->ps.pm_flags &= ~PMF_BLOCK;
+			// consumes 5% of ki
+			client->ps.ammo[WP_KI] -= ( client->ps.stats[STAT_MAX_KI] * 0.05 );
+			client->zanzokenPressTime = 0;
+			client->zanzokenNow = qfalse;
+			client->zanzokenLeft = qfalse;
+			client->zanzokenRight = qfalse;
+			client->zanzokenLastUsed = currentTime; // Set cooldown
 		}
 	}
 }

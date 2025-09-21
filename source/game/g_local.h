@@ -349,6 +349,7 @@ struct gclient_s {
 	qboolean	zanzokenLeft, zanzokenRight;
 	int			zanzokenNumberTimesAllowed;
 	int			zanzokenDelay;
+	int			zanzokenLastUsed;
 
 	// BFP - Charged points for ki dividing ball
 	int			divideBallKiCharged;
