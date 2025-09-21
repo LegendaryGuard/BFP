@@ -2932,21 +2932,21 @@ static void CG_FindAttachMuzzleTag( centity_t *cent, clientInfo_t *ci, refEntity
 	orientation_t tagOrient;
 
 	// legs
-	if ( attackTagPart && attackTagPart != '\0' && attackTagPart == "legs"
+	if ( attackTagPart && attackTagPart != '\0' && !Q_stricmp( attackTagPart, "legs" )
 	&& trap_R_LerpTag( &tagOrient, ci->legsModel, legs->oldframe, legs->frame, 1.0 - legs->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( legs, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// torso
-	if ( attackTagPart && attackTagPart != '\0' && attackTagPart == "torso"
+	if ( attackTagPart && attackTagPart != '\0' && !Q_stricmp( attackTagPart, "torso" )
 	&& trap_R_LerpTag( &tagOrient, ci->torsoModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, attackTagName )) {
 		CG_AddPlayerWeapon( torso, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// head
-	if ( attackTagPart && attackTagPart != '\0' && attackTagPart == "head"
+	if ( attackTagPart && attackTagPart != '\0' && !Q_stricmp( attackTagPart, "head" )
 	&& trap_R_LerpTag( &tagOrient, ci->headModel, head->oldframe, head->frame, 1.0 - head->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( head, NULL, cent, ci->team, attackTagName );
 	}
@@ -2971,6 +2971,10 @@ void CG_Player( centity_t *cent ) {
 	int				powerlevel = -1;
 	// BFP - Save head for first person vis mode
 	refEntity_t savedHead;
+	// BFP - That macro makes all body being transformed during tier up. 
+	// Enabled by default, originally on BFP only shows the head as transformation transition
+	// while the body is already transformed.
+#define TIER_UP_TRANSFORM_ENTIRE_BODY	1
 
 	// the client number is stored in clientNum.  It can't be derived
 	// from the entity number, because a single client may have
@@ -3058,7 +3062,11 @@ void CG_Player( centity_t *cent ) {
 	legs.customSkin = ci->legsSkin;
 
 	// BFP - Ultimate tier legs model and skin
-	if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+	if ( powerlevel >= 1000
+#if TIER_UP_TRANSFORM_ENTIRE_BODY
+	&& cg.time > cent->pe.ultTierTransformTime - 800
+#endif
+	) {
 		if ( ci->ultTierLegsModel ) {
 			legs.hModel = ci->ultTierLegsModel;
 		}
@@ -3110,7 +3118,11 @@ void CG_Player( centity_t *cent ) {
 	torso.customSkin = ci->torsoSkin;
 
 	// BFP - Ultimate tier torso model and skin
-	if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+	if ( powerlevel >= 1000 
+#if TIER_UP_TRANSFORM_ENTIRE_BODY
+	&& cg.time > cent->pe.ultTierTransformTime - 800
+#endif
+	) {
 		if ( ci->ultTierTorsoModel ) {
 			torso.hModel = ci->ultTierTorsoModel;
 		}
