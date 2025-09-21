@@ -1826,17 +1826,31 @@ UI_BotSelectMenu_BuildList
 */
 static void UI_BotSelectMenu_BuildList( void ) {
 	int		n;
+	int		count = 0;
+	const char	*info;
+	char	model[MAX_QPATH];
 
 	botSelectInfo.modelpage = 0;
 	botSelectInfo.numBots = UI_GetNumBots();
+
+	// BFP - A modified list that excludes the monster model used on Monster gamemode
+	for( n = 0; n < botSelectInfo.numBots; n++ ) {
+		info = UI_GetBotInfoByNumber( n );
+		Q_strncpyz( model, Info_ValueForKey( info, "model" ), sizeof(model) );
+
+		// skip monster model
+		if ( !Q_stricmp( model, MONSTER_NAME ) ) {
+			continue;
+		}
+		
+		botSelectInfo.sortedBotNums[count] = n;
+		count++;
+	}
+
+	botSelectInfo.numBots = count; // Update with filtered count
 	botSelectInfo.numpages = botSelectInfo.numBots / MAX_MODELSPERPAGE;
 	if( botSelectInfo.numBots % MAX_MODELSPERPAGE ) {
 		botSelectInfo.numpages++;
-	}
-
-	// initialize the array
-	for( n = 0; n < botSelectInfo.numBots; n++ ) {
-		botSelectInfo.sortedBotNums[n] = n;
 	}
 
 	// now sort it

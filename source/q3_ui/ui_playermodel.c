@@ -611,6 +611,10 @@ static void PlayerModel_BuildList( void )
 
 		if (!strcmp(dirptr,".") || !strcmp(dirptr,".."))
 			continue;
+
+		// BFP - Skip monster model used on Monster gamemode
+		if ( !Q_stricmp( dirptr, MONSTER_NAME ) )
+			continue;
 			
 		// iterate all skin files in directory
 		numfiles = trap_FS_GetFileList( va("models/players/%s",dirptr), "tga", filelist, 2048 );
