@@ -545,7 +545,7 @@ static qboolean PM_CheckJump( void ) {
 
 	// BFP - With ki charge, the player can't jump. With hit stun, avoids jittering movements
 	if ( ( pm->ps->pm_flags & PMF_HITSTUN )
-	|| ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+	|| ( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
 		return qfalse;
 	}
 
