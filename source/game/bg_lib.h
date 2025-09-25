@@ -55,7 +55,7 @@ void	srand( unsigned seed );
 int		rand( void );
 
 // String functions
-int strlen( const char *string );
+size_t strlen( const char *string );
 char *strcat( char *strDestination, const char *strSource );
 char *strcpy( char *strDestination, const char *strSource );
 int strcmp( const char *string1, const char *string2 );
@@ -67,6 +67,9 @@ int toupper( int c );
 
 double atof( const char *string );
 int atoi( const char *string );
+
+int Q_vsprintf( char *buffer, const char *fmt, va_list argptr );
+int Q_sscanf( const char *buffer, const char *fmt, ... );
 
 // Memory functions
 void *memmove( void *dest, const void *src, size_t count );
