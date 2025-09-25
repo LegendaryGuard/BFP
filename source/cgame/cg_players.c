@@ -2932,21 +2932,21 @@ static void CG_FindAttachMuzzleTag( centity_t *cent, clientInfo_t *ci, refEntity
 	orientation_t tagOrient;
 
 	// legs
-	if ( attackTagPart && attackTagPart != '\0' && !Q_stricmp( attackTagPart, "legs" )
+	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "legs" )
 	&& trap_R_LerpTag( &tagOrient, ci->legsModel, legs->oldframe, legs->frame, 1.0 - legs->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( legs, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// torso
-	if ( attackTagPart && attackTagPart != '\0' && !Q_stricmp( attackTagPart, "torso" )
+	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "torso" )
 	&& trap_R_LerpTag( &tagOrient, ci->torsoModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, attackTagName )) {
 		CG_AddPlayerWeapon( torso, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// head
-	if ( attackTagPart && attackTagPart != '\0' && !Q_stricmp( attackTagPart, "head" )
+	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "head" )
 	&& trap_R_LerpTag( &tagOrient, ci->headModel, head->oldframe, head->frame, 1.0 - head->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( head, NULL, cent, ci->team, attackTagName );
 	}

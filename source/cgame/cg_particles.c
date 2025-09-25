@@ -1135,12 +1135,12 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, fl
 
 	// Too much smoke...
 	// That cent->trailTime can be handled to avoid spawning too much and only spawn when the game isn't paused, hehehe :P
-	if ( cent->trailTime > timenonscaled ) {
+	if ( cent->trailTime > cg.time ) {
 		return;
 	}
 	cent->trailTime += 50;
-	if ( cent->trailTime < timenonscaled ) {
-		cent->trailTime = timenonscaled;
+	if ( cent->trailTime < cg.time ) {
+		cent->trailTime = cg.time;
 	}
 
 	if (!free_particles)
