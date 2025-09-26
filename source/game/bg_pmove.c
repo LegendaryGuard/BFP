@@ -1121,19 +1121,27 @@ static void PM_AirMove( void ) {
 #endif
 	PM_TorsoStatusAnim( TORSO_STAND );
 
+	// BFP - Reduces speed when charging ki
+	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
+	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
+	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+		if ( pm->ps->velocity[2] > -10 ) {
+			pm->ps->velocity[2] *= 0.9;
+		}
+		wishvel[2] = -10;
+		VectorCopy (wishvel, wishdir);
+		wishspeed = VectorNormalize(wishdir);
+		PM_Accelerate (wishdir, wishspeed, pm_accelerate);
+		PM_SlideMove( qfalse );
+		pm->ps->velocity[2] *= 0.99;
+		return;
+	}
+
 	PM_StepSlideMove ( qtrue );
 
 	// BFP - TODO: Avoid being pressed. Some lurker may have problems issues doing that on gameplay, I suggest not to do it
 	if ( ( !( pm->ps->eFlags & EF_FLIGHT ) && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
 	&& !( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
-		return;
-	}
-
-	// BFP - Reduces speed when charging ki
-	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
-	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
-	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
-		PM_Accelerate (pm->ps->velocity, VectorNormalize( pm->ps->velocity ), pm_airaccelerate);
 		return;
 	}
 
@@ -1621,6 +1629,9 @@ static void PM_ControlJumpOnGround( void ) { // BFP - A control to handle user m
 		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 			pm->ps->velocity[0] *= 10;
 			pm->ps->velocity[1] *= 10;
+		} else { // BFP - Add a bit of forward/backward speed
+			pm->ps->velocity[0] *= 3.5;
+			pm->ps->velocity[1] *= 3.5;
 		}
 		vel = VectorLength( pm->ps->velocity );
 		if ( vel > 640 ) { // keep maximum speed

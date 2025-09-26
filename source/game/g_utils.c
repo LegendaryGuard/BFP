@@ -128,7 +128,7 @@ G_GetPlayerModelName
 Get player model name from a client
 ================
 */
-const char *G_GetPlayerModelName( int clientNum, char userinfo[MAX_INFO_STRING] ) { // BFP - Get player model name from a client
+const char *G_GetPlayerModelName( int clientNum, const char userinfo[MAX_INFO_STRING] ) { // BFP - Get player model name from a client
 	static char	model[MAX_QPATH];
 	// skin name to truncate "/default", "/red", "/blue"... words
 	char	skinName[MAX_QPATH];

@@ -505,7 +505,7 @@ void SaveRegisteredItems( void );
 //
 int G_ModelIndex( const char *name );
 int		G_SoundIndex( const char *name );
-const char	*G_GetPlayerModelName( int clientNum, char userinfo[MAX_INFO_STRING] );
+const char	*G_GetPlayerModelName( int clientNum, const char userinfo[MAX_INFO_STRING] ); // BFP - Get player model name from a client
 void	G_InitPlayerModelList( void ); // BFP - Initialize player model list
 qboolean G_PlayerModelExistsOnServer( const char *modelName ); // BFP - Check player model existence in the server
 void	G_TeamCommand( team_t team, const char *cmd );
