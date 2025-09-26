@@ -807,6 +807,11 @@ static void PM_WaterMove( void ) {
 		return;
 	}
 
+	// BFP - With ki charge, the player can't move, even up or down
+	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+		pm->cmd.upmove = 0;
+	}
+
 	if ( PM_CheckWaterJump() ) {
 		PM_WaterJumpMove();
 		return;
@@ -976,6 +981,11 @@ static void PM_FlyMove( void ) {
 
 	// normal slowdown
 	PM_Friction ();
+
+	// BFP - With ki charge, the player can't move, even up or down
+	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+		pm->cmd.upmove = 0;
+	}
 
 	// BFP - Ultimate tier
 	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
