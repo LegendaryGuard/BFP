@@ -505,6 +505,9 @@ void SaveRegisteredItems( void );
 //
 int G_ModelIndex( const char *name );
 int		G_SoundIndex( const char *name );
+const char	*G_GetPlayerModelName( int clientNum, char userinfo[MAX_INFO_STRING] );
+void	G_InitPlayerModelList( void ); // BFP - Initialize player model list
+qboolean G_PlayerModelExistsOnServer( const char *modelName ); // BFP - Check player model existence in the server
 void	G_TeamCommand( team_t team, const char *cmd );
 void	G_KillBox (gentity_t *ent);
 gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match);

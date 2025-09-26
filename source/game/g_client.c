@@ -631,10 +631,6 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	char newModelPrefix[MAX_QPATH];
 	char *oldModelDash, *newModelDash;
 
-	// BFP - Skin name to truncate the "/default" word
-	char	skinName[MAX_QPATH];
-	char	*slash;
-
 	ent = g_entities + clientNum;
 	client = ent->client;
 
@@ -703,28 +699,30 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	}
 
 	// set model
-	if( g_gametype.integer >= GT_TEAM ) {
-		Q_strncpyz( model, Info_ValueForKey (userinfo, "team_model"), sizeof( model ) );
-		// BFP - Truncate the "/default" word
-		slash = strchr( model, '/' );
-		if ( slash ) {
-			Q_strncpyz( skinName, slash + 1, sizeof( skinName ) );
-			*slash = 0;
-		}
+	Q_strncpyz( model, G_GetPlayerModelName( clientNum, userinfo ), sizeof( model ) );
 
-		// BFP - Save original player model
-		Q_strncpyz( originalPlayerModel, model, sizeof( originalPlayerModel ) );
-	} else {
-		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
-		// BFP - Truncate the "/default" word
-		slash = strchr( model, '/' );
-		if ( slash && !Q_stricmp( slash, "/default" ) ) {
-			Q_strncpyz( skinName, slash + 1, sizeof( skinName ) );
-			*slash = 0;
-		}
+	// BFP - Save original player model
+	Q_strncpyz( originalPlayerModel, model, sizeof( originalPlayerModel ) );
 
-		// BFP - Save original player model
-		Q_strncpyz( originalPlayerModel, model, sizeof( originalPlayerModel ) );
+	// BFP - Kick/force to spectate the player who uses an illegal model which isn't available in the server
+	if ( !G_PlayerModelExistsOnServer( model )
+	&& ( g_gametype.integer != GT_MONSTER
+	|| ( g_gametype.integer == GT_MONSTER && g_monster.integer < 1 ) ) ) {
+#if KICK_ILLEGAL_PLAYER_MODEL
+		if ( client && client->pers.connected != CON_DISCONNECTED ) {
+			trap_DropClient( clientNum, "was kicked" );
+		}
+#else
+		gentity_t *tempEnt = G_TempEntity( ent->r.currentOrigin, EV_OBITUARY );
+		tempEnt->s.eventParm = MOD_ILLEGAL_PLAYER_MODEL;
+		tempEnt->r.svFlags = SVF_BROADCAST;
+		client->sess.sessionTeam = TEAM_SPECTATOR;
+		client->sess.spectatorState = SPECTATOR_FREE;
+		client->sess.spectatorClient = 0;
+		client->sess.teamLeader = qfalse;
+		ClientBegin( clientNum );
+#endif
+		return qfalse;
 	}
 
 	// bots set their team a few frames later
@@ -764,7 +762,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 		Q_strncpyz( model, MONSTER_NAME, sizeof( model ) );
 	}
 
-	// BFP - NOTE: "omdl" is added for Monster gamemode purposes. 
+	// BFP - NOTE: "m" is added for Monster gamemode purposes. 
 	// Historically, on RC versions, the monster model pack went without player sounds 
 	// and the game loaded the selected player model sounds that the user played 
 	// on the other gamemodes
@@ -772,12 +770,12 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	// send over a subset of the userinfo keys so other clients can
 	// print scoreboards, display models, and play custom sounds
 	if ( ent->r.svFlags & SVF_BOT ) {
-		s = va("n\\%s\\t\\%i\\model\\%s\\omdl\\%s\\w\\%i\\l\\%i\\skill\\%s",
+		s = va("n\\%s\\t\\%i\\model\\%s\\m\\%s\\w\\%i\\l\\%i\\skill\\%s",
 			client->pers.netname, team, model, originalPlayerModel, 
 			client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ) );
 	} else {
-		s = va("n\\%s\\t\\%i\\model\\%s\\omdl\\%s\\w\\%i\\l\\%i",
+		s = va("n\\%s\\t\\%i\\model\\%s\\m\\%s\\w\\%i\\l\\%i",
 			client->pers.netname, client->sess.sessionTeam, model, originalPlayerModel, 
 			client->sess.wins, client->sess.losses );
 	}
@@ -1147,6 +1145,26 @@ void ClientBegin( int clientNum ) {
 
 	// locate ent at a spawn point
 	ClientSpawn( ent );
+
+	// BFP - Kick the player who uses an illegal player model which isn't in the server
+#if KICK_ILLEGAL_PLAYER_MODEL
+	{
+		char	userinfo[MAX_INFO_STRING];
+		char	model[MAX_QPATH];
+
+		trap_GetUserinfo( clientNum, userinfo, sizeof(userinfo) );
+		Q_strncpyz( model, G_GetPlayerModelName( clientNum, userinfo ), sizeof( model ) );
+
+		if ( !G_PlayerModelExistsOnServer( model )
+		&& ( g_gametype.integer != GT_MONSTER
+		|| ( g_gametype.integer == GT_MONSTER && g_monster.integer < 1 ) ) ) {
+			if ( client && client->pers.connected != CON_DISCONNECTED ) {
+				trap_DropClient( clientNum, "was kicked" );
+			}
+			return;
+		}
+	}
+#endif
 
 	if ( client->sess.sessionTeam != TEAM_SPECTATOR ) {
 		// send event

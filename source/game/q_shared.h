@@ -867,6 +867,8 @@ typedef enum {
 
 // BFP - Monster gamemode, monster model name macro
 #define	MONSTER_NAME		"oozaru"
+// BFP - Macro to enable/disable kicking the player who uses an illegal player model, if disabled, the player will be forced to spectate
+#define	KICK_ILLEGAL_PLAYER_MODEL	1
 
 #define	MAX_MODELS			256		// these are sent over the net as 8 bits
 #define	MAX_SOUNDS			256		// so they cannot be blindly increased

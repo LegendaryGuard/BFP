@@ -121,6 +121,100 @@ int G_SoundIndex( const char *name ) {
 	return G_FindConfigstringIndex (name, CS_SOUNDS, MAX_SOUNDS, qtrue);
 }
 
+/*
+================
+G_GetPlayerModelName
+
+Get player model name from a client
+================
+*/
+const char *G_GetPlayerModelName( int clientNum, char userinfo[MAX_INFO_STRING] ) { // BFP - Get player model name from a client
+	static char	model[MAX_QPATH];
+	// skin name to truncate "/default", "/red", "/blue"... words
+	char	skinName[MAX_QPATH];
+	char	*slash;
+
+	// set model
+	if ( g_gametype.integer >= GT_TEAM ) {
+		Q_strncpyz( model, Info_ValueForKey (userinfo, "team_model"), sizeof( model ) );
+	} else {
+		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
+	}
+	// truncate the "/default", "/red", "/blue"... words
+	slash = strchr( model, '/' );
+	if ( slash ) {
+		Q_strncpyz( skinName, slash + 1, sizeof( skinName ) );
+		*slash = 0;
+	}
+
+	return model;
+}
+
+// BFP - Struct for handling the list of models in the server in order to avoid using a model which isn't in the list
+typedef struct {
+	char modelNames[MAX_MODELS][MAX_QPATH];
+	int numModels;
+} modelList_t;
+
+static modelList_t serverModels;
+
+/*
+================
+G_InitPlayerModelList
+
+Initialize player model list at server startup
+================
+*/
+void G_InitPlayerModelList( void ) { // BFP - For Illegal player model handling
+	char	fileList[4096];
+	char	*filePtr;
+	int		numFiles, i, len;
+
+	serverModels.numModels = 0;
+
+	// scan models/players directory for available models
+	numFiles = trap_FS_GetFileList( "models/players", "/", fileList, sizeof(fileList) );
+
+	filePtr = fileList;
+	for ( i = 0; i < numFiles && serverModels.numModels < MAX_MODELS; ++i ) {
+		len = strlen( filePtr );
+
+		if ( len > 0 && filePtr[len - 1] != '.' ) { // skip hidden files
+			// remove trailing slash if present
+			if ( len > 0 && filePtr[len - 1] == '/' ) {
+				Q_strncpyz( serverModels.modelNames[serverModels.numModels], filePtr, len );
+			} else {
+				Q_strncpyz( serverModels.modelNames[serverModels.numModels], filePtr, MAX_QPATH );
+			}
+			++serverModels.numModels;
+		}
+		filePtr += len + 1;
+	}
+}
+
+/*
+================
+G_PlayerModelExistsOnServer
+
+Check if model exists on server
+================
+*/
+qboolean G_PlayerModelExistsOnServer( const char *modelName ) { // BFP - Illegal player model handling
+	int		i;
+
+	if ( !Q_stricmp( modelName, MONSTER_NAME ) ) {
+		return qfalse;
+	}
+
+	for ( i = 0; i < serverModels.numModels; ++i ) {
+		if ( !Q_stricmp( modelName, serverModels.modelNames[i] ) ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
 //=====================================================================
 
 

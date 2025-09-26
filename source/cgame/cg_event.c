@@ -137,6 +137,10 @@ static void CG_Obituary( entityState_t *ent ) {
 	case MOD_TRIGGER_HURT:
 		message = "was in the wrong place";
 		break;
+	// BFP - Player being kicked by using an illegal model
+	case MOD_ILLEGAL_PLAYER_MODEL:
+		message = "got kicked into spectator mode for using an illegal model";
+		break;
 	default:
 		message = NULL;
 		break;

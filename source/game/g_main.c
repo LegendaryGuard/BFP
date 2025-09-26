@@ -414,6 +414,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	SaveRegisteredItems();
 
+	// BFP - Initialize player model list
+	G_InitPlayerModelList();
+
 	G_LocateSpawnSpots();
 
 	G_Printf ("-----------------------------------\n");

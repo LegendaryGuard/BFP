@@ -724,6 +724,34 @@ void Cmd_Team_f( gentity_t *ent ) {
 
 	trap_Argv( 1, s, sizeof( s ) );
 
+	// BFP - Kick/force to spectate the player who uses an illegal model which isn't available in the server
+	{
+		char	model[MAX_QPATH];
+		char	userinfo[MAX_INFO_STRING];
+
+		trap_GetUserinfo( ent->client->ps.clientNum, userinfo, sizeof( userinfo ) );
+		Q_strncpyz( model, G_GetPlayerModelName( ent->client->ps.clientNum, userinfo ), sizeof( model ) );
+
+		if ( !G_PlayerModelExistsOnServer( model )
+		&& ( g_gametype.integer != GT_MONSTER
+		|| ( g_gametype.integer == GT_MONSTER && g_monster.integer < 1 ) ) ) {
+#if KICK_ILLEGAL_PLAYER_MODEL
+			if ( ent->client && ent->client->pers.connected != CON_DISCONNECTED ) {
+				trap_DropClient( ent->client->ps.clientNum, "was kicked" );
+			}
+#else
+			gentity_t *tempEnt = G_TempEntity( ent->r.currentOrigin, EV_OBITUARY );
+			tempEnt->s.eventParm = MOD_ILLEGAL_PLAYER_MODEL;
+			tempEnt->r.svFlags = SVF_BROADCAST;
+			ent->client->sess.sessionTeam = TEAM_SPECTATOR;
+			ent->client->sess.spectatorState = SPECTATOR_FREE;
+			ent->client->sess.spectatorClient = 0;
+			ClientBegin( ent->client->ps.clientNum );
+#endif
+			return;
+		}
+	}
+
 	// BFP - Team Last Man Standing, show a centerprint message to switching teams when the player were fragged and forced to spectate
 	if ( g_gametype.integer == GT_TLMS
 	&& ent->client->forceToSpectate ) {
