@@ -789,7 +789,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	}
 
 	// BFP - Apply dynamic explosion light values
-	leSphere->light = 500 * scale;
+	leSphere->light = 400 * scale;
 	leSphere->lightColor[0] = 1;
 	leSphere->lightColor[1] = 0.75;
 	leSphere->lightColor[2] = 0.0;

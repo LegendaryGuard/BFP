@@ -3210,8 +3210,13 @@ void CG_Player( centity_t *cent ) {
 
 	// BFP - Render ultimate perma-glow dynamic lights when already transformed
 	if ( cg_lightAuras.integer > 0 && cg_permaglowUltimate.integer > 0 && powerlevel >= 1000 ) {
-		trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&80), 1.0, 1.0, 0.2f );
-		trap_R_AddLightToScene( cent->lerpOrigin, 50 + (rand()&80), 1.0, 1.0, 0.2f );
+		int dLightSize = 50;
+		// BFP - Monster gamemode, player monster' dynamic lights are bigger than a normal one
+		if ( cent->currentState.eFlags & EF_MONSTER ) {
+			dLightSize = 270;
+		}
+		trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&( dLightSize + 30 )), 1.0, 1.0, 0.2f );
+		trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&( dLightSize + 30 )), 1.0, 1.0, 0.2f );
 	}
 
 	// BFP - First person camera setup
