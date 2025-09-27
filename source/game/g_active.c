@@ -695,15 +695,29 @@ BlockHandling
 =================
 */
 static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block, reflect ki attacks and reduce health damage
+	// if the block length duration hasn't been expired yet and 
+	// pressing ki charge (if the aura is lighting) or attack buttons, then stop blocking and start the delay
+	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
+	&& ( ( client->ps.pm_flags & PMF_KI_CHARGE )
+	|| ( ucmd->buttons & BUTTON_KI_CHARGE )
+	|| ( ucmd->buttons & BUTTON_ATTACK )
+	|| ( ucmd->buttons & BUTTON_MELEE ) ) ) {
+		client->ps.pm_flags &= ~PMF_BLOCK;
+		client->blockTime = 0;
+		client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
+	}
+
 	// initialize the blocking and start the block length duration, specifically, ki boost and aura are disabled
 	if ( !( client->ps.pm_flags & PMF_BLOCK )
 	&& ( ucmd->buttons & BUTTON_BLOCK )
+	&& !( ucmd->buttons & BUTTON_KI_CHARGE )
 	&& client->blockTime <= 0
 	&& client->blockDelayTime <= 0 ) {
 		client->ps.pm_flags |= PMF_BLOCK;
-		client->ps.eFlags &= ~EF_KI_BOOST;
-		client->ps.eFlags &= ~EF_AURA;
-		ucmd->buttons &= ~BUTTON_KI_USE;
+		if ( ucmd->buttons & BUTTON_KI_USE ) {
+			client->ps.eFlags &= ~EF_KI_BOOST;
+			client->ps.eFlags &= ~EF_AURA;
+		}
 		client->blockTime = level.time + (g_blockLength.integer * 1000);
 	}
 
@@ -721,18 +735,6 @@ static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block
 	&& client->blockTime > 0 
 	&& level.time >= client->blockKnockbackTime ) {
 		client->blockKnockbackTime = 0;
-	}
-
-	// if the block length duration hasn't been expired yet and 
-	// pressing ki charge (if the aura is lighting) or attack buttons, then stop blocking and start the delay
-	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-	&& ( ( client->ps.pm_flags & PMF_KI_CHARGE )
-	|| ( ucmd->buttons & BUTTON_KI_CHARGE )
-	|| ( ucmd->buttons & BUTTON_ATTACK )
-	|| ( ucmd->buttons & BUTTON_MELEE ) ) ) {
-		client->ps.pm_flags &= ~PMF_BLOCK;
-		client->blockTime = 0;
-		client->blockDelayTime = level.time + (g_blockDelay.integer * 1000);
 	}
 
 	// debug print block length and delay duration
@@ -1089,7 +1091,8 @@ void ClientThink_real( gentity_t *ent ) {
 			client->ps.eFlags |= EF_KI_BOOST; // Handle ki boost status
 			client->ps.eFlags |= EF_AURA;
 		} else {
-			if ( !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
+			if ( !( client->ps.pm_flags & PMF_BLOCK ) // BFP - Handle block status from this conditional
+			&& !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
 				client->ps.eFlags &= ~EF_AURA;
 				client->ps.eFlags &= ~EF_KI_BOOST; // Handle ki boost status
 			}

@@ -895,8 +895,7 @@ static void PM_WaterMove( void ) {
 	}
 #endif
 
-	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
-	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+	if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& ( pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0 || pm->cmd.upmove != 0 ) ) {
 		// BFP - Ki boost speed is dependent on powerlevel
@@ -1131,7 +1130,7 @@ static void PM_AirMove( void ) {
 		wishvel[2] = -10;
 		VectorCopy (wishvel, wishdir);
 		wishspeed = VectorNormalize(wishdir);
-		PM_Accelerate (wishdir, wishspeed, pm_accelerate);
+		PM_Accelerate (wishdir, wishspeed, pm_airaccelerate);
 		PM_SlideMove( qfalse );
 		pm->ps->velocity[2] *= 0.99;
 		return;
@@ -1146,12 +1145,6 @@ static void PM_AirMove( void ) {
 	}
 
 	// BFP - Handle gravity, make the player heavier
-	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
-	&& ( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE ) ) {
-		PM_SlideMove ( qtrue );
-		return;
-	}
-
 	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY ) ) {
 		PM_SlideMove ( qtrue );
 		return;
@@ -1281,8 +1274,7 @@ static void PM_WalkMove( void ) {
 	}
 #endif
 
-	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
-	&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+	if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		// BFP - Ki boost speed is dependent on powerlevel
 		wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // move at that speed rate
@@ -1624,8 +1616,7 @@ static void PM_ControlJumpOnGround( void ) { // BFP - A control to handle user m
 			pm->ps->velocity[i] = pml.forward[i]*fmove + pml.right[i]*smove;
 		}
 
-		if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
-		&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 			pm->ps->velocity[0] *= 10;
 			pm->ps->velocity[1] *= 10;
@@ -1756,7 +1747,6 @@ static void PM_GroundTrace( void ) {
 			// BFP - Handle jumping and changing the direction
 			PM_ControlJumpOnGround();
 			if ( ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) )
-			&& !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 			&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 			&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 				pm->ps->velocity[0] *= 5;
@@ -2293,8 +2283,7 @@ static void PM_TorsoAnimation( void ) {
 				pm->ps->velocity[i] = pml.forward[i]*fmove + pml.right[i]*smove;
 			}
 
-			if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
-			&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+			if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 			&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 				pm->ps->velocity[0] *= 10;
 				pm->ps->velocity[1] *= 10;
@@ -2308,8 +2297,7 @@ static void PM_TorsoAnimation( void ) {
 			VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
 		}
 		// increase jumping speed using ki boost while not moving directionally		
-		if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
-		&& pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
+		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) )
 		&& !( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
 		|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
@@ -3189,12 +3177,20 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_USE | BUTTON_MELEE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
 	}
 
+	// BFP - Smoothing horizontal and forward/backward fall while ki charging
 	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
-		// Don't move from the position when falling
-		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
-		&& pm->ps->groundEntityNum == ENTITYNUM_NONE ) {
-			pm->ps->velocity[0] = 0;
-			pm->ps->velocity[1] = 0;
+		float speed = VectorLength( pm->ps->velocity );
+		if ( speed > 0 ) {
+			float control = speed < pm_stopspeed ? pm_stopspeed : speed;
+			float drop = control * pm_friction * pml.frametime;
+			
+			// scale the velocity
+			float newspeed = speed - drop;
+			if ( newspeed < 0 ) newspeed = 0;
+			newspeed /= speed;
+			
+			pm->ps->velocity[0] *= newspeed;
+			pm->ps->velocity[1] *= newspeed;
 		}
 		pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
 	}
@@ -3209,9 +3205,8 @@ Receives hit stun
 */
 static void PM_HitStun( void ) { // BFP - Hit stun
 
-	if ( pm->cmd.buttons & ( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT ) ) {
-		pm->cmd.buttons &= ~( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
-	}
+	pm->cmd.buttons &= ~( BUTTON_MELEE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_ENABLEFLIGHT );
+	pm->cmd.upmove = 0;
 
 	pm->ps->eFlags &= ~EF_FLIGHT;
 	pm->ps->eFlags &= ~EF_KI_BOOST;
@@ -3278,6 +3273,11 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->cmd.buttons &= ~BUTTON_ATTACK;
 		pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 		pm->ps->eFlags &= ~EF_FIRING;
+	}
+
+	// BFP - When blocking, disable the ki use button, also that avoids jittering
+	if ( pm->ps->pm_flags & PMF_BLOCK ) {
+		pm->cmd.buttons &= ~BUTTON_KI_USE;
 	}
 
 	// set the firing flag for continuous beam weapons
