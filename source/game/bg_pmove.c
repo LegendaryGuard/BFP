@@ -373,13 +373,13 @@ static void PM_Friction( void ) {
 
 	// apply water friction even if just wading
 	if ( pm->waterlevel 
-	&& !( pm->ps->eFlags & EF_FLIGHT ) ) { // BFP - Don't apply on flight
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) { // BFP - Don't apply on flight
 		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
 	}
 
 	// apply flying friction
 	// BFP - Flight
-	if ( pm->ps->eFlags & EF_FLIGHT ) {
+	if ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		control = speed < pm_stopspeed ? pm_stopspeed : speed;
 		drop += control*pm_flightfriction*pml.frametime;
 	}
@@ -1138,14 +1138,9 @@ static void PM_AirMove( void ) {
 
 	PM_StepSlideMove ( qtrue );
 
-	// BFP - TODO: Avoid being pressed. Some lurker may have problems issues doing that on gameplay, I suggest not to do it
-	if ( ( !( pm->ps->eFlags & EF_FLIGHT ) && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
-	&& !( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
-		return;
-	}
-
 	// BFP - Handle gravity, make the player heavier
-	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY ) ) {
+	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
+	&& !( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
 		PM_SlideMove ( qtrue );
 		return;
 	}
@@ -1597,7 +1592,7 @@ PM_ControlJumpOnGround
 static void PM_ControlJumpOnGround( void ) { // BFP - A control to handle user movement intentions when jumping off the ground
 	if ( pm->ps->weaponstate != WEAPON_STUN
 	&& pm->ps->groundEntityNum != ENTITYNUM_NONE 
-	&& !( pm->ps->eFlags & EF_FLIGHT )
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
 	&& ( pm->cmd.upmove > 0 || ( pm->ps->pm_flags & PMF_JUMP_HELD ) ) 
 		&& ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
 			|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
@@ -1720,7 +1715,7 @@ static void PM_GroundTrace( void ) {
 	}
 
 	// BFP - Make sure to handle the PMF flags when the player isn't flying
-	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		pm->ps->pm_flags |= PMF_FALLING;
 		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 	}
@@ -1737,7 +1732,7 @@ static void PM_GroundTrace( void ) {
 		pml.walking = qfalse;
 
 		// BFP - If flying, prevent from doing a jumping action on slopes
-		if ( pm->ps->eFlags & EF_FLIGHT ) {
+		if ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 			return;
 		}
 
@@ -1770,7 +1765,7 @@ static void PM_GroundTrace( void ) {
 
 	// BFP - NOTE: Originally, BFP doesn't stop "groundtracing" until here when the player is flying
 	// BFP - If flying, prevent from doing a jumping action on flat ground
-	if ( pm->ps->eFlags & EF_FLIGHT ) {
+	if ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		// BFP - To stick to the movers if the player is near to them
 		pm->ps->groundEntityNum = trace.entityNum;
 		PM_AddTouchEnt( trace.entityNum );
@@ -1795,7 +1790,7 @@ static void PM_GroundTrace( void ) {
 
 	// BFP - Handle when the player isn't flying
 	if ( pm->ps->groundEntityNum == ENTITYNUM_NONE 
-	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		// just hit the ground
 		if ( pm->debugLevel ) {
 			Com_Printf("%i:Land\n", c_pmove);
@@ -2137,7 +2132,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 	//
 	if (!pml.previous_waterlevel && pm->waterlevel) {
 		if ( !( cont & MASK_WATER )
-		&& !( pm->ps->eFlags & EF_FLIGHT )
+		&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
 		&& pm->cmd.upmove > 0 ) {
 			PM_AddEvent( EV_FOOTSPLASH ); // BFP - Play a different and smooth sound
 			return;
@@ -2151,13 +2146,13 @@ static void PM_WaterEvents( void ) {		// FIXME?
 	//
 	if (pml.previous_waterlevel && !pm->waterlevel) {
 		if ( !( cont & MASK_WATER )
-		&& !( pm->ps->eFlags & EF_FLIGHT )
+		&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
 		&& pm->cmd.upmove > 0 ) {
 			PM_AddEvent( EV_FOOTSPLASH ); // BFP - Play a different and smooth sound
 		} else {
 			PM_AddEvent( EV_WATER_LEAVE );
 		}
-		if ( !( pm->ps->eFlags & EF_FLIGHT ) 
+		if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) 
 		&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_MELEE )
@@ -2262,7 +2257,7 @@ static void PM_TorsoAnimation( void ) {
 
 	if ( ( cont & MASK_WATER ) 
 	&& pm->waterlevel <= 2
-	&& !( pm->ps->eFlags & EF_FLIGHT )
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
 	&& pm->cmd.upmove > 0 ) {
 		pm->ps->velocity[2] = 200;
 		// Control the player depending their moves
@@ -2325,7 +2320,7 @@ static void PM_TorsoAnimation( void ) {
 
 	// BFP - Falling distantly from the ground
 	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND )
-	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		pm->ps->pm_flags |= PMF_NEARGROUND;
 		PM_ForceJumpAnim();
 		PM_TorsoStatusAnim( TORSO_STAND );
@@ -2339,7 +2334,7 @@ static void PM_TorsoAnimation( void ) {
 	// Handle the player movement animation when stopping to fly and falling near to the ground
 	// that happens when PMF_FALLING flag isn't handled correctly
 	if ( ( pml.groundTrace.contents & MASK_PLAYERSOLID )
-	&& !( pm->ps->eFlags & EF_FLIGHT )
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
 	&& !( pm->ps->pm_flags & PMF_FALLING )
 	&& ( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
 		pm->ps->pm_flags |= PMF_FALLING;
@@ -2348,7 +2343,7 @@ static void PM_TorsoAnimation( void ) {
 
 	// BFP - That happens when the player is landing nearly
 	if ( !( pm->ps->pm_flags & PMF_NEARGROUND )
-	&& !( pm->ps->eFlags & EF_FLIGHT )
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
 	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
 		PM_SlopesNeargroundAnim( 0 );
@@ -2390,15 +2385,9 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 	pm->trace ( &trace, pm->ps->origin, pm->mins, pm->maxs, point, pm->ps->clientNum, pm->tracemask );
 	pml.groundTrace = trace;
 
-	// BFP - Avoid when the flight key is being pressed all time
-	if ( !( pm->ps->eFlags & EF_FLIGHT ) 
-	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID )
-	&& ( pm->ps->pm_flags & PMF_FLIGHT_ACTIVE ) ) {
-		if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
-			return;
-		} else {
-			pm->ps->pm_flags &= ~PMF_FLIGHT_ACTIVE;
-		}
+	// BFP - Avoid when the flight key is being pressed all time, they want to do it, their flight is still enabled
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
+		pm->ps->pm_flags &= ~PMF_FLIGHT_ACTIVE;
 	}
 
 	// BFP - If the player is in the ground, then jump!
@@ -2448,7 +2437,8 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 		return;
 	}
 
-	if ( ( pm->ps->eFlags & EF_FLIGHT ) && pm->ps->pm_time <= 0 ) {
+	if ( ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) )
+	&& pm->ps->pm_time <= 0 ) {
 
 		// make sure to handle the PMF flags
 		pm->ps->pm_flags &= ~PMF_FALLING;
@@ -2462,7 +2452,7 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
 	if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
 	&& !( pm->ps->pm_flags & PMF_FALLING )
-	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
+	&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 
 		// stops entering again here and don't change the animation to backwards/forward
 		pm->ps->pm_flags |= PMF_FALLING;
@@ -2495,7 +2485,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->ps->pm_time = 0;
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
-			&& !( pm->ps->eFlags & EF_FLIGHT )
+			&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
 			&& ( pm->ps->pm_flags & PMF_FALLING )
 			&& pm->waterlevel <= 1 ) { // Don't force inside the water
 			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
@@ -3133,17 +3123,19 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		return qfalse;
 	}
 
-	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		return qfalse;
 	}
 
 	// Handle the PMF flag if it's already flying
-	if ( ( pm->ps->eFlags & EF_FLIGHT ) && !( pm->ps->pm_flags & PMF_FALLING ) ) {
+	if ( ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) )
+	&& !( pm->ps->pm_flags & PMF_FALLING ) ) {
 		return qtrue;
 	}
 
 	// do not proceed to the jump event while enables the flight in the charging status
-	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_FLIGHT ) ) {
+	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
+	&& ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) ) {
 		pm->ps->groundEntityNum = ENTITYNUM_NONE;
 		return qfalse;
 	}
@@ -3178,7 +3170,7 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 	}
 
 	// BFP - Smoothing horizontal and forward/backward fall while ki charging
-	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
+	if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 		float speed = VectorLength( pm->ps->velocity );
 		if ( speed > 0 ) {
 			float control = speed < pm_stopspeed ? pm_stopspeed : speed;
@@ -3259,7 +3251,6 @@ void PmoveSingle (pmove_t *pmove) {
 		// BFP - TODO: Set to the first selected weapon
 		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
-		pm->ps->pm_flags |= PMF_FLIGHT_ACTIVE; // BFP - Flight active status
 	}
 
 	// BFP - No flight

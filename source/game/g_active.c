@@ -465,7 +465,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// BFP - Decrease ki when flying
-		if ( ( client->ps.eFlags & EF_FLIGHT ) 
+		if ( ( client->ps.eFlags & EF_FLIGHT ) || ( client->buttons & BUTTON_ENABLEFLIGHT )
 		&& client->ps.ammo[WP_KI] > 0
 		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) { // don't decrease when charging
 			if ( g_flightCostPct.value > 0 && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) { // reduce a bit if the percentage cost is more than 0 and has less powerlevel
