@@ -20,6 +20,8 @@ BFP TRAILS
 typedef struct {
 	vec3_t segments[TRAIL_SEGMENTS];
 	int numSegments;
+	vec3_t lastAimAngles;		// track last aim direction
+	int lastAimChangeTime;		// last time aim direction changed
 } trail_t;
 
 static trail_t cg_trails[MAX_GENTITIES][2];
@@ -56,6 +58,8 @@ void CG_ResetTrail( const int TRAIL_TYPE, int entityNum, vec3_t origin ) {
 		VectorCopy( origin, cg_trails[entityNum][TRAIL_TYPE].segments[i] );
 	}
 	cg_trails[entityNum][TRAIL_TYPE].numSegments = 0;
+	VectorClear( cg_trails[entityNum][TRAIL_TYPE].lastAimAngles );
+	cg_trails[entityNum][TRAIL_TYPE].lastAimChangeTime = 0;
 }
 
 /*
@@ -164,8 +168,8 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 	int i;
 	int nBeamSegments = cg_beamTrail.integer;
 	trail_t *beamTrail = &cg_trails[entityNum][BEAM_TRAIL];
-
-	// BFP - TODO: Make beam bendy like BFP did
+	const float BEAM_STRAIGHTEN_RATE = 0.2f;	// how quickly segments straighten (0.0 - 1.0)
+	const float BEAM_AIM_THRESHOLD = 1.0f;		// minimum angle change to consider "aiming"
 
 	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
 		return;
@@ -175,37 +179,135 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 		nBeamSegments = TRAIL_SEGMENTS;
 	}
 
-	if ( nBeamSegments < 2 ) {
+	// for better visual bendy effect, the number of segments should be equal or more than 10
+	if ( nBeamSegments < 10 ) {
 		nBeamSegments = 2;
 	}
 
-	VectorCopy( origin, beamTrail->segments[nBeamSegments - 1] );
-	VectorCopy( muzzleOrigin, beamTrail->segments[0] );
+	beamTrail->numSegments = nBeamSegments;
 
-	// stretching segments
-	{
-		vec3_t dir;
-		for ( i = 1; i < nBeamSegments - 1; ++i ) {
-			float stretchFactor = (float)i / (float)( nBeamSegments - 1 );
-			VectorSubtract( muzzleOrigin, origin, dir );
-			VectorMA( origin, stretchFactor, dir, beamTrail->segments[i] );
+	VectorCopy( muzzleOrigin, beamTrail->segments[0] );
+	VectorCopy( origin, beamTrail->segments[nBeamSegments - 1] );
+
+	// start stretching segments
+	if ( nBeamSegments >= 10 ) {
+		vec3_t direction, currentAngles, beamDir;
+		float angleDelta, beamLength, lengthFactor;
+		qboolean isAiming;
+
+		// beam length and direction
+		VectorSubtract( origin, muzzleOrigin, beamDir );
+		beamLength = VectorLength( beamDir );
+		VectorNormalize( beamDir );
+		vectoangles( beamDir, currentAngles );
+
+		// length factor for straightening based on beam length
+		// longer beam = more straightening (less curve)
+		// reference length of 5000 units as baseline
+		lengthFactor = 1.0f + ( beamLength / 5000.0f );
+		if ( lengthFactor > 2.5f ) {
+			lengthFactor = 2.5f;
+		}
+
+		if ( beamTrail->lastAimChangeTime > 0 ) {
+			angleDelta = Distance( currentAngles, beamTrail->lastAimAngles );
+			isAiming = ( angleDelta > BEAM_AIM_THRESHOLD );
+		} else {
+			isAiming = qfalse;
+			angleDelta = 0;
+		}
+
+		if ( isAiming ) {
+			beamTrail->lastAimChangeTime = cg.time + 200;
+		}
+		VectorCopy( currentAngles, beamTrail->lastAimAngles );
+
+		// shift all segments down by one position (creating trail effect)
+		for ( i = nBeamSegments - 1; i > 0; --i ) {
+			VectorCopy( beamTrail->segments[i - 1], beamTrail->segments[i] );
+		}
+
+		// update all segments with distance-based straightening
+		for ( i = 1; i < nBeamSegments; ++i ) {
+			vec3_t targetPos, segmentToOrigin;
+			float distanceToOrigin, segmentFraction;
+			float straightenFactor, maxExpectedDistance, stretchRatio;
+
+			// ideal position on straight line from muzzle to origin
+			segmentFraction = (float)i / (float)( nBeamSegments - 1 );
+			VectorMA( muzzleOrigin, segmentFraction * beamLength, beamDir, targetPos );
+
+			// how far this segment is from the impact point
+			VectorSubtract( origin, beamTrail->segments[i], segmentToOrigin );
+			distanceToOrigin = VectorLength( segmentToOrigin );
+
+			// expected distance if beam was straight
+			maxExpectedDistance = beamLength * ( 1.0f - segmentFraction );
+
+			// stretch ratio (how much segments are stretched)
+			stretchRatio = 1.0f;
+			if ( maxExpectedDistance > 0.1f ) {
+				stretchRatio = distanceToOrigin / maxExpectedDistance;
+			}
+
+			// more stretch = more straightening
+			// stretchRatio: 1.0 = no stretch, >1.0 = stretched
+
+			// currently aiming - allow bending with minimal straightening
+			// length factor: longer beams still straighten a bit more even while aiming
+			straightenFactor = 0.05f * lengthFactor;
+			if ( straightenFactor > 0.3f ) {
+				straightenFactor = 0.3f;
+			}
+
+			if ( stretchRatio > 1.0f ) {
+				// segments are stretching, straighten them out more aggressively
+				// length factor: longer beams straighten more
+				straightenFactor = BEAM_STRAIGHTEN_RATE * stretchRatio * lengthFactor;
+				if ( straightenFactor > 1.0f ) {
+					straightenFactor = 1.0f;
+				}
+			} else if ( cg.time - beamTrail->lastAimChangeTime > 100 ) {
+				// not aiming and not stretched - gentle straightening
+				// length factor: longer beams straighten faster
+				straightenFactor = BEAM_STRAIGHTEN_RATE * lengthFactor;
+				if ( straightenFactor > 1.0f ) {
+					straightenFactor = 1.0f;
+				}
+			}
+
+			// transition toward target position
+			VectorScale( beamTrail->segments[i], 1.0f - straightenFactor, beamTrail->segments[i] );
+			VectorMA( beamTrail->segments[i], straightenFactor, targetPos, beamTrail->segments[i] );
 		}
 	}
 
 	// draw every beam segment
-	for ( i = 0; i < nBeamSegments - 1; ++i ) {
+	{
 		refEntity_t beam;
 		memset( &beam, 0, sizeof( beam ) );
-		beam.reType = RT_LIGHTNING;
+
 		beam.customShader = hShader;
 		beam.shaderRGBA[0] = beam.shaderRGBA[1] = beam.shaderRGBA[2] = beam.shaderRGBA[3] = 0xff;
 
-		VectorCopy( beamTrail->segments[i], beam.origin );
-		VectorCopy( beamTrail->segments[i + 1], beam.oldorigin );
+		for ( i = 0; i < nBeamSegments - 1; ++i ) {
+			// BFP - NOTE: Skip the rendering of the 2 last segments. 
+			// Weird. That's why the bendy beam can't visualize that segment correctly.
+			// On original BFP also happens
+			if ( nBeamSegments >= 10 && i >= (nBeamSegments - 2) ) {
+				return;
+			}
+			beam.reType = RT_LIGHTNING;
+			VectorCopy( beamTrail->segments[i], beam.origin );
+			VectorCopy( beamTrail->segments[i + 1], beam.oldorigin );
 
-		trap_R_AddRefEntityToScene( &beam );
+			trap_R_AddRefEntityToScene( &beam );
+
+			// apply sprite in the middle of every segment to avoid showing ugly visual effect
+			beam.reType = RT_SPRITE;
+			trap_R_AddRefEntityToScene( &beam );
+		}
 	}
-	beamTrail->numSegments = nBeamSegments;
 }
 
 
@@ -288,11 +390,10 @@ void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhand
 		trap_R_AddRefEntityToScene( &beam );
 
 		// draw every corkscrew segment
+		beam.customShader = corkscrewShader;
+
 		for ( i = 0; i < CORKSCREW_SEGMENTS - 1; ++i ) {
-			memset( &beam, 0, sizeof( beam ) );
 			beam.reType = RT_RAIL_CORE;
-			beam.customShader = corkscrewShader;
-			beam.shaderRGBA[0] = beam.shaderRGBA[1] = beam.shaderRGBA[2] = beam.shaderRGBA[3] = 0xff;
 			VectorCopy( spiralSegments[i], beam.origin );
 			VectorCopy( spiralSegments[i + 1], beam.oldorigin );
 			trap_R_AddRefEntityToScene( &beam );
