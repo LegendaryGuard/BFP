@@ -27,29 +27,31 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 ### Done:
 
-- [x] ~~Animations as listed on the old docs~~
-- [x] ~~Auras~~
-- [x] ~~Balanced player physics movements (different from the original BFP, but balanced for gameplay)~~
-- [x] ~~Bind key to recover ki energy~~
-- [x] ~~Bind key to toggle speed (ki boost)~~
-- [x] ~~Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)~~
-- [x] ~~Breakable map entities ("func_breakable")~~
-- [x] ~~Gametype: Survival (`g_gametype 3`)~~
-- [x] ~~Gametype: Monster (`g_gametype 4`)~~
-- [x] ~~Gametype: Team Last Man Standing (`g_gametype 6`)~~
-- [x] ~~Hit Stun (makes player can't use ki, melee, block and charge)~~
-- [x] ~~Instant character model changing~~
-- [x] ~~Ki trails~~
-- [x] ~~Melee feature~~
-- [x] ~~Remove some items like powerups and health pickups~~
-- [x] ~~Powerlevel and Power Tiers indicated on old docs~~
-- [x] ~~Playable third person mode and first person vis mode~~
-- [x] ~~Remove weapon visuals (models and stuff)~~
-- [x] ~~Replace ammo to ki energy stamina~~
-- [x] ~~Short-Range Teleport - Zanzoken (when pressing 2 times left or right)~~
-- [x] ~~Third person traceable crosshair~~
-- [x] ~~Toggeable flight (bind key)~~
-- [x] ~~Transformations (related to Power Tiers)~~
+- [x] Animations as listed on the old docs
+- [x] Auras
+- [x] Balanced player physics movements (different from the original BFP, but balanced for gameplay)
+- [x] Bind key to recover ki energy
+- [x] Bind key to toggle speed (ki boost)
+- [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
+- [x] Breakable map entities ("func_breakable")
+- [x] Gametype: Survival (`g_gametype 3`)
+- [x] Gametype: Monster (`g_gametype 4`)
+- [x] Gametype: Team Last Man Standing (`g_gametype 6`)
+- [x] Hit Stun (makes player can't use ki, melee, block and charge)
+- [x] Illegal player model server handling
+- [x] Instant character model changing
+- [x] Ki trails
+- [x] Melee feature
+- [x] Remove some items like powerups and health pickups
+- [x] Powerlevel and Power Tiers indicated on old docs
+- [x] Playable third person mode and first person vis mode
+- [x] Remove weapon visuals (models and stuff)
+- [x] Replace ammo to ki energy stamina
+- [x] Short-Range Teleport - Zanzoken (when pressing 2 times left or right)
+- [x] Spectator can stop following the last player
+- [x] Third person traceable crosshair
+- [x] Toggeable flight (bind key)
+- [x] Transformations (related to Power Tiers)
 
 
 ## Table of contents
