@@ -191,7 +191,7 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 
 	// start stretching segments
 	if ( nBeamSegments >= 10 ) {
-		vec3_t direction, currentAngles, beamDir;
+		vec3_t currentAngles, beamDir;
 		float angleDelta, beamLength, lengthFactor;
 		qboolean isAiming;
 

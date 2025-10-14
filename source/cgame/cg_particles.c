@@ -1138,7 +1138,7 @@ void CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, fl
 	if ( cent->trailTime > cg.time ) {
 		return;
 	}
-	cent->trailTime += 50;
+	cent->trailTime += 35;
 	if ( cent->trailTime < cg.time ) {
 		cent->trailTime = cg.time;
 	}
