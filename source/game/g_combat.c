@@ -250,6 +250,8 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	qboolean alreadyTier2 = qfalse;
 	qboolean alreadyTier3 = qfalse;
 	qboolean alreadyTransformed = qfalse;
+	// BFP - Monster gamemode handling the maximum ki calculation
+	int monsterKi = 1;
 
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
 		alreadyTier1 = qtrue;
@@ -294,12 +296,16 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 
 	// BFP - Add more maximum ki
 	currentKiPercentage = ( (float)attacker->client->ps.ammo[WP_KI] / (float)attacker->client->ps.stats[STAT_MAX_KI] );
+	// BFP - Monster gamemode, handle attacker ki monster calculation
+	if ( attacker->client->ps.eFlags & EF_MONSTER ) {
+		monsterKi = 2;
+	}
 	// BFP - NOTE: What the heck? Did BFP dev make this multiplying 9.00825 with powerlevel? Strange approximation...
-	attacker->client->ps.stats[STAT_MAX_KI] = 999 + ( 9.00825 * attacker->client->ps.persistant[PERS_POWERLEVEL] );
+	attacker->client->ps.stats[STAT_MAX_KI] = monsterKi * ( 999 + ( 9.00825 * attacker->client->ps.persistant[PERS_POWERLEVEL] ) );
 
 	// BFP - Avoid exceeding maximum ki
-	if ( attacker->client->ps.stats[STAT_MAX_KI] > 10000 ) {
-		attacker->client->ps.stats[STAT_MAX_KI] = 10000;
+	if ( attacker->client->ps.stats[STAT_MAX_KI] > ( 10000 * monsterKi ) ) {
+		attacker->client->ps.stats[STAT_MAX_KI] = 10000 * monsterKi;
 	}
 
 	// BFP - Add and balance ki

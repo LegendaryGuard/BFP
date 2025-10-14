@@ -465,7 +465,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// BFP - Decrease ki when flying
-		if ( ( client->ps.eFlags & EF_FLIGHT ) || ( client->buttons & BUTTON_ENABLEFLIGHT )
+		if ( ( ( client->ps.eFlags & EF_FLIGHT ) || ( client->buttons & BUTTON_ENABLEFLIGHT ) )
 		&& client->ps.ammo[WP_KI] > 0
 		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) { // don't decrease when charging
 			if ( g_flightCostPct.value > 0 && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) { // reduce a bit if the percentage cost is more than 0 and has less powerlevel
@@ -1297,7 +1297,7 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 		} else if ( clientNum == -2 ) {
 			clientNum = level.follow2;
 		}
-		if ( clientNum >= 0 ) {
+		if ( (unsigned)clientNum < MAX_CLIENTS ) {
 			cl = &level.clients[ clientNum ];
 			if ( cl->pers.connected == CON_CONNECTED && cl->sess.sessionTeam != TEAM_SPECTATOR ) {
 				flags = (cl->ps.eFlags & ~(EF_VOTED | EF_TEAMVOTED)) | (ent->client->ps.eFlags & (EF_VOTED | EF_TEAMVOTED));

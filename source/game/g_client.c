@@ -885,12 +885,15 @@ Check if the player monster is gone and set the monster
 to the most waited player.
 ============
 */
-static void ClientCheckMonsterGone( gentity_t *ent ) { // BFP - Monster gamemode function check
+void ClientCheckMonsterGone( gentity_t *ent ) { // BFP - Monster gamemode function check
 	if ( g_gametype.integer == GT_MONSTER 
 	&& ( ent->client->ps.eFlags & EF_MONSTER )
 	&& ent->client->ps.clientNum == level.monsterClientNum ) {
 		qboolean becameMonster = qfalse;
 		int i;
+
+		ent->client->ps.eFlags &= ~EF_MONSTER;
+
 		for ( i = 0 ; i < level.maxclients ; ++i ) {
 			if ( g_entities[i].client->pers.connected == CON_CONNECTED
 			&& g_entities[i].client->sess.sessionTeam != TEAM_SPECTATOR
@@ -901,6 +904,9 @@ static void ClientCheckMonsterGone( gentity_t *ent ) { // BFP - Monster gamemode
 				// force change if playing with that "monster" thing
 				if ( g_monster.integer > 0 ) {
 					ClientUserinfoChanged( g_entities[i].client->ps.clientNum );
+					if ( ent->client->pers.connected == CON_CONNECTED ) {
+						ClientUserinfoChanged( ent->client->ps.clientNum );
+					}
 				}
 				respawn( &g_entities[i] );
 				break;

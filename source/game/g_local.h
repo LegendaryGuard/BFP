@@ -672,6 +672,7 @@ void G_BroadcastServerCommand( int ignoreClient, const char *command );
 //
 // g_client.c
 //
+void ClientCheckMonsterGone( gentity_t *ent );
 const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot );
 qboolean ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );

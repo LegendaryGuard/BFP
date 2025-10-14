@@ -606,6 +606,13 @@ void SetTeam( gentity_t *ent, char *s ) {
 		team = TEAM_SPECTATOR;
 	}
 
+	// BFP - Monster gamemode, check if the player monster is changing teams
+	if ( g_gametype.integer == GT_MONSTER 
+	&& ( ent->client->ps.eFlags & EF_MONSTER )
+	&& team == TEAM_SPECTATOR ) {
+		ClientCheckMonsterGone( ent );
+	}
+
 	//
 	// decide if we will allow the change
 	//
@@ -671,12 +678,45 @@ to free floating spectator mode
 =================
 */
 void StopFollowing( gentity_t *ent ) {
-	ent->client->ps.persistant[ PERS_TEAM ] = TEAM_SPECTATOR;	
-	ent->client->sess.sessionTeam = TEAM_SPECTATOR;	
-	ent->client->sess.spectatorState = SPECTATOR_FREE;
-	ent->client->ps.pm_flags &= ~PMF_FOLLOW;
-	ent->r.svFlags &= ~SVF_BOT;
-	ent->client->ps.clientNum = ent - g_entities;
+	gclient_t *client;
+
+	if ( ( ent->r.svFlags & SVF_BOT ) || !ent->inuse )
+		return;
+
+	client = ent->client;
+
+	client->ps.persistant[ PERS_TEAM ] = TEAM_SPECTATOR;
+	client->sess.sessionTeam = TEAM_SPECTATOR;
+	SetClientViewAngle( ent, client->ps.viewangles );
+
+	client->sess.spectatorState = SPECTATOR_FREE;
+	client->ps.pm_flags &= ~PMF_FOLLOW;
+	//ent->r.svFlags &= ~SVF_BOT;
+
+	client->ps.clientNum = ent - g_entities;
+}
+
+
+/*
+=================
+StopAndSpectateFreely
+
+Stops following and spectate freely
+=================
+*/
+static void StopAndSpectateFreely( gentity_t *ent ) { // BFP - Stops following and spectate freely
+	vec3_t	currentOrigin, currentAngles;
+	if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
+		// keep the origin and angles after stop following
+		VectorCopy( ent->client->ps.origin, currentOrigin );
+		currentOrigin[2] += 20;
+		VectorCopy( ent->client->ps.viewangles, currentAngles );
+
+		StopFollowing( ent );
+
+		VectorCopy( currentOrigin, ent->client->ps.origin );
+		VectorCopy( currentAngles, ent->client->ps.viewangles );
+	}
 }
 
 /*
@@ -852,15 +892,24 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 		G_Error( "Cmd_FollowCycle_f: bad dir %i", dir );
 	}
 
-	clientnum = ent->client->sess.spectatorClient;
+	// BFP - If currently in free spectator mode, start following from the beginning
+	if ( ent->client->sess.spectatorState == SPECTATOR_FREE ) {
+		clientnum = ( dir == 1 ) ? -1 : level.maxclients;
+	} else {
+		clientnum = ent->client->sess.spectatorClient;
+	}
 	original = clientnum;
 	do {
 		clientnum += dir;
 		if ( clientnum >= level.maxclients ) {
-			clientnum = 0;
+			// BFP - Reached the end going forward - stop following
+			StopAndSpectateFreely( ent );
+			return;
 		}
 		if ( clientnum < 0 ) {
-			clientnum = level.maxclients - 1;
+			// BFP - Reached the beginning going backward - stop following
+			StopAndSpectateFreely( ent );
+			return;
 		}
 
 		// can only follow connected clients
