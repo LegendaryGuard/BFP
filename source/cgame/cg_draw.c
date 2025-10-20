@@ -2284,7 +2284,7 @@ CG_DrawKiWarning
 */
 static void CG_DrawKiWarning( void ) {
 	const char	*s;
-	int			w;
+	int			w, y = 64;
 
 	if ( cg_drawKiWarning.integer <= 0 ) {  // BFP - ki warning (before cg_drawAmmoWarning)
 		return;
@@ -2310,8 +2310,13 @@ static void CG_DrawKiWarning( void ) {
 	} else if ( cg.predictedPlayerState.ammo[WP_KI] < 0 ) {
 		s = "OUT OF KI";
 	}
+
+	// BFP - Put the center notification a bit lower when spectating and following a player
+	if ( cg.snap->ps.pm_flags & PMF_FOLLOW ) {
+		y *= 2;
+	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-	CG_DrawBigString(320 - w / 2, 64, s, 1.0F);
+	CG_DrawBigString(320 - w / 2, y, s, 1.0F);
 }
 
 /*

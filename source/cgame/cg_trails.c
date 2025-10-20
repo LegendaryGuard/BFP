@@ -289,22 +289,24 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 
 		beam.customShader = hShader;
 		beam.shaderRGBA[0] = beam.shaderRGBA[1] = beam.shaderRGBA[2] = beam.shaderRGBA[3] = 0xff;
+		beam.reType = RT_LIGHTNING;
 
-		for ( i = 0; i < nBeamSegments - 1; ++i ) {
-			// BFP - NOTE: Skip the rendering of the 2 last segments. 
-			// Weird. That's why the bendy beam can't visualize that segment correctly.
-			// On original BFP also happens
-			if ( nBeamSegments >= 10 && i >= (nBeamSegments - 2) ) {
-				return;
-			}
-			beam.reType = RT_LIGHTNING;
-			VectorCopy( beamTrail->segments[i], beam.origin );
-			VectorCopy( beamTrail->segments[i + 1], beam.oldorigin );
-
+		if ( nBeamSegments == 2 ) {
+			VectorCopy( beamTrail->segments[0], beam.origin );
+			VectorCopy( beamTrail->segments[1], beam.oldorigin );
 			trap_R_AddRefEntityToScene( &beam );
+			return;
+		}
 
-			// apply sprite in the middle of every segment to avoid showing ugly visual effect
-			beam.reType = RT_SPRITE;
+		// BFP - NOTE: Skip the rendering of the 2 last segments. 
+		// Weird. That's why the bendy beam can't visualize that segment correctly.
+		// On original BFP also happens
+		for ( i = 0; i < nBeamSegments - 2; ++i ) {
+			VectorCopy( beamTrail->segments[i], beam.origin );
+			if ( i > 0 ) {
+				VectorCopy( beamTrail->segments[i - 1], beam.origin );
+			}
+			VectorCopy( beamTrail->segments[i + 1], beam.oldorigin );
 			trap_R_AddRefEntityToScene( &beam );
 		}
 	}
@@ -393,8 +395,10 @@ void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhand
 		beam.customShader = corkscrewShader;
 
 		for ( i = 0; i < CORKSCREW_SEGMENTS - 1; ++i ) {
-			beam.reType = RT_RAIL_CORE;
 			VectorCopy( spiralSegments[i], beam.origin );
+			if ( i > 0 ) {
+				VectorCopy( spiralSegments[i - 1], beam.origin );
+			}
 			VectorCopy( spiralSegments[i + 1], beam.oldorigin );
 			trap_R_AddRefEntityToScene( &beam );
 		}
