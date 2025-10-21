@@ -498,7 +498,9 @@ static void CheckMonsterGamemodeRules( gentity_t *self, gentity_t *attacker, int
 		return;
 	}
 
-	if ( selfMonster && ( meansOfDeath == MOD_TRIGGER_HURT || meansOfDeath == MOD_CRUSH || meansOfDeath == MOD_FALLING ) ) {
+	if ( selfMonster
+	&& ( meansOfDeath == MOD_TRIGGER_HURT || meansOfDeath == MOD_CRUSH || meansOfDeath == MOD_FALLING
+	|| meansOfDeath == MOD_LAVA || meansOfDeath == MOD_SLIME ) ) {
 		trap_SendServerCommand( -1, va("print \"The monster died without a killer.\n\"") );
 		respawn( self );
 		return;
@@ -687,6 +689,14 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	if (self->client && self->client->hook) {
 		// Weapon_HookFree(self->client->hook);
 		Weapon_BFPBeamFree( self->client->hook );
+	}
+
+	// BFP - Monster gamemode, if the player monster fell, respawn and don't score
+	if ( self && self->client && self->client->ps.clientNum == level.monsterClientNum
+	&& ( self->client->ps.eFlags & EF_MONSTER )
+	&& meansOfDeath == MOD_TRIGGER_HURT ) {
+		respawn( self );
+		return;
 	}
 
 	self->client->ps.pm_type = PM_DEAD;

@@ -157,6 +157,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	trace_t		tr;
 	vec3_t		velocity, end;
 	gentity_t	*traceTarget;
+	vec3_t		traceMins, traceMaxs;
 
 	// set aiming directions
 	AngleVectors( attacker->client->ps.viewangles, forward, NULL, NULL );
@@ -165,8 +166,19 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 
 	VectorMA( muzzle, g_meleeDiveRange.integer, forward, end );
 
+	// BFP - Monster gamemode, use scaled bounding box for player monster
+	if ( attacker->client->ps.eFlags & EF_MONSTER ) {
+		// scale down the trace box for monsters to allow teleportation through tighter spaces
+		// use 60% of monster size to avoid getting stuck
+		VectorScale( attacker->r.mins, 0.6, traceMins );
+		VectorScale( attacker->r.maxs, 0.6, traceMaxs );
+	} else {
+		VectorCopy( attacker->r.mins, traceMins );
+		VectorCopy( attacker->r.maxs, traceMaxs );
+	}
+
 	// that part is where the target can be detected when the attacker is on air, if not, the trace will be different
-	trap_Trace( &tr, muzzle, attacker->r.mins, attacker->r.maxs, end, attacker->s.number, MASK_SHOT );
+	trap_Trace( &tr, muzzle, traceMins, traceMaxs, end, attacker->s.number, MASK_SHOT );
 	if ( attacker->client->ps.groundEntityNum != ENTITYNUM_NONE ) {
 		trap_Trace( &tr, muzzle, NULL, NULL, end, attacker->s.number, MASK_SHOT );
 	}
@@ -207,6 +219,11 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 		// BFP - Melee range, it isn't known why, but it's the approximation
 		float		rangeMultiplier = g_meleeRange.integer + 45;
 
+		// BFP - Monster gamemode, adjust range multiplier for player monster
+		if ( attacker->client->ps.eFlags & EF_MONSTER ) {
+			rangeMultiplier *= 2.5;
+		}
+
 		VectorSubtract( traceTarget->client->ps.origin, attacker->client->ps.origin, direction );
 		distance = VectorLength( direction );
 
@@ -215,7 +232,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 		if ( distance >= rangeMultiplier && distance >= 25 ) {
 			// trace only when the player is alive
 			if ( traceTarget->client->ps.pm_type != PM_DEAD ) {
-				trap_Trace( &tr, muzzle, attacker->r.mins, attacker->r.maxs, end, attacker->s.number, MASK_PLAYERSOLID );
+				trap_Trace( &tr, muzzle, traceMins, traceMaxs, end, attacker->s.number, MASK_PLAYERSOLID );
 			}
 
 			// if the target is very near to some brush (solid or surface with no impact) from the map
@@ -236,7 +253,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 
 			// try to trace when the target is dead, that's what BFP originally did, and teleport near the corpse
 			if ( traceTarget->client->ps.pm_type == PM_DEAD ) {
-				trap_Trace( &tr, muzzle, attacker->r.mins, attacker->r.maxs, end, attacker->s.number, MASK_PLAYERSOLID );
+				trap_Trace( &tr, muzzle, traceMins, traceMaxs, end, attacker->s.number, MASK_PLAYERSOLID );
 			}
 
 			// TELEPORT!
@@ -244,7 +261,28 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 			&& attacker->client->ps.origin[2] == target->client->ps.origin[2] ) {
 				tr.endpos[2] = target->client->ps.origin[2];
 			}
-			VectorCopy( tr.endpos, attacker->client->ps.origin );
+
+			// BFP - Monster gamemode, for player monster, adjust teleport position to account for larger bbox
+			if ( attacker->client->ps.eFlags & EF_MONSTER ) {
+				vec3_t adjustedPos, pullBack;
+				VectorCopy( tr.endpos, adjustedPos );
+				
+				// pull back slightly from target to ensure monster fits
+				VectorSubtract( attacker->client->ps.origin, traceTarget->client->ps.origin, pullBack );
+				VectorNormalize( pullBack );
+				VectorMA( adjustedPos, 30.0f, pullBack, adjustedPos );
+
+				// final check that monster fits at this position
+				trap_Trace( &tr, adjustedPos, attacker->r.mins, attacker->r.maxs, adjustedPos, attacker->s.number, MASK_PLAYERSOLID );
+				if ( !tr.startsolid && !tr.allsolid ) {
+					VectorCopy( adjustedPos, attacker->client->ps.origin );
+				} else { // can't fit, abort melee
+					attacker->client->ps.pm_flags &= ~PMF_MELEE;
+					return qfalse;
+				}
+			} else {
+				VectorCopy( tr.endpos, attacker->client->ps.origin );
+			}
 		}
 
 		// BFP - Don't deal damage on warmup
