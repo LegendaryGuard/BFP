@@ -1395,8 +1395,8 @@ void ClientSpawn(gentity_t *ent) {
 	// BFP - Monster gamemode
 	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
 	&& client->ps.clientNum == level.monsterClientNum ) {
-		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_BFG );
-		client->ps.ammo[WP_BFG] = 100;
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_GRAPPLING_HOOK );
+		client->ps.ammo[WP_GRAPPLING_HOOK] = 100;
 	} else {
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
 		client->ps.ammo[WP_MACHINEGUN] = 100;

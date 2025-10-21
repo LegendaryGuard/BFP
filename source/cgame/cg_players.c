@@ -3243,7 +3243,13 @@ void CG_Player( centity_t *cent ) {
 	// CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
 
 	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right, tag_eyes, ...)
-	CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "torso", "tag_left" );
+
+	// BFP - Monster gamemode, for the monster feature option, attach the beam to the mouth, just testing
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 && ( cent->currentState.eFlags & EF_MONSTER ) ) {
+		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "head", "tag_mouth" );
+	} else {
+		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "torso", "tag_left" );
+	}
 
 	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );
