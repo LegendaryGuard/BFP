@@ -682,7 +682,8 @@ void CG_SmokeExplosion( vec3_t origin ) { // BFP - Explosion smoke
 			smokeOrg[1] += ( crandom() * 125 );
 			smokeOrg[2] += ( crandom() * 25 );
 
-			vel[0] = vel[1] = 0;
+			vel[0] = ( crandom() * 525 );
+			vel[1] = ( crandom() * 525 );
 			vel[2] = 50 * explosionSmokeSpeed;
 
 			leSmoke = CG_SmokePuff( smokeOrg, vel, 

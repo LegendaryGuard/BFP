@@ -418,6 +418,10 @@ static void CG_AddMoveDontScaleFade( localEntity_t *le ) { // BFP - For LE_MOVE_
 		return;
 	}
 
+	// slow down the movement
+	le->pos.trDelta[0] *= 0.989;
+	le->pos.trDelta[1] *= 0.989;
+
 	re->radius = le->radius;
 
 	BG_EvaluateTrajectory( &le->pos, timenonscaled, re->origin );

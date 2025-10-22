@@ -3246,7 +3246,7 @@ void CG_Player( centity_t *cent ) {
 
 	// BFP - Monster gamemode, for the monster feature option, attach the beam to the mouth, just testing
 	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 && ( cent->currentState.eFlags & EF_MONSTER ) ) {
-		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "head", "tag_mouth" );
+		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "head", "tag_mouth" );
 	} else {
 		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "torso", "tag_left" );
 	}

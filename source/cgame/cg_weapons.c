@@ -32,6 +32,12 @@ Adds muzzle flash or missile shader/model
 */
 void CG_AddFlashMissile( int entityNum, vec3_t origin, const char *flashMissileShader, const char *flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
 	refEntity_t	flashMissile;
+
+	// don't show the muzzle flash to the player itself on first person camera, even on first person vis mode
+	if ( cg_thirdPerson.integer <= 0 && entityNum == cg.snap->ps.clientNum ) {
+		return;
+	}
+
 	memset( &flashMissile, 0, sizeof( flashMissile ) );
 
 	// BFP - TODO: These function parameters can be applied for the following cfg variable calls:
@@ -917,7 +923,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	// BFP - Displaying the muzzle flash to the other player correctly
 	if ( nonPredictedCent->currentState.generic1 & GEN_READY_KI_ATTACK ) {
 		// BFP - NOTE: That's where we apply the flash properties read from client cfg
-		CG_AddFlashMissile( nonPredictedCent - cg_entities, nonPredictedCent->pe.muzzleOrigin, "ImpactBeamFlashShader", 0, 15, 1 );
+		CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, "ImpactBeamFlashShader", 0, 15, 1 );
 	}
 
 	if ( ps || cg.renderingThirdPerson ||
