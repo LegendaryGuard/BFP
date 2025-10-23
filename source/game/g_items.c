@@ -196,6 +196,8 @@ int Pickup_Weapon (gentity_t *ent, gentity_t *other) {
 //======================================================================
 
 int Pickup_Health (gentity_t *ent, gentity_t *other) {
+	// BFP - No health calculation at pickup
+#if 0
 	int			max;
 	int			quantity;
 
@@ -218,6 +220,24 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 		other->health = max;
 	}
 	other->client->ps.stats[STAT_HEALTH] = other->health;
+#endif
+
+	// BFP - Using "give health" does that
+	if ( ent->item->quantity != 5 && ent->item->quantity != 100 ) {
+		other->health = other->client->ps.stats[STAT_MAX_HEALTH];
+		other->client->ps.stats[STAT_HEALTH] = other->health;
+	}
+
+	// BFP - Using "give mega health" does that
+	if ( ent->item->quantity == 100 ) {
+		other->health += other->client->ps.stats[STAT_MAX_HEALTH];
+		if ( other->health > other->client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
+			other->health = other->client->ps.stats[STAT_MAX_HEALTH] * 2;
+		}
+		other->client->ps.stats[STAT_HEALTH] = other->health;
+		// BFP - Give full ki too
+		other->client->ps.ammo[WP_KI] = other->client->ps.stats[STAT_MAX_KI];
+	}
 
 	if ( ent->item->quantity == 100 ) {		// mega health respawns slow
 		return RESPAWN_MEGAHEALTH;

@@ -111,8 +111,6 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
-	// BFP - No health items
-#if 0
 	//
 	// health
 	//
@@ -183,7 +181,6 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ ""
 	},
-#endif
 
 
 	//

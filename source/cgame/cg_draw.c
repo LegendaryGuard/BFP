@@ -478,7 +478,7 @@ CG_DrawStatusBar
 */
 static void CG_DrawStatusBar( void ) {
 	playerState_t	*ps;
-	int			value;
+	int			value, hvalue;
 	char *string;
 	vec4_t		hcolor;
 	vec3_t		angles;
@@ -606,8 +606,8 @@ static void CG_DrawStatusBar( void ) {
 	//
 	// BFP - Visualize only 1 - 100 instead 0 - 1000
 	value = ( ps->stats[STAT_HEALTH] * 100 + ps->stats[STAT_MAX_HEALTH] / 2.1 ) / ps->stats[STAT_MAX_HEALTH]; // dividing the current health by 2.1 to round
-	value = ( value < 1 ) ? 1 : ( value > 100 ) ? 100 : value;
-	CG_DrawHealthGauge( 154.5, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), GAUGE_WIDTH, GAUGE_HEIGHT, value, 100 );
+	hvalue = ( value < 1 ) ? 1 : ( value > 100 ) ? 100 : value;
+	CG_DrawHealthGauge( 154.5, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), GAUGE_WIDTH, GAUGE_HEIGHT, hvalue, 100 );
 	// BFP - No drawing HP Q3 field
 #if 0
 	if ( value > 100 ) {
