@@ -438,6 +438,10 @@ static void CG_Missile( centity_t *cent ) {
 	// flicker between two skins
 	ent.skinNum = cg.clientFrame & 1;
 	ent.hModel = weapon->missileModel;
+	// BFP - Skip rendering if no missile model
+	if ( !weapon->missileModel ) {
+		return;
+	}
 	ent.renderfx = weapon->missileRenderfx | RF_NOSHADOW;
 
 	// convert direction of travel into axis

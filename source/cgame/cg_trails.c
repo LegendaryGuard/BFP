@@ -69,7 +69,7 @@ Adds ki trail segments
 =====================
 */
 void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader ) {
-	int i, j;
+	int i;
 	int kiTrailLength = cg_kiTrail.integer;
 	trail_t *kiTrail = &cg_trails[entityNum][KI_TRAIL];
 	const int MONSTER_TRAIL_WIDTH = 150;
@@ -308,6 +308,9 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 			}
 			VectorCopy( beamTrail->segments[i + 1], beam.oldorigin );
 			trap_R_AddRefEntityToScene( &beam );
+			beam.reType = RT_SPRITE;
+			trap_R_AddRefEntityToScene( &beam );
+			beam.reType = RT_LIGHTNING;
 		}
 	}
 }

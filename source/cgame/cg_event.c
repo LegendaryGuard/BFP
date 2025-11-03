@@ -586,10 +586,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 
 		// boing sound at origin, jump sound on player
 		trap_S_StartSound ( cent->lerpOrigin, -1, CHAN_VOICE, cgs.media.jumpPadSound );
-		// pain event with fast sequential jump just creates sound distortion
-		if ( cg.time - cent->pe.painTime > 50 )
-			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*jump1.wav" ) );
-		break;
+
+		// BFP - Q3 jump sound removed and no break after this case, so continue to BFP jump sound
 
 	case EV_JUMP:
 		// BFP - Use the second jump sound when using ki boost only when it isn't flying
