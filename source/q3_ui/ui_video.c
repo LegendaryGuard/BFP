@@ -125,10 +125,11 @@ static void DriverInfo_MenuDraw( void )
 	// BFP - For pagination
 	char pageIndicator[64];
 	int startLine, endLine;
-	int len, wrappedLen, j;
-	char wrappedExtension[40]; // 39 characters + 1 null terminator
+	int len, wrappedLen;
 #define DRIVERINFO_LINES_PER_PAGE	20
-#define LIMIT_CHARACTERS			39
+	const int LIMIT_CHARACTERS = 39;
+	char wrappedExtension[40]; // 39 characters + 1 null terminator
+	int j = LIMIT_CHARACTERS;
 
 	Menu_Draw( &s_driverinfo.menu );
 
@@ -158,10 +159,6 @@ static void DriverInfo_MenuDraw( void )
 
 		while ( len > 0 ) {
 			if ( len > LIMIT_CHARACTERS ) {
-				if ( j == 0 ) {
-					j = LIMIT_CHARACTERS; // no delimiter found, use the limit
-				}
-
 				// copy the first part of the string and wrap it
 				strncpy( wrappedExtension, s_driverinfo.strings[i] + wrappedLen, j );
 				wrappedExtension[j] = '\0';
