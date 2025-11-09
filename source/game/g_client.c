@@ -698,6 +698,16 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 		client->ps.stats[STAT_MAX_HEALTH] = 1000;
 	}
 
+	// BFP - Monster gamemode, double max health for player monster
+	if ( g_gametype.integer == GT_MONSTER 
+	&& level.monsterClientNum == clientNum
+	&& ( client->ps.eFlags & EF_MONSTER ) ) {
+		client->ps.stats[STAT_MAX_HEALTH] *= 2;
+		if ( client->ps.stats[STAT_MAX_HEALTH] > 2000 ) {
+			client->ps.stats[STAT_MAX_HEALTH] = 2000;
+		}
+	}
+
 	// set model
 	Q_strncpyz( model, G_GetPlayerModelName( clientNum, userinfo ), sizeof( model ) );
 
@@ -866,6 +876,9 @@ Sets the player monster status and properties.
 static void ClientBecomeMonster( gentity_t *ent ) { // BFP - Monster gamemode function to set the player monster status
 	// double health and max health
 	ent->client->ps.stats[STAT_MAX_HEALTH] *= 2;
+    if ( ent->client->ps.stats[STAT_MAX_HEALTH] > 2000 ) {
+        ent->client->ps.stats[STAT_MAX_HEALTH] = 2000;
+    }
 	ent->health = ent->client->ps.stats[STAT_HEALTH] = ent->client->ps.stats[STAT_MAX_HEALTH];
 
 	// double ki and max ki
