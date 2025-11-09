@@ -1,5 +1,15 @@
 *.pk3
 .vscode
 .vscode/*
+win32-msvc/.vs
+win32-msvc/Backup
+win32-msvc/Win32
+win32-msvc/Win64
+win32-msvc/x64
+win32-msvc/bfpq3.sln
+win32-msvc/*.vcxproj
+win32-msvc/*.vcxproj.filters
+win32-msvc/*.vcxproj.user
+win32-msvc/*.htm
 build*
 vm*
