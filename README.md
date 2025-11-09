@@ -30,6 +30,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Animations as listed on the old docs
 - [x] Auras
 - [x] Balanced player physics movements (different from the original BFP, but balanced for gameplay)
+- [x] Beam trails
 - [x] Bind key to recover ki energy
 - [x] Bind key to toggle speed (ki boost)
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
@@ -64,7 +65,8 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 > > > 4.2.1. [Building QVM (using .bat)](#building-qvm-using-bat)<br/>
 > > > 4.2.2. [Building QVM (mingw)](#building-qvm-mingw)<br/>
 > > > 4.2.3. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
-> > > 4.2.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)
+> > > 4.2.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)<br/>
+> > > 4.2.5. [MSVC (.dll))](#msvc-dll)
 > >
 > > 4.3. [Linux](#linux)
 > > > 4.3.1. [Building QVM (make)](#building-qvm-make)<br/>
@@ -150,6 +152,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - `g_allowSpectatorChat` cvar is functional, spectators can't send messages if the cvar is disabled
 - spectator mode can toggle ki boost as if the player is flying
 - particle aura is almost implemented
+- beam trails are bendy, almost similar to original BFP though
 - while charging ki near water, bubble particles appear
 - when player is still moving with/without friction and charging ki, antigrav rock particles appear
 - new particles: charge smoke, which appears when charging ki near the ground
@@ -343,6 +346,26 @@ The information in the map file can be useful for debugging and performance anal
     7- `git`
 
     3. Open Cygwin, go to the directory where you cloned the repository and compile with `make`
+    
+    * #### _MSVC (.dll)_: 
+
+    Requires MSVC (Microsoft Visual C++) 2005 or newer (Visual Studio Community) to be installed.
+
+    1. Run `bfpq3.sln`
+
+    Open the solution in `win32-msvc` directory. If you're using a newer version of MSVC and it's appearing a dialog box that tries to migrate the solution and their stuff, continue by clicking Ok. After the browser will open about the solution migration details, you can close it and ignore the warnings that comments about the old MSVC stuff from 2005.
+
+    2. Build the solution
+
+    In the *Solution Configurations* tab, you can switch `Debug` or `Release` and `Win32` or `x64`.<br/>
+    Right-click to the solution in the *Solution Explorer* and click `Build Solution`, check the log until the build is succeded. Go to `Win32` or `x64` folder in `win32-msvc`, look inside `Debug` or `Release` and get the dlls you built.
+
+    3. Debugging
+
+    You need the dlls built with `Debug` and running in-game.<br/>
+    In the MSVC tab, `Debug` > `Attach to Process` or press `Ctrl+Alt+P` and use the `Attach to Process` dialog to attach the debugger to the process (in that case select `Quake3.exe` / `ioQuake3.exe` / `Quake3e.exe` or any Quake 3 executable launcher). After, while that's running, add some breakpoint in some line of the code where you want to debug and test.
+
+    Some old MSVC tutorial can be found in **Focus on Mod Programming for Quake III Arena** in `APPENDIX A - Debugging Your Mod in Visual Studio` section.
 
 - ### Linux:
 
@@ -469,6 +492,9 @@ The information in the map file can be useful for debugging and performance anal
 
 #### Unused source code files and unavailable in the build tools:
 
+- g_rankings.c
+- g_rankings.h
+- ui_login.c
 - ui_rankings.c
 - ui_rankstatus.c
 - ui_signup.c
