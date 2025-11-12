@@ -174,8 +174,9 @@ typedef enum {
 #define PMF_FOLLOW			4096	// spectate following another player
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
-#define PMF_FLIGHT_ACTIVE	8192	// BFP - Flight active status
-#define PMF_ULTIMATE_TIER	16384	// BFP - Ultimate tier status
+#define PMF_ULTIMATE_TIER	8192	// BFP - Ultimate tier status
+// BFP - TODO: Remove this unused flag in the future?
+// #define PMF_FLIGHT_ACTIVE	16384	// BFP - Flight active status
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
