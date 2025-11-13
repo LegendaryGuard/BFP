@@ -242,11 +242,17 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	// BFP - Monster gamemode, force player monster third person camera views
 	if ( cg.predictedPlayerState.eFlags & EF_MONSTER ) {
+// BFP - Macro to enable/disable original player monster camera view position
+#define BFP_MONSTER_CAMERA_VIEWPOS	1
+#if BFP_MONSTER_CAMERA_VIEWPOS
+		// BFP original camera view position
+		camHeight = -385.0f;
+		camRange  =  500.0f;
+#else
+		// far camera view position similar to BFP fixed third person camera
 		camHeight = -530.0f;
 		camRange  =  900.0f;
-		// BFP original camera view position (disabled)
-		// camHeight = -385.0f;
-		// camRange  =  500.0f;
+#endif
 	}
 	VectorCopy( cg.refdef.vieworg, overrideOrg );
 
