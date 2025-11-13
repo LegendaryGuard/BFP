@@ -938,6 +938,16 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		ByteToDir( es->eventParm, dir );
 		break;
 
+	case EV_BLINDING:
+		if ( es->number == cg.snap->ps.clientNum ) {
+			if ( !cg.blindLastAttackTime || cg.time - cg.blindLastAttackTime > 4000 ) {
+				cg.blind = qtrue;
+				cg.blindStartTime = cg.time;
+				cg.blindLastAttackTime = cg.time;
+			}
+		}
+		break;
+
 	case EV_BULLET_HIT_WALL:
 		ByteToDir( es->eventParm, dir );
 		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qfalse, ENTITYNUM_WORLD );

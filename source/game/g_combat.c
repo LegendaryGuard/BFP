@@ -1099,6 +1099,13 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		knockback = 0;
 	}
 
+	// BFP - Blinds the opponent and it can be blinded again after 4 seconds (look inside cg_draw.c in CG_DrawBlindEffect for more details)
+	if ( mod == MOD_MACHINEGUN // BFP - TODO: That's just a test. Add something to the weapon: 'blinding' for properties of the ki attacks from cfg
+	&& ( !targ->blindedTime || level.time - targ->blindedTime >= 2000 ) ) {
+		targ->blindedTime = level.time;
+		BG_AddPredictableEventToPlayerstate( EV_BLINDING, 0, &targ->client->ps, -1 );
+	}
+
 	// figure momentum add, even if the damage won't be taken
 	if ( knockback && targ->client ) {
 		vec3_t	kvel;

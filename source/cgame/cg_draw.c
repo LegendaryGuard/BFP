@@ -2320,6 +2320,41 @@ static void CG_DrawKiWarning( void ) {
 }
 
 /*
+================
+CG_DrawBlindEffect
+
+Draws a white screen overlay that fades out (Blinding Flash effect)
+================
+*/
+static void CG_DrawBlindEffect( void ) { // BFP - Blind
+	const float	BLIND_ALPHA_TIME = 17000.0f,
+				BLIND_DURATION = 6000.0f; // original BFP lasts 6 seconds with that opacity
+	float	blindAlpha = 0.0f;
+	float	elapsed = (float)( cg.time - cg.blindStartTime );
+
+	if ( !cg.blind ) {
+		return;
+	}
+
+	if ( elapsed >= BLIND_ALPHA_TIME ) {
+		cg.blind = qfalse;
+		return;
+	}
+
+	if ( elapsed < BLIND_DURATION ) {
+		blindAlpha = 1.0f - ( elapsed / BLIND_ALPHA_TIME );
+	}
+
+	if ( blindAlpha > 0.0f ) {
+		vec4_t	color = { 1.0f, 1.0f, 1.0f, 1.0f };
+		color[3] = blindAlpha;
+		trap_R_SetColor( color );
+		CG_DrawPic( 0, 0, 640, 480, cgs.media.whiteShader );
+		trap_R_SetColor( NULL );
+	}
+}
+
+/*
 =================
 CG_DrawHitStun
 =================
@@ -2508,6 +2543,9 @@ static void CG_Draw2D( void ) {
 		CG_DrawIntermission();
 		return;
 	}
+
+	// BFP - Draw blind effect (Blinding Flash)
+	CG_DrawBlindEffect();
 
 /*
 	if (cg.cameraMode) {

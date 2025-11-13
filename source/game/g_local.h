@@ -88,6 +88,8 @@ struct gentity_s {
 
 	qboolean	enabledivide;		// BFP - Projectile state for dividing ball
 
+	int			blindedTime;		// BFP - Blind time
+
 	int			flags;				// FL_* variables
 
 	char		*model;

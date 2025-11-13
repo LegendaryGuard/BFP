@@ -635,6 +635,10 @@ typedef struct {
 
 	//qboolean cameraMode;		// if rendering from a loaded camera
 
+	// BFP - Blind
+	qboolean	blind;
+	int			blindStartTime;			// when the current blind effect started
+	int			blindLastAttackTime;	// last time the player was 'blind attacked'
 
 	// development tool
 	refEntity_t		testModelEntity;

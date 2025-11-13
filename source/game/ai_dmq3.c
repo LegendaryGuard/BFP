@@ -2093,6 +2093,14 @@ void BotAimAtEnemy(bot_state_t *bs) {
 	bot_goal_t goal;
 	bsp_trace_t trace;
 	vec3_t target;
+	gentity_t *botent = &g_entities[bs->entitynum];
+
+	// BFP - If bot is blinded, severely reduce aim accuracy
+	if ( botent->blindedTime && level.time - botent->blindedTime < 6000 ) {
+		// make the bot aim wildly
+		bs->ideal_viewangles[YAW] += 60 * crandom();
+		return;
+	}
 
 	//if the bot has no enemy
 	if (bs->enemy < 0) {
@@ -2381,8 +2389,15 @@ void BotCheckAttack(bot_state_t *bs) {
 	aas_entityinfo_t entinfo;
 	weapon_t weapon;
 	vec3_t mins = {-8, -8, -8}, maxs = {8, 8, 8};
+	gentity_t *botent;
 
-	// BFP - TODO: When the bot receives a hit stun, try to act like they use short-range teleport to escape from this stun status
+	botent = &g_entities[bs->entitynum];
+
+	// BFP - If bot is blinded, don't attack
+	if ( botent->blindedTime && level.time - botent->blindedTime < 6000 ) {
+		return; // Bot can't see to attack
+	}
+
 	// BFP - Avoid the bot tries to attack with this status, otherwise keeps stunned while pressing attack key
 	if ( ( bs->cur_ps.pm_flags & PMF_HITSTUN ) && bs->cur_ps.pm_time > 0 ) {
 		return;
@@ -2403,8 +2418,8 @@ void BotCheckAttack(bot_state_t *bs) {
 	//check fire throttle characteristic
 	if (bs->firethrottlewait_time > FloatTime()) return;
 
-	// BFP - Make the fire throttle wait a bit more, before: 1, now: 7
-	firethrottle = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_FIRETHROTTLE, 0, 7);
+	// BFP - Make the fire throttle wait a bit more, before: 1, now: 24
+	firethrottle = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_FIRETHROTTLE, 0, 24);
 	//Com_Printf( "firethrottle: %f\n", firethrottle );
 	if (bs->firethrottleshoot_time < FloatTime()) {
 		// BFP - When it's ready to attack, fire
