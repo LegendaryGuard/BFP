@@ -33,6 +33,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Beam trails
 - [x] Bind key to recover ki energy
 - [x] Bind key to toggle speed (ki boost)
+- [x] Blinding Flash (blinds players during 6 seconds)
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [x] Breakable map entities ("func_breakable")
 - [x] Gametype: Survival (`g_gametype 3`)
@@ -505,13 +506,16 @@ The information in the map file can be useful for debugging and performance anal
 
 The mod source code is [GPLv2 licensed](./COPYING.txt), the contents are based on Quake III Arena.
 
-The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and `ui_mp3decoder.h`) is based on code from various contributors:
+The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and `ui_mp3decoder.h`) uses _Open Source Modification License (OSML) v1.0_ and is based on code from various contributors:
 - Copyright (C) 1993 Sun Microsystems
 - Copyright (C) 1995-1997 Michael Hipp
 - Copyright (C) 1999 Aaron Holtzman
 - Copyright (C) 2000-2001 Tim Angus
 
 The images, screenshots, and URLs, even in the docs, included in this repository are used for reference purposes only and are not covered by the GPL license. They're sourced from various locations and are subject to their respective copyrights and terms of use.
+
+> [!WARNING]
+> Any derivative works must follow the same rules and disclose their code to the public as to encourage fan projects based on Bid For Power.
 
 ### Bid For Power name
 
