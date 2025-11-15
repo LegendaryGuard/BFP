@@ -1434,7 +1434,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 						mod, shader,
 						600, qfalse );
 	} else if ( weapon == WP_LIGHTNING ) { // BFP - TODO: Just a test for lightning gun (eyebeam should have this behavior)
-		CG_SmokeExplosion( origin ); // BFP - Explosion smoke
+		CG_SmokeExplosion( origin, dir ); // BFP - Explosion smoke
 	} else { // BFP - Explosion effects
 		CG_ExplosionEffect( origin, dir );
 	}

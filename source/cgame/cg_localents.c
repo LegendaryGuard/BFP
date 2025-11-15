@@ -418,9 +418,17 @@ static void CG_AddMoveDontScaleFade( localEntity_t *le ) { // BFP - For LE_MOVE_
 		return;
 	}
 
-	// slow down the movement
-	le->pos.trDelta[0] *= 0.989;
-	le->pos.trDelta[1] *= 0.989;
+	// slow down the movement during 0.25 sec
+	if ( timenonscaled - le->startTime < 250 ) {
+		le->pos.trDelta[0] *= 0.989;
+		le->pos.trDelta[1] *= 0.989;
+	} else { // stop moving horizontally
+		vec3_t currentPos;
+		BG_EvaluateTrajectory( &le->pos, timenonscaled, currentPos );
+		VectorCopy( currentPos, le->pos.trBase );
+		le->pos.trTime = timenonscaled;
+		le->pos.trDelta[0] = le->pos.trDelta[1] = 0;
+	}
 
 	re->radius = le->radius;
 

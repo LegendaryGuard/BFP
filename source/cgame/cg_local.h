@@ -1342,7 +1342,7 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir );
 // BFP - Spark particles explosion
 void CG_SparksExplosion( vec3_t origin, vec3_t dir );
 // BFP - Explosion smoke
-void CG_SmokeExplosion( vec3_t origin );
+void CG_SmokeExplosion( vec3_t origin, vec3_t dir );
 // BFP - Explosion sounds
 void CG_ExplosionSound( vec3_t origin );
 // BFP - Explosion effects

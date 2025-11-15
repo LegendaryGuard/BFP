@@ -938,13 +938,13 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		ByteToDir( es->eventParm, dir );
 		break;
 
+	// BFP - Blind
 	case EV_BLINDING:
-		if ( es->number == cg.snap->ps.clientNum ) {
-			if ( !cg.blindLastAttackTime || cg.time - cg.blindLastAttackTime > 4000 ) {
-				cg.blind = qtrue;
-				cg.blindStartTime = cg.time;
-				cg.blindLastAttackTime = cg.time;
-			}
+		if ( es->number == cg.snap->ps.clientNum 
+		&& ( !cg.blindLastAttackTime || cg.time - cg.blindLastAttackTime > 4000 ) ) {
+			cg.blind = qtrue;
+			cg.blindStartTime = cg.time;
+			cg.blindLastAttackTime = cg.time;
 		}
 		break;
 

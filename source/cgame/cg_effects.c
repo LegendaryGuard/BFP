@@ -659,7 +659,7 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles 
 CG_SmokeExplosion
 =================
 */
-void CG_SmokeExplosion( vec3_t origin ) { // BFP - Explosion smoke
+void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 	if ( cg_explosionSmoke.integer > 0 
 	&& !( trap_CM_PointContents( origin, 0 ) & MASK_WATER ) ) { // don't spawn smoke under water, lava or any liquid
 		// BFP - TODO: Apply explosionSmoke as indicated on default.cfg file from some character: explosionSmoke <weaponNum> <numSmokes(int)>
@@ -670,20 +670,42 @@ void CG_SmokeExplosion( vec3_t origin ) { // BFP - Explosion smoke
 		int	explosionSmokeLife = 1500;
 		// BFP - TODO: Apply explosionSmokeSpeed as indicated on default.cfg file from some character: explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
 		int	explosionSmokeSpeed = 10;
+
+		// for spreading smoke
+		vec3_t up = {0, 0, 1};
+		vec3_t right, forward;
+		
+		VectorCopy( dir, forward );
+		CrossProduct( forward, up, right );
+		if ( VectorLength( right ) < 0.1f ) {
+			vec3_t side = {1, 0, 0};
+			CrossProduct( forward, side, right );
+		}
+		VectorNormalize( right );
+		CrossProduct( right, forward, up );
+		VectorNormalize( up );
+		
 		for ( i = 0; i < numSmokes; ++i ) {
 			localEntity_t	*leSmoke;
-			vec3_t	vel, smokeOrg;
+			vec3_t	vel, smokeOrg, spreadDir;
+			float	rightSpread, upSpread;
 			static int	timenonscaled;
 
 			timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
 
-			VectorCopy( origin, smokeOrg );
-			smokeOrg[0] += ( crandom() * 125 );
-			smokeOrg[1] += ( crandom() * 125 );
-			smokeOrg[2] += ( crandom() * 25 );
+			rightSpread = crandom() * 80;
+			upSpread = crandom() * 25;
 
-			vel[0] = ( crandom() * 525 );
-			vel[1] = ( crandom() * 525 );
+			VectorCopy( dir, spreadDir );
+			VectorMA( spreadDir, rightSpread, right, spreadDir );
+			VectorMA( spreadDir, upSpread, up, spreadDir );
+			VectorNormalize( spreadDir );
+
+			// position smoke offset in the spread direction
+			VectorMA( origin, 20 + ( rand() % 80 ), spreadDir, smokeOrg );
+
+			// velocity moves outward in spread direction
+			VectorScale( spreadDir, 150 + ( rand() % 300 ), vel );
 			vel[2] = 50 * explosionSmokeSpeed;
 
 			leSmoke = CG_SmokePuff( smokeOrg, vel, 
@@ -739,7 +761,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	if ( cg_explosionRing.integer > 0 ) { // BFP - Explosion ring
 		leRing = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
 	}
-	CG_SmokeExplosion( origin ); // BFP - Explosion smoke
+	CG_SmokeExplosion( origin, dir ); // BFP - Explosion smoke
 
 	if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
 		const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
