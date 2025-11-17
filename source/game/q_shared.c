@@ -1014,6 +1014,38 @@ int QDECL Com_sprintf( char *dest, int size, const char *fmt, ... ) {
 
 
 /*
+=================
+Com_Bufsprintf
+
+Formats a string and appends it to the destination buffer
+while ensuring the buffer does not overflow
+=================
+*/
+qboolean QDECL Com_Bufsprintf( char *dest, int size, int *bufLen, const char *fmt, ... ) { // BFP - Avoids the buffer from overflowing
+	va_list	argptr;
+	char	tempBuffer[1024];
+	int		len;
+
+	if ( *bufLen >= size ) {
+		return qfalse;
+	}
+
+	va_start( argptr, fmt );
+	len = Q_vsprintf( tempBuffer, fmt, argptr );
+	va_end( argptr );
+
+	if ( len > 0 && (*bufLen + len) < size ) {
+		Q_strncpyz( dest + *bufLen, tempBuffer, size - *bufLen );
+		*bufLen += len;
+		return qtrue;
+	}
+
+	*bufLen = size;
+	return qfalse;
+}
+
+
+/*
 ============
 va
 

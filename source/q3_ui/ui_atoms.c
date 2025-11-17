@@ -1065,12 +1065,176 @@ qboolean UI_ConsoleCommand( int realTime ) {
 	return qfalse;
 }
 
+
+/*
+=================
+UI_ConvertHexKeyname
+
+Converts hexadecimal keynames to character representations
+=================
+*/
+static void UI_ConvertHexKeyname( char keyname[32] ) { // BFP - Converts any hexadecimal key into a symbol character, e.g. 0x7e = ~
+	int	i;
+	typedef struct {
+		const char *hex, *replacement;
+	} keynameMap_t;
+
+	static const keynameMap_t	KEYNAMEMAP[] = {
+		{ "0x00", "NULL" },			{ "0x01", "SOH" },	{ "0x02", "STX" },	{ "0x03", "ETX" },
+		{ "0x04", "EOT" },			{ "0x05", "ENQ" },	{ "0x06", "ACK" },	{ "0x07", "BEL" },
+		{ "0x08", "BACKSPACE" },	{ "0x0a", "LF" },	{ "0x0b", "VT" },	{ "0x0c", "FF" },
+		{ "0x0e", "SO" },			{ "0x0f", "SI" },	{ "0x10", "DLE" },	{ "0x11", "DC1" },
+		{ "0x12", "DC2" },			{ "0x13", "DC3" },	{ "0x14", "DC4" },	{ "0x15", "NAK" },
+		{ "0x16", "SYN" },			{ "0x17", "ETB" },	{ "0x18", "CAN" },	{ "0x19", "EM" },
+		{ "0x1a", "SUB" },			{ "0x1c", "FS" },	{ "0x1d", "GS" },	{ "0x1e", "RS" },
+		{ "0x20", "SPACE" },		{ "0x21", "!" },	{ "0x22", "\"" },	{ "0x23", "#" },
+		{ "0x24", "$" },			{ "0x25", "%" },	{ "0x26", "&" },	{ "0x27", "'" },
+		{ "0x28", "(" },			{ "0x29", ")" },	{ "0x2a", "*" },	{ "0x2b", "+" },
+		{ "0x2c", "," },			{ "0x2d", "-" },	{ "0x2e", "." },	{ "0x2f", "/" },
+		{ "0x3a", ":" },			{ "0x3b", ";" },	{ "0x3c", "<" },	{ "0x3d", "=" },
+		{ "0x3e", ">" },			{ "0x3f", "?" },	{ "0x40", "@" },	{ "0x5b", "[" },
+		{ "0x5c", "\\" },			{ "0x5d", "]" },	{ "0x5e", "^" },	{ "0x5f", "_" },
+		{ "0x60", "`" },			{ "0x7b", "{" },	{ "0x7c", "|" },	{ "0x7d", "}" },
+		{ "0x7e", "~" },			{ "0xb0", "°" }
+	};
+
+	for ( i = 0; i < ARRAY_LEN( KEYNAMEMAP ); ++i ) {
+		if ( !Q_stricmp( keyname, KEYNAMEMAP[i].hex ) ) {
+			Q_strncpyz( keyname, KEYNAMEMAP[i].replacement, sizeof(keyname) );
+			return;
+		}
+	}
+	// if no mapping found, the keyname remains unchanged
+}
+
+
+/*
+=================
+UI_WriteBFPConfig
+=================
+*/
+static void UI_WriteBFPConfig( void ) { // BFP - Overwrites bfp.cfg
+	fileHandle_t	f;
+	int				i, len;
+	char			buffer[BFP_CFG_BUFFER_SIZE];
+	int				bufLen = 0;
+	char			modelBuffer[MAX_STRING_CHARS];
+	char			keyname[32];
+	char			binding[MAX_STRING_CHARS];
+
+	// write model configuration first
+	trap_Cvar_VariableStringBuffer( "model", modelBuffer, sizeof(modelBuffer) );
+	if ( modelBuffer[0] ) {
+		Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "c model %s\n", modelBuffer );
+	}
+
+	// write all key bindings by iterating through all possible keys
+	for ( i = 0; i < 256; ++i ) {
+		trap_Key_KeynumToStringBuf( i, keyname, sizeof(keyname) );
+		trap_Key_GetBindingBuf( i, binding, sizeof(binding) );
+
+		// convert any hexadecimal key into a symbol character, e.g. 0x7e = ~
+		UI_ConvertHexKeyname( keyname );
+
+		// only write non-empty bindings
+		if ( binding[0] ) {
+			Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "b %s \"%s\"\n", keyname, binding );
+		}
+	}
+
+	// write all BFP-specific cvars
+	{
+		typedef struct {
+			const char* cvarName;
+			const char* cvarValue;
+		} bfpCvars_t;
+
+		const bfpCvars_t BFPCVARS[] = {
+			{ "cg_thirdPerson", "1" },
+			{ "cg_thirdPersonRange", "110" },
+			{ "cg_thirdPersonHeight", "-60" },
+			{ "cg_fixedThirdPerson", "1" },
+			{ "cg_lightAuras", "1" },
+			{ "cg_lightExplosions", "1" },
+			{ "cg_lightweightAuras", "0" },
+			{ "cg_transformationAura", "1" },
+			{ "cg_simpleHUD", "0" },
+			{ "cg_drawOwnModel", "1" },
+			{ "cg_polygonAura", "1" },
+			{ "cg_spriteAura", "0" },
+			{ "cg_highPolyAura", "1" },
+			{ "cg_smallOwnAura", "1" },
+			{ "cg_permaglowUltimate", "1" },
+			{ "cg_superdeformed", "0" },
+			{ "cg_flytilt", "1" },
+			{ "cg_kiTrail", "50" },
+			{ "cg_beamTrail", "25" },
+			{ "cg_bigExplosions", "1" },
+			{ "cg_chargeupAlert", "1" },
+			{ "cg_stfu", "0" },
+			{ "cg_lifekills", "0" },
+			{ "cg_lifedeaths", "0" },
+			{ "cg_drawKiWarning", "1" },
+			{ "sv_pure", "0" },
+			{ "cg_explosionShell", "1" },
+			{ "cg_explosionSmoke", "1" },
+			{ "cg_particles", "1" },
+			{ "cg_crosshairColor", "7" },
+			{ "cg_stableCrosshair", "0" },
+			{ "cg_explosionRing", "1" },
+			{ "cg_lowpolysphere", "0" },
+			{ "cg_musicUnpacked", "1" },
+			{ "cg_playHitSound", "0" },
+			{ "g_hitStun", "1" }
+		};
+
+		int numCvars = sizeof(BFPCVARS) / sizeof(BFPCVARS[0]);
+
+		for ( i = 0; i < numCvars; ++i ) {
+			const char *cvarName = BFPCVARS[i].cvarName;
+			const char *defaultValue = BFPCVARS[i].cvarValue;
+			char cvarValue[MAX_STRING_CHARS];
+			
+			// get current cvar value into a separate buffer
+			trap_Cvar_VariableStringBuffer( cvarName, cvarValue, sizeof(cvarValue) );
+
+			// if cvar doesn't exist or is empty, use default
+			if ( !cvarValue[0] ) {
+				Q_strncpyz( cvarValue, defaultValue, sizeof(cvarValue) );
+			}
+			
+			// write cvar to buffer
+			Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "c %s %s\n", cvarName, cvarValue );
+		}
+	}
+	
+	// write "bfp" marker at the end of file
+	Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "bfp\n" );
+
+	// check buffer size once at the end
+	if ( bufLen >= (int)sizeof(buffer) ) {
+		Com_Printf( "BFP config file too long\n" );
+		return;
+	}
+
+	// write the entire buffer to file
+	len = trap_FS_FOpenFile( "bfp.cfg", &f, FS_WRITE );
+	if ( len < 0 ) {
+		Com_Printf( "Could not open bfp.cfg for writing\n" );
+		return;
+	}
+
+	trap_FS_Write( buffer, bufLen, f );
+	trap_FS_FCloseFile( f );
+}
+
 /*
 =================
 UI_Shutdown
 =================
 */
 void UI_Shutdown( void ) {
+    UI_WriteBFPConfig(); // BFP - Overwrites bfp.cfg
 }
 
 /*

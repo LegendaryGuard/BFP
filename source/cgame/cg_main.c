@@ -852,6 +852,135 @@ void CG_StartMusic( void ) {
 	trap_S_StartBackgroundTrack( parm1, parm2 );
 }
 
+//==================================================================
+
+/*
+======================
+CG_LoadBFPConfig
+
+Loads and executes the BFP mod config file (bfp.cfg)
+======================
+*/
+static void CG_LoadBFPConfig( void ) { // BFP - Load bfp.cfg
+	fileHandle_t f;
+	int len;
+	char buf[BFP_CFG_BUFFER_SIZE], cmd[1024];
+	char *token, *ptr;
+
+	len = trap_FS_FOpenFile( "bfp.cfg", &f, FS_READ );
+
+	if ( !f ) {
+		// CG_Printf( S_COLOR_YELLOW "WARNING: BFP config file not found, using defaults\n" );
+		return;
+	}
+
+	if ( len >= sizeof(buf) ) {
+		trap_FS_FCloseFile( f );
+		CG_Error( "BFP config file too long\n" );
+		return;
+	}
+
+	// read the config file
+	trap_FS_Read( buf, len, f );
+	buf[len] = 0;
+	trap_FS_FCloseFile( f );
+
+	// parse the config file line by line
+	ptr = buf;
+
+	while ( *ptr ) {
+		// skip whitespace
+		while ( *ptr && ( *ptr == ' ' || *ptr == '\t' || *ptr == '\r' ) ) {
+			ptr++;
+		}
+
+		if ( !*ptr ) {
+			break;
+		}
+
+		// check command type
+		if ( *ptr == 'b' && *(ptr + 1) == ' ' ) { // "b <key> <command>"
+			char key[256], binding[512];
+			int i;
+
+			ptr += 2; // skip "b "
+
+			// parse key
+			i = 0;
+			while ( *ptr && *ptr != ' ' && *ptr != '\n' ) {
+				key[i++] = *ptr++;
+			}
+			key[i] = 0;
+
+			// skip space
+			while ( *ptr && *ptr == ' ' ) {
+				ptr++;
+			}
+
+			// parse binding (may be quoted)
+			i = 0;
+			if ( *ptr == '"' ) {
+				ptr++; // skip opening quote
+				while ( *ptr && *ptr != '"' && *ptr != '\n' ) {
+					binding[i++] = *ptr++;
+				}
+				if ( *ptr == '"' ) {
+					ptr++; // skip closing quote
+				}
+			} else {
+				while ( *ptr && *ptr != '\n' ) {
+					binding[i++] = *ptr++;
+				}
+			}
+			binding[i] = 0;
+
+			// execute!
+			Com_sprintf( cmd, sizeof( cmd ), "bind %s %s\n", key, binding );
+			trap_SendConsoleCommand( cmd );
+		} else if ( *ptr == 'c' && *(ptr + 1) == ' ' ) { // "c <cvar> <value>"
+			char cvar[256], value[512];
+			int i;
+
+			ptr += 2; // skip "c "
+
+			// parse cvar name
+			i = 0;
+			while ( *ptr && *ptr != ' ' && *ptr != '\n' ) {
+				cvar[i++] = *ptr++;
+			}
+			cvar[i] = 0;
+
+			// skip space
+			while ( *ptr && *ptr == ' ' ) {
+				ptr++;
+			}
+
+			// parse value
+			i = 0;
+			while ( *ptr && *ptr != '\n' ) {
+				value[i++] = *ptr++;
+			}
+			value[i] = 0;
+
+			// execute!
+			Com_sprintf( cmd, sizeof( cmd ), "seta %s %s\n", cvar, value );
+			trap_SendConsoleCommand( cmd );
+		} else if ( !Q_strncmp( ptr, "bfp", 3 ) ) { // "bfp" marks the end of file
+			break;
+		}
+
+		// skip to next line
+		while ( *ptr && *ptr != '\n' ) {
+			ptr++;
+		}
+		if ( *ptr == '\n' ) {
+			ptr++;
+		}
+	}
+
+	// CG_Printf( "^2BFP config loaded successfully\n" );
+}
+
 /*
 =================
 CG_Init
@@ -952,6 +1081,9 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_StartMusic();
 
 	CG_LoadingString( "" );
+
+	// BFP - Load bfp.cfg
+	CG_LoadBFPConfig();
 
 	CG_ShaderStateChanged();
 

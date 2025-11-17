@@ -629,6 +629,9 @@ void Parse3DMatrix (char **buf_p, int z, int y, int x, float *m);
 
 int	QDECL Com_sprintf (char *dest, int size, const char *fmt, ...);
 
+// BFP - Avoids the buffer from overflowing
+qboolean	QDECL Com_Bufsprintf( char *dest, int size, int *bufLen, const char *fmt, ... );
+#define BFP_CFG_BUFFER_SIZE		16384
 
 // mode parm for FS_FOpenFile
 typedef enum {
