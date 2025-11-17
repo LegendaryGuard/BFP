@@ -509,7 +509,7 @@ Installation (windows):
 Starting BFP:<br/>
 There are two ways to start BFP. The easiest way is to use the mods menu in Quake 3. From the main Quake 3 menu, click "mods". Then find "Dragon Ball Z: Bid For Power" on the list and highlight it. If you have a lot of mods installed, you may need to scroll the list in order to make BFP visible. Once you have BFP highlighted, click on the load button and BFP will start.
 
-The other way to start BFP is to use the command line arguments `+set fs_game bfp`. An easy way to do this under Windows is to create a shortcut. Highlight the quake3 icon in whatever directory you installed Quake 3 into, and press ctrl-c to copy the link. Press ctrl-v to create a shortcut to quake3. Right click on the new shortcut and go into the properties menu. Under the `shortcut` tab of the properties menu, change the target to `C:Quake 3 Arenaquake3.exe +set fs_game bfp` if you installed Quake 3 into C:Quake 3 Arena. Use this new shortcut to start BFP.
+The other way to start BFP is to use the command line arguments `+set fs_game bfp`. An easy way to do this under Windows is to create a shortcut. Highlight the quake3 icon in whatever directory you installed Quake 3 into, and press ctrl-c to copy the link. Press ctrl-v to create a shortcut to quake3. Right click on the new shortcut and go into the properties menu. Under the `shortcut` tab of the properties menu, change the target to `C:\Quake 3 Arena\quake3.exe +set fs_game bfp` if you installed Quake 3 into C:\Quake 3 Arena. Use this new shortcut to start BFP.
 
 BFP loads its own config file called 'bfp.cfg'. This allows either way of starting BFP to work without any config file problems.
 

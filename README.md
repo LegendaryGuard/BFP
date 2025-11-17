@@ -31,6 +31,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Auras
 - [x] Balanced player physics movements (different from the original BFP, but balanced for gameplay)
 - [x] Beam trails
+- [x] BFP config file ([bfp.cfg](bfp.cfg)) (a sample of how the game saves general binding and BFP cvar stuff in a cfg file)
 - [x] Bind key to recover ki energy
 - [x] Bind key to toggle speed (ki boost)
 - [x] Blinding Flash (blinds players during 6 seconds)
@@ -45,6 +46,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Ki trails
 - [x] Melee feature
 - [x] Remove some items like powerups and health pickups
+- [x] Particles
 - [x] Powerlevel and Power Tiers indicated on old docs
 - [x] Playable third person mode and first person vis mode
 - [x] Remove weapon visuals (models and stuff)
@@ -172,7 +174,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - the player monster's ki trails are larger than other players'
   - the player monster generates bigger bubbles, smoke, and antigrav rock particles when charging/using ki boost
   - player monster's first-person and first-person vis mode viewpoints work properly
-  - player monster's third-person camera has improved focus (similar to BFP's standard third-person view but scaled for giant characters)
+  - player monster's third-person camera has improved focus in the code (similar to BFP's standard third-person view but scaled for giant characters), it can be enabled by setting `BFP_MONSTER_CAMERA_VIEWPOS` macro to `0` and recompile the code, although the traceable crosshair looks a bit jerky
   - `g_monster` cvar enables the monster/big monkey feature (that happened in the RC/beta versions)
   - available in the UI, maps marked as `monster` besides `oozaru` can be viewed in the GAME SERVER menu
 - team last man standing has the following in-game differences compared to the original:
@@ -227,7 +229,7 @@ Weapon settings:
    * [bfp_weapon.cfg](cfgs/bfp_weapon.cfg)
    * [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg)
 
-BFP config (optional - general binding and some client stuff, unused. WARNING: when executing, game might crash):
+BFP config (a sample of how the game saves general binding and BFP cvar stuff in a cfg file):
 
    * [bfp.cfg](cfgs/bfp.cfg)
 
