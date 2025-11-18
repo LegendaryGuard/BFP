@@ -11,5 +11,6 @@ win32-msvc/*.vcxproj
 win32-msvc/*.vcxproj.filters
 win32-msvc/*.vcxproj.user
 win32-msvc/*.htm
+binaries*
 build*
 vm*
