@@ -2243,6 +2243,9 @@ static void PM_TorsoAnimation( void ) {
 	trace_t		trace;
 	vec3_t		point;
 	int			cont;
+	// BFP - Handle the jump velocity after touching water surface, 
+	// the maximum speed is one-third of the powerlevel
+	float		vel, maxSpeed = 400 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.25 );
 
 	// BFP - Ultimate tier
 	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
@@ -2264,7 +2267,6 @@ static void PM_TorsoAnimation( void ) {
 		if ( pm->cmd.forwardmove > 0 || pm->cmd.forwardmove < 0 
 		|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) {
 			float fmove, smove;
-			float vel;
 			int i;
 
 			fmove = pm->cmd.forwardmove;
@@ -2283,13 +2285,6 @@ static void PM_TorsoAnimation( void ) {
 				pm->ps->velocity[0] *= 10;
 				pm->ps->velocity[1] *= 10;
 			}
-			vel = VectorLength( pm->ps->velocity );
-			if ( vel > 640 ) { // keep maximum speed
-				vel = 640;
-			}
-
-			VectorNormalize( pm->ps->velocity );
-			VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
 		}
 		// increase jumping speed using ki boost while not moving directionally		
 		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
@@ -2298,6 +2293,14 @@ static void PM_TorsoAnimation( void ) {
 		|| pm->cmd.rightmove > 0 || pm->cmd.rightmove < 0 ) ) {
 			pm->ps->velocity[2] *= 5;
 		}
+
+		// fix high speed bug (some strafe - or defrag trick) by touching and jumping off the water surface
+		vel = VectorLength( pm->ps->velocity );
+		if ( vel > maxSpeed ) { // keep maximum speed
+			vel = maxSpeed;
+		}
+		VectorNormalize( pm->ps->velocity );
+		VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
 
 		// BFP - Handle PMF flags, don't do idle or other torso animations while jumping off from the water
 		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY;
