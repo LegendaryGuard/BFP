@@ -322,6 +322,104 @@ static void G_LocateSpawnSpots( void )
 
 
 /*
+======================
+G_LoadBFPServerConfig
+
+Loads and executes the BFP mod server config file (bfp_server.cfg)
+======================
+*/
+static void G_LoadBFPServerConfig( void ) { // BFP - Load bfp_server.cfg
+	fileHandle_t f;
+	int len;
+	char buf[BFP_CFG_BUFFER_SIZE];
+	char *ptr;
+
+	len = trap_FS_FOpenFile( "bfp_server.cfg", &f, FS_READ );
+	if ( !f ) {
+		// Com_Printf( S_COLOR_YELLOW "WARNING: BFP server config file not found, using defaults\n" );
+		return;
+	}
+
+	if ( len >= sizeof(buf) ) {
+		trap_FS_FCloseFile( f );
+		Com_Printf( "BFP server config file too long\n" );
+		return;
+	}
+
+	// read the config file
+	trap_FS_Read( buf, len, f );
+	buf[len] = 0;
+	trap_FS_FCloseFile( f );
+
+	Com_Printf( "reading bfp_server.cfg\n" );
+
+	// parse the config file line by line
+	ptr = buf;
+
+	while ( *ptr ) {
+		// skip whitespace at line start
+		while ( *ptr && (*ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n') ) {
+			ptr++;
+		}
+
+		if ( !*ptr ) {
+			break;
+		}
+
+		if ( !Q_strncmp( ptr, "end", 3 ) ) { // "end" marks the end of file
+			break;
+		}
+
+		// check command type
+		if ( *ptr == 'b' && *(ptr + 1) == ' ' ) { // b <cvarname> <value>
+			char cvar[256], value[512];
+			int i;
+
+			ptr += 2; // skip "b "
+
+			// skip any additional whitespace after "b "
+			while ( *ptr && (*ptr == ' ' || *ptr == '\t') ) {
+				ptr++;
+			}
+
+			// parse cvar name
+			i = 0;
+			while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof(cvar) - 1 ) {
+				cvar[i++] = *ptr++;
+			}
+			cvar[i] = 0;
+
+			// skip space between cvar and value
+			while ( *ptr && (*ptr == ' ' || *ptr == '\t') ) {
+				ptr++;
+			}
+
+			// parse value
+			i = 0;
+			while ( *ptr && *ptr != '\n' && *ptr != '\r' && i < sizeof(value) - 1 ) {
+				value[i++] = *ptr++;
+			}
+			value[i] = 0;
+
+			if ( cvar[0] ) { // set the cvar
+				trap_Cvar_Set( cvar, value );
+			}
+		} else {
+			// skip unrecognized lines
+			while ( *ptr && *ptr != '\n' && *ptr != '\r' ) {
+				ptr++;
+			}
+		}
+
+		// skip to next line (handle both \n and \r\n)
+		while ( *ptr && (*ptr == '\n' || *ptr == '\r') ) {
+			ptr++;
+		}
+	}
+}
+
+
+/*
 ============
 G_InitGame
 
@@ -403,6 +501,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString();
+
+	// BFP - Load bfp_server.cfg
+	G_LoadBFPServerConfig();
 
 	// general initialization
 	G_FindTeams();
