@@ -1100,7 +1100,7 @@ static void UI_ConvertHexKeyname( char keyname[32] ) { // BFP - Converts any hex
 
 	for ( i = 0; i < ARRAY_LEN( KEYNAMEMAP ); ++i ) {
 		if ( !Q_stricmp( keyname, KEYNAMEMAP[i].hex ) ) {
-			Q_strncpyz( keyname, KEYNAMEMAP[i].replacement, sizeof(keyname) );
+			Q_strncpyz( keyname, KEYNAMEMAP[i].replacement, sizeof(KEYNAMEMAP[i].replacement) );
 			return;
 		}
 	}
@@ -1115,17 +1115,15 @@ UI_WriteBFPConfig
 */
 static void UI_WriteBFPConfig( void ) { // BFP - Overwrites bfp.cfg
 	fileHandle_t	f;
-	int				i, len;
+	int				i, len, bufLen = 0;
 	char			buffer[BFP_CFG_BUFFER_SIZE];
-	int				bufLen = 0;
-	char			modelBuffer[MAX_STRING_CHARS];
+	char			modelBuffer[MAX_STRING_CHARS], binding[MAX_STRING_CHARS];
 	char			keyname[32];
-	char			binding[MAX_STRING_CHARS];
 
 	// write model configuration first
 	trap_Cvar_VariableStringBuffer( "model", modelBuffer, sizeof(modelBuffer) );
 	if ( modelBuffer[0] ) {
-		Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "c model %s\n", modelBuffer );
+		bufLen += Com_sprintf( buffer + bufLen, sizeof(buffer), "c model %s\n", modelBuffer );
 	}
 
 	// write all key bindings by iterating through all possible keys
@@ -1138,15 +1136,14 @@ static void UI_WriteBFPConfig( void ) { // BFP - Overwrites bfp.cfg
 
 		// only write non-empty bindings
 		if ( binding[0] ) {
-			Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "b %s \"%s\"\n", keyname, binding );
+			bufLen += Com_sprintf( buffer + bufLen, sizeof(buffer), "b %s \"%s\"\n", keyname, binding );
 		}
 	}
 
 	// write all BFP-specific cvars
 	{
 		typedef struct {
-			const char* cvarName;
-			const char* cvarValue;
+			const char *cvarName, *cvarValue;
 		} bfpCvars_t;
 
 		const bfpCvars_t BFPCVARS[] = {
@@ -1204,12 +1201,12 @@ static void UI_WriteBFPConfig( void ) { // BFP - Overwrites bfp.cfg
 			}
 			
 			// write cvar to buffer
-			Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "c %s %s\n", cvarName, cvarValue );
+			bufLen += Com_sprintf( buffer + bufLen, sizeof(buffer), "c %s %s\n", cvarName, cvarValue );
 		}
 	}
 	
 	// write "bfp" marker at the end of file
-	Com_Bufsprintf( buffer, sizeof(buffer), &bufLen, "bfp\n" );
+	bufLen += Com_sprintf( buffer + bufLen, sizeof(buffer), "bfp\n" );
 
 	// check buffer size once at the end
 	if ( bufLen >= (int)sizeof(buffer) ) {

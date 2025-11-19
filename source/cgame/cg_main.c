@@ -864,19 +864,19 @@ Loads and executes the BFP mod config file (bfp.cfg)
 static void CG_LoadBFPConfig( void ) { // BFP - Load bfp.cfg
 	fileHandle_t f;
 	int len;
-	char buf[BFP_CFG_BUFFER_SIZE], cmd[1024];
-	char *token, *ptr;
+	char buf[BFP_CFG_BUFFER_SIZE], cmd[MAX_STRING_CHARS];
+	char *ptr;
 
 	len = trap_FS_FOpenFile( "bfp.cfg", &f, FS_READ );
 
 	if ( !f ) {
-		// CG_Printf( S_COLOR_YELLOW "WARNING: BFP config file not found, using defaults\n" );
+		// Com_Printf( S_COLOR_YELLOW "WARNING: BFP config file not found, using defaults\n" );
 		return;
 	}
 
 	if ( len >= sizeof(buf) ) {
 		trap_FS_FCloseFile( f );
-		CG_Error( "BFP config file too long\n" );
+		Com_Printf( "BFP config file too long\n" );
 		return;
 	}
 
@@ -978,7 +978,7 @@ static void CG_LoadBFPConfig( void ) { // BFP - Load bfp.cfg
 		}
 	}
 
-	// CG_Printf( "^2BFP config loaded successfully\n" );
+	// Com_Printf( S_COLOR_GREEN "BFP config loaded successfully\n" );
 }
 
 /*
