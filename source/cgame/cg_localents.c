@@ -398,41 +398,35 @@ static void CG_AddMoveDontScaleFade( localEntity_t *le ) { // BFP - For LE_MOVE_
 	refEntity_t	*re;
 	float		c;
 	// BFP - NOTE: Explosion effect use non-timescaled, to be timescaled by game, use cg.time
-	static int	timenonscaled;
-
-	timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
+	le->fadeInTime = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
 
 	re = &le->refEntity;
 
-	if ( le->fadeInTime > le->startTime && timenonscaled < le->fadeInTime ) {
-		// fade / grow time
-		c = 1.0 - (float) ( le->fadeInTime - timenonscaled ) / ( le->fadeInTime - le->startTime );
-	} else {
-		// fade / grow time
-		c = ( le->endTime - timenonscaled ) * le->lifeRate;
-	}
+	// fade / grow time
+	c = (float)( le->endTime - le->fadeInTime ) * (float)le->lifeRate;
 
-	re->shaderRGBA[3] = 0xff * c * le->color[3];
+	// instead 0xff (255), use 510 to make the shader more visible
+	re->shaderRGBA[3] = 510 * c * le->color[3];
 	if ( re->shaderRGBA[3] <= 0 ) { // no alpha, disappear then
 		CG_FreeLocalEntity( le );
 		return;
 	}
 
-	// slow down the movement during 0.25 sec
-	if ( timenonscaled - le->startTime < 250 ) {
-		le->pos.trDelta[0] *= 0.989;
-		le->pos.trDelta[1] *= 0.989;
+	// slow down the movement during 0.33 sec
+	if ( le->fadeInTime - le->startTime < 330 ) {
+		le->pos.trDelta[0] *= 0.998;
+		le->pos.trDelta[1] *= 0.998;
 	} else { // stop moving horizontally
 		vec3_t currentPos;
-		BG_EvaluateTrajectory( &le->pos, timenonscaled, currentPos );
+		BG_EvaluateTrajectory( &le->pos, le->fadeInTime, currentPos );
 		VectorCopy( currentPos, le->pos.trBase );
-		le->pos.trTime = timenonscaled;
+		le->pos.trTime = le->fadeInTime;
 		le->pos.trDelta[0] = le->pos.trDelta[1] = 0;
 	}
 
 	re->radius = le->radius;
 
-	BG_EvaluateTrajectory( &le->pos, timenonscaled, re->origin );
+	BG_EvaluateTrajectory( &le->pos, le->fadeInTime, re->origin );
 
 	trap_R_AddRefEntityToScene( re );
 }

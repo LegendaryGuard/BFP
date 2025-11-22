@@ -689,12 +689,10 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 			localEntity_t	*leSmoke;
 			vec3_t	vel, smokeOrg, spreadDir;
 			float	rightSpread, upSpread;
-			static int	timenonscaled;
+			int	timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
 
-			timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
-
-			rightSpread = crandom() * 80;
-			upSpread = crandom() * 25;
+			rightSpread = crandom() * 500;
+			upSpread = crandom() * 500;
 
 			VectorCopy( dir, spreadDir );
 			VectorMA( spreadDir, rightSpread, right, spreadDir );
@@ -705,7 +703,7 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 			VectorMA( origin, 20 + ( rand() % 80 ), spreadDir, smokeOrg );
 
 			// velocity moves outward in spread direction
-			VectorScale( spreadDir, 150 + ( rand() % 300 ), vel );
+			VectorScale( spreadDir, 150 + ( rand() % 500 ), vel );
 			vel[2] = 50 * explosionSmokeSpeed;
 
 			leSmoke = CG_SmokePuff( smokeOrg, vel, 
