@@ -223,9 +223,9 @@ void MainMenu_Cache( void ) {
 #if ENABLE_BANNER_MODEL
 	s_main.bannerModel = trap_R_RegisterModel( MAIN_BANNER_MODEL );
 #endif
-	trap_R_RegisterShaderNoMip( ART_MENUBG );	// BFP - Menu background
-	trap_R_RegisterShaderNoMip( ART_BFPLOGO );	// BFP - Logo
-	trap_R_RegisterShaderNoMip( ART_CRBANNER );	// BFP - copyright banner
+	s_main.menubg.shader = trap_R_RegisterShaderNoMip( ART_MENUBG );		// BFP - Menu background
+	s_main.bfplogo.shader = trap_R_RegisterShaderNoMip( ART_BFPLOGO );		// BFP - Logo
+	s_main.crbanner.shader = trap_R_RegisterShaderNoMip( ART_CRBANNER );	// BFP - copyright banner
 }
 
 sfxHandle_t ErrorMessage_Key(int key)
@@ -263,7 +263,7 @@ static void Main_MenuBannerModelDraw( void )
 	AxisClear( refdef.viewaxis );
 
 	x = 0;
-	y = 0;
+	y = -25; // BFP - Q3: 0;
 	w = 640;
 	h = 480; // BFP - Q3: 120;
 	UI_AdjustFrom640( &x, &y, &w, &h );
@@ -324,13 +324,28 @@ static void Main_MenuDraw( void ) {
 	}
 	else
 	{
-		// standard menu drawing
-		Menu_Draw( &s_main.menu );		
-	}
 	// BFP - 3d banner model :P
 #if ENABLE_BANNER_MODEL
-	Main_MenuBannerModelDraw();
+		// BFP - Menu background
+		s_main.menubg.generic.type			= MTYPE_BITMAP;
+		s_main.menubg.generic.name			= ART_MENUBG;
+		s_main.menubg.generic.flags			= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
+		s_main.menubg.generic.x				= 0;
+		s_main.menubg.generic.y				= 0;
+		s_main.menubg.width					= 640;
+		s_main.menubg.height				= 480;
+
+		// draw background first
+		UI_DrawHandlePic( s_main.menubg.generic.x, s_main.menubg.generic.y, 
+						  s_main.menubg.width, s_main.menubg.height, 
+						  s_main.menubg.shader );
+		
+		// BFP - Draw 3d BFP banner model behind buttons and title
+		Main_MenuBannerModelDraw();
 #endif
+		// standard menu drawing
+		Menu_Draw( &s_main.menu );
+	}
 
 	// BFP - Demo version disabled, possibly we may remove that :P
 #if 0
@@ -572,10 +587,16 @@ void UI_MainMenu( void ) {
 	s_main.unpackmusic.color				= color_white;
 	s_main.unpackmusic.style				= style;
 
+	// BFP - For 3d banner model :P
+#if !ENABLE_BANNER_MODEL
 	Menu_AddItem( &s_main.menu, &s_main.menubg ); // BFP - Menu background
+#endif
 	Menu_AddItem( &s_main.menu, &s_main.bfplogo ); // BFP - Logo
 
-	Menu_AddItem( &s_main.menu, &s_main.crbanner ); // BFP - copyright banner
+	// BFP - copyright banner
+	if ( s_main.crbanner.shader ) { // if doesn't exist, don't show that box
+		Menu_AddItem( &s_main.menu, &s_main.crbanner );
+	}
 
 	// Menu_AddItem( &s_main.menu,	&s_main.singleplayer ); // BFP - As said before, if anyone has an idea in their mind about Single Player stuff
 	Menu_AddItem( &s_main.menu, &s_main.capbar0 ); // BFP - cap bar for PLAY(MULTIPLAYER) button
