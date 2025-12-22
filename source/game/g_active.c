@@ -1081,6 +1081,13 @@ void ClientThink_real( gentity_t *ent ) {
 			client->hitStunMeleeDelayTime = 0;
 		}
 
+		// BFP - g_chargeDelay cvar for ki charge animation and appearing the aura after this time
+		if ( !( ucmd->buttons & BUTTON_KI_USE ) 
+		&& ( ucmd->buttons & BUTTON_KI_CHARGE ) 
+		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+			client->ps.pm_time = ( g_chargeDelay.integer > 0 ) ? g_chargeDelay.integer : 0;
+		}
+
 		// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
 		if ( !( client->ps.pm_flags & PMF_HITSTUN )
 		&& !( client->ps.pm_flags & PMF_BLOCK )
@@ -1095,12 +1102,6 @@ void ClientThink_real( gentity_t *ent ) {
 			&& !( ucmd->buttons & BUTTON_KI_CHARGE ) ) { // BFP - If it's charging while it was using ki boost, don't remove the aura!
 				client->ps.eFlags &= ~EF_AURA;
 				client->ps.eFlags &= ~EF_KI_BOOST; // Handle ki boost status
-			}
-
-			// BFP - g_chargeDelay cvar for ki charge animation and appearing the aura after this time
-			if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) 
-			&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
-				client->ps.pm_time = ( g_chargeDelay.integer > 0 ) ? g_chargeDelay.integer : 0;
 			}
 		}
 
