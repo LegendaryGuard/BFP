@@ -72,9 +72,18 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 	int i;
 	int kiTrailLength = cg_kiTrail.integer;
 	trail_t *kiTrail = &cg_trails[entityNum][KI_TRAIL];
-	const int MONSTER_TRAIL_WIDTH = 150;
+	const int NORMAL_KI_TRAIL_WIDTH = 15;
+	const int MONSTER_KI_TRAIL_WIDTH = 150;
+	const int OVERLAP_TIMES = 3;
+	float kiTrailWidth = // for the player monster
+		( cg_entities[entityNum].currentState.eFlags & EF_MONSTER )
+		? MONSTER_KI_TRAIL_WIDTH
+		: NORMAL_KI_TRAIL_WIDTH;
+// BFP - A macro to enable/disable poly/refEntity_t rendering. If enabled, render polys, if disabled render the original BFP refEntity_t trails
+#define POLYVERT_KI_TRAILS	1
 
-	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES
+	|| kiTrailLength <= OVERLAP_TIMES ) { // don't draw if ki trail length is less than the number of overlap times
 		return;
 	}
 
@@ -100,17 +109,15 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 	// add the current position at the start
 	VectorCopy( origin, kiTrail->segments[0] );
 
-	for ( i = 0; i < kiTrail->numSegments - 1; ++i ) {
+	for ( i = 0; i < kiTrail->numSegments - OVERLAP_TIMES; ++i ) {
 		vec3_t start, end;
 
 		VectorCopy( kiTrail->segments[i], start );
-		if ( i > 0 ) {
-			VectorCopy( kiTrail->segments[i - 1], start );
-		}
-		VectorCopy( kiTrail->segments[i + 1], end );
+		VectorCopy( kiTrail->segments[i + OVERLAP_TIMES], end );
 
-		// for the player monster
-		if ( cg_entities[entityNum].currentState.eFlags & EF_MONSTER ) {
+#if POLYVERT_KI_TRAILS
+		// render the polys
+		{
 			polyVert_t verts[4];
 			vec3_t forward, right;
 			vec3_t viewAxis;
@@ -122,38 +129,37 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 			CrossProduct( viewAxis, forward, right );
 			VectorNormalize( right );
 
-			VectorMA( end, MONSTER_TRAIL_WIDTH, right, verts[0].xyz );
-			VectorArray2Set( verts[0].st, 0, 1 );
+			VectorMA( start, kiTrailWidth, right, verts[0].xyz );
+			VectorArray2Set( verts[0].st, 0, 0 );
 			Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
 
-			VectorMA( end, -MONSTER_TRAIL_WIDTH, right, verts[1].xyz );
+			VectorMA( end, kiTrailWidth, right, verts[1].xyz );
 			VectorArray2Set( verts[1].st, 1, 0 );
 			Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
 
-			VectorMA( start, -MONSTER_TRAIL_WIDTH, right, verts[2].xyz );
-			VectorArray2Set( verts[2].st, 1, 0 );
+			VectorMA( end, -kiTrailWidth, right, verts[2].xyz );
+			VectorArray2Set( verts[2].st, 1, 1 );
 			Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
 
-			VectorMA( start, MONSTER_TRAIL_WIDTH, right, verts[3].xyz );
+			VectorMA( start, -kiTrailWidth, right, verts[3].xyz );
 			VectorArray2Set( verts[3].st, 0, 1 );
 			Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
 
-			// render 2 times for better visual effect
 			trap_R_AddPolyToScene( hShader, 4, verts );
-			trap_R_AddPolyToScene( hShader, 4, verts );
-		} else { // I see... so, BFP originally used RT_RAIL_CORE, they didn't care the size, it was already set
-			refEntity_t	beam;
-			memset( &beam, 0, sizeof( beam ) );
-			beam.reType = RT_RAIL_CORE;
-			beam.customShader = hShader;
-			VectorCopy( start, beam.origin );
-			VectorCopy( end, beam.oldorigin );
-			beam.shaderRGBA[0] = beam.shaderRGBA[1] = beam.shaderRGBA[2] = beam.shaderRGBA[3] = 255;
-
-			// render 2 times for better visual effect
-			trap_R_AddRefEntityToScene( &beam );
-			trap_R_AddRefEntityToScene( &beam );
 		}
+#else
+		{ // I see... so, BFP originally used RT_RAIL_CORE, they didn't care the size, it was already set
+			refEntity_t	trail;
+			memset( &trail, 0, sizeof( trail ) );
+			trail.reType = RT_RAIL_CORE;
+			trail.customShader = hShader;
+			VectorCopy( start, trail.origin );
+			VectorCopy( end, trail.oldorigin );
+			trail.shaderRGBA[0] = trail.shaderRGBA[1] = trail.shaderRGBA[2] = trail.shaderRGBA[3] = 255;
+
+			trap_R_AddRefEntityToScene( &trail );
+		}
+#endif
 	}
 }
 
