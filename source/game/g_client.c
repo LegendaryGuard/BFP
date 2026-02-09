@@ -1374,7 +1374,8 @@ void ClientSpawn(gentity_t *ent) {
 	}
 
 	// BFP - Max spawn powerlevel, only when g_maxSpawnPL is higher than 0
-	if ( g_maxSpawnPL.integer > 0 && client->ps.persistant[PERS_POWERLEVEL] > g_maxSpawnPL.integer ) {
+	if ( g_maxSpawnPL.integer > 0 && client->ps.persistant[PERS_POWERLEVEL] > g_maxSpawnPL.integer
+	&& g_basePL.integer < 999 ) {
 		client->ps.persistant[PERS_POWERLEVEL] = g_maxSpawnPL.integer;
 	}
 
