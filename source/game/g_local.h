@@ -353,8 +353,8 @@ struct gclient_s {
 	int			zanzokenDelay;
 	int			zanzokenLastUsed;
 
-	// BFP - Charged points for ki dividing ball
-	int			divideBallKiCharged;
+	// BFP - Ki charge points from STAT_KI_ATTACK_CHARGE
+	int			kiChargePoints;
 
 	char		*areabits;
 };

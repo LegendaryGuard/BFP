@@ -29,8 +29,6 @@ static	float	s_quadFactor;
 static	vec3_t	forward, right, up;
 static	vec3_t	muzzle;
 
-#define NUM_NAILSHOTS 15
-
 /*
 ================
 G_BounceProjectile
@@ -371,49 +369,50 @@ void Bullet_Fire (gentity_t *ent, float spread, int damage ) {
 	float		u;
 	gentity_t	*tent;
 	gentity_t	*traceEnt;
-	int			i, passent;
+	int			passent;
+
+	// BFP - bfp_weapon.cfg: randYOffset, randXOffset, range
+	float		randYOffset = 35;
+	float		randXOffset = 35;
+	float		range = 1500;
 
 	damage *= s_quadFactor;
 
-	r = random() * M_PI * 2.0f;
-	u = sin(r) * crandom() * spread * 16;
-	r = cos(r) * crandom() * spread * 16;
-	VectorMA (muzzle, 8192*16, forward, end);
+	r = crandom() * randXOffset;
+	u = crandom() * randYOffset;
+	VectorMA (muzzle, range, forward, end);
 	VectorMA (end, r, right, end);
 	VectorMA (end, u, up, end);
 
 	passent = ent->s.number;
-	for (i = 0; i < 10; i++) {
 
-		trap_Trace (&tr, muzzle, NULL, NULL, end, passent, MASK_SHOT);
-		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
-			return;
+	trap_Trace (&tr, muzzle, NULL, NULL, end, passent, MASK_SHOT);
+	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
+		return;
+	}
+
+	traceEnt = &g_entities[ tr.entityNum ];
+
+	// snap the endpos to integers, but nudged towards the line
+	SnapVectorTowards( tr.endpos, muzzle );
+
+	// send bullet impact
+	if ( traceEnt->takedamage && traceEnt->client ) {
+		tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT ); // BFP - Before Q3: EV_BULLET_HIT_FLESH
+		tent->s.eventParm = DirToByte( tr.plane.normal ); // BFP - Before Q3: traceEnt->s.number
+		if( LogAccuracyHit( traceEnt, ent ) ) {
+			ent->client->accuracy_hits++;
 		}
+	} else {
+		tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS ); // BFP - Before Q3: EV_BULLET_HIT_WALL
+		tent->s.eventParm = DirToByte( tr.plane.normal );
+	}
+	tent->s.weapon = ent->s.weapon; // BFP - Sends weapon info to the event
+	tent->s.otherEntityNum = ent->s.number;
 
-		traceEnt = &g_entities[ tr.entityNum ];
-
-		// snap the endpos to integers, but nudged towards the line
-		SnapVectorTowards( tr.endpos, muzzle );
-
-		// send bullet impact
-		if ( traceEnt->takedamage && traceEnt->client ) {
-			tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT ); // BFP - Before Q3: EV_BULLET_HIT_FLESH
-			tent->s.eventParm = DirToByte( tr.plane.normal ); // BFP - Before Q3: traceEnt->s.number
-			if( LogAccuracyHit( traceEnt, ent ) ) {
-				ent->client->accuracy_hits++;
-			}
-		} else {
-			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS ); // BFP - Before Q3: EV_BULLET_HIT_WALL
-			tent->s.eventParm = DirToByte( tr.plane.normal );
-		}
-		tent->s.weapon = ent->s.weapon; // BFP - Sends weapon info to the event
-		tent->s.otherEntityNum = ent->s.number;
-
-		if ( traceEnt->takedamage) {
-				G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-					damage, 0, MOD_MACHINEGUN);
-		}
-		break;
+	if ( traceEnt->takedamage ) {
+			G_Damage( traceEnt, ent, ent, forward, tr.endpos,
+				damage, 0, MOD_MACHINEGUN);
 	}
 }
 
@@ -451,30 +450,25 @@ SHOTGUN
 
 qboolean ShotgunPellet( vec3_t start, vec3_t end, gentity_t *ent ) {
 	trace_t		tr;
-	int			damage, i, passent;
+	int			damage;
 	gentity_t	*traceEnt;
-	vec3_t		tr_start, tr_end;
 
-	passent = ent->s.number;
-	VectorCopy( start, tr_start );
-	VectorCopy( end, tr_end );
-	for (i = 0; i < 10; i++) {
-		trap_Trace (&tr, tr_start, NULL, NULL, tr_end, passent, MASK_SHOT);
-		traceEnt = &g_entities[ tr.entityNum ];
+	trap_Trace (&tr, start, NULL, NULL, end, ent->s.number, MASK_SHOT);
+	traceEnt = &g_entities[ tr.entityNum ];
 
-		// send bullet impact
-		if (  tr.surfaceFlags & SURF_NOIMPACT ) {
-			return qfalse;
-		}
-
-		if ( traceEnt->takedamage) {
-			damage = DEFAULT_SHOTGUN_DAMAGE * s_quadFactor;
-			G_Damage( traceEnt, ent, ent, forward, tr.endpos,	damage, 0, MOD_SHOTGUN);
-				if( LogAccuracyHit( traceEnt, ent ) ) {
-					return qtrue;
-				}
-		}
+	// send bullet impact
+	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 		return qfalse;
+	}
+
+	if ( traceEnt->takedamage ) {
+		damage = DEFAULT_SHOTGUN_DAMAGE * s_quadFactor;
+
+		G_Damage( traceEnt, ent, ent, forward, tr.endpos,
+			damage, 0, MOD_SHOTGUN );
+		if( LogAccuracyHit( traceEnt, ent ) ) {
+			return qtrue;
+		}
 	}
 	return qfalse;
 }
@@ -742,73 +736,66 @@ void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
 	G_FreeEntity( ent );
 }
 
+qboolean Weapon_BFPBeamTrace ( gentity_t *ent, vec3_t origin ) { // BFP - Beam trace
+	gentity_t	*owner = &g_entities[ent->r.ownerNum];
+	gentity_t	*traceEnt = NULL;
+	trace_t		trace;
+
+	trap_Trace( &trace, origin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, 
+				ent->r.ownerNum, MASK_SHOT | MASK_SOLID );
+
+	traceEnt = &g_entities[ trace.entityNum ];
+	if ( !Q_stricmp( traceEnt->classname, "beam" ) ) {
+		return qtrue;
+	}
+
+	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
+		Weapon_BFPBeamFree( ent );
+		if ( owner->client ) {
+			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+			owner->client->ps.weaponstate = WEAPON_READY;
+			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		}
+		return qtrue;
+	}
+
+	if ( trace.fraction < 1.0 ) {
+		VectorCopy( trace.endpos, ent->r.currentOrigin );
+		G_MissileImpact( ent, &trace );
+		if ( owner->client ) {
+			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+			owner->client->ps.weaponstate = WEAPON_READY;
+			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		}
+		return qtrue;
+	}
+	return qfalse;
+}
+
 void Weapon_BFPBeamThink ( gentity_t *ent ) // BFP - BFP Beam think
 {
 	gentity_t *owner = &g_entities[ent->r.ownerNum];
 	vec3_t ownerViewPos, previousOrigin, newVelocity;
-	trace_t trace;
 	float beamSpeed = 2000;
-
-	// BFP - TODO: Beam struggle: 2 beams collide 
 
 	VectorCopy( owner->client->ps.origin, ownerViewPos );
 	ownerViewPos[2] += owner->client->ps.viewheight;
 	AngleVectors( owner->client->ps.viewangles, forward, NULL, NULL );
-
 	VectorCopy( ent->r.currentOrigin, previousOrigin );
 
 	VectorScale( forward, beamSpeed, newVelocity );
-	VectorCopy( newVelocity, ent->s.pos.trDelta );
 
+	VectorCopy( newVelocity, ent->s.pos.trDelta );
 	VectorCopy( ownerViewPos, ent->s.pos.trBase );
 
 	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
 
-	trap_Trace( &trace, ownerViewPos, NULL, NULL, ent->r.currentOrigin, 
-				ent->r.ownerNum, MASK_SHOT | MASK_SOLID );
-
-	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
-		Weapon_BFPBeamFree( ent );
-		if ( owner->client ) {
-			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
-			owner->client->ps.weaponstate = WEAPON_READY;
-			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
-		}
+	if ( Weapon_BFPBeamTrace( ent, ent->s.pos.trBase ) ) {
 		return;
 	}
 
-	if ( trace.fraction < 1.0 ) {
-		VectorCopy( trace.endpos, ent->r.currentOrigin );
-		G_MissileImpact( ent, &trace );
-		if ( owner->client ) {
-			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
-			owner->client->ps.weaponstate = WEAPON_READY;
-			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
-		}
+	if ( Weapon_BFPBeamTrace( ent, previousOrigin ) ) {
 		return;
-	}
-
-	trap_Trace( &trace, previousOrigin, NULL, NULL,
-				ent->r.currentOrigin, ent->r.ownerNum, MASK_SHOT | MASK_SOLID );
-
-	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
-		Weapon_BFPBeamFree( ent );
-		if ( owner->client ) {
-			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
-			owner->client->ps.weaponstate = WEAPON_READY;
-			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
-		}
-		return;
-	}
-
-	if ( trace.fraction < 1.0 ) {
-		VectorCopy( trace.endpos, ent->r.currentOrigin );
-		G_MissileImpact( ent, &trace );
-		if ( owner->client ) {
-			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
-			owner->client->ps.weaponstate = WEAPON_READY;
-			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
-		}
 	}
 }
 
@@ -824,42 +811,38 @@ void Weapon_LightningFire( gentity_t *ent ) {
 	trace_t		tr;
 	vec3_t		end;
 	gentity_t	*traceEnt, *tent;
-	int			damage, i, passent;
+	int			damage, passent;
 
 	damage = 8 * s_quadFactor;
 
 	passent = ent->s.number;
-	for (i = 0; i < 10; i++) {
-		VectorMA( muzzle, LIGHTNING_RANGE, forward, end );
+	VectorMA( muzzle, LIGHTNING_RANGE, forward, end );
 
-		trap_Trace( &tr, muzzle, NULL, NULL, end, passent, MASK_SHOT );
+	trap_Trace( &tr, muzzle, NULL, NULL, end, passent, MASK_SHOT );
 
-		if ( tr.entityNum == ENTITYNUM_NONE ) {
-			return;
+	if ( tr.entityNum == ENTITYNUM_NONE ) {
+		return;
+	}
+
+	traceEnt = &g_entities[ tr.entityNum ];
+
+	if ( traceEnt->takedamage) {
+		G_Damage( traceEnt, ent, ent, forward, tr.endpos,
+			damage, 0, MOD_LIGHTNING);
+	}
+
+	if ( traceEnt->takedamage && traceEnt->client ) {
+		tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
+		tent->s.otherEntityNum = traceEnt->s.number;
+		tent->s.eventParm = DirToByte( tr.plane.normal );
+		tent->s.weapon = ent->s.weapon;
+		if( LogAccuracyHit( traceEnt, ent ) ) {
+			ent->client->accuracy_hits++;
 		}
-
-		traceEnt = &g_entities[ tr.entityNum ];
-
-		if ( traceEnt->takedamage) {
-				G_Damage( traceEnt, ent, ent, forward, tr.endpos,
-					damage, 0, MOD_LIGHTNING);
-		}
-
-		if ( traceEnt->takedamage && traceEnt->client ) {
-			tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
-			tent->s.otherEntityNum = traceEnt->s.number;
-			tent->s.eventParm = DirToByte( tr.plane.normal );
-			tent->s.weapon = ent->s.weapon;
-			if( LogAccuracyHit( traceEnt, ent ) ) {
-				ent->client->accuracy_hits++;
-			}
-		} else if ( !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
-			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
-			tent->s.eventParm = DirToByte( tr.plane.normal );
-			tent->s.weapon = ent->s.weapon; // BFP - Sends weapon info to the event
-		}
-
-		break;
+	} else if ( !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
+		tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
+		tent->s.eventParm = DirToByte( tr.plane.normal );
+		tent->s.weapon = ent->s.weapon; // BFP - Sends weapon info to the event
 	}
 }
 

@@ -31,15 +31,8 @@ G_DivideProjectile_Fire
 */
 static void G_DivideProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir ) {
 	gentity_t	*m;
-	float s_quadFactor = 1;
-
-	if ( ent->client->ps.powerups[PW_QUAD] ) {
-		s_quadFactor = g_quadfactor.value;
-	}
 
 	m = fire_plasma( ent, start, dir );
-	m->damage *= s_quadFactor;
-	m->splashDamage *= s_quadFactor;
 	m->enabledivide = qtrue; // handle divided ki ball, otherwise crashes (in DLL/SO)
 
 //	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
@@ -53,7 +46,7 @@ G_HandleDivideKiBall
 static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP - WP_PLASMAGUN would be that dividing ball, when pressing the attack key again, divides by the number of balls depending on the ki attack charge points had
 	vec3_t	dir, angles;
 	int		i;
-	int		chargePoints = client->divideBallKiCharged;
+	int		chargePoints = client->kiChargePoints;
 	int		projectiles_to_spawn = 0;
 	int		yawAdjustments[6] = {
 		// if charge attack is 2:
@@ -533,16 +526,18 @@ void G_RunMissile( gentity_t *ent ) {
 		// if just died, then stop
 		if ( client->ps.pm_type == PM_DEAD ) {
 			G_BFPBeamStop( ent );
+			return;
 		}
 
 		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 			G_BFPBeamStop( ent );
+			return;
 		}
 
 		if ( tr.fraction != 1 ) {
 			G_BFPBeamStop( ent );
+			return;
 		}
-		return;
 	}
 
 	if ( tr.fraction != 1 ) {
@@ -711,6 +706,8 @@ fire_rocket
 */
 gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	gentity_t	*bolt;
+	// BFP - Projectile radius
+	float		radius = 20;
 
 	VectorNormalize (dir);
 
@@ -731,12 +728,19 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
+	// BFP - Speed similar to BFP ki blast attack (missileSpeed)
+	bolt->speed = 6000;
+
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, 900, bolt->s.pos.trDelta );
+	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, bolt->r.currentOrigin);
+
+	// BFP - Collision radius
+	VectorSet( bolt->r.mins, -radius, -radius, -radius );
+	VectorSet( bolt->r.maxs, radius, radius, radius );
 
 	return bolt;
 }
@@ -786,6 +790,8 @@ fire_bfpbeam
 */
 gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	gentity_t	*beam;
+	// BFP - Projectile radius
+	float		radius = 30;
 
 	VectorNormalize( dir );
 
@@ -807,13 +813,20 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	beam->splashRadius = 120;
 	beam->splashMethodOfDeath = MOD_KI_ATTACK;
 
+	// BFP - Speed similar to BFP lightning blast/heaven's wrath attack (missileSpeed)
+	beam->speed = 2000;
+
 	beam->s.pos.trType = TR_LINEAR;
 	beam->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	beam->s.otherEntityNum = self->s.number; // use to match beam in client
 	VectorCopy( start, beam->s.pos.trBase );
-	VectorScale( dir, 800, beam->s.pos.trDelta );
+	VectorScale( dir, beam->speed, beam->s.pos.trDelta );	// speed
 	SnapVector( beam->s.pos.trDelta );			// save net bandwidth
 	VectorCopy( start, beam->r.currentOrigin );
+
+	// BFP - Collision radius
+	VectorSet( beam->r.mins, -radius, -radius, -radius );
+	VectorSet( beam->r.maxs, radius, radius, radius );
 
 	return beam;
 }
