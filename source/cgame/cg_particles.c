@@ -437,7 +437,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			{
 				// BFP - To detect if there is something solid
 				trace_t		trace;
-				vec3_t		rockMins = {0, 0, -1}; // place a bit above
+				vec3_t		rockMins = {0, 0, -2}; // place a bit above
 				// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
 				CG_Trace( &trace, p->org, rockMins, rockMins, org, -1, CONTENTS_SOLID );
 
@@ -452,38 +452,25 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				}
 				else // bouncing
 				{
-					if ( trace.plane.normal[2] > 0.1 
-					&& trace.plane.normal[2] < 0.95 ) { // detect position on the slopes
-						VectorCopy (org, p->org);
-						// if the particle is touching a mover and moves down, so keep bouncing
-						if ( p->roll > 0 ) {
-							p->vel[2] = 50 * p->roll;
-							p->accel[2] = 50 * p->roll;
-							p->roll--; // that decreases bounces
-						}
-						if ( p->roll <= 0 ) { // stop
-							p->vel[2] = 0;
-							p->accel[2] = 0;
-						} else { // keep detecting the position
-							VectorCopy (trace.endpos, p->org);
-						}
-					} else {
-						if ( trace.plane.normal[2] < 0.95 ) { // for slopes
-							VectorCopy (org, p->org);
-						}
-						// if the particle is touching a mover and moves down, so keep bouncing
-						if ( trace.fraction <= 0 ) {
-							p->roll = 6;
+					if ( trace.plane.normal[2] >= 0.7 && Q_fabs( p->vel[2] ) < 1 ) {
+						// stop bouncing
+						VectorClear( p->vel );
+						VectorClear( p->accel );
+						VectorCopy( org, p->org );
+					}
+					else
+					{
+						// similar to CG_ReflectVelocity
+						const float BOUNCEFACTOR = 0.5f;
+						float dot = DotProduct( p->vel, trace.plane.normal );
+						if ( trace.plane.normal[2] < 0.91 && VectorLength( p->vel ) < 110 ) {
+							VectorMA( p->vel, 3 * dot, trace.plane.normal, p->vel );
+							VectorScale( p->vel, 3, p->vel );
 						} else {
-							if ( p->roll > 0 ) {
-								p->vel[2] = 50 * p->roll;
-								p->accel[2] = 50 * p->roll;
-								p->roll--; // that decreases bounces
-							}
+							VectorMA( p->vel, -2 * dot, trace.plane.normal, p->vel );
+							VectorScale( p->vel, BOUNCEFACTOR, p->vel );
 						}
-						if ( p->roll <= 0 ) { // keep detecting the position
-							VectorCopy (trace.endpos, p->org);
-						}
+						VectorCopy( trace.endpos, p->org );
 					}
 				}
 			}
@@ -499,7 +486,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 		{
 			// BFP - To detect if there is something solid
 			trace_t		trace;
-			vec3_t		debrisMins = {0, 0, -1}; // place a bit above
+			vec3_t		debrisMins = {0, 0, -2}; // place a bit above
 			int 		contents;
 			// contents should be CONTENTS_SOLID, so the particles don't touch any entity like the player
 			CG_Trace( &trace, p->org, debrisMins, debrisMins, org, -1, CONTENTS_SOLID );
@@ -525,22 +512,23 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				}
 				else // bouncing
 				{
-					if ( trace.plane.normal[2] < 0.7 ) { // if it's on a slope
-						if ( Q_fabs( p->vel[2] ) < 1 ) {
-							VectorClear( p->accel );
-							VectorClear( p->vel );
-							p->height = p->width *= 0.9; // make it tinier when that happens
+					if ( trace.plane.normal[2] >= 0.7 && Q_fabs( p->vel[2] ) < 1 ) {
+						// stop bouncing
+						VectorClear( p->vel );
+						VectorClear( p->accel );
+						p->height = p->width *= 0.9; // make it tinier when that happens
+					}
+					else
+					{
+						// similar to CG_ReflectVelocity
+						const float BOUNCEFACTOR = 0.55f;
+						float dot = DotProduct( p->vel, trace.plane.normal );
+						if ( trace.plane.normal[2] < 0.91 && VectorLength( p->vel ) < 110 ) {
+							VectorMA( p->vel, 3 * dot, trace.plane.normal, p->vel );
+							VectorScale( p->vel, 3, p->vel );
 						} else {
-							p->vel[2] -= (p->link) ? 100 : 80;
-							p->accel[2] -= (p->link) ? 10 : 100;
-						}
-					} else {
-						if ( trace.fraction <= 0 ) {
-							p->roll = 3;
-						} else {
-							p->vel[2] = (p->roll > 0) ? 500 * p->roll : 0;
-							p->accel[2] = (p->roll > 0) ? 500 * p->roll : 0;
-							p->roll--; // decreases bounces
+							VectorMA( p->vel, -2.5 * dot, trace.plane.normal, p->vel );
+							VectorScale( p->vel, BOUNCEFACTOR, p->vel );
 						}
 					}
 				}
@@ -562,12 +550,11 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 
 		if (p->type == P_DEBRIS && p->snum > 0) { // render spark particles
 			vec3_t	forward, right, endPoint;
-			float	length;
+			float	length = (rand() % 25) + 25; // multiplier to tweak trail length
 
 			// direction of the particle
 			VectorNormalize2( p->vel, forward );
 
-			length = VectorLength( p->vel ) * 0.015f; // multiplier to tweak trail length
 			VectorMA( org, length, forward, endPoint );
 			PerpendicularVector( right, forward );
 
@@ -1350,7 +1337,6 @@ void CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum,
 	p->accel[1] = 0;
 	p->accel[2] = 20;
 
-	p->roll = 5; // used as bounce counter
 	p->link = qfalse; // to handle the ki charging status
 	p->snum = 0; // to handle the client side visuals
 }

@@ -577,6 +577,11 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 	int				i;
 	vec3_t			sprOrg, sprVel;
 	int				numRocks = 26;
+	vec3_t			right, up, forward;
+
+	VectorCopy( dir, forward );
+	PerpendicularVector( right, forward );
+	CrossProduct( forward, right, up );
 
 	// BFP - NOTE: Debris particles shouldn't be used for bullet and disk weapon types
 
@@ -585,6 +590,9 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 	for ( i = 0; i < numRocks; ++i ) {
 		// spawn randomly the shaders with the particles
 		int shaderIndex = rand() % 3;
+		float	speed = 1000.0f + (rand() % 800);
+		float	rSpread = crandom() * 4000.0f; 
+		float	uSpread = crandom() * 4000.0f;
 
 		// that would be the range for debris particles
 		VectorMA( origin, 24, dir, sprOrg );
@@ -592,10 +600,14 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 		sprOrg[1] += (rand() % 24);
 		sprOrg[2] += (rand() % 24);
 
-		VectorScale( dir, 2000 + (rand() % 1000), sprVel );
-		sprVel[0] += (rand() % 2800) - 1500;
-		sprVel[1] += (rand() % 2800) - 1500;
-		sprVel[2] += (rand() % 2200) - 1000;
+		VectorScale( dir, speed, sprVel );
+
+		VectorMA( sprVel, rSpread, right, sprVel );
+		VectorMA( sprVel, uSpread, up, sprVel );
+
+		sprVel[0] += crandom() * 100;
+		sprVel[1] += crandom() * 100;
+		sprVel[2] += crandom() * 100;
 
 		switch ( shaderIndex ) {
 			case 0: {
@@ -620,10 +632,13 @@ CG_SparksExplosion
 */
 void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles explosion
 	int				i;
-	// spawn randomly the shaders with the particles
-	int				shaderIndex;
 	vec3_t			sparkOrg, sparkVel;
 	int				numSparks = 26;
+	vec3_t			right, up, forward;
+
+	VectorCopy( dir, forward );
+	PerpendicularVector( right, forward );
+	CrossProduct( forward, right, up );
 
 	// BFP - NOTE: Spark particles shouldn't be used on bullet and disk weapon types
 
@@ -632,15 +647,22 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles 
 	// BFP - TODO: Apply number of sparks as indicated on default.cfg file of some character: explosionSparks <weaponNum> <numSparks>
 
 	for ( i = 0; i < numSparks; ++i ) {
-		shaderIndex = (rand() % 100) < 50 ? 0 : 1; // if the random range was rand() % 2, it would repeat the pattern without randomize correctly
+		// spawn randomly the shaders with the particles
+		int		shaderIndex = (rand() % 100) < 50 ? 0 : 1; // if the random range was rand() % 2, it would repeat the pattern without randomize correctly
+		float	speed = 2000.0f + (rand() % 800);
+		float	rSpread = crandom() * 2000.0f; 
+		float	uSpread = crandom() * 2000.0f;
 
-		VectorMA( origin, 0, dir, sparkOrg );
+		VectorMA( origin, 1.0f, dir, sparkOrg );
 
-		// move faster
-		VectorScale( dir, 1500 + (rand() % 1000), sparkVel );
-		sparkVel[0] += crandom() * ( 2 * (rand() % 3500) - 1500 );
-		sparkVel[1] += crandom() * ( 2 * (rand() % 3500) - 1500 );
-		sparkVel[2] += 1.5 * (rand() % 2100) - 1000;
+		VectorScale( dir, speed, sparkVel );
+
+		VectorMA( sparkVel, rSpread, right, sparkVel );
+		VectorMA( sparkVel, uSpread, up, sparkVel );
+
+		sparkVel[0] += crandom() * 100;
+		sparkVel[1] += crandom() * 100;
+		sparkVel[2] += crandom() * 100;
 
 		switch ( shaderIndex ) {
 			case 0: {

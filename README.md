@@ -158,6 +158,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - beam trails are bendy, almost similar to original BFP though
 - while charging ki near water, bubble particles appear
 - when player is still moving with/without friction and charging ki, antigrav rock particles appear
+- when antigrav rock and rock debris particles fall in a slope or inclined places, bounce and slide, that makes the movements more realistic
 - new particles: charge smoke, which appears when charging ki near the ground
 - removed some unused cvars
 - balanced player pmove physics: 
