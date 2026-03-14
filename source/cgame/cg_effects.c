@@ -678,6 +678,42 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles 
 
 /*
 =================
+CG_BeamStruggleEffect
+=================
+*/
+void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir ) { // BFP - Beam struggle effect
+	int				i;
+	vec3_t			sparkOrg, sparkVel;
+	int				numSparks = 26;
+
+	for ( i = 0; i < numSparks; ++i ) {
+		// spawn randomly the shaders with the particles
+		int		shaderIndex = (rand() % 100) < 50 ? 0 : 1;
+		float	speed = 600.0f + (rand() % 800);
+
+		VectorMA( origin, 0, dir, sparkOrg );
+
+		sparkVel[0] = crandom();
+		sparkVel[1] = crandom();
+		sparkVel[2] = crandom();
+
+		VectorNormalize( sparkVel );
+		VectorScale( sparkVel, speed, sparkVel );
+
+		switch ( shaderIndex ) {
+			case 0: {
+				CG_ParticleBeamStruggleSpark( cgs.media.sparkShader1, sparkOrg, sparkVel );
+				break;
+			}
+			default: {
+				CG_ParticleBeamStruggleSpark( cgs.media.sparkShader2, sparkOrg, sparkVel );
+			}
+		}
+	}
+}
+
+/*
+=================
 CG_SmokeExplosion
 =================
 */

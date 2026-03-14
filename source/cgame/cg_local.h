@@ -1341,6 +1341,8 @@ localEntity_t *CG_SpawnExplosionModel( vec3_t origin, vec3_t dir, leType_t type,
 void CG_DebrisExplosion( vec3_t origin, vec3_t dir );
 // BFP - Spark particles explosion
 void CG_SparksExplosion( vec3_t origin, vec3_t dir );
+// BFP - Beam struggle sparks
+void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir );
 // BFP - Explosion smoke
 void CG_SmokeExplosion( vec3_t origin, vec3_t dir );
 // BFP - Explosion sounds
@@ -1610,6 +1612,8 @@ void	CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean w
 void	CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel);
 // BFP - Charge smoke particle for ki charge
 void	CG_ParticleChargeSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float radialVel, float baseRadius);
+// BFP - Beam struggle spark particle
+void	CG_ParticleBeamStruggleSpark (qhandle_t pshader, vec3_t origin, vec3_t vel);
 
 // BFP - Unused particle stuff, saved for later :P
 #if 0

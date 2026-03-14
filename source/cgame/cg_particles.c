@@ -82,6 +82,7 @@ typedef enum
 	P_BUBBLE,
 	P_BUBBLE_TURBULENT,
 	P_AURA, // BFP - Particle aura
+	P_BEAMSTRUGGLE_SPARK, // BFP - Beam struggle spark
 	P_SPRITE
 // BFP - Unused particle types, saved for later :P
 #if 0
@@ -332,7 +333,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Bubble types moved here for better management
 	|| p->type == P_ANTIGRAV_ROCK // BFP - Added antigrav rock type
 	|| p->type == P_AURA // BFP - Particle aura
-	|| p->type == P_DEBRIS) // BFP - Debris type
+	|| p->type == P_DEBRIS // BFP - Debris type
+	|| p->type == P_BEAMSTRUGGLE_SPARK) // BFP - Beam struggle spark type
 	{// create a front rotating facing polygon
 
 // BFP - No smoke distance
@@ -548,9 +550,9 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			}
 		}
 
-		if (p->type == P_DEBRIS && p->snum > 0) { // render spark particles
+		if ( (p->type == P_DEBRIS && p->snum > 0) || p->type == P_BEAMSTRUGGLE_SPARK ) { // render spark particles
 			vec3_t	forward, right, endPoint;
-			float	length = (rand() % 25) + 25; // multiplier to tweak trail length
+			float	length = (rand() % 15) + 25; // multiplier to tweak trail length
 
 			// direction of the particle
 			VectorNormalize2( p->vel, forward );
@@ -908,7 +910,8 @@ void CG_AddParticles (void)
 		|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Add P_BUBBLE types to remove particles
 		|| p->type == P_ANTIGRAV_ROCK // BFP - Add P_ANTIGRAV_ROCK to remove particles
 		|| p->type == P_AURA // BFP - Add P_AURA to remove particles
-		|| p->type == P_DEBRIS) // BFP - Add P_DEBRIS to remove particles
+		|| p->type == P_DEBRIS // BFP - Add P_DEBRIS to remove particles
+		|| p->type == P_BEAMSTRUGGLE_SPARK) // BFP - Add P_BEAMSTRUGGLE_SPARK to remove particles
 		{
 			if (timenonscaled > p->endtime)
 			{
@@ -1541,6 +1544,35 @@ void CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel)
 	p->roll = 0; // no bounce
 	p->link = qfalse;
 	p->snum = 1; // treat it as non-solid
+}
+
+void CG_ParticleBeamStruggleSpark (qhandle_t pshader, vec3_t origin, vec3_t vel)
+{
+	cparticle_t	*p;
+
+	if (!free_particles)
+		return;
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+	p->time = timenonscaled;
+	p->endtime = timenonscaled + 250;
+
+	VectorCopy( origin, p->org );
+	p->start = origin[2];
+	VectorCopy( vel, p->vel );
+
+	p->accel[0] = (crandom() * 300);
+	p->accel[1] = (crandom() * 300);
+	p->accel[2] = -1200 - (crandom() * 300);
+
+	p->type = P_BEAMSTRUGGLE_SPARK;
+	p->color = 0;
+	p->alpha = 1.0;
+	p->alphavel = 0;
+	p->pshader = pshader;
+	p->height = p->width = (rand() % 10) + 5;
 }
 
 // BFP - Unused function for particles, looks like here is to determine in the areas
