@@ -435,10 +435,6 @@ typedef struct {
 #define VectorNegate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2])
 #define VectorSet(v, x, y, z)	((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
 #define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
-// BFP - VectorArray2Set sets the 2 values of a vec2_t variable (or any array of 2) in a single line
-#define VectorArray2Set(v,x,y)	((v)[0]=(x), (v)[1]=(y))
-// BFP - Vector4Set sets the 4 values of a vec4_t variable (or any array of 4) in a single line
-#define Vector4Set(v,w,x,y,z)	((v)[0]=(w), (v)[1]=(x), (v)[2]=(y), (v)[3]=(z))
 
 #define	SnapVector(v) {v[0]=((int)(v[0]));v[1]=((int)(v[1]));v[2]=((int)(v[2]));}
 // just in case you do't want to use the macros
@@ -513,6 +509,19 @@ static ID_INLINE void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cro
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
 }
 
+// BFP - VectorArray2Set sets the 2 values of a vec2_t variable in a single line
+static ID_INLINE void VectorArray2Set( vec2_t v, float x, float y ) {
+	v[0] = x;
+	v[1] = y;
+}
+// BFP - Vector4Set sets the 4 values of a byte[4] variable in a single line
+static ID_INLINE void Vector4Set( byte v[4], float w, float x, float y, float z ) {
+	v[0] = w;
+	v[1] = x;
+	v[2] = y;
+	v[3] = z;
+}
+
 #else
 int VectorCompare( const vec3_t v1, const vec3_t v2 );
 
@@ -529,6 +538,11 @@ void VectorNormalizeFast( vec3_t v );
 void VectorInverse( vec3_t v );
 
 void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross );
+
+// BFP - VectorArray2Set sets the 2 values of a vec2_t variable in a single line
+void VectorArray2Set( vec2_t v, float x, float y );
+// BFP - Vector4Set sets the 4 values of a byte[4] variable in a single line
+void Vector4Set( byte v[4], float w, float x, float y, float z );
 
 #endif
 

@@ -208,6 +208,20 @@ void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
 	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
 }
+
+// BFP - VectorArray2Set sets the 2 values of a vec2_t variable in a single line
+void VectorArray2Set( vec2_t v, float x, float y ) {
+	v[0] = x;
+	v[1] = y;
+}
+
+// BFP - Vector4Set sets the 4 values of a vec4_t variable in a single line
+void Vector4Set( byte v[4], float w, float x, float y, float z ) {
+	v[0] = w;
+	v[1] = x;
+	v[2] = y;
+	v[3] = z;
+}
 #endif
 
 //=======================================================
