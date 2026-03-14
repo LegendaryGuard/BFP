@@ -1614,15 +1614,3 @@ void	CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel);
 void	CG_ParticleChargeSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float radialVel, float baseRadius);
 // BFP - Beam struggle spark particle
 void	CG_ParticleBeamStruggleSpark (qhandle_t pshader, vec3_t origin, vec3_t vel);
-
-// BFP - Unused particle stuff, saved for later :P
-#if 0
-void	CG_ParticleSmoke (qhandle_t pshader, centity_t *cent);
-void	CG_ParticleBulletDebris (vec3_t	org, vec3_t vel, int duration);
-void	CG_ParticleDust (centity_t *cent, vec3_t origin, vec3_t dir);
-void	CG_ParticleMisc (qhandle_t pshader, vec3_t origin, int size, int duration, float alpha);
-void	CG_ParticleExplosion (char *animStr, vec3_t origin, vec3_t vel, int duration, int sizeStart, int sizeEnd);
-void	CG_ParticleSnow (qhandle_t pshader, vec3_t origin, vec3_t origin2, int turb, float range, int snum);
-void	CG_ParticleSnowFlurry (qhandle_t pshader, centity_t *cent);
-int		CG_NewParticleArea ( int num ); // BFP - Unused function for particles, looks like here is to determine in the areas
-#endif
