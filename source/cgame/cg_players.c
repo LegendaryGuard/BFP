@@ -2081,9 +2081,9 @@ static void CG_ChargeSmokeBubbles( centity_t *cent, vec3_t mins, vec3_t maxs,
 		// tracing the water surface
 		trap_CM_BoxTrace( &waterTrace, cent->lerpOrigin, end, mins, maxs, 0, CONTENTS_WATER );
 
-		waterTrace.endpos[2] -= 20; // put a bit down to make the bubbles move
+		waterTrace.endpos[2] -= 8; // put a bit down to make the bubbles move
 		if ( cent->currentState.eFlags & EF_MONSTER ) { // BFP - Monster gamemode, put a bit more down the bubbles
-			waterTrace.endpos[2] -= 10;
+			waterTrace.endpos[2] -= 20;
 		}
 		if ( ( waterContents & CONTENTS_WATER ) 
 		&& waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {

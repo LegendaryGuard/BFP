@@ -884,22 +884,13 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			float rndLightningPartEff = random();
 
 			ByteToDir( es->eventParm, dir );
-			if ( es->weapon == WP_LIGHTNING ) {
-				if ( rndLightningPartEff < 0.5 ) {
-					CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
-				}
-			} else {
+			if ( es->weapon != WP_LIGHTNING
+			|| ( es->weapon == WP_LIGHTNING && rndLightningPartEff < 0.5 ) ) {
 				CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
 			}
 			if ( es->weapon != WP_MACHINEGUN && es->weapon != WP_SHOTGUN ) { // BFP - Avoid exploding using finger blast type thingies
-				if ( es->weapon == WP_LIGHTNING ) {
-					if ( rndLightningPartEff < 0.5 ) {
-						// BFP - Debris particles explosion
-						CG_DebrisExplosion( position, dir );
-						// BFP - Spark particles explosion
-						CG_SparksExplosion( position, dir );
-					}
-				} else {
+				if ( es->weapon != WP_LIGHTNING
+				|| ( es->weapon == WP_LIGHTNING && rndLightningPartEff < 0.5 ) ) {
 					// BFP - Debris particles explosion
 					CG_DebrisExplosion( position, dir );
 					// BFP - Spark particles explosion
