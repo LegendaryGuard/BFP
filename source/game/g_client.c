@@ -390,6 +390,11 @@ void CopyToBodyQue( gentity_t *ent ) {
 
 	trap_UnlinkEntity (ent);
 
+	// don't leave a corpse if already gibbed
+	if ( ent->s.eType == ET_INVISIBLE && ent->health <= GIB_HEALTH ) {
+		return;
+	}
+
 	// if client is in a nodrop area, don't leave the body
 	contents = trap_PointContents( ent->s.origin, -1 );
 	if ( contents & CONTENTS_NODROP ) {
@@ -1466,7 +1471,7 @@ void ClientSpawn(gentity_t *ent) {
 	}
 
 	// don't allow full run speed for a bit
-	// client->ps.pm_flags |= PMF_TIME_KNOCKBACK; // BFP - No handling PMF_TIME_KNOCKBACK
+	client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
 	client->ps.pm_time = 100;
 
 	client->respawnTime = level.time;

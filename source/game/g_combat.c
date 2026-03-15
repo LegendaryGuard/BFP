@@ -138,17 +138,31 @@ LookAtKiller
 */
 void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker ) {
 	vec3_t		dir;
+	float		killerYaw = self->s.angles[YAW];
 
 	if ( attacker && attacker != self ) {
 		VectorSubtract (attacker->s.pos.trBase, self->s.pos.trBase, dir);
 	} else if ( inflictor && inflictor != self ) {
 		VectorSubtract (inflictor->s.pos.trBase, self->s.pos.trBase, dir);
 	} else {
-		self->client->ps.stats[STAT_DEAD_YAW] = self->s.angles[YAW];
+		if ( killerYaw > 255 ) {
+			self->client->ps.damageYaw = 255;
+			self->client->ps.damagePitch = (int)( killerYaw - 255 ); 
+		} else {
+			self->client->ps.damageYaw = (int)killerYaw;
+			self->client->ps.damagePitch = 0;
+		}
 		return;
 	}
 
-	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
+	killerYaw = vectoyaw( dir );
+	if ( killerYaw > 255 ) {
+		self->client->ps.damageYaw = 255;
+		self->client->ps.damagePitch = (int)( killerYaw - 255 ); 
+	} else {
+		self->client->ps.damageYaw = (int)killerYaw;
+		self->client->ps.damagePitch = 0;
+	}
 }
 
 /*
@@ -1130,7 +1144,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 				t = 200;
 			}
 			targ->client->ps.pm_time = t;
-			// targ->client->ps.pm_flags |= PMF_TIME_KNOCKBACK; // BFP - No handling PMF_TIME_KNOCKBACK
+			targ->client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
 		}
 	}
 
@@ -1323,7 +1337,7 @@ qboolean CanDamage (gentity_t *targ, vec3_t origin) {
 G_RadiusDamage
 ============
 */
-qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, float radius,
+qboolean G_RadiusDamage ( gentity_t *self, vec3_t origin, gentity_t *attacker, float damage, float radius,
 					 gentity_t *ignore, int mod) {
 	float		points, dist;
 	gentity_t	*ent;
@@ -1380,7 +1394,7 @@ qboolean G_RadiusDamage ( vec3_t origin, gentity_t *attacker, float damage, floa
 			// push the center of mass higher than the origin so players
 			// get knocked into the air more
 			dir[2] += 24;
-			G_Damage (ent, NULL, attacker, dir, origin, (int)points, DAMAGE_RADIUS, mod);
+			G_Damage (ent, self, attacker, dir, origin, (int)points, DAMAGE_RADIUS, mod);
 		}
 	}
 

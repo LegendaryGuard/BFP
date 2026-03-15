@@ -2365,7 +2365,7 @@ static void CG_DrawHitStun( void ) { // BFP - Hit stun bottom centerprint
 
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
 	// 900 is added to adjust the timer calculated in milliseconds
-	t = ( 900 + cg.predictedPlayerState.pm_time ) / 1000;
+	t = ( 900 + cg.predictedPlayerState.stats[STAT_HITSTUN_TIME] ) / 1000;
 	if ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) {
 		s = "Stun";
 	}

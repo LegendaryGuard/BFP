@@ -920,12 +920,9 @@ void BotSetupForMovement(bot_state_t *bs) {
 	//set the onground flag
 	if (bs->cur_ps.groundEntityNum != ENTITYNUM_NONE) initmove.or_moveflags |= MFL_ONGROUND;
 	//set the teleported flag
-	// BFP - No handling PMF_TIME_KNOCKBACK
-#if 0
 	if ((bs->cur_ps.pm_flags & PMF_TIME_KNOCKBACK) && (bs->cur_ps.pm_time > 0)) {
 		initmove.or_moveflags |= MFL_TELEPORTED;
 	}
-#endif
 	//set the waterjump flag
 	// BFP - No handling PMF_TIME_WATERJUMP
 #if 0
@@ -2399,7 +2396,7 @@ void BotCheckAttack(bot_state_t *bs) {
 	}
 
 	// BFP - Avoid the bot tries to attack with this status, otherwise keeps stunned while pressing attack key
-	if ( ( bs->cur_ps.pm_flags & PMF_HITSTUN ) && bs->cur_ps.pm_time > 0 ) {
+	if ( ( bs->cur_ps.pm_flags & PMF_HITSTUN ) && bs->cur_ps.stats[STAT_HITSTUN_TIME] > 0 ) {
 		return;
 	}
 

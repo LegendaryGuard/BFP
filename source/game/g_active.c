@@ -501,20 +501,21 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 	// BFP - When the player doesn't have more ki, gets a hit stun
 	if ( ( client->ps.ammo[WP_KI] <= 0 )
-		|| ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 )
+		|| ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 )
 		|| ( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) ) {
-		if ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.pm_time <= 0 ) {
+		if ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 ) {
 			client->ps.ammo[WP_KI] /= flightCostTotal;
 		}
 		if ( client->ps.ammo[WP_KI] <= 0 ) {
-			client->ps.pm_time = 100; // handle time
+			client->ps.stats[STAT_HITSTUN_TIME] = 100; // handle time
 		} else {
-			client->ps.pm_time = 1000;
+			client->ps.stats[STAT_HITSTUN_TIME] = 1000;
 		}
 		client->ps.pm_flags |= PMF_HITSTUN;
 	}
 
-	if ( client->ps.ammo[WP_KI] > 0 && ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.pm_time <= 0 ) {
+	if ( client->ps.ammo[WP_KI] > 0
+	&& ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.stats[STAT_HITSTUN_TIME] <= 0 ) {
 		client->ps.pm_flags &= ~PMF_HITSTUN;
 	}
 }
@@ -912,7 +913,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 		}
 
 		// put in 1 second delay before the player can 'zanzoken' out of stun
-		if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.pm_time > 2000 ) {
+		if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.stats[STAT_HITSTUN_TIME] > 2000 ) {
 			client->zanzokenPressTime = 0;
 			client->zanzokenNow = qfalse;
 			client->zanzokenLeft = qfalse;
@@ -922,9 +923,9 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 
 		if ( Zanzoken( ent, range ) ) {
 			// block and stun statuses are removed when using zanzoken
-			if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.pm_time <= 2000 ) {
+			if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.stats[STAT_HITSTUN_TIME] <= 2000 ) {
 				client->ps.pm_flags &= ~PMF_HITSTUN;
-				client->ps.pm_time = 0;
+				client->ps.stats[STAT_HITSTUN_TIME] = 0;
 			}
 			client->ps.pm_flags &= ~PMF_BLOCK;
 			// consumes 5% of ki

@@ -320,7 +320,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	&& !( traceTarget->client->ps.pm_flags & PMF_BLOCK ) 
 	&& attacker->client->hitStunMeleeDelayTime <= 0 ) {
 		// add 3 seconds to the hitstun when there's no delay
-		traceTarget->client->ps.pm_time = 3000;
+		traceTarget->client->ps.stats[STAT_HITSTUN_TIME] = 3000;
 		traceTarget->client->ps.pm_flags |= PMF_HITSTUN;
 		attacker->client->hitStunMeleeDelayTime = level.time + 6000;
 	}
@@ -644,7 +644,7 @@ void weapon_railgun_fire (gentity_t *ent) {
 	VectorMA( tent->s.origin2, -1, up, tent->s.origin2 );
 
 	// BFP - Finger beam splash damage
-	if ( G_RadiusDamage( trace.endpos, ent, damage, splashRadius, 0, MOD_RAILGUN ) ) {
+	if ( G_RadiusDamage( ent, trace.endpos, ent, damage, splashRadius, 0, MOD_RAILGUN ) ) {
 		hits++;
 	}
 
@@ -812,15 +812,17 @@ void Weapon_LightningFire( gentity_t *ent ) {
 	vec3_t		end;
 	gentity_t	*traceEnt, *tent;
 	int			damage, passent;
+	// BFP - bfp_weapon.cfg: range
+	float		range = LIGHTNING_RANGE;
 
 	damage = 8 * s_quadFactor;
 
 	passent = ent->s.number;
-	VectorMA( muzzle, LIGHTNING_RANGE, forward, end );
+	VectorMA( muzzle, range, forward, end );
 
 	trap_Trace( &tr, muzzle, NULL, NULL, end, passent, MASK_SHOT );
 
-	if ( tr.entityNum == ENTITYNUM_NONE ) {
+	if ( tr.surfaceFlags & SURF_NOIMPACT /*tr.entityNum == ENTITYNUM_NONE*/ ) {
 		return;
 	}
 
@@ -839,7 +841,11 @@ void Weapon_LightningFire( gentity_t *ent ) {
 		if( LogAccuracyHit( traceEnt, ent ) ) {
 			ent->client->accuracy_hits++;
 		}
-	} else if ( !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
+		return;
+	}
+
+	// BFP - That random handles avoiding the particle spam with lightning gun type
+	if ( random() < 0.3 ) {
 		tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
 		tent->s.eventParm = DirToByte( tr.plane.normal );
 		tent->s.weapon = ent->s.weapon; // BFP - Sends weapon info to the event

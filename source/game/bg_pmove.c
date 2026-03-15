@@ -362,12 +362,11 @@ static void PM_Friction( void ) {
 	if ( pm->waterlevel <= 1 ) {
 		if ( pml.walking && !(pml.groundTrace.surfaceFlags & SURF_SLICK) ) {
 
-			// BFP - No handling PMF_TIME_KNOCKBACK
 			// if getting knocked back, no friction
-			// if ( ! (pm->ps->pm_flags & PMF_TIME_KNOCKBACK) ) {
+			if ( !( pm->ps->pm_flags & PMF_TIME_KNOCKBACK ) ) {
 				control = speed < pm_stopspeed ? pm_stopspeed : speed;
 				drop += control*pm_friction*pml.frametime;
-			// }
+			}
 		}
 	}
 
@@ -777,14 +776,12 @@ static void PM_WaterJumpMove( void ) {
 	PM_StepSlideMove( qtrue );
 
 	pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
-	// BFP - No handling PMF_ALL_TIMES
-#if 0
+
 	if (pm->ps->velocity[2] < 0) {
 		// cancel as soon as we are falling down again
 		pm->ps->pm_flags &= ~PMF_ALL_TIMES;
 		pm->ps->pm_time = 0;
 	}
-#endif
 }
 
 /*
@@ -1052,7 +1049,10 @@ static void PM_FlyMove( void ) {
 
 	PM_StepSlideMove( qfalse );
 
-	PM_Drifting(); // BFP - Drifting
+	// BFP - Drifting
+	if ( pm->ps->pm_time <= 0 ) {
+		PM_Drifting();
+	}
 }
 
 
@@ -1276,7 +1276,7 @@ static void PM_WalkMove( void ) {
 
 	// when a player gets hit, they temporarily lose
 	// full control, which allows them to be moved a bit
-	if ( ( pml.groundTrace.surfaceFlags & SURF_SLICK ) ) { // BFP - No handling PMF_TIME_KNOCKBACK, before: || pm->ps->pm_flags & PMF_TIME_KNOCKBACK ) {
+	if ( ( pml.groundTrace.surfaceFlags & SURF_SLICK ) || ( pm->ps->pm_flags & PMF_TIME_KNOCKBACK ) ) {
 		accelerate = pm_airaccelerate;
 	} else {
 		accelerate = pm_accelerate;
@@ -1287,7 +1287,7 @@ static void PM_WalkMove( void ) {
 	//Com_Printf("velocity = %1.1f %1.1f %1.1f\n", pm->ps->velocity[0], pm->ps->velocity[1], pm->ps->velocity[2]);
 	//Com_Printf("velocity1 = %1.1f\n", VectorLength(pm->ps->velocity));
 
-	if ( ( pml.groundTrace.surfaceFlags & SURF_SLICK ) ) { // BFP - No handling PMF_TIME_KNOCKBACK, before: || pm->ps->pm_flags & PMF_TIME_KNOCKBACK ) {
+	if ( ( pml.groundTrace.surfaceFlags & SURF_SLICK ) || ( pm->ps->pm_flags & PMF_TIME_KNOCKBACK ) ) {
 		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
 	} else {
 		// don't reset the z velocity for slopes
@@ -1732,7 +1732,7 @@ static void PM_GroundTrace( void ) {
 		pml.walking = qfalse;
 
 		// BFP - If flying, prevent from doing a jumping action on slopes
-		if ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+		if ( pm->ps->eFlags & EF_FLIGHT ) {
 			return;
 		}
 
@@ -1765,7 +1765,7 @@ static void PM_GroundTrace( void ) {
 
 	// BFP - NOTE: Originally, BFP doesn't stop "groundtracing" until here when the player is flying
 	// BFP - If flying, prevent from doing a jumping action on flat ground
-	if ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+	if ( pm->ps->eFlags & EF_FLIGHT ) {
 		// BFP - To stick to the movers if the player is near to them
 		pm->ps->groundEntityNum = trace.entityNum;
 		PM_AddTouchEnt( trace.entityNum );
@@ -1815,7 +1815,9 @@ static void PM_GroundTrace( void ) {
 	pm->ps->groundEntityNum = trace.entityNum;
 
 	// BFP - Avoid abnormal speed (and strafe - or defrag)
-	PM_ControlJumpOnGround();
+	if ( !( pm->ps->pm_flags & PMF_JUMP_HELD ) ) { // don't use the jump key for that
+		PM_ControlJumpOnGround();
+	}
 
 	// don't reset the z velocity for slopes
 	// pm->ps->velocity[2] = 0;
@@ -2369,6 +2371,30 @@ static void PM_TorsoAnimation( void ) {
 
 /*
 ==============
+PM_CheckFlightState
+==============
+*/
+static void PM_CheckFlightState( void ) { // BFP - Checks if the flight is disabled while the key is held
+	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
+		if ( !( pm->ps->stats[STAT_FLAGS] & STATF_FLIGHT_LATCH ) ) {
+			// change state and lock until release
+			pm->ps->stats[STAT_FLAGS] ^= STATF_FLIGHT_ACTIVE;
+			pm->ps->stats[STAT_FLAGS] |= STATF_FLIGHT_LATCH;
+		}
+	} else {
+		pm->ps->stats[STAT_FLAGS] &= ~STATF_FLIGHT_LATCH;
+	}
+
+	if ( pm->ps->stats[STAT_FLAGS] & STATF_FLIGHT_ACTIVE ) {
+		pm->cmd.buttons |= BUTTON_ENABLEFLIGHT;
+		pm->ps->stats[STAT_FLAGS] &= ~STATF_FLIGHT_ACTIVE;
+	} else {
+		pm->cmd.buttons &= ~BUTTON_ENABLEFLIGHT;
+	}
+}
+
+/*
+==============
 PM_FlightStart
 ==============
 */
@@ -2378,6 +2404,11 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 
 	// BFP - Hit stun
 	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+		return;
+	}
+
+	// BFP - Ultimate tier
+	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
 		return;
 	}
 
@@ -2398,7 +2429,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE )
 			&& pm->ps->weaponstate != WEAPON_KIEXPLOSIONWAVE
 			&& pm->ps->weaponstate != WEAPON_STUN ) {
-				pm->ps->pm_time = 550;
+				pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
 				pm->ps->velocity[2] = JUMP_VELOCITY - 200;
 
 				// don't play the animation when being transformed
@@ -2434,7 +2465,7 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 	}
 
 	if ( ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) )
-	&& pm->ps->pm_time <= 0 ) {
+	&& pm->ps->pm_time <= 570 ) { // smooth jump animation
 
 		// make sure to handle the PMF flags
 		pm->ps->pm_flags &= ~PMF_FALLING;
@@ -2560,7 +2591,7 @@ static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 		PM_StartLegsAnim( LEGS_IDLECR );
 	}
 
-	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) && pm->ps->pm_time <= 0 ) {
+	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) && pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 		pm->ps->pm_flags &= ~PMF_HITSTUN;
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
@@ -3043,12 +3074,16 @@ static void PM_DropTimers( void ) {
 	// drop misc timing counter
 	if ( pm->ps->pm_time ) {
 		if ( pml.msec >= pm->ps->pm_time ) {
-			// BFP - No handling PMF_ALL_TIMES
-			// pm->ps->pm_flags &= ~PMF_ALL_TIMES;
+			pm->ps->pm_flags &= ~PMF_ALL_TIMES;
 			pm->ps->pm_time = 0;
 		} else {
 			pm->ps->pm_time -= pml.msec;
 		}
+	}
+
+	// BFP - Hit stun time
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] ) {
+		pm->ps->stats[STAT_HITSTUN_TIME] -= pml.msec;
 	}
 
 	// drop animation counter
@@ -3293,6 +3328,9 @@ void PmoveSingle (pmove_t *pmove) {
 		pmove->cmd.rightmove = 0;
 		pmove->cmd.upmove = 0;
 	}
+
+	// BFP - Checks if the flight is disabled and the key is held
+	PM_CheckFlightState();
 
 	// clear all pmove local vars
 	memset (&pml, 0, sizeof(pml));

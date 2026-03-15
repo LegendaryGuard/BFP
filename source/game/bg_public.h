@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	ITEM_RADIUS			15		// item sizes are needed for client side pickup detection
 
-#define	LIGHTNING_RANGE		768
+#define	LIGHTNING_RANGE		1500 //768
 
 #define	SCORE_NOT_PRESENT	-9999	// for the CS_SCORES[12] when only one player is present
 
@@ -159,9 +159,7 @@ typedef enum {
 // BFP - PMF_TIME_LAND is unused
 // #define	PMF_TIME_LAND		32		// pm_time is time before rejump
 #define PMF_FALLING			32		// BFP - Falling status
-// BFP - PMF_TIME_KNOCKBACK is unused
-// #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
-#define PMF_KI_ATTACK		64		// BFP - Ki attack
+#define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
 #define PMF_KI_CHARGE		128		// BFP - Ki charge
 // BFP - PMF_TIME_WATERJUMP is unused
 // #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
@@ -175,13 +173,12 @@ typedef enum {
 // BFP - PMF_SCOREBOARD is unused
 // #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
 #define PMF_ULTIMATE_TIER	8192	// BFP - Ultimate tier status
-// BFP - TODO: Remove this unused flag in the future?
-// #define PMF_FLIGHT_ACTIVE	16384	// BFP - Flight active status
+#define	PMF_KI_ATTACK		16384	// BFP - Ki attack
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
 // BFP - That combination of PMF_TIME_* flags is unused
-// #define	PMF_ALL_TIMES	(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
+#define	PMF_ALL_TIMES	PMF_TIME_KNOCKBACK //(PMF_TIME_WATERJUMP|PMF_TIME_LAND|PMF_TIME_KNOCKBACK)
 
 #define	MAXTOUCH	32
 typedef struct {
@@ -232,16 +229,37 @@ void Pmove (pmove_t *pmove);
 // NOTE: may not have more than 16
 typedef enum {
 	STAT_HEALTH,
-	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
-	STAT_DEAD_YAW,					// look this direction when dead (FIXME: get rid of?)
+	// BFP - Got rid of STAT_DEAD_YAW, now uses ps->damageYaw
+	STAT_UNUSED_INDEX,				// unused stat index (don't remove if you want to keep demo networking!)
 	STAT_CLIENTS_READY,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
 	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
-	STAT_MAX_KI						// BFP - Maximum ki
+	STAT_MAX_KI,					// BFP - Maximum ki
+	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
+	STAT_FLAGS,						// BFP - Flags to handle the status
+	STAT_HITSTUN_TIME				// BFP - Hit stun time
 } statIndex_t;
 
+// BFP - Using STAT_FLAGS integer 16-bit size as flags
+// player_state->stats[STAT_FLAGS]
+#define STATF_FLIGHT_ACTIVE		1
+#define STATF_FLIGHT_LATCH		2
+// #define STATF_FLAG_3			4
+// #define STATF_FLAG_4			8
+// #define STATF_FLAG_5			16
+// #define STATF_FLAG_6			32
+// #define STATF_FLAG_7			64
+// #define STATF_FLAG_8			128
+// #define STATF_FLAG_9			256
+// #define STATF_FLAG_10		512
+// #define STATF_FLAG_11		1024
+// #define STATF_FLAG_12		2048
+// #define STATF_FLAG_13		4096
+// #define STATF_FLAG_14		8192
+// #define STATF_FLAG_15		16384
+// #define STATF_FLAG_16		32768
 
 // player_state->persistant[] indexes
 // these fields are the only part of player_state that isn't

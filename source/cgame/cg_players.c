@@ -3233,7 +3233,7 @@ void CG_Player( centity_t *cent ) {
 		&& ( cent->currentState.eFlags & EF_DEAD )
 		&& cg_drawOwnModel.integer >= 1 ) { // BFP - Death camera only for First person vis
 			VectorCopy( deadOriginDrawOwnModel, cg.refdef.vieworg );
-			cg.refdefViewAngles[YAW] = cg.snap->ps.stats[STAT_DEAD_YAW];
+			cg.refdefViewAngles[YAW] = cg.snap->ps.damageYaw + cg.snap->ps.damagePitch;
 		}
 	}
 
