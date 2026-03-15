@@ -21,6 +21,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [ ] BFP bots logic (handling the flight, ki boost, ki charge, use of ki attacks, melee, ...)
 - [ ] Cvars as described on old docs
 - [ ] Power Struggles (when two beam attacks collide)
+- [ ] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
 - [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
 - [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
@@ -150,6 +151,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - in the first GAME SERVER menu has a horizontal scrolling description about the selected gametype
 - SERVER INFO menu displays all server info (on original BFP, the info was badly displayed and nothing was shown) and it has pagination
 - DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
+- CHANGE MAP button is added in in-game pause MENU, allows you to change the map without restarting the server and making everyone reconnect
 - explosion dynamic lights are back (these were broken after RC/beta versions)
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
 - `g_allowSpectatorChat` cvar is functional, spectators can't send messages if the cvar is disabled
