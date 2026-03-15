@@ -130,20 +130,20 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 			VectorNormalize( right );
 
 			VectorMA( start, kiTrailWidth, right, verts[0].xyz );
-			VectorArray2Set( verts[0].st, 0, 0 );
-			Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
+			Vector2Set( verts[0].st, 0, 0 );
+			Byte4Set( verts[0].modulate, 255, 255, 255, 255 );
 
 			VectorMA( end, kiTrailWidth, right, verts[1].xyz );
-			VectorArray2Set( verts[1].st, 1, 0 );
-			Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
+			Vector2Set( verts[1].st, 1, 0 );
+			Byte4Set( verts[1].modulate, 255, 255, 255, 255 );
 
 			VectorMA( end, -kiTrailWidth, right, verts[2].xyz );
-			VectorArray2Set( verts[2].st, 1, 1 );
-			Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
+			Vector2Set( verts[2].st, 1, 1 );
+			Byte4Set( verts[2].modulate, 255, 255, 255, 255 );
 
 			VectorMA( start, -kiTrailWidth, right, verts[3].xyz );
-			VectorArray2Set( verts[3].st, 0, 1 );
-			Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
+			Vector2Set( verts[3].st, 0, 1 );
+			Byte4Set( verts[3].modulate, 255, 255, 255, 255 );
 
 			trap_R_AddPolyToScene( hShader, 4, verts );
 		}
@@ -181,13 +181,13 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 		return;
 	}
 
-	if ( nBeamSegments > TRAIL_SEGMENTS ) {
-		nBeamSegments = TRAIL_SEGMENTS;
-	}
-
 	// for better visual bendy effect, the number of segments should be equal or more than 10
 	if ( nBeamSegments < 10 ) {
 		nBeamSegments = 2;
+	}
+
+	if ( nBeamSegments > TRAIL_SEGMENTS ) {
+		nBeamSegments = TRAIL_SEGMENTS;
 	}
 
 	beamTrail->numSegments = nBeamSegments;
@@ -198,8 +198,8 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 	// start stretching segments
 	if ( nBeamSegments >= 10 ) {
 		vec3_t currentAngles, beamDir;
-		float angleDelta, beamLength, lengthFactor;
-		qboolean isAiming;
+		float angleDelta = 0, beamLength, lengthFactor;
+		qboolean isAiming = qfalse;
 
 		// beam length and direction
 		VectorSubtract( origin, muzzleOrigin, beamDir );
@@ -218,9 +218,6 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 		if ( beamTrail->lastAimChangeTime > 0 ) {
 			angleDelta = Distance( currentAngles, beamTrail->lastAimAngles );
 			isAiming = ( angleDelta > BEAM_AIM_THRESHOLD );
-		} else {
-			isAiming = qfalse;
-			angleDelta = 0;
 		}
 
 		if ( isAiming ) {
@@ -237,7 +234,7 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 		for ( i = 1; i < nBeamSegments; ++i ) {
 			vec3_t targetPos, segmentToOrigin;
 			float distanceToOrigin, segmentFraction;
-			float straightenFactor, maxExpectedDistance, stretchRatio;
+			float straightenFactor, maxExpectedDistance, stretchRatio = 1.0f;
 
 			// ideal position on straight line from muzzle to origin
 			segmentFraction = (float)i / (float)( nBeamSegments - 1 );
@@ -251,7 +248,6 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 			maxExpectedDistance = beamLength * ( 1.0f - segmentFraction );
 
 			// stretch ratio (how much segments are stretched)
-			stretchRatio = 1.0f;
 			if ( maxExpectedDistance > 0.1f ) {
 				stretchRatio = distanceToOrigin / maxExpectedDistance;
 			}

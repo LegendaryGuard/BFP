@@ -2333,26 +2333,26 @@ static void CG_PlayerSplash( centity_t *cent ) {
 	VectorCopy( trace.endpos, verts[0].xyz );
 	verts[0].xyz[0] -= markSize;
 	verts[0].xyz[1] -= markSize;
-	VectorArray2Set( verts[0].st, 0, 0 );
-	Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
+	Vector2Set( verts[0].st, 0, 0 );
+	Byte4Set( verts[0].modulate, 255, 255, 255, 255 );
 
 	VectorCopy( trace.endpos, verts[1].xyz );
 	verts[1].xyz[0] -= markSize;
 	verts[1].xyz[1] += markSize;
-	VectorArray2Set( verts[1].st, 0, 1 );
-	Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
+	Vector2Set( verts[1].st, 0, 1 );
+	Byte4Set( verts[1].modulate, 255, 255, 255, 255 );
 
 	VectorCopy( trace.endpos, verts[2].xyz );
 	verts[2].xyz[0] += markSize;
 	verts[2].xyz[1] += markSize;
-	VectorArray2Set( verts[2].st, 1, 1 );
-	Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
+	Vector2Set( verts[2].st, 1, 1 );
+	Byte4Set( verts[2].modulate, 255, 255, 255, 255 );
 
 	VectorCopy( trace.endpos, verts[3].xyz );
 	verts[3].xyz[0] += markSize;
 	verts[3].xyz[1] -= markSize;
-	VectorArray2Set( verts[3].st, 1, 0 );
-	Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
+	Vector2Set( verts[3].st, 1, 0 );
+	Byte4Set( verts[3].modulate, 255, 255, 255, 255 );
 
 	trap_R_AddPolyToScene( cgs.media.wakeMarkShader, 4, verts );
 }
@@ -2896,7 +2896,7 @@ int CG_LightVerts( vec3_t normal, int numVerts, polyVert_t *verts )
 	for (i = 0; i < numVerts; i++) {
 		incoming = DotProduct (normal, lightDir);
 		if ( incoming <= 0 ) {
-			Vector4Set( verts[i].modulate, ambientLight[0], ambientLight[1], ambientLight[2], 255 );
+			Byte4Set( verts[i].modulate, ambientLight[0], ambientLight[1], ambientLight[2], 255 );
 			continue;
 		} 
 		j = ( ambientLight[0] + incoming * directedLight[0] );

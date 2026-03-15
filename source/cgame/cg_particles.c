@@ -185,8 +185,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, -width, vright, point);	
 		}
 		VectorCopy (point, verts[0].xyz);	
-		VectorArray2Set( verts[0].st, 0, 0 );
-		Vector4Set( verts[0].modulate, 255, 255, 255, 255 );
+		Vector2Set( verts[0].st, 0, 0 );
+		Byte4Set( verts[0].modulate, 255, 255, 255, 255 );
 
 		if (p->roll) {
 			VectorMA (point, 2*height, ru, point);	
@@ -194,8 +194,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, 2*height, vup, point);	
 		}
 		VectorCopy (point, verts[1].xyz);	
-		VectorArray2Set( verts[1].st, 0, 1 );
-		Vector4Set( verts[1].modulate, 255, 255, 255, 255 );
+		Vector2Set( verts[1].st, 0, 1 );
+		Byte4Set( verts[1].modulate, 255, 255, 255, 255 );
 
 		if (p->roll) {
 			VectorMA (point, 2*width, rr, point);	
@@ -203,8 +203,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, 2*width, vright, point);	
 		}
 		VectorCopy (point, verts[2].xyz);	
-		VectorArray2Set( verts[2].st, 1, 1 );
-		Vector4Set( verts[2].modulate, 255, 255, 255, 255 );
+		Vector2Set( verts[2].st, 1, 1 );
+		Byte4Set( verts[2].modulate, 255, 255, 255, 255 );
 
 		if (p->roll) {
 			VectorMA (point, -2*height, ru, point);	
@@ -212,8 +212,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, -2*height, vup, point);	
 		}
 		VectorCopy (point, verts[3].xyz);	
-		VectorArray2Set( verts[3].st, 1, 0 );
-		Vector4Set( verts[3].modulate, 255, 255, 255, 255 );
+		Vector2Set( verts[3].st, 1, 0 );
+		Byte4Set( verts[3].modulate, 255, 255, 255, 255 );
 	}
 	else if (p->type == P_SMOKE || p->type == P_SMOKE_IMPACT
 	|| p->type == P_BUBBLE || p->type == P_BUBBLE_TURBULENT // BFP - Bubble types moved here for better management
@@ -448,23 +448,23 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 
 			// bottom-left
 			VectorMA( org, -p->width, right, verts[0].xyz );
-			VectorArray2Set( verts[0].st, 0, 0 );
-			Vector4Set( verts[0].modulate, 255, 255, 255, 255 * alpha );
+			Vector2Set( verts[0].st, 0, 0 );
+			Byte4Set( verts[0].modulate, 255, 255, 255, 255 * alpha );
 
 			// top-left
 			VectorMA( org, p->width, right, verts[1].xyz );
-			VectorArray2Set( verts[1].st, 0, 1 );
-			Vector4Set( verts[1].modulate, 255, 255, 255, 255 * alpha );
+			Vector2Set( verts[1].st, 0, 1 );
+			Byte4Set( verts[1].modulate, 255, 255, 255, 255 * alpha );
 
 			// top-right
 			VectorMA( endPoint, p->width * 0.2f, right, verts[2].xyz ); // make the tip narrower
-			VectorArray2Set( verts[2].st, 1, 1 );
-			Vector4Set( verts[2].modulate, 255, 255, 255, 255 * alpha );
+			Vector2Set( verts[2].st, 1, 1 );
+			Byte4Set( verts[2].modulate, 255, 255, 255, 255 * alpha );
 
 			// bottom-right, but copied to top-right, making it similar to a triangle
 			VectorCopy( verts[2].xyz, verts[3].xyz );
-			VectorArray2Set( verts[3].st, 1, 0 );
-			Vector4Set( verts[3].modulate, 255, 255, 255, 255 * alpha );
+			Vector2Set( verts[3].st, 1, 0 );
+			Byte4Set( verts[3].modulate, 255, 255, 255, 255 * alpha );
 
 			trap_R_AddPolyToScene( p->pshader, 4, verts );
 			return;
@@ -481,8 +481,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, -p->width, vright, point);	
 		}
 		VectorCopy (point, verts[0].xyz);	
-		VectorArray2Set( verts[0].st, 0, 0 );
-		Vector4Set( verts[0].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
+		Vector2Set( verts[0].st, 0, 0 );
+		Byte4Set( verts[0].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
 
 		if (p->rotate)
 		{
@@ -495,8 +495,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, p->width, vright, point);	
 		}
 		VectorCopy (point, verts[1].xyz);	
-		VectorArray2Set( verts[1].st, 0, 1 );
-		Vector4Set( verts[1].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
+		Vector2Set( verts[1].st, 0, 1 );
+		Byte4Set( verts[1].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
 
 		if (p->rotate)
 		{
@@ -509,8 +509,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, p->width, vright, point);	
 		}
 		VectorCopy (point, verts[2].xyz);	
-		VectorArray2Set( verts[2].st, 1, 1 );
-		Vector4Set( verts[2].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
+		Vector2Set( verts[2].st, 1, 1 );
+		Byte4Set( verts[2].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
 
 		if (p->rotate)
 		{
@@ -523,8 +523,8 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			VectorMA (point, -p->width, vright, point);	
 		}
 		VectorCopy (point, verts[3].xyz);	
-		VectorArray2Set( verts[3].st, 1, 0 );
-		Vector4Set( verts[3].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
+		Vector2Set( verts[3].st, 1, 0 );
+		Byte4Set( verts[3].modulate, 255 * color[0], 255 * color[1], 255 * color[2], 255 * invratio );
 	}
 	// done.
 	

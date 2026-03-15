@@ -509,13 +509,13 @@ static ID_INLINE void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cro
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
 }
 
-// BFP - VectorArray2Set sets the 2 values of a vec2_t variable in a single line
-static ID_INLINE void VectorArray2Set( vec2_t v, float x, float y ) {
+// BFP - Vector2Set sets the 2 values of a vec2_t variable in a single line
+static ID_INLINE void Vector2Set( vec2_t v, float x, float y ) {
 	v[0] = x;
 	v[1] = y;
 }
-// BFP - Vector4Set sets the 4 values of a byte[4] variable in a single line
-static ID_INLINE void Vector4Set( byte v[4], float w, float x, float y, float z ) {
+// BFP - Byte4Set sets the 4 values of a byte[4] variable in a single line
+static ID_INLINE void Byte4Set( byte v[4], float w, float x, float y, float z ) {
 	v[0] = w;
 	v[1] = x;
 	v[2] = y;
@@ -539,10 +539,10 @@ void VectorInverse( vec3_t v );
 
 void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross );
 
-// BFP - VectorArray2Set sets the 2 values of a vec2_t variable in a single line
-void VectorArray2Set( vec2_t v, float x, float y );
-// BFP - Vector4Set sets the 4 values of a byte[4] variable in a single line
-void Vector4Set( byte v[4], float w, float x, float y, float z );
+// BFP - Vector2Set sets the 2 values of a vec2_t variable in a single line
+void Vector2Set( vec2_t v, float x, float y );
+// BFP - Byte4Set sets the 4 values of a byte[4] variable in a single line
+void Byte4Set( byte v[4], float w, float x, float y, float z );
 
 #endif
 
