@@ -163,7 +163,7 @@ typedef enum {
 #define PMF_KI_CHARGE		128		// BFP - Ki charge
 // BFP - PMF_TIME_WATERJUMP is unused
 // #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
-#define	PMF_STOP_AIR_FLY	256		// BFP - Stop air gravity check
+#define	PMF_AIR_GRAVITY		256		// BFP - Air gravity check
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
 // BFP - no hook

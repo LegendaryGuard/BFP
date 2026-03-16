@@ -1050,7 +1050,7 @@ void BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad ) {
 	VectorCopy( jumppad->origin2, ps->velocity );
 
 	// BFP - Keep the speed (take a look on bg_pmove.c about PM_AirMove where handles that PMF flag)
-	ps->pm_flags &= ~PMF_STOP_AIR_FLY;
+	ps->pm_flags &= ~PMF_AIR_GRAVITY;
 }
 
 /*

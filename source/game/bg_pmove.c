@@ -563,7 +563,7 @@ static qboolean PM_CheckJump( void ) {
 	pml.walking = qfalse;
 	pm->ps->pm_flags |= PMF_JUMP_HELD;
 	pm->ps->pm_flags |= PMF_NEARGROUND; // BFP - Handle PMF_NEARGROUND, avoid checking if there's ground at that point
-	pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+	pm->ps->pm_flags &= ~PMF_AIR_GRAVITY; // BFP - Air gravity
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
@@ -1138,7 +1138,7 @@ static void PM_AirMove( void ) {
 	PM_StepSlideMove ( qtrue );
 
 	// BFP - Handle gravity, make the player heavier
-	if ( !( pm->ps->pm_flags & PMF_STOP_AIR_FLY )
+	if ( !( pm->ps->pm_flags & PMF_AIR_GRAVITY )
 	&& !( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
 		PM_SlideMove ( qtrue );
 		return;
@@ -1773,7 +1773,7 @@ static void PM_GroundTrace( void ) {
 		return;
 	}
 
-	pm->ps->pm_flags |= PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+	pm->ps->pm_flags |= PMF_AIR_GRAVITY; // BFP - Air gravity
 
 	pml.groundPlane = qtrue;
 	pml.walking = qtrue;
@@ -2305,7 +2305,7 @@ static void PM_TorsoAnimation( void ) {
 		VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
 
 		// BFP - Handle PMF flags, don't do idle or other torso animations while jumping off from the water
-		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY;
+		pm->ps->pm_flags &= ~PMF_AIR_GRAVITY;
 		pm->ps->pm_flags |= PMF_NEARGROUND;
 
 		PM_ForceJumpAnim();
@@ -2375,6 +2375,18 @@ PM_CheckFlightState
 ==============
 */
 static void PM_CheckFlightState( void ) { // BFP - Checks if the flight is disabled while the key is held
+	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR
+	|| ( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
+		pm->ps->stats[STAT_FLAGS] &= ~( STATF_FLIGHT_ACTIVE | STATF_FLIGHT_LATCH );
+		// add a small fall while respawning and holding the key
+		if ( ( pm->ps->pm_flags & PMF_RESPAWNED ) && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
+			pm->ps->velocity[2] -= 150;
+		} else {
+			pm->cmd.buttons &= ~BUTTON_ENABLEFLIGHT;
+		}
+		return;
+	}
+
 	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
 		if ( !( pm->ps->stats[STAT_FLAGS] & STATF_FLIGHT_LATCH ) ) {
 			// change state and lock until release
@@ -2469,7 +2481,7 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 
 		// make sure to handle the PMF flags
 		pm->ps->pm_flags &= ~PMF_FALLING;
-		pm->ps->pm_flags |= PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+		pm->ps->pm_flags |= PMF_AIR_GRAVITY; // BFP - Air gravity
 
 		PM_ContinueFlyAnim();
 		return;
@@ -3279,7 +3291,7 @@ void PmoveSingle (pmove_t *pmove) {
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
 		// BFP - TODO: Set to the first selected weapon
-		pm->ps->pm_flags &= ~PMF_STOP_AIR_FLY; // BFP - Stop air gravity
+		pm->ps->pm_flags |= PMF_AIR_GRAVITY; // BFP - Air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
 	}
 
@@ -3311,6 +3323,9 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->cmd.buttons &= ~BUTTON_ATTACK;
 	}
 
+	// BFP - Checks if the flight is disabled and the key is held
+	PM_CheckFlightState();
+
 	// clear the respawned flag if attack and use are cleared
 	if ( pm->ps->stats[STAT_HEALTH] > 0 && 
 		!( pm->cmd.buttons & (BUTTON_ATTACK | BUTTON_USE_HOLDABLE) ) ) {
@@ -3328,9 +3343,6 @@ void PmoveSingle (pmove_t *pmove) {
 		pmove->cmd.rightmove = 0;
 		pmove->cmd.upmove = 0;
 	}
-
-	// BFP - Checks if the flight is disabled and the key is held
-	PM_CheckFlightState();
 
 	// clear all pmove local vars
 	memset (&pml, 0, sizeof(pml));
