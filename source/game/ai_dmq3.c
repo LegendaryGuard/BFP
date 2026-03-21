@@ -2420,7 +2420,7 @@ void BotCheckAttack(bot_state_t *bs) {
 	//Com_Printf( "firethrottle: %f\n", firethrottle );
 	if (bs->firethrottleshoot_time < FloatTime()) {
 		// BFP - When it's ready to attack, fire
-		if ( bs->cur_ps.generic1 & GEN_READY_KI_ATTACK ) {
+		if ( bs->cur_ps.eFlags & EF_READY_KI_ATTACK ) {
 			bs->firethrottleshoot_time = FloatTime() + 1 - firethrottle;
 			bs->firethrottlewait_time = 0;
 		}

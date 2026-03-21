@@ -271,6 +271,8 @@ typedef enum {
 #define	EF_AWARD_EXCELLENT	0x00000008		// draw an excellent sprite
 #define EF_PLAYER_EVENT		0x00000010
 #define	EF_BOUNCE			0x00000010		// for missiles
+// BFP - This eFlag hack is used for client/player only:
+#define	EF_READY_KI_ATTACK	0x00000010		// BFP - Ready ki attack
 #define	EF_BOUNCE_HALF		0x00000020		// for missiles
 // BFP - EF_AWARD_GAUNTLET flag is renamed	// draw a gauntlet sprite
 #define	EF_FLIGHT			0x00000040		// BFP - Used for flying status
@@ -292,16 +294,16 @@ typedef enum {
 // #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
 
-// BFP - Reusing generic1 integer 8-bit size
+// BFP - We can use generic1 integer 8-bit fields, but if we use as integer, only can use until 128 ~ 256
 // entityState_t->generic1
-#define	GEN_READY_KI_ATTACK	1
-// #define GEN_FLAG_2		2
-// #define GEN_FLAG_3		4
-// #define GEN_FLAG_4		8
-// #define GEN_FLAG_5		16
-// #define GEN_FLAG_6		32
-// #define GEN_FLAG_7		64
-// #define GEN_FLAG_8		128
+// #define	GENF_FLAG_1		1
+// #define	GENF_FLAG_2		2
+// #define	GENF_FLAG_3		4
+// #define	GENF_FLAG_4		8
+// #define	GENF_FLAG_5		16
+// #define	GENF_FLAG_6		32
+// #define	GENF_FLAG_7		64
+// #define	GENF_FLAG_8		128
 
 // NOTE: may not have more than 16
 typedef enum {

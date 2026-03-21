@@ -923,7 +923,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	VectorCopy( parent->origin, nonPredictedCent->pe.muzzleOrigin );
 
 	// BFP - Displaying the muzzle flash to the other player correctly
-	if ( nonPredictedCent->currentState.generic1 & GEN_READY_KI_ATTACK ) {
+	if ( nonPredictedCent->currentState.eFlags & EF_READY_KI_ATTACK ) {
 		// BFP - NOTE: That's where we apply the flash properties read from client cfg
 		CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, "ImpactBeamFlashShader", 0, 15, 1 );
 	}
