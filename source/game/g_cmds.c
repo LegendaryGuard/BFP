@@ -1754,7 +1754,7 @@ void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 	if ( ent->client->ps.pm_type != PM_DEAD ) {
 		// do not play the sound in the charging status
 		if ( !( ent->client->ps.eFlags & EF_FLIGHT ) && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
-			G_AddEvent( ent, EV_ENABLE_FLIGHT, 0 ); // play the sound
+			BG_AddPredictableEventToPlayerstate( EV_ENABLE_FLIGHT, 0, &ent->client->ps, -1 ); // play the sound
 		}
 		ent->client->ps.eFlags ^= EF_FLIGHT;
 	}

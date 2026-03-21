@@ -626,9 +626,15 @@ Drifting movements
 */
 static void PM_Drifting( void ) { // BFP - Drifting
 	vec3_t	drift;
-	float	forwardSpeed = DotProduct( pm->ps->velocity, pml.forward );
-	float	rightSpeed = DotProduct( pm->ps->velocity, pml.right );
-	float	driftFactor = 0.0003;
+	float	forwardSpeed, rightSpeed, driftFactor = 0.0003;
+
+	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR
+	|| ( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
+		return;
+	}
+
+	forwardSpeed = -DotProduct( pm->ps->velocity, pml.forward );
+	rightSpeed = DotProduct( pm->ps->velocity, pml.right );
 
 	// apply directional drift when keys are released
 	if ( pm->cmd.rightmove == 0 && Q_fabs( rightSpeed ) > 0.0f
@@ -1004,7 +1010,8 @@ static void PM_FlyMove( void ) {
 
 		// BFP - Going up/down a bit down when moving left/right depending how the player looks
 		if ( !( pm->ps->pm_flags & PMF_BLOCK ) 
-		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
+		&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) )
+		&& pm->ps->pm_type != PM_SPECTATOR ) {
 
 			// handle downward push when moving left/right without upmove
 			if ( pm->cmd.rightmove != 0 && pm->cmd.upmove <= 0 ) {
@@ -2377,7 +2384,7 @@ PM_CheckFlightState
 static void PM_CheckFlightState( void ) { // BFP - Checks if the flight is disabled while the key is held
 	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR
 	|| ( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
-		pm->ps->stats[STAT_FLAGS] &= ~( STATF_FLIGHT_ACTIVE | STATF_FLIGHT_LATCH );
+		pm->ps->pm_flags &= ~PMF_FLIGHT_LATCH;
 		// add a small fall while respawning and holding the key
 		if ( ( pm->ps->pm_flags & PMF_RESPAWNED ) && ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) {
 			pm->ps->velocity[2] -= 150;
@@ -2388,18 +2395,21 @@ static void PM_CheckFlightState( void ) { // BFP - Checks if the flight is disab
 	}
 
 	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
-		if ( !( pm->ps->stats[STAT_FLAGS] & STATF_FLIGHT_LATCH ) ) {
+		if ( !( pm->ps->pm_flags & PMF_FLIGHT_LATCH ) ) {
+			// do not play the sound in the charging status
+			if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
+				PM_AddEvent( EV_ENABLE_FLIGHT ); // play the sound
+			}
 			// change state and lock until release
-			pm->ps->stats[STAT_FLAGS] ^= STATF_FLIGHT_ACTIVE;
-			pm->ps->stats[STAT_FLAGS] |= STATF_FLIGHT_LATCH;
+			pm->ps->eFlags ^= EF_FLIGHT;
+			pm->ps->pm_flags |= PMF_FLIGHT_LATCH;
 		}
 	} else {
-		pm->ps->stats[STAT_FLAGS] &= ~STATF_FLIGHT_LATCH;
+		pm->ps->pm_flags &= ~PMF_FLIGHT_LATCH;
 	}
 
-	if ( pm->ps->stats[STAT_FLAGS] & STATF_FLIGHT_ACTIVE ) {
+	if ( pm->ps->eFlags & EF_FLIGHT ) {
 		pm->cmd.buttons |= BUTTON_ENABLEFLIGHT;
-		pm->ps->stats[STAT_FLAGS] &= ~STATF_FLIGHT_ACTIVE;
 	} else {
 		pm->cmd.buttons &= ~BUTTON_ENABLEFLIGHT;
 	}

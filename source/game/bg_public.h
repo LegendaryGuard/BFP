@@ -150,30 +150,25 @@ typedef enum {
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
 #define	PMF_BLOCK			4		// BFP - Block
-// BFP - PMF_BACKWARDS_JUMP is unused
-// #define	PMF_BACKWARDS_JUMP	8		// go into backwards land
+// BFP - PMF_BACKWARDS_JUMP is renamed	// go into backwards land
 #define	PMF_NEARGROUND		8		// BFP - Near ground check
-// BFP - PMF_BACKWARDS_RUN is unused
-// #define	PMF_BACKWARDS_RUN	16		// coast down to backwards run
+// BFP - PMF_BACKWARDS_RUN is renamed	// coast down to backwards run
 #define	PMF_MELEE			16		// BFP - Melee
-// BFP - PMF_TIME_LAND is unused
-// #define	PMF_TIME_LAND		32		// pm_time is time before rejump
+// BFP - PMF_TIME_LAND is renamed	// pm_time is time before rejump
 #define PMF_FALLING			32		// BFP - Falling status
 #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
 #define PMF_KI_CHARGE		128		// BFP - Ki charge
-// BFP - PMF_TIME_WATERJUMP is unused
-// #define	PMF_TIME_WATERJUMP	256		// pm_time is waterjump
+// BFP - PMF_TIME_WATERJUMP is renamed	// pm_time is waterjump
 #define	PMF_AIR_GRAVITY		256		// BFP - Air gravity check
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
-// BFP - no hook
-// #define PMF_GRAPPLE_PULL	2048	// pull towards grapple location
+// BFP - PMF_GRAPPLE_PULL is renamed	// pull towards grapple location
 #define PMF_HITSTUN			2048	// BFP - Hit stun
 #define PMF_FOLLOW			4096	// spectate following another player
-// BFP - PMF_SCOREBOARD is unused
-// #define PMF_SCOREBOARD		8192	// spectate as a scoreboard
+// BFP - PMF_SCOREBOARD is renamed	// spectate as a scoreboard
 #define PMF_ULTIMATE_TIER	8192	// BFP - Ultimate tier status
 #define	PMF_KI_ATTACK		16384	// BFP - Ki attack
+#define	PMF_FLIGHT_LATCH	32768	// BFP - Flight latch toggling
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
@@ -232,34 +227,14 @@ typedef enum {
 	STAT_HOLDABLE_ITEM,
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
-	// BFP - Got rid of STAT_DEAD_YAW, now uses ps->damageYaw
+	// BFP - Got rid of STAT_DEAD_YAW, now uses ps->damageYaw and ps->damagePitch
 	STAT_UNUSED_INDEX,				// unused stat index (don't remove if you want to keep demo networking!)
 	STAT_CLIENTS_READY,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
 	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
 	STAT_MAX_KI,					// BFP - Maximum ki
 	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
-	STAT_FLAGS,						// BFP - Flags to handle the status
 	STAT_HITSTUN_TIME				// BFP - Hit stun time
 } statIndex_t;
-
-// BFP - Using STAT_FLAGS integer 16-bit size as flags
-// player_state->stats[STAT_FLAGS]
-#define STATF_FLIGHT_ACTIVE		1
-#define STATF_FLIGHT_LATCH		2
-// #define STATF_FLAG_3			4
-// #define STATF_FLAG_4			8
-// #define STATF_FLAG_5			16
-// #define STATF_FLAG_6			32
-// #define STATF_FLAG_7			64
-// #define STATF_FLAG_8			128
-// #define STATF_FLAG_9			256
-// #define STATF_FLAG_10		512
-// #define STATF_FLAG_11		1024
-// #define STATF_FLAG_12		2048
-// #define STATF_FLAG_13		4096
-// #define STATF_FLAG_14		8192
-// #define STATF_FLAG_15		16384
-// #define STATF_FLAG_16		32768
 
 // player_state->persistant[] indexes
 // these fields are the only part of player_state that isn't
@@ -297,24 +272,22 @@ typedef enum {
 #define EF_PLAYER_EVENT		0x00000010
 #define	EF_BOUNCE			0x00000010		// for missiles
 #define	EF_BOUNCE_HALF		0x00000020		// for missiles
-// BFP - No EF_AWARD_GAUNTLET flag
-// #define	EF_AWARD_GAUNTLET	0x00000040		// draw a gauntlet sprite
+// BFP - EF_AWARD_GAUNTLET flag is renamed	// draw a gauntlet sprite
 #define	EF_FLIGHT			0x00000040		// BFP - Used for flying status
 #define	EF_NODRAW			0x00000080		// may have an event, but no model (unspawned items)
 #define	EF_FIRING			0x00000100		// for lightning gun
 #define	EF_KI_BOOST			0x00000200		// BFP - Used for ki boost status
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
-// BFP - No EF_AWARD_CAP flag
-// #define EF_AWARD_CAP		0x00000800		// draw the capture sprite
+// BFP - EF_AWARD_CAP flag is renamed	// draw the capture sprite
 #define EF_AURA_TIER_UP		0x00000800		// BFP - Aura tier up effect when transforms or passes to the next tier
 #define	EF_TALK				0x00001000		// draw a talk balloon
 #define	EF_CONNECTION		0x00002000		// draw a connection trouble sprite
 #define	EF_VOTED			0x00004000		// already cast a vote
-// BFP - No EF_AWARD_IMPRESSIVE, EF_AWARD_DEFEND and EF_AWARD_ASSIST flags
-// #define	EF_AWARD_IMPRESSIVE	0x00008000		// draw an impressive sprite
+// BFP - EF_AWARD_IMPRESSIVE flag is renamed	// draw an impressive sprite
+#define	EF_MONSTER			0x00008000		// BFP - Player marked as monster on monster gametype (g_gametype 4)
+// BFP - No EF_AWARD_DEFEND and EF_AWARD_ASSIST flags
 // #define	EF_AWARD_DEFEND		0x00010000		// draw a defend sprite
 // #define	EF_AWARD_ASSIST		0x00020000		// draw a assist sprite
-#define	EF_MONSTER			0x00008000		// BFP - Player marked as monster on monster gametype (g_gametype 4)
 // BFP - Unused EF flag
 // #define EF_AWARD_DENIED		0x00040000		// denied
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote

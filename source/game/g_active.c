@@ -465,7 +465,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// BFP - Decrease ki when flying
-		if ( ( ( client->ps.eFlags & EF_FLIGHT ) || ( client->buttons & BUTTON_ENABLEFLIGHT ) )
+		if ( ( client->ps.eFlags & EF_FLIGHT )
 		&& client->ps.ammo[WP_KI] > 0
 		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) { // don't decrease when charging
 			if ( g_flightCostPct.value > 0 && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) { // reduce a bit if the percentage cost is more than 0 and has less powerlevel
@@ -668,25 +668,6 @@ void SendPendingPredictableEvents( playerState_t *ps ) {
 		t->r.singleClient = ps->clientNum;
 		// set back external event
 		ps->externalEvent = extEvent;
-	}
-}
-
-/*
-=================
-FlyingThink
-=================
-*/
-void FlyingThink( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Flight
-	gclient_t	*client;
-
-	client = ent->client;
-
-	client->oldbuttons = client->buttons;
-	client->buttons = ucmd->buttons;
-
-	// enableflight button cycles
-	if ( ( client->buttons & BUTTON_ENABLEFLIGHT ) && ! ( client->oldbuttons & BUTTON_ENABLEFLIGHT ) ) {
-		Cmd_BFP_Fly_f( ent );
 	}
 }
 
@@ -1121,9 +1102,6 @@ void ClientThink_real( gentity_t *ent ) {
 		&& client->ps.pm_time <= 0 ) { // charge ki!
 			client->ps.eFlags |= EF_AURA;
 		}
-
-		// BFP - Enable flight
-		FlyingThink( ent, ucmd ); // prevents client-server side issues when there's other client in-game
 	}
 
 	// BFP - No flight
