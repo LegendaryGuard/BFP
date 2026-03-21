@@ -201,6 +201,29 @@ void G_ExplodeMissile( gentity_t *ent ) {
 	trap_LinkEntity( ent );
 }
 
+
+/*
+================
+G_CollideDetonationCheck
+
+Checks the projectile collision radius and detonation point
+================
+*/
+static void G_CollideDetonationCheck( gentity_t *ent, trace_t *trace ) { // BFP - Detonation check
+	vec3_t impactPoint;
+	// BFP - NOTE: This setup solves the issue of real impact crack mark for collision radius, but original BFP didn't that (uses -1)
+	float distToPlane = DotProduct( trace->endpos, trace->plane.normal ) - trace->plane.dist;
+
+	VectorMA( trace->endpos, -distToPlane, trace->plane.normal, impactPoint );
+
+	if ( trace->contents & MASK_PLAYERSOLID ) {
+		gentity_t *te = G_TempEntity( impactPoint, EV_MISSILE_MISS );
+		te->s.eventParm = DirToByte( trace->plane.normal );
+	} else {
+		G_AddEvent( ent, EV_MISSILE_DETONATE, 0 );
+	}
+}
+
 /*
 ================
 G_BFPBeamImpact
@@ -226,11 +249,7 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 	} else {
 		VectorCopy( trace->endpos, v );
 		// BFP - Detonation check
-		if ( trace->contents & MASK_PLAYERSOLID ) {
-			G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
-		} else {
-			G_AddEvent( nent, EV_MISSILE_DETONATE, 0 );
-		}
+		G_CollideDetonationCheck( nent, trace );
 		ent->enemy = NULL;
 	}
 
@@ -309,14 +328,11 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 					velocity[2] = 1;
 				}
 #endif
-				// BFP - Normalize velocity to apply the force to lose altitude while flying/floating underwater
-				VectorNormalize( velocity );
-				velocity[2] = -1;
 
 				// BFP - Consume 10% of ki when deflecting the projectile and apply knockback
 				if ( other->client->blockKnockbackTime <= 0 ) {
 					other->client->ps.ammo[WP_KI] -= other->client->ps.stats[STAT_MAX_KI] * 0.1;
-					other->client->blockKnockbackTime = level.time + 250;	
+					other->client->blockKnockbackTime = level.time + 250;
 				}
 
 				G_Damage (other, ent, &g_entities[ent->r.ownerNum], velocity,
@@ -339,9 +355,6 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 				velocity[2] = 1;	// stepped on a grenade
 			}
 #endif
-			// BFP - Normalize velocity to apply the force to lose altitude while flying/floating underwater
-			VectorNormalize( velocity );
-			velocity[2] = -1;
 
 			G_Damage (other, ent, &g_entities[ent->r.ownerNum], velocity,
 				ent->s.origin, ent->damage, 
@@ -350,7 +363,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	}
 
 	// BFP - Changed "hook" to "beam" classname
-	if (!strcmp(ent->classname, "beam")) {
+	if ( !Q_stricmp( ent->classname, "beam" ) ) {
 		G_BFPBeamImpact( ent, other, trace );
 		return;
 	}
@@ -413,11 +426,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		G_AddEvent( ent, EV_MISSILE_MISS_METAL, DirToByte( trace->plane.normal ) );
 	} else {
 		// BFP - Detonation check
-		if ( trace->contents & MASK_PLAYERSOLID ) {
-			G_AddEvent( ent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
-		} else {
-			G_AddEvent( ent, EV_MISSILE_DETONATE, 0 );
-		}
+		G_CollideDetonationCheck( ent, trace );
 	}
 
 	ent->freeAfterEvent = qtrue;

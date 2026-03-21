@@ -153,7 +153,7 @@ CheckMeleeAttack
 */
 qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	trace_t		tr;
-	vec3_t		velocity, end;
+	vec3_t		end;
 	gentity_t	*traceTarget;
 	vec3_t		traceMins, traceMaxs;
 
@@ -291,25 +291,20 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 
 		// PUSH AND DEAL DAMAGE!
 		if ( g_meleeDamage.integer > 0 ) {
-			float forceMultiplier = 100.0f + 2.0f * (g_meleeDamage.integer - 10);
-
-			// only when the target isn't dead
-			if ( traceTarget->client->ps.pm_type != PM_DEAD ) {
-				VectorSubtract( traceTarget->client->ps.origin, attacker->client->ps.origin, velocity );
-				VectorNormalize( velocity );
-
-				// apply the push force (proportional to the melee damage) in the direction of the attack
-				VectorScale( velocity, g_meleeDamage.integer * forceMultiplier, traceTarget->client->ps.velocity );
-			}
-
 			// consume 5% of ki when being defended and apply knockback
 			if ( ( traceTarget->client->ps.pm_flags & PMF_BLOCK ) && traceTarget->client->blockKnockbackTime <= 0 ) {
 				traceTarget->client->ps.ammo[WP_KI] -= traceTarget->client->ps.stats[STAT_MAX_KI] * 0.05;
 				traceTarget->client->blockKnockbackTime = level.time + 250;
-			} else {
-				G_Damage ( traceTarget, attacker, attacker, velocity, attacker->s.origin, 
-					g_meleeDamage.integer, 0, MOD_MELEE );
 			}
+			G_Damage ( traceTarget, attacker, attacker, direction, forward, 
+				g_meleeDamage.integer, 0, MOD_MELEE );
+			if ( g_meleeDamage.integer < 4 ) { // lose altitude while flying, when damage is lesser than 4
+				traceTarget->client->ps.velocity[2] -= 300;
+			}
+			if ( g_meleeDamage.integer < 30 ) {
+				traceTarget->client->ps.pm_time = 200;
+			}
+			traceTarget->client->ps.pm_flags |= PMF_TIME_KNOCKBACK;
 		}
 	}
 

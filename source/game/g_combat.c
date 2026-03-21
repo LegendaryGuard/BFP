@@ -1038,6 +1038,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	int			asave;
 	int			knockback;
 	int			max;
+	// BFP - Melee knockback
+	int			meleeKnockback;
 
 	// BFP - Ultimate tier status is invulnerable!
 	if ( targ->client // BFP - NOTE: Avoid DLL/SO crashing when impacting a door or any map entity (ET_MOVER), this is important for implementations like that!
@@ -1081,6 +1083,15 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		}
 		return;
 	}
+
+	// BFP - Melee knockback
+	if ( mod == MOD_MELEE ) {
+		meleeKnockback = damage * 7.8;
+		if ( damage > 10 ) {
+			meleeKnockback = damage * 78 * ( 0.001 * damage );
+		}
+	}
+
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
@@ -1100,11 +1111,23 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		dflags |= DAMAGE_NO_KNOCKBACK;
 	} else {
 		VectorNormalize(dir);
+
+		// BFP - Lose altitude while flying/floating underwater
+		dir[2] = -1;
 	}
 
 	knockback = damage;
 	if ( knockback > 200 ) {
 		knockback = 200;
+	}
+	// BFP - Add enough knockback to push the targets while receiving explosion/projectile impacts
+	if ( mod != MOD_MELEE ) {
+		knockback = 200;
+	} else { // BFP - Melee knockback
+		knockback = meleeKnockback;
+	}
+	if ( knockback > 2000 ) { // BFP - Melee knockback cannot be more than 2000
+		knockback = 2000;
 	}
 	if ( targ->flags & FL_NO_KNOCKBACK ) {
 		knockback = 0;
@@ -1203,11 +1226,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	asave = CheckArmor (targ, take, dflags);
 	take -= asave;
 
-	// BFP - Lose altitude while flying/floating underwater
-	if ( knockback && targ->client
-	&& targ->client->ps.velocity[2] > 0
-	&& ( targ->health - (take - asave) ) > 0 ) {
-		targ->client->ps.velocity[2] = -targ->client->ps.velocity[2];
+	 // BFP - When blocking, don't receive damage
+	if ( client->ps.pm_flags & PMF_BLOCK ) {
+		take = asave = 0;
 	}
 
 	if ( g_debugDamage.integer ) {
@@ -1249,8 +1270,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 
 	// do the damage
-	if (take
-	&& !( client->ps.pm_flags & PMF_BLOCK )) { // BFP - When blocking, don't receive damage
+	if (take) {
 		targ->health = targ->health - take;
 		if ( targ->client ) {
 			targ->client->ps.stats[STAT_HEALTH] = targ->health;
