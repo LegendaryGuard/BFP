@@ -803,7 +803,7 @@ qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (
 	VectorCopy( tr.endpos, ent->client->ps.origin );
 
 	// sound event
-	BG_AddPredictableEventToPlayerstate( EV_ZANZOKEN, 0, &ent->client->ps, -1 );
+	BG_AddPredictableEventToPlayerstate( EV_ZANZOKEN_IN, 0, &ent->client->ps, -1 );
 
 	return qtrue;
 }

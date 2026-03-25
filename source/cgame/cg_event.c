@@ -460,79 +460,125 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	}
 	ci = &cgs.clientinfo[ clientNum ];
 
+	// BFP - HIGHLY MODIFIED, every event is sorted for original BFP networking
+
 	switch ( event ) {
+	case EV_NONE:					// 0
+	case EV_UNUSED_INDEX1:			// 1
+	case EV_UNUSED_INDEX2:			// 2
+	case EV_UNUSED_INDEX3:			// 3
+	case EV_UNUSED_INDEX4:			// 4
+	case EV_UNUSED_INDEX5:			// 5
+	case EV_UNUSED_INDEX6:			// 6
+	case EV_UNUSED_INDEX7:			// 7
+	case EV_UNUSED_INDEX8:			// 8
+	case EV_UNUSED_INDEX9:			// 9
+		break;
+
+	// BFP - Melee
+	case EV_MELEE_READY:			// 10
+		break;
+	case EV_MELEE:					// 11
+	{
+		int rndMeleeSnd = rand() % 5;
+		switch ( rndMeleeSnd ) {
+			case 0: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit1.wav" ) );
+				break;
+			}
+			case 1: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit2.wav" ) );
+				break;
+			}
+			case 2: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit3.wav" ) );
+				break;
+			}
+			case 3: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit4.wav" ) );
+				break;
+			}
+			default: {
+				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit5.wav" ) );
+			}
+		}
+		break;
+	}
+
+	case EV_UNUSED_INDEX12:			// 12
+		break;
+		
+	// BFP - Tier up events
+	case EV_TIER_RESET:				// 13
+		break;
+	case EV_TIER_0:					// 14
+	case EV_TIER_1:					// 15
+	case EV_TIER_2:					// 16
+	case EV_TIER_3:					// 17
+	case EV_TIER_4:					// 18
+		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
+		if ( event == EV_TIER_4 && es->number == cg.snap->ps.clientNum ) {
+			trap_SendConsoleCommand( "transformorbit\n" );
+		}
+		break;
+
+	// BFP - Short-Range Teleport (Zanzoken)
+	case EV_ZANZOKEN_IN:			// 19
+		trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/srteleport.wav" ) );
+	case EV_ZANZOKEN_OUT:			// 20
+		break;
+	
+	// BFP - Ki boost
+	case EV_KI_BOOST:				// 21
+		break;
+
+	// BFP - A normal jump sound is played when enables the flight
+	case EV_ENABLE_FLIGHT:			// 22
+		trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) );
+		break;
+
 	//
 	// movement generated events
 	//
-	case EV_FOOTSTEP:
+	case EV_FOOTSTEP:				// 23
 		if (cg_footsteps.integer) {
 			trap_S_StartSound (NULL, es->number, CHAN_BODY, 
 				cgs.media.footsteps[ ci->footsteps ][rand()&3] );
 		}
 		break;
 
-	case EV_FOOTSTEP_METAL:
+	case EV_FOOTSTEP_METAL:			// 24
 		if (cg_footsteps.integer) {
 			trap_S_StartSound (NULL, es->number, CHAN_BODY, 
 				cgs.media.footsteps[ FOOTSTEP_METAL ][rand()&3] );
 		}
 		break;
 
-	case EV_FOOTSPLASH:
+	case EV_FOOTSPLASH:				// 25
 		if (cg_footsteps.integer) {
 			trap_S_StartSound (NULL, es->number, CHAN_BODY, 
 				cgs.media.footsteps[ FOOTSTEP_SPLASH ][rand()&3] );
 		}
 		break;
 
-	case EV_FOOTWADE:
+	case EV_FOOTWADE:				// 26
 		if (cg_footsteps.integer) {
 			trap_S_StartSound (NULL, es->number, CHAN_BODY, 
 				cgs.media.footsteps[ FOOTSTEP_SPLASH ][rand()&3] );
 		}
 		break;
 
-	case EV_SWIM:
+	case EV_SWIM:					// 27
 		if (cg_footsteps.integer) {
 			trap_S_StartSound (NULL, es->number, CHAN_BODY, 
 				cgs.media.footsteps[ FOOTSTEP_SPLASH ][rand()&3] );
 		}
 		break;
 
-	case EV_FALL_SHORT:
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.landSound );
-		if ( clientNum == cg.predictedPlayerState.clientNum ) {
-			// smooth landing z changes
-			cg.landChange = -8;
-			cg.landTime = cg.time;
-		}
-		break;
-
-	case EV_FALL_MEDIUM:
-		// BFP - Use normal land sound instead
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.landSound );
-		// use normal pain sound
-		// trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.wav" ) );
-		if ( clientNum == cg.predictedPlayerState.clientNum ) {
-			// smooth landing z changes
-			cg.landChange = -16;
-			cg.landTime = cg.time;
-		}
-		break;
-
-	case EV_FALL_FAR:
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.wav" ) );
-		cent->pe.painTime = cg.time;	// don't play a pain sound right after this
-		if ( clientNum == cg.predictedPlayerState.clientNum ) {
-			// smooth landing z changes
-			cg.landChange = -24;
-			cg.landTime = cg.time;
-		}
-		break;
-
-	case EV_STEP_4:
-	case EV_STEP_8:
-	case EV_STEP_12:
+	case EV_STEP_4:					// 28
+	case EV_STEP_8:					// 29
+	case EV_STEP_12:				// 30
+									// 31
 	case EV_STEP_16:		// smooth out step up transitions
 	{
 		float	oldStep;
@@ -565,7 +611,38 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 	}
 
-	case EV_JUMP_PAD:
+	case EV_FALL_SHORT:				// 32
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.landSound );
+		if ( clientNum == cg.predictedPlayerState.clientNum ) {
+			// smooth landing z changes
+			cg.landChange = -8;
+			cg.landTime = cg.time;
+		}
+		break;
+
+	case EV_FALL_MEDIUM:			// 33
+		// BFP - Use normal land sound instead
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.landSound );
+		// use normal pain sound
+		// trap_S_StartSound( NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*pain100_1.wav" ) );
+		if ( clientNum == cg.predictedPlayerState.clientNum ) {
+			// smooth landing z changes
+			cg.landChange = -16;
+			cg.landTime = cg.time;
+		}
+		break;
+
+	case EV_FALL_FAR:				// 34
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*fall1.wav" ) );
+		cent->pe.painTime = cg.time;	// don't play a pain sound right after this
+		if ( clientNum == cg.predictedPlayerState.clientNum ) {
+			// smooth landing z changes
+			cg.landChange = -24;
+			cg.landTime = cg.time;
+		}
+		break;
+
+	case EV_JUMP_PAD:				// 35
 //		CG_Printf( "EV_JUMP_PAD w/effect #%i\n", es->eventParm );
 // BFP - No smoke puff effect when using a jump pad
 #if 0
@@ -586,10 +663,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 
 		// boing sound at origin, jump sound on player
 		trap_S_StartSound ( cent->lerpOrigin, -1, CHAN_VOICE, cgs.media.jumpPadSound );
-
 		// BFP - Q3 jump sound removed and no break after this case, so continue to BFP jump sound
+		break;
 
-	case EV_JUMP:
+	case EV_JUMP:					// 36
+	case EV_JUMP_2:					// 37
 		// BFP - Use the second jump sound when using ki boost only when it isn't flying
 		if ( ( es->eFlags & EF_AURA ) && !( cent->currentState.eFlags & EF_FLIGHT ) ) {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump2.wav" ) ); // BFP - Ki boost jump sound
@@ -597,18 +675,17 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) ); // BFP - Normal jump sound
 		}
 		break;
-	case EV_TAUNT:
-		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.wav" ) );
-		break;
-	case EV_WATER_TOUCH:
+
+
+	case EV_WATER_TOUCH:			// 38
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrInSound );
 		break;
 
-	case EV_WATER_LEAVE:
+	case EV_WATER_LEAVE:			// 39
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrOutSound );
 		break;
 
-	case EV_WATER_UNDER:
+	case EV_WATER_UNDER:			// 40
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.watrUnSound );
 		// BFP - Bubble and splash particles when entering under water
 		{
@@ -661,11 +738,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		}
 		break;
 
-	case EV_WATER_CLEAR:
+	case EV_WATER_CLEAR:			// 41
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.wav" ) );
 		break;
 
-	case EV_ITEM_PICKUP:
+	case EV_ITEM_PICKUP:			// 42
 		{
 			gitem_t	*item;
 			int		index;
@@ -708,7 +785,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		}
 		break;
 
-	case EV_GLOBAL_ITEM_PICKUP:
+	case EV_GLOBAL_ITEM_PICKUP:		// 43
 		{
 			gitem_t	*item;
 			int		index;
@@ -749,87 +826,37 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	//
 	// weapon events
 	//
-	case EV_NOAMMO:
+	case EV_NOAMMO:					// 44
 //		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.noAmmoSound );
 		if ( es->number == cg.snap->ps.clientNum ) {
 			CG_OutOfAmmoChange();
 		}
 		break;
 
-	case EV_CHANGE_WEAPON:
+	case EV_CHANGE_WEAPON:			// 45
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.selectSound );
 		break;
 
-	case EV_FIRE_WEAPON:
+	case EV_FIRE_WEAPON:			// 46
 		CG_FireWeapon( cent );
 		break;
 
-	// BFP - Melee
-	case EV_MELEE:
-	{
-		int rndMeleeSnd = rand() % 5;
-		switch ( rndMeleeSnd ) {
-			case 0: {
-				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit1.wav" ) );
-				break;
-			}
-			case 1: {
-				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit2.wav" ) );
-				break;
-			}
-			case 2: {
-				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit3.wav" ) );
-				break;
-			}
-			case 3: {
-				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit4.wav" ) );
-				break;
-			}
-			default: {
-				trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/melee_hit5.wav" ) );
-			}
-		}
-		break;
-	}
-
-	// BFP - Short-Range Teleport (Zanzoken)
-	case EV_ZANZOKEN:
-		trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/srteleport.wav" ) );
-		break;
-
-	// BFP - Tier up events
-	case EV_TIER_0:
-	case EV_TIER_1:
-	case EV_TIER_2:
-	case EV_TIER_3:
-	case EV_TIER_4:
-		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
-		if ( event == EV_TIER_4 && es->number == cg.snap->ps.clientNum ) {
-			trap_SendConsoleCommand( "transformorbit\n" );
-		}
-		break;
-
-	// BFP - A normal jump sound is played when enables the flight
-	case EV_ENABLE_FLIGHT:
-		trap_S_StartSound (NULL, es->number, CHAN_BODY, CG_CustomSound( es->number, "sound/bfp/jump1.wav" ) );
-		break;
-
-	case EV_USE_ITEM0:
-	case EV_USE_ITEM1:
-	case EV_USE_ITEM2:
-	case EV_USE_ITEM3:
-	case EV_USE_ITEM4:
-	case EV_USE_ITEM5:
-	case EV_USE_ITEM6:
-	case EV_USE_ITEM7:
-	case EV_USE_ITEM8:
-	case EV_USE_ITEM9:
-	case EV_USE_ITEM10:
-	case EV_USE_ITEM11:
-	case EV_USE_ITEM12:
-	case EV_USE_ITEM13:
-	case EV_USE_ITEM14:
-	case EV_USE_ITEM15:
+	case EV_USE_ITEM0:				// 47
+	case EV_USE_ITEM1:				// 48
+	case EV_USE_ITEM2:				// 49
+	case EV_USE_ITEM3:				// 50
+	case EV_USE_ITEM4:				// 51
+	case EV_USE_ITEM5:				// 52
+	case EV_USE_ITEM6:				// 53
+	case EV_USE_ITEM7:				// 54
+	case EV_USE_ITEM8:				// 55
+	case EV_USE_ITEM9:				// 56
+	case EV_USE_ITEM10:				// 57
+	case EV_USE_ITEM11:				// 58
+	case EV_USE_ITEM12:				// 59
+	case EV_USE_ITEM13:				// 60
+	case EV_USE_ITEM14:				// 61
+	case EV_USE_ITEM15:				// 62
 		CG_UseItem( cent );
 		break;
 
@@ -838,26 +865,26 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	//
 	// other events
 	//
-	case EV_PLAYER_TELEPORT_IN:
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.teleInSound );
-		CG_SpawnEffect( position);
-		break;
-
-	case EV_PLAYER_TELEPORT_OUT:
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.teleOutSound );
-		CG_SpawnEffect(  position);
-		break;
-
-	case EV_ITEM_POP:
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.respawnSound );
-		break;
-
-	case EV_ITEM_RESPAWN:
+	case EV_ITEM_RESPAWN:			// 63
 		cent->miscTime = cg.time;	// scale up from this
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.respawnSound );
 		break;
 
-	case EV_GRENADE_BOUNCE:
+	case EV_ITEM_POP:				// 64
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.respawnSound );
+		break;
+
+	case EV_PLAYER_TELEPORT_IN:		// 65
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.teleInSound );
+		CG_SpawnEffect( position);
+		break;
+
+	case EV_PLAYER_TELEPORT_OUT:	// 66
+		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.teleOutSound );
+		CG_SpawnEffect(  position);
+		break;
+
+	case EV_GRENADE_BOUNCE:			// 67
 		if ( rand() & 1 ) {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.hgrenb1aSound );
 		} else {
@@ -865,83 +892,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		}
 		break;
 
-	case EV_SCOREPLUM:
-		CG_ScorePlum( cent->currentState.otherEntityNum, cent->lerpOrigin, cent->currentState.time );
-		break;
-
-	//
-	// missile impacts
-	//
-	case EV_MISSILE_HIT:
-		ByteToDir( es->eventParm, dir );
-		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
-		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
-		break;
-
-	case EV_MISSILE_MISS:
-		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
-		if ( es->weapon != WP_MACHINEGUN && es->weapon != WP_SHOTGUN ) { // BFP - Avoid exploding using finger blast type thingies
-			// BFP - Debris particles explosion
-			CG_DebrisExplosion( position, dir );
-			// BFP - Spark particles explosion
-			CG_SparksExplosion( position, dir );
-		}
-		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
-		break;
-
-	case EV_MISSILE_MISS_METAL:
-		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
-		// BFP - Debris particles explosion
-		CG_DebrisExplosion( position, dir );
-		// BFP - Spark particles explosion
-		CG_SparksExplosion( position, dir );
-		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
-		break;
-
-	// BFP - EV_MISSILE_DETONATE - used on ki grenade bounces and beams, 
-	// that happens when projectiles/beams reaches their lifetime limit or are stopped by the player actions
-	// no debris and sparks particles here
-	case EV_MISSILE_DETONATE:
-		{
-			vec3_t	dirDetonate = {0, 0, 1}; // place the explosion position and size correctly
-			CG_MissileHitWall( es->weapon, 0, position, dirDetonate, IMPACTSOUND_DEFAULT );
-			CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
-		}
-		break;
-
-	case EV_RAILTRAIL:
-		cent->currentState.weapon = WP_RAILGUN;
-		// if the end was on a nomark surface, don't make an explosion
-		CG_RailTrail( ci, es->origin2, es->pos.trBase );
-		ByteToDir( es->eventParm, dir );
-		break;
-
-	// BFP - Blind
-	case EV_BLINDING:
-		if ( es->number == cg.snap->ps.clientNum 
-		&& ( !cg.blindLastAttackTime || cg.time - cg.blindLastAttackTime > 4000 ) ) {
-			cg.blind = qtrue;
-			cg.blindStartTime = cg.time;
-			cg.blindLastAttackTime = cg.time;
-		}
-		break;
-
-	case EV_BULLET_HIT_WALL:
-		ByteToDir( es->eventParm, dir );
-		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qfalse, ENTITYNUM_WORLD );
-		break;
-
-	case EV_BULLET_HIT_FLESH:
-		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qtrue, es->eventParm );
-		break;
-
-	case EV_SHOTGUN:
-		CG_ShotgunFire( es );
-		break;
-
-	case EV_GENERAL_SOUND:
+	case EV_GENERAL_SOUND:			// 68
 		if ( cgs.gameSounds[ es->eventParm ] ) {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, cgs.gameSounds[ es->eventParm ] );
 		} else {
@@ -949,7 +900,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, s ) );
 		}
 		break;
-
+									// 69
 	case EV_GLOBAL_SOUND:	// play from the player's head so it never diminishes
 		if ( cgs.gameSounds[ es->eventParm ] ) {
 			trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, cgs.gameSounds[ es->eventParm ] );
@@ -958,7 +909,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			trap_S_StartSound (NULL, cg.snap->ps.clientNum, CHAN_AUTO, CG_CustomSound( es->number, s ) );
 		}
 		break;
-
+									// 70
 	case EV_GLOBAL_TEAM_SOUND:	// play from the player's head so it never diminishes
 		{
 			switch( es->eventParm ) {
@@ -1038,7 +989,72 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			break;
 		}
 
-	case EV_PAIN:
+	case EV_BULLET_HIT_FLESH:		// 71
+		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qtrue, es->eventParm );
+		break;
+
+	case EV_BULLET_HIT_WALL:		// 72
+		ByteToDir( es->eventParm, dir );
+		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qfalse, ENTITYNUM_WORLD );
+		break;
+
+	//
+	// missile impacts
+	//
+	case EV_MISSILE_HIT:			// 73
+		ByteToDir( es->eventParm, dir );
+		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
+		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+		break;
+
+	case EV_MISSILE_MISS:			// 74
+		ByteToDir( es->eventParm, dir );
+		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
+		if ( es->weapon != WP_MACHINEGUN && es->weapon != WP_SHOTGUN ) { // BFP - Avoid exploding using finger blast type thingies
+			// BFP - Debris particles explosion
+			CG_DebrisExplosion( position, dir );
+			// BFP - Spark particles explosion
+			CG_SparksExplosion( position, dir );
+		}
+		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+		break;
+
+	case EV_MISSILE_MISS_METAL:		// 75
+		ByteToDir( es->eventParm, dir );
+		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
+		// BFP - Debris particles explosion
+		CG_DebrisExplosion( position, dir );
+		// BFP - Spark particles explosion
+		CG_SparksExplosion( position, dir );
+		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+		break;
+
+	// BFP - EV_MISSILE_DETONATE - used on ki grenade bounces and beams, 
+	// that happens when projectiles/beams reaches their lifetime limit or are stopped by the player actions
+	// no debris and sparks particles here
+	case EV_MISSILE_DETONATE:		// 76
+		{
+			vec3_t	dirDetonate = {0, 0, 1}; // place the explosion position and size correctly
+			CG_MissileHitWall( es->weapon, 0, position, dirDetonate, IMPACTSOUND_DEFAULT );
+			CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+		}
+		break;
+
+	case EV_RAILTRAIL:				// 77
+		cent->currentState.weapon = WP_RAILGUN;
+		// if the end was on a nomark surface, don't make an explosion
+		CG_RailTrail( ci, es->origin2, es->pos.trBase );
+		ByteToDir( es->eventParm, dir );
+		break;
+
+	case EV_SHOTGUN:				// 78
+		CG_ShotgunFire( es );
+		break;
+	
+	case EV_UNUSED_INDEX79:			// 79
+		break;
+
+	case EV_PAIN:					// 80
 		// local player sounds are triggered in CG_CheckLocalSounds,
 		// so ignore events on the player
 		if ( cent->currentState.number != cg.snap->ps.clientNum ) {
@@ -1046,21 +1062,21 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		}
 		break;
 
-	case EV_DEATH1:
-	case EV_DEATH2:
-	case EV_DEATH3:
+	case EV_DEATH1:					// 81
+	case EV_DEATH2:					// 82
+	case EV_DEATH3:					// 83
 		trap_S_StartSound( NULL, es->number, CHAN_VOICE, 
 				CG_CustomSound( es->number, va("*death%i.wav", event - EV_DEATH1 + 1) ) );
 		break;
 
-	case EV_OBITUARY:
+	case EV_OBITUARY:				// 84
 		CG_Obituary( es );
 		break;
 
 	//
 	// powerup events
 	//
-	case EV_POWERUP_QUAD:
+	case EV_POWERUP_QUAD:			// 85
 		if ( es->number == cg.snap->ps.clientNum ) {
 			cg.powerupActive = PW_QUAD;
 			cg.powerupTime = cg.time;
@@ -1068,36 +1084,63 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.quadSound );
 		break;
 
-	case EV_POWERUP_BATTLESUIT:
+	case EV_POWERUP_BATTLESUIT:		// 86
 		if ( es->number == cg.snap->ps.clientNum ) {
 			cg.powerupActive = PW_BATTLESUIT;
 			cg.powerupTime = cg.time;
 		}
 		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.protectSound );
 		break;
-	// BFP - No regen powerup
-#if 0
-	case EV_POWERUP_REGEN:
-		if ( es->number == cg.snap->ps.clientNum ) {
-			cg.powerupActive = PW_REGEN;
-			cg.powerupTime = cg.time;
-		}
-		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.regenSound );
+	
+	case EV_UNUSED_INDEX87:			// 87
 		break;
-#endif
 
-	case EV_GIB_PLAYER:
+	case EV_GIB_PLAYER:				// 88
 		trap_S_StartSound( NULL, es->number, CHAN_BODY, cgs.media.gibSound );
 		CG_GibPlayer( cent->lerpOrigin );
 		break;
 
-	case EV_STOPLOOPINGSOUND:
+	case EV_UNUSED_INDEX89:			// 89
+	case EV_UNUSED_INDEX90:			// 90
+		break;
+
+	case EV_SCOREPLUM:				// 91
+		CG_ScorePlum( cent->currentState.otherEntityNum, cent->lerpOrigin, cent->currentState.time );
+		break;
+
+	case EV_TAUNT:					// 92
+		trap_S_StartSound (NULL, es->number, CHAN_VOICE, CG_CustomSound( es->number, "*taunt.wav" ) );
+		break;
+
+	case EV_UNUSED_INDEX93:			// 93
+	case EV_UNUSED_INDEX94:			// 94
+	case EV_UNUSED_INDEX95:			// 95
+		break;
+
+	// BFP - Blind
+	case EV_BLINDING:				// 96
+		if ( es->number == cg.snap->ps.clientNum 
+		&& ( !cg.blindLastAttackTime || cg.time - cg.blindLastAttackTime > 4000 ) ) {
+			cg.blind = qtrue;
+			cg.blindStartTime = cg.time;
+			cg.blindLastAttackTime = cg.time;
+		}
+		break;
+
+	case EV_DEBUG_LINE:				// 97
+		CG_Beam( cent );
+		break;
+
+	case EV_STOPLOOPINGSOUND:		// 98
 		trap_S_StopLoopingSound( es->number );
 		es->loopSound = 0;
 		break;
 
-	case EV_DEBUG_LINE:
-		CG_Beam( cent );
+	// BFP - Beam struggle effect
+	case EV_BEAM_STRUGGLE:			// 99
+		ByteToDir( es->eventParm, dir );
+		// BFP - Beam struggle effect
+		CG_BeamStruggleEffect( position, dir );
 		break;
 
 	default:

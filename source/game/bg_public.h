@@ -133,12 +133,16 @@ typedef enum {
 	PM_SPINTERMISSION	// no movement or status bar
 } pmtype_t;
 
+// BFP - Cannot be more than 16, weaponstate is a 4-bit integer size
 typedef enum {
 	WEAPON_READY, 
 	WEAPON_RAISING,
 	WEAPON_DROPPING,
-	WEAPON_CHARGING, // BFP - Ki attack charging
 	WEAPON_FIRING,
+
+	// BFP - The following weapon states are to handle the movements 
+	// (originally BFP didn't use that because of their abuse of WP_, PW_ and STAT_ stuff in their networking):
+	WEAPON_CHARGING, // BFP - Ki attack charging
 	WEAPON_BEAMFIRING, // BFP - Beam fire
 	WEAPON_EXPLODING_KIBALLFIRING, // BFP - Quick ki explosion and homing ball fire
 	WEAPON_DIVIDINGKIBALLFIRING, // BFP - Dividing ball fire
@@ -146,6 +150,7 @@ typedef enum {
 	WEAPON_STUN // BFP - Stun status (not hit stun) when using ki explosion wave
 } weaponstate_t;
 
+// BFP - TODO: Change the way to use the PMF_ flags in order to keep original BFP networking
 // pmove->pm_flags
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
@@ -228,12 +233,20 @@ typedef enum {
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
 	// BFP - Got rid of STAT_DEAD_YAW, now uses ps->damageYaw and ps->damagePitch
-	STAT_UNUSED_INDEX,				// unused stat index (don't remove if you want to keep demo networking!)
+	STAT_UNUSED_INDEX4,				// unused stat index (don't remove if you want to keep demo networking!)
 	STAT_CLIENTS_READY,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
-	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
+
+	STAT_UNUSED_INDEX6,				// BFP - Powerlevel
+	STAT_UNUSED_INDEX7,				// BFP - Flight jump anim transition seconds, maximum is 21 sec and stops changing to 0, even when stop flying also reproduces this stat index like starting to fly (looks weird)
+	STAT_UNUSED_INDEX8,				// BFP - Ki, but we use WP_KI for ammo in that case, it doesn't make sense for STAT_ while that is keeping for original BFP netowrking
 	STAT_MAX_KI,					// BFP - Maximum ki
+	STAT_UNUSED_INDEX10,			// BFP - Melee attack time
+	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
 	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
-	STAT_HITSTUN_TIME				// BFP - Hit stun time
+	STAT_UNUSED_INDEX13,			// BFP - Beam firing weapon state
+	STAT_UNUSED_INDEX14,			// BFP - Force field weapon state
+	//STAT_UNUSED_INDEX15			// BFP - TODO: Fly tilt angles (left: moves to -80, right: moves to 80), rename during the config implementation
+	STAT_HITSTUN_TIME				// BFP - TODO: Replace hit stun time to PW_UNUSED_INDEX10
 } statIndex_t;
 
 // player_state->persistant[] indexes
@@ -252,18 +265,21 @@ typedef enum {
 	PERS_KILLED,					// count of the number of times you died
 	// player awards tracking
 	PERS_EXCELLENT_COUNT,			// two successive kills in a short amount of time
-	// BFP - No impressive, gauntlet, defend, assist and capture counters
-/*
-	PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
-	PERS_DEFEND_COUNT,				// defend awards
-	PERS_ASSIST_COUNT,				// assist awards
-	PERS_GAUNTLET_FRAG_COUNT,		// kills with the guantlet
-	PERS_CAPTURES,					// captures
-*/
-	PERS_POWERLEVEL					// BFP - Powerlevel
+
+	// BFP - NOTE: These indexes are being kept for original BFP networking
+	// BFP - No impressive, gauntlet, defend, assist and capture (PERS_CAPTURES is renamed) counters are used. Renamed as PERS_UNUSED_INDEX00
+	PERS_UNUSED_INDEX10,			//PERS_IMPRESSIVE_COUNT,			// two railgun hits in a row
+	PERS_UNUSED_INDEX11,			//PERS_DEFEND_COUNT,				// defend awards
+	PERS_UNUSED_INDEX12,			//PERS_ASSIST_COUNT,				// assist awards
+	// BFP - This index is used in original BFP networking, but remains unknown
+	PERS_UNUSED_INDEX13,			//PERS_GAUNTLET_FRAG_COUNT,		// kills with the guantlet
+
+	PERS_POWERLEVEL,				// BFP - Powerlevel	(before Q3: //PERS_CAPTURES,					// captures)
+
+	PERS_UNUSED_INDEX15				// BFP - ??? (Original BFP networking says it appears when spawning at the first time of all in-game)
 } persEnum_t;
 
-
+// BFP - TODO: Change the way to use the EF_ flags in order to keep original BFP networking 
 // entityState_t->eFlags
 #define	EF_DEAD				0x00000001		// don't draw a foe marker over players with EF_DEAD
 #define EF_AURA				0x00000002		// BFP - Aura, used to display players' aura
@@ -307,20 +323,28 @@ typedef enum {
 
 // NOTE: may not have more than 16
 typedef enum {
+	// BFP - NOTE: Modified according to keep original BFP networking
+	// PW_REGEN doesn't appear and has been replaced by other feature
+	// BFP - that's where PW_HASTE, PW_BATTLESUIT and PW_INVIS are marked as PW_NONE after picking up
 	PW_NONE,
 
 	PW_QUAD,
-	PW_BATTLESUIT,
-	// BFP - No haste powerup
-//	PW_HASTE,
-	PW_INVIS,
-	// BFP - No regen powerup
-//	PW_REGEN,
-	// BFP - No flight powerup
-//	PW_FLIGHT,
 
-	PW_REDFLAG,
-	PW_BLUEFLAG,
+	// BFP - Red and blue flag are replaced from PW_BATTLESUIT and PW_HASTE according to original BFP networking
+	PW_REDFLAG, //PW_BATTLESUIT,
+	PW_BLUEFLAG, //PW_HASTE,
+
+	PW_INVIS,			// BFP - TODO: Hide the item and rename as PW_UNUSED_INDEX4
+	PW_UNUSED_INDEX5,	// BFP - That would be PW_FLIGHT, used for flying
+	PW_BATTLESUIT,		// BFP - TODO: Hide the item and rename as PW_UNUSED_INDEX6	// BFP - Used for ki recharge
+	PW_UNUSED_INDEX7,	// BFP - Used for ki use/boost
+	PW_UNUSED_INDEX8,	// BFP - Used for blocking seconds (defend from melee, beams, explosions and impacts, and reflect ki attack projectiles)
+	PW_UNUSED_INDEX9,	// BFP - Used for melee toggle
+	PW_UNUSED_INDEX10,	// BFP - Used for hit stun seconds
+	PW_UNUSED_INDEX11,	// BFP - Used for ki attack charge points
+	PW_UNUSED_INDEX12,	// BFP - Used for enable/disable monster in monster gamemode (g_gametype 4)
+	PW_UNUSED_INDEX13,	// BFP - Used for beam firing state
+	PW_UNUSED_INDEX14,	// BFP - Used for jump (looks strange...)
 
 	PW_NUM_POWERUPS
 
@@ -336,20 +360,26 @@ typedef enum {
 } holdable_t;
 
 
+// BFP - NOTE: According to keep original BFP networking, these are modified for features
 typedef enum {
-	WP_NONE,
+	WP_NONE,				// BFP - TODO: First attack selected, rename during the config implementation
+	WP_GAUNTLET,			// BFP - TODO: Second attack selected, rename during the config implementation
+	WP_MACHINEGUN,			// BFP - TODO: Third attack selected, rename during the config implementation
+	WP_SHOTGUN,				// BFP - TODO: Fourth attack selected, rename during the config implementation
+	WP_GRENADE_LAUNCHER,	// BFP - TODO: Fifth (or last) attack selected and also for a timer of 2000 msec when being attacked/damaged, rename during the config implementation
 
-	WP_GAUNTLET,
-	WP_MACHINEGUN,
-	WP_SHOTGUN,
-	WP_GRENADE_LAUNCHER,
-	WP_ROCKET_LAUNCHER,
-	WP_LIGHTNING,
-	WP_RAILGUN,
-	WP_PLASMAGUN,
-	WP_BFG,
-	WP_GRAPPLING_HOOK,
-	WP_KI,				// BFP - Ammo bit used for ki
+	WP_ROCKET_LAUNCHER,		// BFP - TODO: Ki recharge delay time (for g_chargeDelay), rename during the config implementation
+	WP_LIGHTNING,			// BFP - TODO: Hit stun delay after receiving hit stun, rename during the config implementation
+	WP_RAILGUN,				// BFP - TODO: Block delay, rename during the config implementation
+	WP_PLASMAGUN,			// BFP - TODO: Ki use/boost toggle, rename during the config implementation
+	WP_BFG,					// BFP - TODO: Flight toggle key control, rename during the config implementation
+	WP_GRAPPLING_HOOK,		// BFP - TODO: Blind seconds, rename during the config implementation
+
+	WP_UNUSED_INDEX11,		// BFP - TODO: Rapid attacks like ki storm (alternates -1 and 1), rename during the config implementation
+	WP_KI,					// BFP - Ammo bit used for ki, that isn't from original BFP networking, but for optimization reasons is used. Unknown or unused index for original BFP networking
+	WP_UNUSED_INDEX13,		// BFP - TODO: Toggle to use Short-Range Teleport - Zanzoken, rename during the config implementation
+	WP_UNUSED_INDEX14,		// BFP - TODO: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken, rename during the config implementation
+	WP_UNUSED_INDEX15,		// BFP - TODO: Enables/disables beam struggle , rename during the config implementation
 
 	WP_NUM_WEAPONS
 } weapon_t;
@@ -536,7 +566,7 @@ typedef enum {
 	TORSO_AFFIRMATIVE,
 	TORSO_NEGATIVE,
 
-	MAX_ANIMATIONS,			// BFP - important variable, don't remove!
+	MAX_ANIMATIONS,			// BFP - important index, don't remove!
 
 	// LEGS_BACKCR,			// BFP - No longer used
 	// LEGS_BACKWALK,		// BFP - No longer used
@@ -544,7 +574,7 @@ typedef enum {
 	FLAG_STAND,
 	FLAG_STAND2RUN,
 
-	MAX_TOTALANIMATIONS		// BFP - important variable, don't remove!
+	MAX_TOTALANIMATIONS		// BFP - important index, don't remove!
 } animNumber_t;
 
 typedef struct animation_s {

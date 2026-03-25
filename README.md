@@ -38,6 +38,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Blinding Flash (blinds players during 6 seconds)
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [x] Breakable map entities ("func_breakable")
+- [x] Damage and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
 - [x] Gametype: Survival (`g_gametype 3`)
 - [x] Gametype: Monster (`g_gametype 4`)
 - [x] Gametype: Team Last Man Standing (`g_gametype 6`)
@@ -198,10 +199,11 @@ Any fixes, improvements and contributions are welcome. But we can't accept secon
 
 Documentations, references and extracted stuff will give us clues to reach the goals. <br/>
 
-- Old documentations:
+- Old documentations and networking:
 
     * [Guide](docs/Guide.md)
     * [Creating custom plugin models](docs/Create_Custom_Models.md)
+    * [Networking](docs/bfp_networking.md)
 
 <br/>
 
@@ -235,7 +237,6 @@ Weapon settings:
 BFP config (a sample of how the game saves general binding and BFP cvar stuff in a cfg file):
 
    * [bfp.cfg](cfgs/bfp.cfg)
-
 
 # How to build
 

@@ -62,6 +62,7 @@ gitem_t	bg_itemlist[] =
 	// ARMOR
 	//
 
+// BFP - 1
 /*QUAKED item_armor_shard (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -79,6 +80,7 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+// BFP - 2
 /*QUAKED item_armor_combat (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -95,6 +97,7 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+// BFP - 3
 /*QUAKED item_armor_body (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -114,6 +117,7 @@ gitem_t	bg_itemlist[] =
 	//
 	// health
 	//
+// BFP - 4
 /*QUAKED item_health_small (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -131,6 +135,7 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+// BFP - 5
 /*QUAKED item_health (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -148,6 +153,7 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+// BFP - 6
 /*QUAKED item_health_large (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -165,6 +171,7 @@ gitem_t	bg_itemlist[] =
 /* sounds */ ""
 	},
 
+// BFP - 7
 /*QUAKED item_health_mega (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -186,7 +193,135 @@ gitem_t	bg_itemlist[] =
 	//
 	// WEAPONS 
 	//
+#define ENABLE_Q3_WEAPONS 1
+#if !ENABLE_Q3_WEAPONS
+// BFP - TODO: IMPORTANT: Check config attack implementation, original BFP demo networking uses weapons from 8 until 12
+// BFP - 8
+	{
+		"weapon",
+		"sound/misc/w_pkup.wav",
+		{ "models/powerups/instant/quad.md3", 0, 0, 0 },
+/* icon */		"icons/largekiblast",
+/* pickup */	"Weapon",
+		0,
+		IT_WEAPON,
+		WP_NONE,
+/* precache */ "",
+/* sounds */ ""
+	},
+// BFP - 9 ... 116
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_GAUNTLET, "", "" },
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_SHOTGUN, "", "" },
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_MACHINEGUN, "", "" },
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_GRENADE_LAUNCHER, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
+	{ NULL, NULL, {NULL, NULL, 0, 0}, NULL, NULL, 0, 0, 0, "", "" },
 
+#else
+// BFP - TODO: IMPORTANT: AFTER COMPLETING CONFIG ATTACK IMPLEMENTATION,
+// REMOVE ALL Q3 WEAPONS AND KEEP ORIGINAL BFP ITEM INDEXES, MACRO INCLUDED
 /*QUAKED weapon_gauntlet (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -346,145 +481,14 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ ""
 	},
-
-	// BFP - No ammo items
-#if 0
-	//
-	// AMMO ITEMS
-	//
-
-/*QUAKED ammo_shells (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_shells",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/shotgunam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_shotgun",
-/* pickup */	"Shells",
-		10,
-		IT_AMMO,
-		WP_SHOTGUN,
-/* precache */ "",
-/* sounds */ ""
-	},
-
-/*QUAKED ammo_bullets (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_bullets",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/machinegunam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_machinegun",
-/* pickup */	"Bullets",
-		50,
-		IT_AMMO,
-		WP_MACHINEGUN,
-/* precache */ "",
-/* sounds */ ""
-	},
-
-/*QUAKED ammo_grenades (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_grenades",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/grenadeam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_grenade",
-/* pickup */	"Grenades",
-		5,
-		IT_AMMO,
-		WP_GRENADE_LAUNCHER,
-/* precache */ "",
-/* sounds */ ""
-	},
-
-/*QUAKED ammo_cells (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_cells",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/plasmaam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_plasma",
-/* pickup */	"Cells",
-		30,
-		IT_AMMO,
-		WP_PLASMAGUN,
-/* precache */ "",
-/* sounds */ ""
-	},
-
-/*QUAKED ammo_lightning (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_lightning",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/lightningam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_lightning",
-/* pickup */	"Lightning",
-		60,
-		IT_AMMO,
-		WP_LIGHTNING,
-/* precache */ "",
-/* sounds */ ""
-	},
-
-/*QUAKED ammo_rockets (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_rockets",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/rocketam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_rocket",
-/* pickup */	"Rockets",
-		5,
-		IT_AMMO,
-		WP_ROCKET_LAUNCHER,
-/* precache */ "",
-/* sounds */ ""
-	},
-
-/*QUAKED ammo_slugs (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_slugs",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/railgunam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_railgun",
-/* pickup */	"Slugs",
-		10,
-		IT_AMMO,
-		WP_RAILGUN,
-/* precache */ "",
-/* sounds */ ""
-	},
-
-/*QUAKED ammo_bfg (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"ammo_bfg",
-		"sound/misc/am_pkup.wav",
-        { "models/powerups/ammo/bfgam.md3", 
-		0, 0, 0},
-/* icon */		"icons/icona_bfg",
-/* pickup */	"Bfg Ammo",
-		15,
-		IT_AMMO,
-		WP_BFG,
-/* precache */ "",
-/* sounds */ ""
-	},
 #endif
+
+
 
 	//
 	// HOLDABLE ITEMS
 	//
+// BFP - 117
 /*QUAKED holdable_teleporter (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -500,6 +504,8 @@ gitem_t	bg_itemlist[] =
 /* precache */ "",
 /* sounds */ ""
 	},
+	
+// BFP - 118
 /*QUAKED holdable_medkit (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -521,6 +527,7 @@ gitem_t	bg_itemlist[] =
 	//
 	// POWERUP ITEMS
 	//
+// BFP - 119
 /*QUAKED item_quad (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -538,6 +545,7 @@ gitem_t	bg_itemlist[] =
 /* sounds */ "sound/items/damage2.wav sound/items/damage3.wav"
 	},
 
+// BFP - 120
 /*QUAKED item_enviro (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -555,8 +563,7 @@ gitem_t	bg_itemlist[] =
 /* sounds */ "sound/items/airout.wav sound/items/protect3.wav"
 	},
 
-	// BFP - No haste powerup
-#if 0
+// BFP - 121
 /*QUAKED item_haste (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -569,12 +576,12 @@ gitem_t	bg_itemlist[] =
 /* pickup */	"Speed",
 		30,
 		IT_POWERUP,
-		PW_HASTE,
+		0,
 /* precache */ "",
 /* sounds */ ""
 	},
-#endif
 
+// BFP - 122
 /*QUAKED item_invis (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 	{
@@ -587,51 +594,12 @@ gitem_t	bg_itemlist[] =
 /* pickup */	"Invisibility",
 		30,
 		IT_POWERUP,
-		PW_INVIS,
+		0,
 /* precache */ "",
 /* sounds */ ""
 	},
 
-	// BFP - No regen powerup
-#if 0
-/*QUAKED item_regen (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"item_regen",
-		"sound/items/regeneration.wav",
-        { "models/powerups/instant/regen.md3", 
-		"models/powerups/instant/regen_ring.md3", 
-		0, 0 },
-/* icon */		"icons/regen",
-/* pickup */	"Regeneration",
-		30,
-		IT_POWERUP,
-		PW_REGEN,
-/* precache */ "",
-/* sounds */ "sound/items/regen.wav"
-	},
-#endif
-
-	// BFP - No flight powerup
-#if 0
-/*QUAKED item_flight (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
-*/
-	{
-		"item_flight",
-		"sound/items/flight.wav",
-        { "models/powerups/instant/flight.md3", 
-		"models/powerups/instant/flight_ring.md3", 
-		0, 0 },
-/* icon */		"icons/flight",
-/* pickup */	"Flight",
-		60,
-		IT_POWERUP,
-		PW_FLIGHT,
-/* precache */ "",
-/* sounds */ "sound/items/flight.wav"
-	},
-#endif
-
+// BFP - 123
 /*QUAKED team_CTF_redflag (1 0 0) (-16 -16 -16) (16 16 16)
 Only in CTF games
 */
@@ -649,6 +617,7 @@ Only in CTF games
 /* sounds */ ""
 	},
 
+// BFP - 124
 /*QUAKED team_CTF_blueflag (0 0 1) (-16 -16 -16) (16 16 16)
 Only in CTF games
 */
