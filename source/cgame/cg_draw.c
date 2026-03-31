@@ -587,7 +587,7 @@ static void CG_DrawStatusBar( void ) {
 		string = va( "1 Mil!" );
 		CG_DrawBigString( 510, 454, string, 1.0f );
 	} else {
-		short x = 510;
+		int x = 510;
 		string = va( "%d", value );
 		if ( value < 10 ) {
 			x = 526;
@@ -605,7 +605,7 @@ static void CG_DrawStatusBar( void ) {
 	// health
 	//
 	// BFP - Visualize only 1 - 100 instead 0 - 1000
-	value = ( ps->stats[STAT_HEALTH] * 100 + ps->stats[STAT_MAX_HEALTH] / 2.1 ) / ps->stats[STAT_MAX_HEALTH]; // dividing the current health by 2.1 to round
+	value = ( ps->stats[STAT_HEALTH] * 100 ) / ps->stats[STAT_MAX_HEALTH];
 	hvalue = ( value < 1 ) ? 1 : ( value > 100 ) ? 100 : value;
 	CG_DrawHealthGauge( 154.5, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), GAUGE_WIDTH, GAUGE_HEIGHT, hvalue, 100 );
 	// BFP - No drawing HP Q3 field
@@ -625,7 +625,7 @@ static void CG_DrawStatusBar( void ) {
 	CG_DrawField ( 185, 432, 3, value);
 #endif
 
-	string = va( "%d%%", value ); // %% is a percentage sign
+	string = va( "%d%%", hvalue ); // %% is a percentage sign
 	CG_DrawBigString( 107, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
 	CG_ColorForHealth( hcolor );
 	trap_R_SetColor( hcolor );
@@ -1036,9 +1036,9 @@ static float CG_DrawScores( float y ) {
 	vec4_t		color;
 	float		y1;
 	gitem_t		*item;
-	const short	POS_STR_Y = -19; // BFP - Before Q3: 4
-	const short	POS_FLAG_X = 6; // BFP - Before Q3: (nothing)
-	const short	POS_FLAG_Y = 34; // BFP - Before Q3: 4
+	const int	POS_STR_Y = -19; // BFP - Before Q3: 4
+	const int	POS_FLAG_X = 6; // BFP - Before Q3: (nothing)
+	const int	POS_FLAG_Y = 34; // BFP - Before Q3: 4
 
 	// BFP - Don't show small two score display when spectating
 	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
@@ -1342,7 +1342,7 @@ CG_DrawKiAttackChargeUpPoints
 =====================
 */
 static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up points
-	short			x = 105, i = 1;
+	int			x = 105, i = 1;
 
 	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0
 	// don't draw unless the player is charging/exploding a ki wave
@@ -1770,7 +1770,7 @@ CG_DrawNumAlivePlayers
 */
 static void CG_DrawNumAlivePlayers( void ) { // BFP - Show number of alive players for the player itself
 	// if the player is the only one playing, the counter won't be shown
-	short i = 0, alivePlayers = 0;
+	int i = 0, alivePlayers = 0;
 	while ( i < MAX_CLIENTS ) {
 		if ( cg_entities[i].currentValid && !( cg_entities[i].currentState.eFlags & EF_DEAD ) ) {
 			if ( cgs.gametype >= GT_TEAM 
@@ -2361,18 +2361,18 @@ CG_DrawHitStun
 */
 static void CG_DrawHitStun( void ) { // BFP - Hit stun bottom centerprint
 	const char	*s;
-	short		w, t;
+	int		w, t;
 
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
 	// 900 is added to adjust the timer calculated in milliseconds
 	t = ( 900 + cg.predictedPlayerState.stats[STAT_HITSTUN_TIME] ) / 1000;
-	if ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) {
+	if ( cg.predictedPlayerState.stats[STAT_HITSTUN_TIME] > 0 ) {
 		s = "Stun";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
 	UI_DrawProportionalString( 320 - w / 2, SCREEN_HEIGHT - ( BIGCHAR_HEIGHT * 6 ) + 24, 
 		s, UI_SMALLFONT, colorWhite );
-	if ( cg.predictedPlayerState.pm_flags & PMF_HITSTUN ) {
+	if ( cg.predictedPlayerState.stats[STAT_HITSTUN_TIME] > 0 ) {
 		if ( t <= 0 ) {
 			t = 1;
 		}
