@@ -273,11 +273,14 @@ void CG_StoreEvent( entity_event_t evt, int eventParm, int entityNum )
 	if ( eventStack >= MAX_PREDICTED_EVENTS )
 		return;
 
+// BFP - Remove that in the future >:(
+#if 0
 	if ( evt == EV_FALL_FAR ) {
 		CG_AddFallDamage( 10 );
 	} else if ( evt == EV_FALL_MEDIUM ) {
 		CG_AddFallDamage( 5 );
 	}
+#endif
 
 	events[ eventStack ] = evt;
 	eventParms[ eventStack ] = eventParm;
@@ -324,7 +327,11 @@ void CG_PlayDroppedEvents( playerState_t *ps, playerState_t *ops ) {
 	cent->currentState.eventParm = oldParam;
 }
 
-
+// BFP - When powerlevel is lesser than 10, (notorious between 0 and 4), 
+// the camera yaw view changes abruptly when the player is spawned at the first time falling far. 
+// Remove that in the future
+// It doesn't look useful at all, it's a bug or an annoying glitch >:(
+#if 0
 static int CG_CheckArmor( int damage ) {
 	int				save;
 	int				count;
@@ -374,6 +381,7 @@ void CG_AddFallDamage( int damage )
 	//cg.predictedPlayerState.damageEvent++;
 	cg.predictedPlayerState.damageCount = take + asave;
 }
+#endif
 
 
 /*
