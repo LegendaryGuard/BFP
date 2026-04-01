@@ -739,7 +739,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 
 	case EV_WATER_CLEAR:			// 41
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.wav" ) );
+		// BFP - No water clear sound
+		// trap_S_StartSound (NULL, es->number, CHAN_AUTO, CG_CustomSound( es->number, "*gasp.wav" ) );
 		break;
 
 	case EV_ITEM_PICKUP:			// 42

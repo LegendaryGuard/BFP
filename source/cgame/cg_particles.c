@@ -695,8 +695,8 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		}
 
 		VectorSet( p->vel, 
-				(rand() % 521) - 250,
-				(rand() % 521) - 250,
+				crandom() * 300,
+				crandom() * 300,
 				30 * (rand() % (int)range) );
 
 		// dispersion
@@ -712,8 +712,8 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 	else
 	{
 		// spawn in one point
-		float angle = random() * M_PI * 2;
-		float radius = random() * range * 1.5;
+		float angle = crandom() * M_PI;
+		float radius = crandom() * range;
 
 		p->type = P_BUBBLE;
 
@@ -722,15 +722,15 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		p->org[2] += (crandom() * 5);
 
 		VectorSet( p->vel, 
-				(rand() % 521) - 250,
-				(rand() % 521) - 250,
+				crandom() * 360,
+				crandom() * 360,
 				20 );
 
 		// dispersion
 		VectorSet( p->accel, 
 				crandom() * 10, 
 				crandom() * 10, 
-				1000 );
+				1200 );
 	}
 
 	p->snum = 3 - (crandom() * 6); // used to randomize where the bubbles stop when these touches the surface
@@ -1092,8 +1092,8 @@ void CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t 
 	p->org[2] += (crandom() * 5);
 
 	VectorSet( p->vel, 
-			(rand() % 621) - 250,
-			(rand() % 621) - 250,
+			crandom() * 360,
+			crandom() * 360,
 			100 );
 
 	// dispersion

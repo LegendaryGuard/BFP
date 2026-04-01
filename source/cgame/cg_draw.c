@@ -1295,13 +1295,21 @@ static void CG_DrawLowerRight( void ) {
 
 	y = 480 - ICON_SIZE;
 
+	// BFP - CG_DrawTeamOverlay and CG_DrawScores are placed to get better visibility with cg_drawTeamOverlay 2
+
+	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 ) { // BFP - Don't draw if the player is dead
+		// before Q3: y = CG_DrawScores( y );
+		CG_DrawScores( y );
+	}
+
+	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) { // BFP - Don't draw if the player is dead or spectating
+		// BFP - HUD overlay
+		CG_DrawHUDOverlay();
+	}
+
 	if ( cgs.gametype >= GT_TEAM && cg_drawTeamOverlay.integer == 2 ) {
 		y = CG_DrawTeamOverlay( y, qtrue, qfalse );
 	} 
-
-	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 ) { // BFP - Don't draw if the player is dead
-		y = CG_DrawScores( y );
-	}
 	// BFP - Don't draw powerups
 	// y = CG_DrawPowerups( y );
 }
@@ -1371,9 +1379,6 @@ static void CG_DrawLowerLeft( void ) {
 	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) { // BFP - Don't draw if the player is dead or spectating
 		// BFP - Selected ki attack
 		CG_DrawSelectedKiAttack();
-
-		// BFP - HUD overlay
-		CG_DrawHUDOverlay();
 
 		// BFP - Place head in the corner
 		CG_DrawStatusBarHead( 0 ); // CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );

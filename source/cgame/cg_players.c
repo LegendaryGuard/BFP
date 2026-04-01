@@ -1530,6 +1530,10 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND )
 			&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_FLYIDLE
 			|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STAND )
+		&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLECR 
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STUN )
+			&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_IDLE 
+			|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_STUN )
 		&& ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) != TORSO_CHARGE ) ) {
 		// if not standing still, always point all in the same direction
@@ -2070,6 +2074,12 @@ static void CG_ChargeSmokeBubbles( centity_t *cent, vec3_t mins, vec3_t maxs,
 		CG_ParticleChargeSmoke( cent, cgs.media.particleSmokeShader, chargeSmokePos, chargeSmokeSize, chargeSmokeRadialVel, chargeSmokeBaseRadius );
 	}
 
+	// don't spawn other bubble particles if already underwater
+	waterContents = CG_PointContents( cent->lerpOrigin, -1 );
+	if ( waterContents & CONTENTS_WATER ) {
+		return;
+	}
+
 	// water surface
 	if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 	|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
@@ -2085,8 +2095,7 @@ static void CG_ChargeSmokeBubbles( centity_t *cent, vec3_t mins, vec3_t maxs,
 		if ( cent->currentState.eFlags & EF_MONSTER ) { // BFP - Monster gamemode, put a bit more down the bubbles
 			waterTrace.endpos[2] -= 20;
 		}
-		if ( ( waterContents & CONTENTS_WATER ) 
-		&& waterTrace.fraction >= 0.10f && waterTrace.fraction <= 0.70f ) {
+		if ( waterTrace.fraction >= 0 && waterTrace.fraction <= 0.70f ) {
 			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
 			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
 			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
