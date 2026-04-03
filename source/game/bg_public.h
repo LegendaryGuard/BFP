@@ -167,8 +167,8 @@ typedef enum {
 #define	PMF_AIR_GRAVITY		256		// BFP - Air gravity check
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
 #define	PMF_USE_ITEM_HELD	1024
-// BFP - PMF_GRAPPLE_PULL is renamed	// pull towards grapple location
-#define PMF_HITSTUN			2048	// BFP - Hit stun
+// BFP - PMF_GRAPPLE_PULL is unused
+//#define	PMF_GRAPPLE_PULL	2048	// pull towards grapple location
 #define PMF_FOLLOW			4096	// spectate following another player
 // BFP - PMF_SCOREBOARD is renamed	// spectate as a scoreboard
 #define PMF_ULTIMATE_TIER	8192	// BFP - Ultimate tier status
@@ -296,8 +296,10 @@ typedef enum {
 #define	EF_FIRING			0x00000100		// for lightning gun
 #define	EF_KI_BOOST			0x00000200		// BFP - Used for ki boost status
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
-// BFP - EF_AWARD_CAP flag is renamed	// draw the capture sprite
-#define EF_AURA_TIER_UP		0x00000800		// BFP - Aura tier up effect when transforms or passes to the next tier
+// BFP - This eFlag hack is used for client/player only:
+#define EF_AURA_TIER_UP		0x00000400		// BFP - Aura tier up effect when transforms or passes to the next tier
+// BFP - EF_AWARD_CAP is unused
+//#define	EF_AWARD_CAP		0x00000800		// draw the capture sprite
 #define	EF_TALK				0x00001000		// draw a talk balloon
 #define	EF_CONNECTION		0x00002000		// draw a connection trouble sprite
 #define	EF_VOTED			0x00004000		// already cast a vote
@@ -375,11 +377,11 @@ typedef enum {
 	WP_BFG,					// BFP - TODO: Flight toggle key control, rename during the config implementation
 	WP_GRAPPLING_HOOK,		// BFP - TODO: Blind seconds, rename during the config implementation
 
-	WP_UNUSED_INDEX11,		// BFP - TODO: Rapid attacks like ki storm (alternates -1 and 1), rename during the config implementation
+//	WP_UNUSED_INDEX11,		// BFP - TODO: Rapid attacks like ki storm (alternates -1 and 1), rename during the config implementation
 	WP_KI,					// BFP - Ammo bit used for ki, that isn't from original BFP networking, but for optimization reasons is used. Unknown or unused index for original BFP networking
-	WP_UNUSED_INDEX13,		// BFP - TODO: Toggle to use Short-Range Teleport - Zanzoken, rename during the config implementation
-	WP_UNUSED_INDEX14,		// BFP - TODO: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken, rename during the config implementation
-	WP_UNUSED_INDEX15,		// BFP - TODO: Enables/disables beam struggle , rename during the config implementation
+//	WP_UNUSED_INDEX13,		// BFP - TODO: Toggle to use Short-Range Teleport - Zanzoken, rename during the config implementation
+//	WP_UNUSED_INDEX14,		// BFP - TODO: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken, rename during the config implementation
+//	WP_UNUSED_INDEX15,		// BFP - TODO: Enables/disables beam struggle , rename during the config implementation
 
 	WP_NUM_WEAPONS
 } weapon_t;

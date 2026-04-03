@@ -416,7 +416,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 	// BFP - Charge ki
 	if ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA )
-	&& !( client->ps.pm_flags & PMF_HITSTUN )
+	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
 	&& client->ps.ammo[WP_KI] < client->ps.stats[STAT_MAX_KI] ) {
 		float kiChargeTotal = ( g_kiCharge.value * 0.01 ) + g_kiChargePct.value * ( client->ps.stats[STAT_MAX_KI] * 0.0001 );
 		client->ps.ammo[WP_KI] += kiChargeTotal;
@@ -477,8 +477,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		// BFP - Regenerate ki
 		if ( !( client->pers.cmd.buttons & BUTTON_KI_USE ) && !( client->ps.eFlags & EF_KI_BOOST )
 		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) ) // don't increase when charging
-		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) // don't increase when trying to charge when stunned
-		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) ) { // don't increase when trying to attack when stunned
+		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) // don't increase when trying to charge when stunned
+		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) ) { // don't increase when trying to attack when stunned
 			client->ps.ammo[WP_KI] += g_kiRegen.value + ( g_kiRegenPct.value * client->ps.stats[STAT_MAX_KI] * 0.01 );
 		}
 
@@ -502,7 +502,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	// BFP - When the player doesn't have more ki, gets a hit stun
 	if ( ( client->ps.ammo[WP_KI] <= 0 )
 		|| ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 )
-		|| ( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && ( client->ps.pm_flags & PMF_HITSTUN ) ) ) {
+		|| ( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) ) {
 		if ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 ) {
 			client->ps.ammo[WP_KI] /= flightCostTotal;
 		}
@@ -511,12 +511,6 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		} else {
 			client->ps.stats[STAT_HITSTUN_TIME] = 1000;
 		}
-		client->ps.pm_flags |= PMF_HITSTUN;
-	}
-
-	if ( client->ps.ammo[WP_KI] > 0
-	&& ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.stats[STAT_HITSTUN_TIME] <= 0 ) {
-		client->ps.pm_flags &= ~PMF_HITSTUN;
 	}
 }
 
@@ -580,7 +574,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			// BFP - When the player is falling with stunned status
 			// if powerlevel is very low, weaker at falling (player has less max health)
 			// but when the powerlevel is getting higher, the less damage it will have (player has more max health)
-			if ( client->ps.pm_flags & PMF_HITSTUN ) {
+			if ( client->ps.stats[STAT_HITSTUN_TIME] > 0 ) {
 				damage = 5; // medium fall
 				if ( event == EV_FALL_FAR ) {
 					damage = 10;
@@ -894,7 +888,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 		}
 
 		// put in 1 second delay before the player can 'zanzoken' out of stun
-		if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.stats[STAT_HITSTUN_TIME] > 2000 ) {
+		if ( client->ps.stats[STAT_HITSTUN_TIME] > 2000 ) {
 			client->zanzokenPressTime = 0;
 			client->zanzokenNow = qfalse;
 			client->zanzokenLeft = qfalse;
@@ -904,8 +898,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 
 		if ( Zanzoken( ent, range ) ) {
 			// block and stun statuses are removed when using zanzoken
-			if ( ( client->ps.pm_flags & PMF_HITSTUN ) && client->ps.stats[STAT_HITSTUN_TIME] <= 2000 ) {
-				client->ps.pm_flags &= ~PMF_HITSTUN;
+			if ( client->ps.stats[STAT_HITSTUN_TIME] <= 2000 ) {
 				client->ps.stats[STAT_HITSTUN_TIME] = 0;
 			}
 			client->ps.pm_flags &= ~PMF_BLOCK;
@@ -1071,7 +1064,7 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 
 		// BFP - Ki use has 2 options: "kiusetoggle" to toggle and "+button8" when key is being hold
-		if ( !( client->ps.pm_flags & PMF_HITSTUN )
+		if ( client->ps.stats[STAT_HITSTUN_TIME] <= 0
 		&& !( client->ps.pm_flags & PMF_BLOCK )
 		&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
 			|| ( client->ps.eFlags & EF_KI_BOOST ) ) // BFP - When "kiusetoggle" is binded, enables/disables

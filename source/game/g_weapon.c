@@ -311,12 +311,11 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	// if the attacker is using ki boost, stun the target! (g_hitStun enabled only)
 	if ( g_hitStun.integer >= 1 
 	&& ( attacker->client->ps.eFlags & EF_KI_BOOST ) 
-	&& !( traceTarget->client->ps.pm_flags & PMF_HITSTUN )
+	&& traceTarget->client->ps.stats[STAT_HITSTUN_TIME] <= 0
 	&& !( traceTarget->client->ps.pm_flags & PMF_BLOCK ) 
 	&& attacker->client->hitStunMeleeDelayTime <= 0 ) {
 		// add 3 seconds to the hitstun when there's no delay
 		traceTarget->client->ps.stats[STAT_HITSTUN_TIME] = 3000;
-		traceTarget->client->ps.pm_flags |= PMF_HITSTUN;
 		attacker->client->hitStunMeleeDelayTime = level.time + 6000;
 	}
 

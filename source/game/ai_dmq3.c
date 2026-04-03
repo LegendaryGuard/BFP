@@ -2396,7 +2396,7 @@ void BotCheckAttack(bot_state_t *bs) {
 	}
 
 	// BFP - Avoid the bot tries to attack with this status, otherwise keeps stunned while pressing attack key
-	if ( ( bs->cur_ps.pm_flags & PMF_HITSTUN ) && bs->cur_ps.stats[STAT_HITSTUN_TIME] > 0 ) {
+	if ( bs->cur_ps.stats[STAT_HITSTUN_TIME] > 0 ) {
 		return;
 	}
 

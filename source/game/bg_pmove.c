@@ -251,7 +251,7 @@ static void PM_ContinueMeleeStrikeLegsAnim( qboolean condition ) { // BFP - Mele
 	// keep moving the legs when the player is attacking to the target through melee 
 	// if the condition variable isn't used leave using this value: 1 or qtrue
 	if ( ( condition ) && ( pm->ps->pm_flags & PMF_MELEE )
-	&& !( pm->ps->pm_flags & PMF_HITSTUN ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) { PM_ContinueLegsAnim( LEGS_MELEE_STRIKE ); }
+	&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) { PM_ContinueLegsAnim( LEGS_MELEE_STRIKE ); }
 }
 
 /*
@@ -401,6 +401,17 @@ static void PM_Friction( void ) {
 
 
 /*
+==================
+PM_KiBoostPowerlevelSpeed
+==================
+*/
+static float PM_KiBoostPowerlevelSpeed( void ) { // BFP - Powerlevel ki boost speed
+	int	powerlevel = pm->ps->persistant[PERS_POWERLEVEL];
+	return pm->ps->speed + ( powerlevel * 0.5 );
+}
+
+
+/*
 ==============
 PM_Accelerate
 
@@ -542,7 +553,7 @@ static qboolean PM_CheckJump( void ) {
 	}
 
 	// BFP - With ki charge, the player can't jump. With hit stun, avoids jittering movements
-	if ( ( pm->ps->pm_flags & PMF_HITSTUN )
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0
 	|| ( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
 		return qfalse;
 	}
@@ -629,7 +640,9 @@ static void PM_Drifting( void ) { // BFP - Drifting
 	float	forwardSpeed, rightSpeed, driftFactor = 0.0003;
 
 	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR
-	|| ( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
+	|| ( pm->ps->pm_flags & PMF_RESPAWNED )
+	// handling for underwater
+	|| ( pm->waterlevel && pm->ps->velocity[0] <= 0 && pm->ps->velocity[1] <= 0 && pm->ps->velocity[2] <= 0 ) ) {
 		return;
 	}
 
@@ -865,7 +878,7 @@ static void PM_WaterMove( void ) {
 			// BFP - Avoid going up, keep sinking
 			if ( i == 2
 			&& ( pm->ps->weaponstate == WEAPON_KIEXPLOSIONWAVE || pm->ps->weaponstate == WEAPON_STUN 
-			|| ( pm->ps->pm_flags & PMF_HITSTUN ) ) ) {
+			|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) ) {
 				wishvel[2] = 0;
 			}
 		}
@@ -876,13 +889,13 @@ static void PM_WaterMove( void ) {
 	// BFP - Reduces speed when charging ki
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
 	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
-	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+	&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 		wishvel[2] *= 0.15;
 	}
 
 	// BFP - Sink on stunned status
 	if ( pm->ps->weaponstate == WEAPON_KIEXPLOSIONWAVE || pm->ps->weaponstate == WEAPON_STUN 
-	|| ( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		wishvel[2] -= pm->ps->gravity * pml.frametime;
 		PM_SlideMove( qtrue );
 	}
@@ -900,8 +913,7 @@ static void PM_WaterMove( void ) {
 	if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& ( pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0 || pm->cmd.upmove != 0 ) ) {
-		// BFP - Ki boost speed is dependent on powerlevel
-		wishspeed *= 2.5 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 );
+		wishspeed += PM_KiBoostPowerlevelSpeed();
 	}
 
 	PM_Accelerate (wishdir, wishspeed, pm_wateraccelerate);
@@ -931,7 +943,7 @@ Fly tilt view
 */
 static void PM_FlyTiltView( void ) { // BFP - Fly tilt
 	static float	currentRollAngle = 0;
-	short	targetRollAngle = 0;
+	int		targetRollAngle = 0;
 	float	rollStep = 0.2;
 
 	if ( ( pm->ps->eFlags & EF_FLIGHT )
@@ -1035,8 +1047,8 @@ static void PM_FlyMove( void ) {
 	if ( !( pm->ps->pm_flags & PMF_BLOCK ) // BFP - Don't increase the speed when blocking
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 		if ( pm->ps->weaponstate != WEAPON_BEAMFIRING ) { // BFP - Don't increase speed when beam firing
-			// BFP - Ki boost speed is dependent on powerlevel
-			wishspeed *= 2.5 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // increase the speed a bit
+			float factor = 2.0f + ( (float)pm->ps->persistant[PERS_POWERLEVEL] * 0.001 );
+			wishspeed += PM_KiBoostPowerlevelSpeed() * factor;
 		}
 	}
 
@@ -1129,7 +1141,7 @@ static void PM_AirMove( void ) {
 	// BFP - Reduces speed when charging ki
 	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
 	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
-	&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+	&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 		if ( pm->ps->velocity[2] > -10 ) {
 			pm->ps->velocity[2] *= 0.9;
 		}
@@ -1145,8 +1157,7 @@ static void PM_AirMove( void ) {
 	PM_StepSlideMove ( qtrue );
 
 	// BFP - Handle gravity, make the player heavier
-	if ( !( pm->ps->pm_flags & PMF_AIR_GRAVITY )
-	&& !( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
+	if ( !( pm->ps->pm_flags & PMF_AIR_GRAVITY ) ) {
 		PM_SlideMove ( qtrue );
 		return;
 	}
@@ -1277,8 +1288,7 @@ static void PM_WalkMove( void ) {
 
 	if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		// BFP - Ki boost speed is dependent on powerlevel
-		wishspeed *= 2 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.001 ); // move at that speed rate
+		wishspeed += PM_KiBoostPowerlevelSpeed();
 	}
 
 	// when a player gets hit, they temporarily lose
@@ -1299,6 +1309,22 @@ static void PM_WalkMove( void ) {
 	} else {
 		// don't reset the z velocity for slopes
 //		pm->ps->velocity[2] = 0;
+	}
+
+	// BFP - Sink on stunned status
+	if ( pm->ps->weaponstate == WEAPON_KIEXPLOSIONWAVE || pm->ps->weaponstate == WEAPON_STUN 
+	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
+		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
+
+		// slide along the ground plane
+		PM_ClipVelocity ( pm->ps->velocity, pml.groundTrace.plane.normal, 
+			pm->ps->velocity, OVERCLIP );
+
+		PM_SlideMove ( qtrue );
+		PM_StepSlideMove ( qtrue );
+
+		PM_Drifting(); // BFP - Drifting
+		return;
 	}
 
 	vel = VectorLength(pm->ps->velocity);
@@ -1507,7 +1533,7 @@ static void PM_CrashLand( void ) {
 			if ( pm->ps->stats[STAT_HEALTH] > 0 ) {
 				PM_AddEvent( EV_FALL_MEDIUM );
 			}
-		} else if ( delta > 7 ) {
+		} else if ( delta > 30 ) { // BFP - Fall at that velocity
 			PM_AddEvent( EV_FALL_SHORT );
 		} else {
 			PM_AddEvent( PM_FootstepForSurface() );
@@ -1961,7 +1987,7 @@ static void PM_Footsteps( void ) {
 	qboolean	footstep;
 
 	// BFP - Hit stun and ultimate tier
-	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
 		return;
 	}
 
@@ -2035,8 +2061,12 @@ static void PM_Footsteps( void ) {
 			} else if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
 				PM_ContinueLegsAnim( LEGS_IDLE );
 			}
-		} else if ( !( pm->ps->pm_flags & PMF_DUCKED ) ) { // BFP - Handle the legs while it isn't doing nothing
-			PM_ContinueLegsAnim( LEGS_IDLE );
+		} else { // BFP - Handle the legs while it isn't doing nothing
+			if ( pm->ps->pm_flags & PMF_DUCKED ) {
+				PM_ContinueLegsAnim( LEGS_IDLECR );
+			} else {
+				PM_ContinueLegsAnim( LEGS_IDLE );
+			}
 		}
 		// BFP - Melee strike legs animation
 		PM_ContinueMeleeStrikeLegsAnim( qtrue );
@@ -2166,7 +2196,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 		&& !( pm->ps->pm_flags & PMF_KI_CHARGE )
 		&& !( pm->ps->pm_flags & PMF_MELEE )
 		&& !( pm->ps->pm_flags & PMF_ULTIMATE_TIER )
-		&& !( pm->ps->pm_flags & PMF_HITSTUN ) ) {
+		&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 			PM_ForceJumpAnim(); // BFP - Keep legs animation
 		}
 	}
@@ -2425,7 +2455,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 	trace_t		trace;
 
 	// BFP - Hit stun
-	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		return;
 	}
 
@@ -2608,19 +2638,9 @@ PM_HitStunAnimation
 */
 static void PM_HitStunAnimation( void ) { // BFP - Hit stun
 
-	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		PM_StartTorsoAnim( TORSO_STUN );
 		PM_StartLegsAnim( LEGS_IDLECR );
-	}
-
-	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) && pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
-		pm->ps->pm_flags &= ~PMF_HITSTUN;
-		// do jump animation if it's falling
-		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
-			&& ( pm->ps->pm_flags & PMF_FALLING ) ) {
-			PM_ForceJumpAnim();
-			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
-		}
 	}
 }
 
@@ -2724,7 +2744,7 @@ static void PM_Weapon( void ) {
 	const int	ATTACK_CHARGE_LIMIT = 6; // BFP - Ki attack charge limit
 
 	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
-	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
 		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
 		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 		pm->ps->weaponTime = 0;
@@ -3104,7 +3124,7 @@ static void PM_DropTimers( void ) {
 	}
 
 	// BFP - Hit stun time
-	if ( pm->ps->stats[STAT_HITSTUN_TIME] ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		pm->ps->stats[STAT_HITSTUN_TIME] -= pml.msec;
 	}
 
@@ -3171,7 +3191,7 @@ Enables/disables flight
 static qboolean PM_EnableFlight( void ) { // BFP - Flight
 
 	// BFP - Hit stun, avoid enabling flight if the player is in this status
-	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		return qfalse;
 	}
 
@@ -3205,7 +3225,7 @@ Charges ki
 static void PM_KiCharge( void ) { // BFP - Ki Charge
 
 	// BFP - Hit stun, avoid charging if the player is in this status
-	if ( pm->ps->pm_flags & PMF_HITSTUN ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		return;
 	}
 
@@ -3301,7 +3321,7 @@ void PmoveSingle (pmove_t *pmove) {
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
 		// BFP - TODO: Set to the first selected weapon
-		pm->ps->pm_flags |= PMF_AIR_GRAVITY; // BFP - Air gravity
+		pm->ps->pm_flags &= ~PMF_AIR_GRAVITY; // BFP - Air gravity
 		pm->ps->pm_flags |= PMF_FALLING;
 	}
 
@@ -3421,7 +3441,7 @@ void PmoveSingle (pmove_t *pmove) {
 	}
 
 	// BFP - Hit stun
-	if ( ( pm->ps->pm_flags & PMF_HITSTUN ) 
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 
 		&& pm->ps->pm_type != PM_DEAD
 		&& pm->ps->pm_type != PM_SPECTATOR ) {
 		PM_HitStun();
