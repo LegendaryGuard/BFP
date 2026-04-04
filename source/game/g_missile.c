@@ -82,6 +82,9 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 
 	// BFP - TODO: Apply minCharge and maxCharge from reading bfp_weapon.cfg 
 	if ( chargePoints < 2 ) {
+		client->ps.weaponstate = WEAPON_READY;
+		client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 		return;
 	}
 
@@ -100,9 +103,14 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 	case 6:
 		projectiles_to_spawn = 6;
 		break;
+	default:
+		projectiles_to_spawn = 0;
 	}
 
 	if ( projectiles_to_spawn == 0 ) {
+		client->ps.weaponstate = WEAPON_READY;
+		client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 		return;
 	}
 
@@ -130,6 +138,7 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 		}
 	}
 
+	client->ps.weaponstate = WEAPON_READY;
 	client->ps.pm_flags &= ~PMF_KI_ATTACK;
 	client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 }
