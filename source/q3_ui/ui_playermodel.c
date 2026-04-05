@@ -615,7 +615,11 @@ static void PlayerModel_BuildList( void )
 		// BFP - Skip monster model used on Monster gamemode
 		if ( !Q_stricmp( dirptr, MONSTER_NAME ) )
 			continue;
-			
+
+		// BFP - Skip player models without prefix
+		if ( !strchr( dirptr, '-' ) )
+			continue;
+
 		// iterate all skin files in directory
 		numfiles = trap_FS_GetFileList( va("models/players/%s",dirptr), "tga", filelist, 2048 );
 		fileptr  = filelist;
@@ -640,6 +644,14 @@ static void PlayerModel_BuildList( void )
 			}
 		}
 	}	
+
+	// BFP - To debug the loaded player models
+#if 0
+	for ( i = 0; i < s_playermodel.nummodels; ++i ) {
+		Com_Printf( "^5%d - player model: ^3%s\n", i, s_playermodel.modelnames[i] );
+	}
+	Com_Printf( "^2UI LOADED PLAYER MODELS: ^5%d\n", s_playermodel.nummodels );
+#endif
 
 	//APSFIXME - Degenerate no models case
 

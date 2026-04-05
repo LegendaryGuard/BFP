@@ -46,6 +46,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Illegal player model server handling
 - [x] Instant character model changing
 - [x] Ki trails
+- [x] Load player models only by prefix
 - [x] Melee feature
 - [x] Remove some items like powerups and health pickups
 - [x] Particles
@@ -169,7 +170,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - no weird underwater movements while going intentionally down and moving crazily fast touching the ground (this might be a bug/glitch from original BFP)
   - no specified stuck animation, so any animation is correctly handled when being stuck (on original BFP, when the player is stuck or pretty near to something solid, the reason is still unknown though. It does a jumping forward/backward animation, that doesn't make sense)
   - water movement handling is different from original BFP, but it works similarly
-- survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own preffix, dies and respawns during warmup, the warmup resets. So, that's unfair)
+- survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own prefix, dies and respawns during warmup, the warmup resets. So, that's unfair)
 - monster/oozaru gamemode has the following in-game differences compared to the original:
   - the player monster is labeled 'MON' on the scoreboard
   - the player monster has a larger floating sprite chat

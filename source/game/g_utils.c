@@ -121,6 +121,25 @@ int G_SoundIndex( const char *name ) {
 	return G_FindConfigstringIndex (name, CS_SOUNDS, MAX_SOUNDS, qtrue);
 }
 
+// BFP - Struct for handling the list of models in the server in order to avoid using a model which isn't in the list
+typedef struct {
+	char	modelNames[MAX_MODELS][MAX_QPATH];
+	int		numModels;
+} modelList_t;
+
+static modelList_t serverModels;
+
+/*
+================
+G_PlayerModelNameCompare
+
+Comparison function for qsort (alphabetical order)
+================
+*/
+static int QDECL G_PlayerModelNameCompare( const void *a, const void *b ) { // BFP - Compare to sort alphabetically
+	return Q_stricmp( (const char *)a, (const char *)b );
+}
+
 /*
 ================
 G_GetPlayerModelName
@@ -133,6 +152,7 @@ const char *G_GetPlayerModelName( int clientNum, const char userinfo[MAX_INFO_ST
 	// skin name to truncate "/default", "/red", "/blue"... words
 	char	skinName[MAX_QPATH];
 	char	*slash;
+	int		len, i;
 
 	// set model
 	if ( g_gametype.integer >= GT_TEAM ) {
@@ -140,6 +160,18 @@ const char *G_GetPlayerModelName( int clientNum, const char userinfo[MAX_INFO_ST
 	} else {
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 	}
+
+	// if only executes the prefix, e.g. "bfp1-", loads the first player model in the list for this prefix
+	len = strlen( model );
+	if ( len > 0 && model[len - 1] == '-' ) {
+		for ( i = 0; i < serverModels.numModels; ++i ) {
+			if ( !Q_strncmp( serverModels.modelNames[i], model, len ) ) {
+				Q_strncpyz( model, serverModels.modelNames[i], sizeof( model ) );
+				break;
+			}
+		}
+	}
+
 	// truncate the "/default", "/red", "/blue"... words
 	slash = strchr( model, '/' );
 	if ( slash ) {
@@ -150,14 +182,6 @@ const char *G_GetPlayerModelName( int clientNum, const char userinfo[MAX_INFO_ST
 	return model;
 }
 
-// BFP - Struct for handling the list of models in the server in order to avoid using a model which isn't in the list
-typedef struct {
-	char modelNames[MAX_MODELS][MAX_QPATH];
-	int numModels;
-} modelList_t;
-
-static modelList_t serverModels;
-
 /*
 ================
 G_InitPlayerModelList
@@ -167,6 +191,7 @@ Initialize player model list at server startup
 */
 void G_InitPlayerModelList( void ) { // BFP - For Illegal player model handling
 	char	fileList[4096];
+	char	tempName[MAX_QPATH];
 	char	*filePtr;
 	int		numFiles, i, len;
 
@@ -181,15 +206,34 @@ void G_InitPlayerModelList( void ) { // BFP - For Illegal player model handling
 
 		if ( len > 0 && filePtr[len - 1] != '.' ) { // skip hidden files
 			// remove trailing slash if present
-			if ( len > 0 && filePtr[len - 1] == '/' ) {
-				Q_strncpyz( serverModels.modelNames[serverModels.numModels], filePtr, len );
+			if ( filePtr[len - 1] == '/' ) {
+				Q_strncpyz( tempName, filePtr, len ); 
 			} else {
-				Q_strncpyz( serverModels.modelNames[serverModels.numModels], filePtr, MAX_QPATH );
+				Q_strncpyz( tempName, filePtr, sizeof(tempName) );
 			}
-			++serverModels.numModels;
+
+			// filter only by prefix
+			if ( strchr( tempName, '-' ) ) {
+				Q_strncpyz( serverModels.modelNames[serverModels.numModels], tempName, MAX_QPATH );
+				++serverModels.numModels;
+			}
 		}
 		filePtr += len + 1;
 	}
+
+	// sort them alphabetically
+	if ( serverModels.numModels > 1 ) {
+		qsort( serverModels.modelNames, serverModels.numModels, 
+				sizeof( serverModels.modelNames[0] ), G_PlayerModelNameCompare );
+	}
+
+	// BFP - To debug the loaded player models
+#if 0
+	for ( i = 0; i < serverModels.numModels; ++i ) {
+		Com_Printf( "^5%d - player model: ^3%s\n", i, serverModels.modelNames[i] );
+	}
+	Com_Printf( "^2LOADED PLAYER MODELS: ^5%d\n", serverModels.numModels );
+#endif
 }
 
 /*
