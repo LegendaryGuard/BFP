@@ -1086,17 +1086,23 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 	// BFP - Melee knockback
 	if ( mod == MOD_MELEE ) {
-		meleeKnockback = damage * 7.8;
-		if ( damage > 10 ) {
-			meleeKnockback = damage * 78 * ( 0.001 * damage );
+		float	meleeFactor = 15.0f;
+		if ( damage <= 10 ) {
+			meleeFactor = 7.5f;
+		} else if ( damage <= 20 ) {
+			meleeFactor = 7.5f + ( damage - 10 ) * 0.45f;
+		} else if ( damage <= 50 ) {
+			meleeFactor = 12.0f + ( damage - 20 ) * 0.1f;
 		}
+		meleeKnockback = damage * meleeFactor;
 	}
 
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
-		max = attacker->client->ps.stats[STAT_MAX_HEALTH];
-		damage = damage * max / 100;
+		// BFP - Apply attacker powerlevel calculation, no maximum health calculation
+		max = attacker->client->ps.persistant[PERS_POWERLEVEL] + 1; // BFP - before Q3: max = attacker->client->ps.stats[STAT_MAX_HEALTH];
+		damage = damage * max * 0.01; // BFP - before Q3: damage = damage * max / 100;
 	}
 
 	client = targ->client;
@@ -1202,7 +1208,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( attacker->client && targ != attacker && targ->health > 0
 			&& targ->s.eType != ET_MISSILE
 			&& targ->s.eType != ET_GENERAL
-	&& !( client->ps.pm_flags & PMF_BLOCK ) ) { // BFP - When blocking, don't receive any hit
+	&& !( client->ps.pm_flags & PMF_BLOCK ) // BFP - When blocking, don't receive any hit
+ 	&& damage > 0 ) { // BFP - Don't apply hits persistance if the damage is lesser than 1
 		if ( OnSameTeam( targ, attacker ) ) {
 			attacker->client->ps.persistant[PERS_HITS]--;
 		} else {
@@ -1217,9 +1224,12 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		damage *= 0.5;
 	}
 
+	// BFP - No damage < 1 conditional
+#if 0
 	if ( damage < 1 ) {
 		damage = 1;
 	}
+#endif
 	take = damage;
 
 	// save some from armor
