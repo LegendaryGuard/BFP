@@ -781,7 +781,7 @@ void Svcmd_AddBot_f( void ) {
 	// go ahead and load the bot's media immediately
 	if ( level.time - level.startTime > 1000 &&
 		trap_Cvar_VariableIntegerValue( "cl_running" ) ) {
-		trap_SendServerCommand( -1, "loaddeferred\n" );	// FIXME: spelled wrong, but not changing for demo
+		trap_SendServerCommand( -1, "loaddefered\n" );
 	}
 }
 

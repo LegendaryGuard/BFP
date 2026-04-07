@@ -255,7 +255,7 @@ static consoleCommand_t	commands[] = {
 	{ "startOrbit", CG_StartOrbit_f },
 	{ "transformorbit", CG_TransformOrbit_f }, // BFP - Transformation orbit
 	//{ "camera", CG_Camera_f },
-	{ "loaddeferred", CG_LoadDeferredPlayers }	
+	{ "loaddefered", CG_LoadDeferredPlayers }	
 };
 
 
@@ -329,5 +329,5 @@ void CG_InitConsoleCommands( void ) {
 	trap_AddCommand ("teamvote");
 	trap_AddCommand ("stats");
 	trap_AddCommand ("teamtask");
-	trap_AddCommand ("loaddefered");	// spelled wrong, but not changing for demo
+	trap_AddCommand ("loaddefered");
 }
