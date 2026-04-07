@@ -60,10 +60,8 @@ void Weapon_Gauntlet( gentity_t *ent ) {
 }
 
 // BFP - TODO: There's a ki attack that acts like a shockwave to push opponents, 
-// maybe gauntlet attack can be modified adding punch attack distance and pushing opponents
+// gauntlet attack can be modified adding punch attack distance and pushing opponents
 
-// BFP - No check gauntlet attack
-#if 0
 /*
 ===============
 CheckGauntletAttack
@@ -74,14 +72,16 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 	vec3_t		end;
 	gentity_t	*tent;
 	gentity_t	*traceEnt;
-	int			damage;
+	// BFP - bfp_weapon.cfg: damage, range ...
+	int			damage = 8;
+	int			range = 500;
 
 	// set aiming directions
 	AngleVectors (ent->client->ps.viewangles, forward, right, up);
 
 	CalcMuzzlePoint ( ent, forward, right, up, muzzle );
 
-	VectorMA (muzzle, 32, forward, end);
+	VectorMA (muzzle, range, forward, end);
 
 	trap_Trace (&tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT);
 	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
@@ -90,6 +90,8 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 
 	traceEnt = &g_entities[ tr.entityNum ];
 
+	// BFP - No EV_MISSILE_HIT here
+#if 0
 	// send blood impact
 	if ( traceEnt->takedamage && traceEnt->client ) {
 		tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
@@ -97,11 +99,14 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 		tent->s.eventParm = DirToByte( tr.plane.normal );
 		tent->s.weapon = ent->s.weapon;
 	}
+#endif
 
 	if ( !traceEnt->takedamage) {
 		return qfalse;
 	}
 
+	// BFP - No PW_QUAD damage calculation here
+#if 0
 	if (ent->client->ps.powerups[PW_QUAD] ) {
 		G_AddEvent( ent, EV_POWERUP_QUAD, 0 );
 		s_quadFactor = g_quadfactor.value;
@@ -110,12 +115,12 @@ qboolean CheckGauntletAttack( gentity_t *ent ) {
 	}
 
 	damage = 50 * s_quadFactor;
+#endif
 	G_Damage( traceEnt, ent, ent, forward, tr.endpos,
 		damage, 0, MOD_GAUNTLET );
 
 	return qtrue;
 }
-#endif
 
 /*
 ===================
@@ -184,6 +189,12 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	// when the attacker is very near from the target, continue attacking if that happens
 	traceTarget = GetEntityNearMeleeRadius( muzzle, attacker, &g_entities[ tr.entityNum ] );
 
+	// avoid entity null references
+	if ( !traceTarget || traceTarget == NULL ) {
+		attacker->client->ps.pm_flags &= ~PMF_MELEE;
+		return qfalse;
+	}
+
 	// stop melee if there's no entity
 	if ( !traceTarget->takedamage ) {
 		attacker->client->ps.pm_flags &= ~PMF_MELEE;
@@ -243,7 +254,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 			// if the target position is being covered under something solid (e.g. a brush from the map), 
 			// avoid the attacker teleporting there, otherwise gets stuck
 			target = &g_entities[ tr.entityNum ];
-			if ( target->client // avoids DLL/SO crash
+			if ( target && target->client // avoids DLL/SO crash
 			&& target->client->ps.pm_type != PM_DEAD && !target->takedamage ) {
 				attacker->client->ps.pm_flags &= ~PMF_MELEE;
 				return qfalse;
@@ -255,7 +266,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 			}
 
 			// TELEPORT!
-			if ( target->client // avoids DLL/SO crash
+			if ( target && target->client // avoids DLL/SO crash
 			&& attacker->client->ps.origin[2] == target->client->ps.origin[2] ) {
 				tr.endpos[2] = target->client->ps.origin[2];
 			}

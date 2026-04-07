@@ -1042,7 +1042,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	int			meleeKnockback;
 
 	// BFP - Ultimate tier status is invulnerable!
-	if ( targ->client // BFP - NOTE: Avoid DLL/SO crashing when impacting a door or any map entity (ET_MOVER), this is important for implementations like that!
+	if ( targ && targ->client // BFP - NOTE: Avoid DLL/SO crashing when impacting a door or any map entity (ET_MOVER), this is important for implementations like that!
 	&& ( targ->client->ps.pm_flags & PMF_ULTIMATE_TIER ) ) {
 		return;
 	}

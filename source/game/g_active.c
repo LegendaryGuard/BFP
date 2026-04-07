@@ -401,6 +401,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	gclient_t	*client;
 	// BFP - Flight cost total variable
 	float		flightCostTotal = g_flightCost.value + g_flightCostPct.value * ( ent->client->ps.stats[STAT_MAX_KI] * 0.01 );
+	// BFP - Random factor for ki charge last digits
+	float		rndKiCharge = 0.8f + crandom() * 0.2f;
 
 	client = ent->client;
 	client->timeResidual += msec;
@@ -411,7 +413,13 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	&& !( client->ps.pm_flags & PMF_BLOCK ) ) {
 		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
 		float boostCostTotal = ( g_boostCost.value * 0.001 ) + ( g_boostCostPct.value * 0.1 ) * client->ps.stats[STAT_MAX_KI] * 0.0001;
-		client->ps.ammo[WP_KI] -= boostCostTotal;
+		// use msec to adjust the consumption
+		client->kiResidual += boostCostTotal * msec;
+		if ( client->kiResidual >= 1.0f ) {
+			int drop = (int)client->kiResidual;
+			client->ps.ammo[WP_KI] -= drop;
+			client->kiResidual -= drop;
+		}
 	}
 
 	// BFP - Charge ki
@@ -419,7 +427,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
 	&& client->ps.ammo[WP_KI] < client->ps.stats[STAT_MAX_KI] ) {
 		float kiChargeTotal = ( g_kiCharge.value * 0.01 ) + g_kiChargePct.value * ( client->ps.stats[STAT_MAX_KI] * 0.0001 );
-		client->ps.ammo[WP_KI] += kiChargeTotal;
+		client->ps.ammo[WP_KI] += kiChargeTotal * rndKiCharge;
 	}
 
 	// BFP - Block ki consume
@@ -1095,6 +1103,16 @@ void ClientThink_real( gentity_t *ent ) {
 		&& client->ps.pm_time <= 0 ) { // charge ki!
 			client->ps.eFlags |= EF_AURA;
 		}
+	}
+
+	// BFP - TODO: That's just a test for gauntlet. 
+	// It might modify if weapon config is going to be implemented
+
+	// check for the hit-scan gauntlet, don't let the action
+	// go through as an attack unless it actually hits something
+	if ( client->ps.weapon == WP_GAUNTLET && !( ucmd->buttons & BUTTON_TALK ) &&
+		( ucmd->buttons & BUTTON_ATTACK ) && client->ps.weaponTime <= 0 ) {
+		CheckGauntletAttack( ent );
 	}
 
 	// BFP - No flight
