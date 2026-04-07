@@ -732,6 +732,10 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 		// for spreading smoke
 		vec3_t up = {0, 0, 1};
 		vec3_t right, forward;
+
+		// BFP - To randomize the vertical speed
+		float	minVert = 10 * explosionSmokeSpeed;
+		float	maxVert = 50 * explosionSmokeSpeed;
 		
 		VectorCopy( dir, forward );
 		CrossProduct( forward, up, right );
@@ -762,7 +766,7 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 
 			// velocity moves outward in spread direction
 			VectorScale( spreadDir, 150 + ( rand() % 500 ), vel );
-			vel[2] = 50 * explosionSmokeSpeed;
+			vel[2] = maxVert + ( rand() % (int)( minVert ) );
 
 			leSmoke = CG_SmokePuff( smokeOrg, vel, 
 				explosionSmokeRadius,

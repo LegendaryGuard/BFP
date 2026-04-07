@@ -685,7 +685,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_
 		p->type = P_BUBBLE_TURBULENT;
 		// BFP - Apply end time to remove particles in that case, if there's no end time the particles will remain there
 		p->endtime = timenonscaled + turbtime;
-		p->height = p->width = (rand() % 1) + size;
+		p->height = p->width = (rand() % 2) + size;
 
 		// BFP - Monster gamemode, player monster bubble particles has different spawning origin
 		if ( cgs.gametype == GT_MONSTER

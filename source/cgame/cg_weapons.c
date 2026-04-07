@@ -1168,9 +1168,12 @@ void CG_NextWeapon_f( void ) {
 		if ( cg.weaponSelect == 16 ) {
 			cg.weaponSelect = 0;
 		}
+		// BFP - Don't lock the scroll to this weapon index
+#if 0
 		if ( cg.weaponSelect == WP_GAUNTLET ) {
 			continue;		// never cycle to gauntlet
 		}
+#endif
 		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
 			break;
 		}
@@ -1204,9 +1207,12 @@ void CG_PrevWeapon_f( void ) {
 		if ( cg.weaponSelect == -1 ) {
 			cg.weaponSelect = 15;
 		}
+		// BFP - Don't lock the scroll to this weapon index
+#if 0
 		if ( cg.weaponSelect == WP_GAUNTLET ) {
 			continue;		// never cycle to gauntlet
 		}
+#endif
 		if ( CG_WeaponSelectable( cg.weaponSelect ) ) {
 			break;
 		}
