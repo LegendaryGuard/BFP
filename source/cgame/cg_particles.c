@@ -400,6 +400,13 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 				}
 				else // bouncing
 				{
+					if ( p->link ) { // water touching something solid
+						VectorClear( p->vel );
+						VectorClear( p->accel );
+						VectorCopy( trace.endpos, p->org );
+						p->height = p->width *= 0.9; // make it tinier when that happens
+					}
+
 					if ( trace.plane.normal[2] >= 0.7 && Q_fabs( p->vel[2] ) < 1 ) {
 						// stop bouncing
 						VectorClear( p->vel );

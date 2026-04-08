@@ -343,9 +343,6 @@ typedef struct {
 	char			headModelName[MAX_QPATH];
 	char			headSkinName[MAX_QPATH];
 
-	// BFP - Monster original player model name to keep the player sounds
-	char			originalModelName[MAX_QPATH];
-
 	qboolean		deferred;
 
 	qboolean		newAnims;		// true if using the new mission pack animations
