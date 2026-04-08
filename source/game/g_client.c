@@ -632,7 +632,6 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	char	userinfo[MAX_INFO_STRING];
 
 	// BFP - Model prefix load
-	char originalPlayerModel[MAX_QPATH];
 	char newModelPrefix[MAX_QPATH];
 	char *oldModelDash, *newModelDash;
 
@@ -716,9 +715,6 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	// set model
 	Q_strncpyz( model, G_GetPlayerModelName( clientNum, userinfo ), sizeof( model ) );
 
-	// BFP - Save original player model
-	Q_strncpyz( originalPlayerModel, model, sizeof( originalPlayerModel ) );
-
 	// BFP - Kick/force to spectate the player who uses an illegal model which isn't available in the server
 	if ( !G_PlayerModelExistsOnServer( model )
 	&& ( g_gametype.integer != GT_MONSTER
@@ -770,28 +766,16 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	strcpy(c1, Info_ValueForKey( userinfo, "color1" ));
 #endif
 
-	// BFP - Monster gamemode, if g_monster is enabled, that "monster" appears :)
-	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
-	&& level.monsterClientNum == client->ps.clientNum
-	&& ( client->ps.eFlags & EF_MONSTER ) ) {
-		Q_strncpyz( model, MONSTER_NAME, sizeof( model ) );
-	}
-
-	// BFP - NOTE: "m" is added for Monster gamemode purposes. 
-	// Historically, on RC versions, the monster model pack went without player sounds 
-	// and the game loaded the selected player model sounds that the user played 
-	// on the other gamemodes
-
 	// send over a subset of the userinfo keys so other clients can
 	// print scoreboards, display models, and play custom sounds
 	if ( ent->r.svFlags & SVF_BOT ) {
-		s = va("n\\%s\\t\\%i\\model\\%s\\m\\%s\\w\\%i\\l\\%i\\skill\\%s",
-			client->pers.netname, team, model, originalPlayerModel, 
+		s = va("n\\%s\\t\\%i\\model\\%s\\w\\%i\\l\\%i\\skill\\%s",
+			client->pers.netname, team, model, 
 			client->sess.wins, client->sess.losses,
 			Info_ValueForKey( userinfo, "skill" ) );
 	} else {
-		s = va("n\\%s\\t\\%i\\model\\%s\\m\\%s\\w\\%i\\l\\%i",
-			client->pers.netname, client->sess.sessionTeam, model, originalPlayerModel, 
+		s = va("n\\%s\\t\\%i\\model\\%s\\w\\%i\\l\\%i",
+			client->pers.netname, client->sess.sessionTeam, model, 
 			client->sess.wins, client->sess.losses );
 	}
 
@@ -807,11 +791,11 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 			Q_strncpyz( ent->oldModelPrefix, ent->oldModel, sizeof( ent->oldModelPrefix ) );
 		}
 
-		newModelDash = strchr(originalPlayerModel, '-');
+		newModelDash = strchr(model, '-');
 		if ( newModelDash ) {
-			Q_strncpyz( newModelPrefix, originalPlayerModel, newModelDash - originalPlayerModel + 1 );
+			Q_strncpyz( newModelPrefix, model, newModelDash - model + 1 );
 		} else {
-			Q_strncpyz( newModelPrefix, originalPlayerModel, sizeof( newModelPrefix ) );
+			Q_strncpyz( newModelPrefix, model, sizeof( newModelPrefix ) );
 		}
 
 		// compare model prefixes
@@ -824,7 +808,7 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 		}
 
 		// save the new model as the old model for the next time this function runs
-		Q_strncpyz( ent->oldModel, originalPlayerModel, sizeof( ent->oldModel ) );
+		Q_strncpyz( ent->oldModel, model, sizeof( ent->oldModel ) );
 	}
 
 	// BFP - Send powerlevel info to cgame reusing frame from entityState_t struct

@@ -845,6 +845,22 @@ typedef struct {
 	qhandle_t	medalCapture;
 */
 
+	// BFP - Monster models, animations, skins and icon
+	qhandle_t		monsterLegsModel;
+	qhandle_t		monsterLegsSkin;
+	qhandle_t		monsterTorsoModel;
+	qhandle_t		monsterTorsoSkin;
+	qhandle_t		monsterHeadModel;
+	qhandle_t		monsterHeadSkin;
+	qhandle_t		monsterUltTierLegsModel;
+	qhandle_t		monsterUltTierLegsSkin;
+	qhandle_t		monsterUltTierTorsoModel;
+	qhandle_t		monsterUltTierTorsoSkin;
+	qhandle_t		monsterUltTierHeadModel;
+	qhandle_t		monsterUltTierHeadSkin;
+	qhandle_t		monsterModelIcon;
+	animation_t		monsterAnimations[MAX_TOTALANIMATIONS];
+
 	// sounds
 	sfxHandle_t	quadSound;
 	sfxHandle_t	tracerSound;
@@ -1226,6 +1242,10 @@ qhandle_t CG_StatusHandle(int task);
 //
 // cg_player.c
 //
+// BFP - Monster gamemode, those 2 functions are used for g_monster to load monster model
+qboolean CG_FindClientHeadFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *headModelName, const char *headSkinName, const char *base, const char *ext );
+qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci );
+
 void CG_Player( centity_t *cent );
 void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t re, entityState_t *state, int team );

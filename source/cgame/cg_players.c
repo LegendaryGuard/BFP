@@ -87,7 +87,7 @@ Read a configuration file containing animation coutns and rates
 models/players/visor/animation.cfg, etc
 ======================
 */
-static qboolean	CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
+qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci ) {
 	char		*text_p, *prev;
 	int			len;
 	int			i;
@@ -399,7 +399,7 @@ static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t
 CG_FindClientHeadFile
 ==========================
 */
-static qboolean	CG_FindClientHeadFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *headModelName, const char *headSkinName, const char *base, const char *ext ) {
+qboolean CG_FindClientHeadFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *headModelName, const char *headSkinName, const char *base, const char *ext ) {
 	char *team, *headsFolder;
 	int i;
 
@@ -491,66 +491,42 @@ static qboolean	CG_RegisterClientSkin( clientInfo_t *ci, const char *teamName, c
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/lower_%s.skin", modelName, skinName );
 	ci->legsSkin = trap_R_RegisterSkin( filename );
 	if (!ci->legsSkin) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/lower_%s.skin", modelName, skinName );
-		// ci->legsSkin = trap_R_RegisterSkin( filename );
-		// if (!ci->legsSkin) {
-			Com_Printf( "Leg skin load failure: %s\n", filename );
-		// }
+		Com_Printf( "Leg skin load failure: %s\n", filename );
 	}
 
 	// BFP - Ultimate tier legs skin
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjlower.skin", modelName, skinName );
 	ci->ultTierLegsSkin = trap_R_RegisterSkin( filename );
 	// if (!ci->ultTierLegsSkin) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjlower.skin", modelName, skinName );
-		// ci->ultTierLegsSkin = trap_R_RegisterSkin( filename );
-		// if (!ci->ultTierLegsSkin) {
 		//	Com_Printf( "Ultimate tier leg skin load failure: %s\n", filename );
-		// }
 	// }
 
 	// BFP - Torso skin
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper_%s.skin", modelName, skinName );
 	ci->torsoSkin = trap_R_RegisterSkin( filename );
 	if (!ci->torsoSkin) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/upper_%s.skin", modelName, skinName );
-		// ci->torsoSkin = trap_R_RegisterSkin( filename );
-		// if (!ci->torsoSkin) {
-			Com_Printf( "Torso skin load failure: %s\n", filename );
-		// }
+		Com_Printf( "Torso skin load failure: %s\n", filename );
 	}
 
 	// BFP - Ultimate tier torso skin
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjtorso.skin", modelName, skinName );
 	ci->ultTierTorsoSkin = trap_R_RegisterSkin( filename );
 	// if (!ci->ultTierTorsoSkin) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjtorso.skin", modelName, skinName );
-		// ci->ultTierTorsoSkin = trap_R_RegisterSkin( filename );
-		// if (!ci->ultTierTorsoSkin) {
 		//	Com_Printf( "Ultimate tier torso skin load failure: %s\n", filename );
-		// }
 	// }
 
 	// BFP - Head skin
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/head_%s.skin", modelName, skinName );
 	ci->headSkin = trap_R_RegisterSkin( filename );
 	if (!ci->headSkin) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/head_%s.skin", modelName, skinName );
-		// ci->headSkin = trap_R_RegisterSkin( filename );
-		// if (!ci->headSkin) {
-			Com_Printf( "Head skin load failure: %s\n", filename );
-		// }
+		Com_Printf( "Head skin load failure: %s\n", filename );
 	}
 
 	// BFP - Ultimate tier head skin
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjhead.skin", modelName, skinName );
 	ci->ultTierHeadSkin = trap_R_RegisterSkin( filename );
 	// if (!ci->ultTierHeadSkin) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjhead.skin", modelName, skinName );
-		// ci->ultTierHeadSkin = trap_R_RegisterSkin( filename );
-		// if (!ci->ultTierHeadSkin) {
 		//	Com_Printf( "Ultimate tier head skin load failure: %s\n", filename );
-		// }
 	// }
 
 	// BFP - Uses more memory load, not recommended, remove in the future?
@@ -606,47 +582,31 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/lower.md3", modelName );
 	ci->legsModel = trap_R_RegisterModel( filename );
 	if ( !ci->legsModel ) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/lower.md3", modelName );
-		// ci->legsModel = trap_R_RegisterModel( filename );
-		// if ( !ci->legsModel ) {
-			Com_Printf( "Failed to load model file %s\n", filename );
-			return qfalse;
-		// }
+		Com_Printf( "Failed to load model file %s\n", filename );
+		return qfalse;
 	}
 
 	// BFP - Ultimate tier legs model
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjlegs.md3", modelName );
 	ci->ultTierLegsModel = trap_R_RegisterModel( filename );
 	/*if ( !ci->ultTierLegsModel ) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjlegs.md3", modelName );
-		ci->ultTierLegsModel = trap_R_RegisterModel( filename );
-		if ( !ci->ultTierLegsModel ) {
-			Com_Printf( "Failed to load ultimate tier legs model file %s\n", filename );
-			return qfalse;
-		}
+		Com_Printf( "Failed to load ultimate tier legs model file %s\n", filename );
+		return qfalse;
 	}*/
 
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper.md3", modelName );
 	ci->torsoModel = trap_R_RegisterModel( filename );
 	if ( !ci->torsoModel ) {
-		// Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/upper.md3", modelName );
-		// ci->torsoModel = trap_R_RegisterModel( filename );
-		// if ( !ci->torsoModel ) {
-			Com_Printf( "Failed to load model file %s\n", filename );
-			return qfalse;
-		// }
+		Com_Printf( "Failed to load model file %s\n", filename );
+		return qfalse;
 	}
 
 	// BFP - Ultimate tier torso model
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjtorso.md3", modelName );
 	ci->ultTierTorsoModel = trap_R_RegisterModel( filename );
 	/*if ( !ci->ultTierTorsoModel ) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjtorso.md3", modelName );
-		ci->ultTierTorsoModel = trap_R_RegisterModel( filename );
-		if ( !ci->ultTierTorsoModel ) {
-			Com_Printf( "Failed to load ultimate tier torso model file %s\n", filename );
-			return qfalse;
-		}
+		Com_Printf( "Failed to load ultimate tier torso model file %s\n", filename );
+		return qfalse;
 	}*/
 
 	// if( headName[0] == '*' ) {
@@ -672,12 +632,8 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjhead.md3", modelName );
 	ci->ultTierHeadModel = trap_R_RegisterModel( filename );
 	/*if ( !ci->ultTierHeadModel ) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/ssjhead.md3", modelName );
-		ci->ultTierHeadModel = trap_R_RegisterModel( filename );
-		if ( !ci->ultTierHeadModel ) {
-			Com_Printf( "Failed to load ultimate tier head model file %s\n", filename );
-			return qfalse;
-		}
+		Com_Printf( "Failed to load ultimate tier head model file %s\n", filename );
+		return qfalse;
 	}*/
 
 	// if any skins failed to load, return failure
@@ -703,11 +659,8 @@ static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelN
 	// load the animations
 	Com_sprintf( filename, sizeof( filename ), "models/players/%s/animation.cfg", modelName );
 	if ( !CG_ParseAnimationFile( filename, ci ) ) {
-		Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/animation.cfg", modelName );
-		if ( !CG_ParseAnimationFile( filename, ci ) ) {
-			Com_Printf( "Failed to load animation file %s\n", filename );
-			return qfalse;
-		}
+		Com_Printf( "Failed to load animation file %s\n", filename );
+		return qfalse;
 	}
 
 	if ( CG_FindClientHeadFile( filename, sizeof(filename), ci, teamName, headName, headSkinName, "icon", "skin" ) ) {
@@ -769,8 +722,6 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	const char	*s;
 	int			clientNum;
 	char		teamname[MAX_QPATH];
-	// BFP - Monster gamemode, slash to truncate the skinName in modelName
-	char		*slash;
 
 	teamname[0] = 0;
 	modelloaded = qtrue;
@@ -812,15 +763,6 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 
 	// sounds
 	dir = ci->modelName;
-	// BFP - Monster gamemode, get original model name to keep the player sounds
-	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 ) {
-		dir = ci->originalModelName;
-		// truncate skinName (e.g. modelName/red --> modelName), otherwise it will get loading errors
-		slash = strchr( dir, '/' );
-		if ( slash ) {
-			*slash = '\0';
-		}
-	}
 	fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
 
 	for ( i = 0 ; i < MAX_CUSTOM_SOUNDS ; i++ ) {
@@ -1091,21 +1033,6 @@ void CG_NewClientInfo( int clientNum ) {
 		Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
 		// truncate modelName
 		*slash = 0;
-	}
-
-	// BFP - Monster gamemode, get original model name with "m" to keep the player sounds
-	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 ) {
-		v = Info_ValueForKey( configstring, "m" );
-		Q_strncpyz( newInfo.originalModelName, v, sizeof( newInfo.originalModelName ) );
-		slash = strchr( newInfo.originalModelName, '/' );
-		if ( !slash || !Q_stricmp( newInfo.modelName, MONSTER_NAME ) ) {
-			// modelName didn not include a skin name
-			Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
-		} else {
-			Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
-			// truncate modelName
-			*slash = 0;
-		}
 	}
 
 	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
@@ -2824,8 +2751,8 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		}
 
 		// keep the aura pivot tagged in tag_torso
-		CG_PositionRotatedEntityOnTag( &aura, &legs, ci->legsModel, "tag_torso" );
-		CG_PositionRotatedEntityOnTag( &aura2, &legs, ci->legsModel, "tag_torso" );
+		CG_PositionRotatedEntityOnTag( &aura, &legs, legs.hModel /*ci->legsModel*/, "tag_torso" );
+		CG_PositionRotatedEntityOnTag( &aura2, &legs, legs.hModel /*ci->legsModel*/, "tag_torso" );
 
 		// BFP - Sprite aura
 		if ( ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) 
@@ -2942,21 +2869,21 @@ static void CG_FindAttachMuzzleTag( centity_t *cent, clientInfo_t *ci, refEntity
 
 	// legs
 	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "legs" )
-	&& trap_R_LerpTag( &tagOrient, ci->legsModel, legs->oldframe, legs->frame, 1.0 - legs->backlerp, attackTagName ) ) {
+	&& trap_R_LerpTag( &tagOrient, legs->hModel, legs->oldframe, legs->frame, 1.0 - legs->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( legs, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// torso
 	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "torso" )
-	&& trap_R_LerpTag( &tagOrient, ci->torsoModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, attackTagName )) {
+	&& trap_R_LerpTag( &tagOrient, torso->hModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, attackTagName )) {
 		CG_AddPlayerWeapon( torso, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// head
 	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "head" )
-	&& trap_R_LerpTag( &tagOrient, ci->headModel, head->oldframe, head->frame, 1.0 - head->backlerp, attackTagName ) ) {
+	&& trap_R_LerpTag( &tagOrient, head->hModel, head->oldframe, head->frame, 1.0 - head->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( head, NULL, cent, ci->team, attackTagName );
 	}
 }
@@ -2979,7 +2906,10 @@ void CG_Player( centity_t *cent ) {
 	// BFP - Powerlevel for the aura
 	int				powerlevel = -1;
 	// BFP - Save head for first person vis mode
-	refEntity_t savedHead;
+	refEntity_t		savedHead;
+	// BFP - Monster gamemode with g_monster enabled, temporarily swap animations
+	animation_t		backupAnimations[MAX_TOTALANIMATIONS];
+
 	// BFP - That macro makes all body being transformed during tier up. 
 	// Enabled by default, originally on BFP only shows the head as transformation transition
 	// while the body is already transformed.
@@ -3037,12 +2967,27 @@ void CG_Player( centity_t *cent ) {
 	memset( &torso, 0, sizeof(torso) );
 	memset( &head, 0, sizeof(head) );
 
+	// BFP - Monster gamemode with g_monster enabled, temporarily swap animations
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0
+	&& ( cent->currentState.eFlags & EF_MONSTER )
+	&& cgs.media.monsterAnimations[0].numFrames != 0 ) {
+		memcpy( backupAnimations, ci->animations, sizeof(ci->animations) );
+		memcpy( ci->animations, cgs.media.monsterAnimations, sizeof(ci->animations) );
+	}
+
 	// get the rotation information
 	CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
 	
 	// get the animation state (after rotation, to allow feet shuffle)
 	CG_PlayerAnimation( cent, &legs.oldframe, &legs.frame, &legs.backlerp,
 		 &torso.oldframe, &torso.frame, &torso.backlerp );
+
+	// BFP - Monster gamemode with g_monster enabled, temporarily swap animations
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0
+	&& ( cent->currentState.eFlags & EF_MONSTER )
+	&& cgs.media.monsterAnimations[0].numFrames != 0 ) {
+		memcpy( ci->animations, backupAnimations, sizeof(ci->animations) );
+	}
 
 	// add the talk baloon or disconnect icon
 	CG_PlayerSprites( cent );
@@ -3084,6 +3029,22 @@ void CG_Player( centity_t *cent ) {
 		}
 	}
 
+	// BFP - Monster gamemode, set legs model and skin
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0
+	&& ( cent->currentState.eFlags & EF_MONSTER ) ) {
+		legs.hModel = cgs.media.monsterLegsModel;
+		legs.customSkin = cgs.media.monsterLegsSkin;
+		// BFP - Ultimate tier monster legs model and skin
+		if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+			if ( cgs.media.monsterUltTierLegsModel ) {
+				legs.hModel = cgs.media.monsterUltTierLegsModel;
+			}
+			if ( cgs.media.monsterUltTierLegsSkin ) {
+				legs.customSkin = cgs.media.monsterUltTierLegsSkin;
+			}
+		}
+	}
+
 	// BFP - Super Deformed (Chibi style) easter egg for the base model (the legs apply all parts of the body)
 	if ( cg_superdeformed.integer > 0 ) {
 		CG_ModelSize( &legs, 0.8f );
@@ -3120,10 +3081,6 @@ void CG_Player( centity_t *cent ) {
 	// add the torso
 	//
 	torso.hModel = ci->torsoModel;
-	if (!torso.hModel) {
-		return;
-	}
-
 	torso.customSkin = ci->torsoSkin;
 
 	// BFP - Ultimate tier torso model and skin
@@ -3140,9 +3097,29 @@ void CG_Player( centity_t *cent ) {
 		}
 	}
 
+	// BFP - Monster gamemode, set torso model and skin
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0
+	&& ( cent->currentState.eFlags & EF_MONSTER ) ) {
+		torso.hModel = cgs.media.monsterTorsoModel;
+		torso.customSkin = cgs.media.monsterTorsoSkin;
+		// BFP - Ultimate tier monster torso model and skin
+		if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+			if ( cgs.media.monsterUltTierTorsoModel ) {
+				torso.hModel = cgs.media.monsterUltTierTorsoModel;
+			}
+			if ( cgs.media.monsterUltTierTorsoSkin ) {
+				torso.customSkin = cgs.media.monsterUltTierTorsoSkin;
+			}
+		}
+	}
+
+	if ( !torso.hModel ) {
+		return;
+	}
+
 	VectorCopy( cent->lerpOrigin, torso.lightingOrigin );
 
-	CG_PositionRotatedEntityOnTag( &torso, &legs, ci->legsModel, "tag_torso");
+	CG_PositionRotatedEntityOnTag( &torso, &legs, legs.hModel /*ci->legsModel*/, "tag_torso" );
 
 	torso.shadowPlane = shadowPlane;
 	torso.renderfx = renderfx;
@@ -3153,10 +3130,6 @@ void CG_Player( centity_t *cent ) {
 	// add the head
 	//
 	head.hModel = ci->headModel;
-	if ( !head.hModel ) {
-		return;
-	}
-
 	head.customSkin = ci->headSkin;
 
 	// BFP - Ultimate tier head model and skin
@@ -3167,6 +3140,26 @@ void CG_Player( centity_t *cent ) {
 		if ( ci->ultTierHeadSkin ) {
 			head.customSkin = ci->ultTierHeadSkin;
 		}
+	}
+
+	// BFP - Monster gamemode, set head model and skin
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0
+	&& ( cent->currentState.eFlags & EF_MONSTER ) ) {
+		head.hModel = cgs.media.monsterHeadModel;
+		head.customSkin = cgs.media.monsterHeadSkin;
+		// BFP - Ultimate tier monster head model and skin
+		if ( powerlevel >= 1000 && cg.time > cent->pe.ultTierTransformTime - 800 ) {
+			if ( cgs.media.monsterUltTierHeadModel ) {
+				head.hModel = cgs.media.monsterUltTierHeadModel;
+			}
+			if ( cgs.media.monsterUltTierHeadSkin ) {
+				head.customSkin = cgs.media.monsterUltTierHeadSkin;
+			}
+		}
+	}
+
+	if ( !head.hModel ) {
+		return;
 	}
 
 	// BFP - Make a model changing effect when aura tier is up
@@ -3189,7 +3182,7 @@ void CG_Player( centity_t *cent ) {
 
 	VectorCopy( cent->lerpOrigin, head.lightingOrigin );
 
-	CG_PositionRotatedEntityOnTag( &head, &torso, ci->torsoModel, "tag_head");
+	CG_PositionRotatedEntityOnTag( &head, &torso, torso.hModel /*ci->torsoModel*/, "tag_head" );
 
 	head.shadowPlane = shadowPlane;
 	head.renderfx = renderfx;
@@ -3236,8 +3229,8 @@ void CG_Player( centity_t *cent ) {
 		if ( !( cent->currentState.eFlags & EF_DEAD ) ) {
 			// BFP - Set dead origin where the player was alive when First person vis mode is being used
 			VectorCopy( cg.refdef.vieworg, deadOriginDrawOwnModel );
-			CG_PositionRotatedEntityOnTag( &savedHead, &savedHead, ci->headModel, "tag_eyes");
-			CG_OffsetFirstPersonView( cent, &savedHead, ci->headModel );
+			CG_PositionRotatedEntityOnTag( &savedHead, &savedHead, head.hModel /*ci->headModel*/, "tag_eyes" );
+			CG_OffsetFirstPersonView( cent, &savedHead, head.hModel /*ci->headModel*/ );
 		} else if ( cg.snap->ps.stats[STAT_HEALTH] <= 0
 		&& ( cent->currentState.eFlags & EF_DEAD )
 		&& cg_drawOwnModel.integer >= 1 ) { // BFP - Death camera only for First person vis

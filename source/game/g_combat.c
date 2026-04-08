@@ -531,11 +531,6 @@ static void CheckMonsterGamemodeRules( gentity_t *self, gentity_t *attacker, int
 		self->client->ps.eFlags &= ~EF_MONSTER;
 		attacker->client->ps.eFlags |= EF_MONSTER;
 
-		// if they're playing with the monster, then they're forced to change to that "monster" thing
-		if ( g_monster.integer > 0 ) {
-			ClientUserinfoChanged( self->client->ps.clientNum );
-			ClientUserinfoChanged( attacker->client->ps.clientNum );
-		}
 		respawn( attacker );
 	}
 }

@@ -497,6 +497,102 @@ static void CG_RegisterSounds( void ) {
 
 //===================================================================================
 
+/*
+==========================
+CG_RegisterMonsterModel
+==========================
+*/
+static qboolean CG_RegisterMonsterModel( void ) { // BFP - Monster gamemode, register monster model
+	char	filename[MAX_QPATH*2];
+
+	// legs
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/lower.md3", MONSTER_NAME );
+	cgs.media.monsterLegsModel = trap_R_RegisterModel( filename );
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjlegs.md3", MONSTER_NAME );
+	cgs.media.monsterUltTierLegsModel = trap_R_RegisterModel( filename );
+
+	// torso
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper.md3", MONSTER_NAME );
+	cgs.media.monsterTorsoModel = trap_R_RegisterModel( filename );
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjtorso.md3", MONSTER_NAME );
+	cgs.media.monsterUltTierTorsoModel = trap_R_RegisterModel( filename );
+
+	// head
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/head.md3", MONSTER_NAME );
+	cgs.media.monsterHeadModel = trap_R_RegisterModel( filename );
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjhead.md3", MONSTER_NAME );
+	cgs.media.monsterUltTierHeadModel = trap_R_RegisterModel( filename );
+
+	if ( !cgs.media.monsterLegsModel || !cgs.media.monsterTorsoModel || !cgs.media.monsterHeadModel ) {
+		return qfalse;
+	}
+	return qtrue;
+}
+
+/*
+==========================
+CG_RegisterMonsterSkin
+==========================
+*/
+static void CG_RegisterMonsterSkin( void ) { // BFP - Monster gamemode, register monster skin
+	char	filename[MAX_QPATH];
+
+	// legs
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/lower_%s.skin", MONSTER_NAME, "default" );
+	cgs.media.monsterLegsSkin = trap_R_RegisterSkin( filename );
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjlower.skin", MONSTER_NAME, "default" );
+	cgs.media.monsterUltTierLegsSkin = trap_R_RegisterSkin( filename );
+
+	// torso
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/upper_%s.skin", MONSTER_NAME, "default" );
+	cgs.media.monsterTorsoSkin = trap_R_RegisterSkin( filename );
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjtorso.skin", MONSTER_NAME, "default" );
+	cgs.media.monsterUltTierTorsoSkin = trap_R_RegisterSkin( filename );
+
+	// head
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/head_%s.skin", MONSTER_NAME, "default" );
+	cgs.media.monsterHeadSkin = trap_R_RegisterSkin( filename );
+	Com_sprintf( filename, sizeof( filename ), "models/players/%s/ssjhead.skin", MONSTER_NAME, "default" );
+	cgs.media.monsterUltTierHeadSkin = trap_R_RegisterSkin( filename );
+}
+
+/*
+==========================
+CG_RegisterMonsterAnimations
+==========================
+*/
+static void CG_RegisterMonsterAnimations( void ) { // BFP - Monster gamemode, register monster skin
+	char	filename[MAX_QPATH*2];
+	clientInfo_t	temp;
+
+	memset( &temp, 0, sizeof(temp) );
+
+	Com_sprintf( filename, sizeof(filename), "models/players/%s/animation.cfg", MONSTER_NAME );
+	if ( CG_ParseAnimationFile( filename, &temp ) ) {
+		memcpy( cgs.media.monsterAnimations, temp.animations, sizeof(cgs.media.monsterAnimations) );
+	}
+}
+
+/*
+==========================
+CG_RegisterMonsterModelIcon
+==========================
+*/
+static void CG_RegisterMonsterModelIcon( void ) { // BFP - Monster gamemode, register monster model icon
+	char	filename[MAX_QPATH*2];
+	clientInfo_t	temp;
+
+	memset( &temp, 0, sizeof(temp) );
+
+	if ( CG_FindClientHeadFile( filename, sizeof(filename), &temp, "default", MONSTER_NAME, "default", "icon", "skin" ) ) {
+		cgs.media.monsterModelIcon = trap_R_RegisterShaderNoMip( filename );
+	} else if ( CG_FindClientHeadFile( filename, sizeof(filename), &temp, "default", MONSTER_NAME, "default", "icon", "tga" ) ) {
+		cgs.media.monsterModelIcon = trap_R_RegisterShaderNoMip( filename );
+	}
+	if ( !cgs.media.monsterModelIcon ) {
+		cgs.media.monsterModelIcon = cgs.media.deferShader;
+	}
+}
 
 /*
 =================
@@ -747,6 +843,21 @@ static void CG_RegisterGraphics( void ) {
 			break;
 		}
 		cgs.gameModels[i] = trap_R_RegisterModel( modelName );
+	}
+
+	// BFP - Monster gamemode, set model and skin for the player monster
+	// BFP - NOTE: Historically, on RC versions, the monster model pack went without player sounds 
+	// and the game loaded the selected player model sounds that the user played 
+	// on the other gamemodes
+	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 ) {
+		if ( CG_RegisterMonsterModel() ) {
+			CG_Printf( "loaded monster model\n" );
+		} else {
+			CG_Printf( "unable to load monster model\n" );
+		}
+		CG_RegisterMonsterSkin();
+		CG_RegisterMonsterAnimations();
+		CG_RegisterMonsterModelIcon();
 	}
 
 	CG_ClearParticles ();

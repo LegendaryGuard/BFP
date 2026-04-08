@@ -159,6 +159,8 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 	int				powerlevel = -1;
 	// BFP - Ultimate tier head model and skin
 	qhandle_t		tierHeadModel, tierHeadSkin;
+	// BFP - Monster gamemode, check to show monster head model and icon
+	qboolean		isMonster;
 
 	ci = &cgs.clientinfo[ clientNum ];
 
@@ -168,23 +170,42 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
 	}
 
+	// BFP - Monster gamemode, check to show monster head model and icon
+    isMonster = ( cgs.gametype == GT_MONSTER && cgs.monster > 0
+		&& ( cg_entities[clientNum].currentState.eFlags & EF_MONSTER ) );
+
 	// BFP - Ultimate tier head model and skin
-	tierHeadModel = ci->headModel;
-	tierHeadSkin = ci->headSkin;
-	if ( powerlevel >= 1000 ) {
-		if ( ci->ultTierHeadModel ) {
-			tierHeadModel = ci->ultTierHeadModel;
+	if ( isMonster ) {
+		tierHeadModel = cgs.media.monsterHeadModel;
+		tierHeadSkin = cgs.media.monsterHeadSkin;
+		if ( powerlevel >= 1000 && cgs.media.monsterUltTierHeadModel ) {
+			tierHeadModel = cgs.media.monsterUltTierHeadModel;
+			tierHeadSkin = cgs.media.monsterUltTierHeadSkin;
 		}
-		if ( ci->ultTierHeadSkin ) {
-			tierHeadSkin = ci->ultTierHeadSkin;
+	} else {
+		tierHeadModel = ci->headModel;
+		tierHeadSkin = ci->headSkin;
+		if ( powerlevel >= 1000 ) {
+			if ( ci->ultTierHeadModel ) {
+				tierHeadModel = ci->ultTierHeadModel;
+			}
+			if ( ci->ultTierHeadSkin ) {
+				tierHeadSkin = ci->ultTierHeadSkin;
+			}
 		}
 	}
 
 	if ( cg_draw3dIcons.integer ) {
 		cm = ci->headModel;
 		// BFP - Ultimate tier head model
-		if ( powerlevel >= 1000 && ci->ultTierHeadModel ) {
-			cm = ci->ultTierHeadModel;
+		if ( isMonster ) {
+			cm = cgs.media.monsterHeadModel;
+			if ( powerlevel >= 1000 && cgs.media.monsterUltTierHeadModel )
+				cm = cgs.media.monsterUltTierHeadModel;
+		} else {
+			cm = ci->headModel;
+			if ( powerlevel >= 1000 && ci->ultTierHeadModel )
+				cm = ci->ultTierHeadModel;
 		}
 		if ( !cm ) {
 			return;
@@ -207,7 +228,11 @@ void CG_DrawHead( float x, float y, float w, float h, int clientNum, vec3_t head
 		// BFP - Ultimate tier head model and skin draw
 		CG_Draw3DModel( x, y, w, h, tierHeadModel, tierHeadSkin, origin, headAngles );
 	} else if ( cg_drawIcons.integer ) {
-		CG_DrawPic( x, y, w, h, ci->modelIcon );
+		qhandle_t	icon = ci->modelIcon;
+		if ( isMonster && cgs.media.monsterModelIcon ) {
+			icon = cgs.media.monsterModelIcon;
+		}
+		CG_DrawPic( x, y, w, h, icon );
 	}
 
 	// if they are deferred, draw a cross out
