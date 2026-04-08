@@ -35,7 +35,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] BFP config file ([bfp.cfg](bfp.cfg)) (a sample of how the game saves general binding and BFP cvar stuff in a cfg file)
 - [x] Bind key to recover ki energy
 - [x] Bind key to toggle speed (ki boost)
-- [x] Blinding Flash (blinds players during 6 seconds)
+- [x] Blinding Flash (blinds opponents during 6 seconds)
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [x] Breakable map entities ("func_breakable")
 - [x] Damage calculated by attacker powerlevel, modified knockback and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
@@ -45,6 +45,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Hit Stun (makes player can't use ki, melee, block and charge)
 - [x] Illegal player model server handling
 - [x] Instant character model changing
+- [x] Ki shockwave (or Tornado Blast) weapon (a shockwave to push opponents)
 - [x] Ki trails
 - [x] Load player models only by prefix
 - [x] Melee feature
@@ -158,6 +159,8 @@ You'll notice some differences and things that the original Bid For Power didn't
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
 - `g_allowSpectatorChat` cvar is functional, spectators can't send messages if the cvar is disabled
 - spectator mode can toggle ki boost as if the player is flying
+- ki boost consumption is applied in msec if `timescale` is different from it (on original BFP only applies until 0.89 and from 0.89 until 0.80 reduces one per one very slowly)
+- real impact crack mark, when projectiles/ki attacks impact something solid on ground, walls or slopes (on original BFP, that hasn't been fixed)
 - particle aura is almost implemented
 - beam trails are bendy, almost similar to original BFP though
 - while charging ki near water, bubble particles appear
