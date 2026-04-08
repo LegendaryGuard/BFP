@@ -471,15 +471,15 @@ static float PM_CmdScale( usercmd_t *cmd ) {
 	int		max;
 	float	total;
 	float	scale;
-	// BFP - Monster gamemode, player monster speed is doubled
+	// BFP - Monster gamemode, player monster speed is faster
 	float	speed = pm->ps->speed;
 	if ( pm->ps->eFlags & EF_MONSTER ) {
 		if ( !( pm->ps->eFlags & EF_KI_BOOST )
 		&& !( pm->cmd.buttons & BUTTON_KI_USE )
 		&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
-			speed *= 2;
+			speed *= 3.25;
 		} else {
-			speed *= 1.25;
+			speed *= 1.5;
 		}
 	}
 

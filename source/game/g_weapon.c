@@ -64,13 +64,13 @@ void Weapon_Gauntlet( gentity_t *ent ) {
 
 /*
 ===============
-CheckGauntletAttack
+CheckKiShockwavePushAttack
 ===============
 */
-qboolean CheckGauntletAttack( gentity_t *ent ) {
+qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 	trace_t		tr;
 	vec3_t		end;
-	gentity_t	*tent;
+	// gentity_t	*tent;
 	gentity_t	*traceEnt;
 	// BFP - bfp_weapon.cfg: damage, range ...
 	int			damage = 8;
