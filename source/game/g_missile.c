@@ -223,6 +223,14 @@ static void G_CollideDetonationCheck( gentity_t *ent, trace_t *trace ) { // BFP 
 	// BFP - NOTE: This setup solves the issue of real impact crack mark for collision radius, but original BFP didn't that (uses -1)
 	float distToPlane = DotProduct( trace->endpos, trace->plane.normal ) - trace->plane.dist;
 
+	// if there's a mover or a corpse going to be gibbed, change the impact direction, otherwise the explosion will appear very down or under the target
+	gentity_t *target = &g_entities[ trace->entityNum ];
+	if ( target
+	&& ( ( target->client && target->client->ps.pm_type == PM_DEAD )
+	|| target->s.eType == ET_MOVER ) ) {
+		distToPlane = 1;
+	}
+
 	VectorMA( trace->endpos, -distToPlane, trace->plane.normal, impactPoint );
 
 	if ( trace->contents & MASK_PLAYERSOLID ) {
