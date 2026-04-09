@@ -275,8 +275,11 @@ static void PM_SlopesNeargroundAnim( qboolean is_slope ) { // BFP - Animation ha
 		}
 	} else {
 		// if it's trying to crouch, then play jumping animation once
+		if ( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB ) {
+			return;
+		}
 		if ( pm->ps->pm_flags & PMF_DUCKED ) {
-			pm->ps->pm_flags |= PMF_NEARGROUND;
 			PM_ForceJumpAnim();
 			return;
 		}
@@ -573,7 +576,6 @@ static qboolean PM_CheckJump( void ) {
 	pml.groundPlane = qfalse;		// jumping away
 	pml.walking = qfalse;
 	pm->ps->pm_flags |= PMF_JUMP_HELD;
-	pm->ps->pm_flags |= PMF_NEARGROUND; // BFP - Handle PMF_NEARGROUND, avoid checking if there's ground at that point
 	pm->ps->pm_flags &= ~PMF_AIR_GRAVITY; // BFP - Air gravity
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
@@ -1747,12 +1749,6 @@ static void PM_GroundTrace( void ) {
 		return;
 	}
 
-	// BFP - Make sure to handle the PMF flags when the player isn't flying
-	if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
-		pm->ps->pm_flags |= PMF_FALLING;
-		pm->ps->pm_flags &= ~PMF_NEARGROUND;
-	}
-
 	// slopes that are too steep will not be considered onground
 	if ( trace.plane.normal[2] < MIN_WALK_NORMAL ) {
 		if ( pm->debugLevel ) {
@@ -1789,9 +1785,6 @@ static void PM_GroundTrace( void ) {
 			return;
 		}
 
-		// BFP - Handling the PMF flags when that happens
-		pm->ps->pm_flags &= ~PMF_NEARGROUND;
-
 		PM_SlopesNeargroundAnim( 1 );
 		return;
 	}
@@ -1802,7 +1795,6 @@ static void PM_GroundTrace( void ) {
 		// BFP - To stick to the movers if the player is near to them
 		pm->ps->groundEntityNum = trace.entityNum;
 		PM_AddTouchEnt( trace.entityNum );
-		pm->ps->pm_flags |= PMF_NEARGROUND;
 		return;
 	}
 
@@ -1830,9 +1822,6 @@ static void PM_GroundTrace( void ) {
 		}
 		
 		PM_CrashLand();
-
-		// BFP - Handling the PM flag when stepping the ground
-		pm->ps->pm_flags &= ~PMF_NEARGROUND;
 
 		// BFP - PMF_TIME_LAND doesn't exist and it doesn't have any handle checks
 #if 0
@@ -2341,9 +2330,8 @@ static void PM_TorsoAnimation( void ) {
 		VectorNormalize( pm->ps->velocity );
 		VectorScale( pm->ps->velocity, vel, pm->ps->velocity );
 
-		// BFP - Handle PMF flags, don't do idle or other torso animations while jumping off from the water
+		// BFP - Handle PMF flag
 		pm->ps->pm_flags &= ~PMF_AIR_GRAVITY;
-		pm->ps->pm_flags |= PMF_NEARGROUND;
 
 		PM_ForceJumpAnim();
 		return;
@@ -2361,9 +2349,9 @@ static void PM_TorsoAnimation( void ) {
 	pml.groundTrace = trace;
 
 	// BFP - Falling distantly from the ground
-	if ( trace.fraction == 1.0 && !( pm->ps->pm_flags & PMF_NEARGROUND )
+	if ( trace.fraction == 1.0 && !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
 	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
-		pm->ps->pm_flags |= PMF_NEARGROUND;
 		PM_ForceJumpAnim();
 		PM_TorsoStatusAnim( TORSO_STAND );
 	}
@@ -2371,24 +2359,6 @@ static void PM_TorsoAnimation( void ) {
 	// If idling, keep the torso
 	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove ) {
 		PM_TorsoStatusAnim( TORSO_STAND );
-	}
-
-	// Handle the player movement animation when stopping to fly and falling near to the ground
-	// that happens when PMF_FALLING flag isn't handled correctly
-	if ( ( pml.groundTrace.contents & MASK_PLAYERSOLID )
-	&& !( pm->ps->eFlags & EF_FLIGHT )
-	&& !( pm->ps->pm_flags & PMF_FALLING )
-	&& ( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
-		pm->ps->pm_flags |= PMF_FALLING;
-		pm->ps->pm_flags &= ~PMF_NEARGROUND;
-	}
-
-	// BFP - That happens when the player is landing nearly
-	if ( !( pm->ps->pm_flags & PMF_NEARGROUND )
-	&& !( pm->ps->eFlags & EF_FLIGHT )
-	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
-	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
-		PM_SlopesNeargroundAnim( 0 );
 	}
 
 	// BFP - Melee strike legs animation, don't apply if it isn't touching the ground
@@ -2472,10 +2442,14 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 	pml.groundTrace = trace;
 
 	// BFP - If the player is in the ground, then jump!
-	// And make sure to handle the PMF flag when the player isn't flying and falling
+	// And make sure when the player isn't flying and falling
 	if ( ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) // handle the flight button if it's being pressed, that avoids jittering
-	&& ( pm->ps->pm_flags & PMF_FALLING ) 
-	&& !( pm->ps->pm_flags & PMF_NEARGROUND ) ) {
+	&& ( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_IDLE
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_IDLECR
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_WALK
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_WALKCR
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN ) ) {
 		if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
 			// do a smooth jump animation like BFP does
 			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE )
@@ -2500,7 +2474,6 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 				}
 			}
 		}
-		pm->ps->pm_flags &= ~PMF_FALLING;
 	}
 }
 
@@ -2518,24 +2491,26 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 
 	if ( ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) )
 	&& pm->ps->pm_time <= 570 ) { // smooth jump animation
-
-		// make sure to handle the PMF flags
-		pm->ps->pm_flags &= ~PMF_FALLING;
 		pm->ps->pm_flags |= PMF_AIR_GRAVITY; // BFP - Air gravity
-
 		PM_ContinueFlyAnim();
 		return;
 	}
 
 	// Handle the player movement animation if trying to change quickly the direction of forward or backward
+	
+	// BFP - That happens when the player is landing nearly
+	if ( !( pm->ps->eFlags & EF_FLIGHT )
+	&& !( pm->ps->pm_flags & PMF_JUMP_HELD )
+	&& pm->ps->groundEntityNum == ENTITYNUM_NONE // hasn't touched the ground yet
+	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) ) {
+		PM_SlopesNeargroundAnim( 0 );
+	}
+
 	if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
-	&& !( pm->ps->pm_flags & PMF_FALLING )
-	&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
-
-		// stops entering again here and don't change the animation to backwards/forward
-		pm->ps->pm_flags |= PMF_FALLING;
-		pm->ps->pm_flags &= ~PMF_NEARGROUND;
-
+	&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
+	&& !( pm->ps->eFlags & EF_FLIGHT )
+	&& pm->waterlevel < 1 ) {
 		if ( pm->cmd.forwardmove < 0 ) { // when failing backwards after flying
 			PM_StartLegsAnim( LEGS_JUMPB );
 		} else {
@@ -2564,13 +2539,12 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
 			&& !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->cmd.buttons & BUTTON_ENABLEFLIGHT )
-			&& ( pm->ps->pm_flags & PMF_FALLING )
-			&& pm->waterlevel <= 1 ) { // Don't force inside the water
-			pm->ps->pm_flags &= ~PMF_FALLING; // Handle PMF_FALLING when falling
-			if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+			&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
+				|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
+			&& pm->waterlevel <= 1 // Don't force inside the water
+			&& !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
 				PM_ForceJumpAnim();
 				PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
-			}
 		}
 		return;
 	}
@@ -2579,13 +2553,13 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->ps->pm_time = 0; // Make sure the animation isn't playing yet
 		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
-		pm->ps->pm_flags &= ~PMF_NEARGROUND; // Make sure to handle the PMF flag
 		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
 			PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
 		}
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
-			&& ( pm->ps->pm_flags & PMF_FALLING )
+			&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
+				|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
 			&& pm->waterlevel <= 1 // don't force inside the water
 			&& ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) ) { // avoid forcing animations on transformation phase
 			PM_ForceJumpAnim();
@@ -3199,12 +3173,6 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		return qfalse;
 	}
 
-	// Handle the PMF flag if it's already flying
-	if ( ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) )
-	&& !( pm->ps->pm_flags & PMF_FALLING ) ) {
-		return qtrue;
-	}
-
 	// do not proceed to the jump event while enables the flight in the charging status
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
 	&& ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) ) {
@@ -3256,7 +3224,6 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 			pm->ps->velocity[0] *= newspeed;
 			pm->ps->velocity[1] *= newspeed;
 		}
-		pm->ps->pm_flags |= PMF_FALLING; // Handle PMF_FALLING flag
 	}
 }
 
@@ -3322,7 +3289,6 @@ void PmoveSingle (pmove_t *pmove) {
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
 		// BFP - TODO: Set to the first selected weapon
 		pm->ps->pm_flags &= ~PMF_AIR_GRAVITY; // BFP - Air gravity
-		pm->ps->pm_flags |= PMF_FALLING;
 	}
 
 	// BFP - No flight

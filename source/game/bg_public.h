@@ -155,12 +155,12 @@ typedef enum {
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
 #define	PMF_BLOCK			4		// BFP - Block
-// BFP - PMF_BACKWARDS_JUMP is renamed	// go into backwards land
-#define	PMF_NEARGROUND		8		// BFP - Near ground check
+// BFP - PMF_BACKWARDS_JUMP is unused
+//#define	PMF_BACKWARDS_JUMP		8		// go into backwards land
 // BFP - PMF_BACKWARDS_RUN is renamed	// coast down to backwards run
 #define	PMF_MELEE			16		// BFP - Melee
-// BFP - PMF_TIME_LAND is renamed	// pm_time is time before rejump
-#define PMF_FALLING			32		// BFP - Falling status
+// BFP - PMF_TIME_LAND is unused
+//#define PMF_TIME_LAND			32	// pm_time is time before rejump
 #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
 #define PMF_KI_CHARGE		128		// BFP - Ki charge
 // BFP - PMF_TIME_WATERJUMP is renamed	// pm_time is waterjump
