@@ -233,6 +233,23 @@ static void PlayerModel_UpdateGrid( void )
 
 /*
 =================
+PlayerModel_ShowPages
+=================
+*/
+static void PlayerModel_ShowPages( void ) { // BFP - For pagination
+	char pageIndicator[64];
+
+	Menu_Draw( &s_playermodel.menu );
+
+	if ( s_playermodel.numpages > 1 ) {
+		Com_sprintf( pageIndicator, sizeof(pageIndicator), "Page %d of %d",
+			s_playermodel.modelpage + 1, s_playermodel.numpages );
+		UI_DrawString( 320, 440, pageIndicator, UI_CENTER | UI_SMALLFONT, color_white );
+	}
+}
+
+/*
+=================
 PlayerModel_UpdateModel
 =================
 */
@@ -738,6 +755,7 @@ static void PlayerModel_MenuInit( void )
 	PlayerModel_Cache();
 
 	s_playermodel.menu.key        = PlayerModel_MenuKey;
+	s_playermodel.menu.draw		  = PlayerModel_ShowPages; // BFP - For pagination
 	s_playermodel.menu.wrapAround = qtrue;
 	s_playermodel.menu.fullscreen = qtrue;
 

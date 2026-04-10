@@ -178,7 +178,7 @@ static void ServerInfo_MenuDraw( void )
 	int				lineIndex;
 	int				len, wrappedLen, i;
 	char			wrappedValue[MAX_INFO_VALUE];
-#define LIMIT_CHARACTERS		39
+	const int		LIMIT_CHARACTERS = 39;
 
 	// BFP - NOTE: On original BFP, Menu_Draw is used at the end of the function, so hides completely the server info (·_·)
 	// To avoid the hidden info issue, the function needs to be called at the beginning, just here:
@@ -195,8 +195,8 @@ static void ServerInfo_MenuDraw( void )
 	s = s_serverinfo.info;
 	lineIndex = 0;
 
-	while ( s ) {
-		Info_NextPair( s, key, value );
+	while ( s && *s ) {
+		s = Info_NextPair( s, key, value );
 		if ( !key[0] ) {
 			break;
 		}
@@ -382,8 +382,8 @@ void UI_ServerInfoMenu( void )
 
 	s_serverinfo.numlines = 0;
 	s = s_serverinfo.info;
-	while ( s ) {
-		Info_NextPair( s, key, value );
+	while ( s && *s ) {
+		s = Info_NextPair( s, key, value );
 		if ( !key[0] ) {
 			break;
 		}
