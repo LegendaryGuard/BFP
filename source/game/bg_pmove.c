@@ -2434,6 +2434,12 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		return;
 	}
 
+	// BFP - Avoid entering jump flying status after recharging ki
+	if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE )
+	&& pm->ps->pm_time > 0 ) {
+		return;
+	}
+
 	point[0] = pm->ps->origin[0];
 	point[1] = pm->ps->origin[1];
 	point[2] = pm->ps->origin[2] - 0.25;
@@ -2449,30 +2455,27 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_WALK
 		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_WALKCR
 		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
-		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN ) ) {
-		if ( pml.groundTrace.contents & MASK_PLAYERSOLID ) {
-			// do a smooth jump animation like BFP does
-			if ( !( pm->cmd.buttons & BUTTON_KI_CHARGE )
-			&& pm->ps->weaponstate != WEAPON_KIEXPLOSIONWAVE
-			&& pm->ps->weaponstate != WEAPON_STUN ) {
-				pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
-				pm->ps->velocity[2] = JUMP_VELOCITY - 200;
+		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN ) 
+	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
+	&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
+	&& pm->ps->weaponstate != WEAPON_KIEXPLOSIONWAVE
+	&& pm->ps->weaponstate != WEAPON_STUN ) {
+		pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
+		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
 
-				// don't play the animation when being transformed
-				if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
-					if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
-					&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
-						if ( pm->cmd.forwardmove > 0 ) {
-							PM_TorsoStatusAnim( TORSO_FLYA );
-						} else if ( pm->cmd.forwardmove < 0 ) {
-							PM_TorsoStatusAnim( TORSO_FLYB );
-						} else {
-							PM_TorsoStatusAnim( TORSO_STAND );
-						}
-					}
-					PM_ForceLegsAnim( LEGS_JUMP );
+		// don't play the animation when being transformed
+		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
+			if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
+			&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
+				if ( pm->cmd.forwardmove > 0 ) {
+					PM_TorsoStatusAnim( TORSO_FLYA );
+				} else if ( pm->cmd.forwardmove < 0 ) {
+					PM_TorsoStatusAnim( TORSO_FLYB );
+				} else {
+					PM_TorsoStatusAnim( TORSO_STAND );
 				}
 			}
+			PM_ForceLegsAnim( LEGS_JUMP );
 		}
 	}
 }
@@ -2550,7 +2553,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 	}
 
 	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
-		pm->ps->pm_time = 0; // Make sure the animation isn't playing yet
+		pm->ps->pm_time = 200; // Make sure to avoid entering jump flying status after recharging ki
 		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
 		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
 		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
@@ -3173,13 +3176,6 @@ static qboolean PM_EnableFlight( void ) { // BFP - Flight
 		return qfalse;
 	}
 
-	// do not proceed to the jump event while enables the flight in the charging status
-	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE )
-	&& ( ( pm->ps->eFlags & EF_FLIGHT ) || ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) ) ) {
-		pm->ps->groundEntityNum = ENTITYNUM_NONE;
-		return qfalse;
-	}
-
 	return qtrue;
 }
 
@@ -3441,7 +3437,9 @@ void PmoveSingle (pmove_t *pmove) {
 	// set mins, maxs, and viewheight
 	PM_CheckDuck ();
 
+	// BFP - Flight start
 	PM_FlightStart();
+
 	// set groundentity
 	PM_GroundTrace();
 
