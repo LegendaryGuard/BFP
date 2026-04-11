@@ -264,6 +264,16 @@ static void PM_SlopesNeargroundAnim( qboolean is_slope ) { // BFP - Animation ha
 	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
 		return;
 	}
+
+	if ( pm->waterlevel > 0 ) { // not for water
+		return;
+	}
+
+	// don't apply if it's already striking
+	if ( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_MELEE_STRIKE ) {
+		return;
+	}
+
 	if ( is_slope ) {
 		if ( pm->ps->pm_flags & PMF_DUCKED ) {
 			PM_ContinueLegsAnim( LEGS_IDLECR );
@@ -837,8 +847,13 @@ static void PM_WaterMove( void ) {
 	// BFP - Underwater animation handling, uses flying animation in that case
 	if ( pm->waterlevel > 2 ) {
 		PM_ContinueFlyAnim();
+		// keep charging animation, otherwise looks jerky
+		if ( ( pm->cmd.buttons & BUTTON_KI_CHARGE )
+		&& !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+			PM_ContinueTorsoAnim( TORSO_CHARGE );
+			PM_ContinueLegsAnim( LEGS_CHARGE );
+		}
 	}
-
 
 	// BFP - Melee strike legs animation
 	PM_ContinueMeleeStrikeLegsAnim( qtrue );
@@ -1290,7 +1305,11 @@ static void PM_WalkMove( void ) {
 
 	if ( pm->ps->weaponstate != WEAPON_BEAMFIRING // BFP - Don't increase speed when beam firing
 	&& ( ( pm->ps->eFlags & EF_KI_BOOST ) || ( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
-		wishspeed += PM_KiBoostPowerlevelSpeed();
+		if ( pm->ps->pm_flags & PMF_DUCKED ) { // ducking uses 30% of speed
+			wishspeed += ( 1.0 - pm_duckScale ) * ( PM_KiBoostPowerlevelSpeed() * 0.3 );
+		} else {
+			wishspeed += PM_KiBoostPowerlevelSpeed();
+		}
 	}
 
 	// when a player gets hit, they temporarily lose
