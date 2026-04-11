@@ -1211,8 +1211,6 @@ typedef enum _flag_status {
 #ifndef LERP
 #define LERP( a, b, w ) ( ( a ) * ( 1.0f - ( w ) ) + ( b ) * ( w ) )
 #endif
-#endif	// __Q_SHARED_H
-
 
 // custom functions
 int BG_sprintf( char *buf, const char *format, ... );
@@ -1238,3 +1236,5 @@ qboolean  BigEndian( void );
 
 
 float mp3dec_pow( float x, float y ); // BFP - Unpack music, memory management for ui_mp3decoder
+
+#endif	// __Q_SHARED_H
