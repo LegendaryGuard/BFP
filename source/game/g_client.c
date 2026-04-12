@@ -903,13 +903,6 @@ void ClientCheckMonsterGone( gentity_t *ent ) { // BFP - Monster gamemode functi
 				level.monsterClientNum = g_entities[i].client->ps.clientNum;
 				g_entities[i].client->ps.eFlags |= EF_MONSTER;
 				becameMonster = qtrue;
-				// force change if playing with that "monster" thing
-				if ( g_monster.integer > 0 ) {
-					ClientUserinfoChanged( g_entities[i].client->ps.clientNum );
-					if ( ent->client->pers.connected == CON_CONNECTED ) {
-						ClientUserinfoChanged( ent->client->ps.clientNum );
-					}
-				}
 				respawn( &g_entities[i] );
 				break;
 			}
@@ -1442,7 +1435,7 @@ void ClientSpawn(gentity_t *ent) {
 	SetClientViewAngle( ent, spawn_angles );
 
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
-		// BFP - Monster gamemode, if this guy spectated, respawn the other guy who can be become a monster
+		// BFP - Monster gamemode, if this guy spectated, respawn the other guy who can become a monster
 		ClientCheckMonsterGone( ent );
 	} else {
 		G_KillBox( ent );
@@ -1561,7 +1554,7 @@ void ClientDisconnect( int clientNum ) {
 		ClientUserinfoChanged( level.sortedClients[0] );
 	}
 
-	// BFP - Monster gamemode, if this guy disconnected, respawn the other guy who can be become a monster
+	// BFP - Monster gamemode, if this guy disconnected, respawn the other guy who can become a monster
 	ClientCheckMonsterGone( ent );
 
 	trap_UnlinkEntity (ent);

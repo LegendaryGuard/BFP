@@ -2518,8 +2518,6 @@ static void PM_FlightAnimation( void ) { // BFP - Flight
 		return;
 	}
 
-	// Handle the player movement animation if trying to change quickly the direction of forward or backward
-	
 	// BFP - That happens when the player is landing nearly
 	if ( !( pm->ps->eFlags & EF_FLIGHT )
 	&& !( pm->ps->pm_flags & PMF_JUMP_HELD )
@@ -2580,6 +2578,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		}
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
+			&& !( pm->ps->eFlags & EF_FLIGHT )
 			&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
 				|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
 			&& pm->waterlevel <= 1 // don't force inside the water
