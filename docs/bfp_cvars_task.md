@@ -11,6 +11,7 @@ For more, look in [cvar_bfp_list.txt](docs/cvar_bfp_list.txt)
 - [x] cg_superdeformed
 - [x] cg_beamTrail
 - [x] cg_kiTrail
+- [x] cg_forceSkin
 - [x] cg_yrgolroxor
 - [x] cg_thirdPersonHeight
 - [x] cg_fixedThirdPerson

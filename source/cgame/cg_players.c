@@ -1035,6 +1035,11 @@ void CG_NewClientInfo( int clientNum ) {
 		*slash = 0;
 	}
 
+	// BFP - cg_forceSkin, forces the default skin for each model
+	if ( cg_forceSkin.integer ) {
+		Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
+	}
+
 	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
 #if 0
 	if ( cg_forceModel.integer ) {
@@ -1078,6 +1083,11 @@ void CG_NewClientInfo( int clientNum ) {
 		Q_strncpyz( newInfo.headSkinName, slash + 1, sizeof( newInfo.headSkinName ) );
 		// truncate modelName
 		*slash = 0;
+	}
+
+	// BFP - cg_forceSkin, forces the default skin for each model
+	if ( cg_forceSkin.integer ) {
+		Q_strncpyz( newInfo.headSkinName, "default", sizeof( newInfo.headSkinName ) );
 	}
 
 	// BFP - Change the model without impeding with defer
