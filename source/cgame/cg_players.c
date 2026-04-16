@@ -1870,7 +1870,8 @@ static void CG_PlayerFloatSprite( centity_t *cent, qhandle_t shader ) {
 	int				rf;
 	refEntity_t		ent;
 
-	if ( cent->currentState.number == cg.snap->ps.clientNum && !cg.renderingThirdPerson ) {
+	// BFP - Don't show the float sprite to the player itself, only in mirrors
+	if ( cent->currentState.number == cg.snap->ps.clientNum ) { // && !cg.renderingThirdPerson ) {
 		rf = RF_THIRD_PERSON;		// only show in mirrors
 	} else {
 		rf = 0;
@@ -1900,11 +1901,11 @@ static void CG_PlayerFloatSprite( centity_t *cent, qhandle_t shader ) {
 ===============
 CG_FloatSpriteCheck
 
-Check if there's some EF flag enabled, also don't show the float sprite to the player itself
+Check if there's some EF flag enabled
 ===============
 */
 static qboolean CG_FloatSpriteCheck( centity_t *cent, int eFlag, qhandle_t shader ) { // BFP - Check EF flag and don't show float sprite to the player itself
-	if ( ( cent->currentState.eFlags & eFlag ) && cent->currentState.clientNum != cg.snap->ps.clientNum ) {
+	if ( cent->currentState.eFlags & eFlag ) {
 		CG_PlayerFloatSprite( cent, shader );
 		return qtrue;
 	}
@@ -1936,7 +1937,6 @@ static void CG_PlayerSprites( centity_t *cent ) {
 
 	team = cgs.clientinfo[ cent->currentState.clientNum ].team;
 	if ( !(cent->currentState.eFlags & EF_DEAD) && 
-		cent->currentState.clientNum != cg.snap->ps.clientNum && // BFP - Don't show the friend team shader to the player itself
 		cg.snap->ps.persistant[PERS_TEAM] == team &&
 		cgs.gametype >= GT_TEAM) {
 		// BFP - BFP doesn't use cg_drawFriend to draw that floating friend sprite, keeps enabled always. 
@@ -3229,8 +3229,8 @@ void CG_Player( centity_t *cent ) {
 		if ( !( cent->currentState.eFlags & EF_DEAD ) ) {
 			// BFP - Set dead origin where the player was alive when First person vis mode is being used
 			VectorCopy( cg.refdef.vieworg, deadOriginDrawOwnModel );
-			CG_PositionRotatedEntityOnTag( &savedHead, &savedHead, head.hModel /*ci->headModel*/, "tag_eyes" );
-			CG_OffsetFirstPersonView( cent, &savedHead, head.hModel /*ci->headModel*/ );
+			CG_PositionRotatedEntityOnTag( &savedHead, &savedHead, savedHead.hModel /*ci->headModel*/, "tag_eyes" );
+			CG_OffsetFirstPersonView( cent, &savedHead, savedHead.hModel /*ci->headModel*/ );
 		} else if ( cg.snap->ps.stats[STAT_HEALTH] <= 0
 		&& ( cent->currentState.eFlags & EF_DEAD )
 		&& cg_drawOwnModel.integer >= 1 ) { // BFP - Death camera only for First person vis
