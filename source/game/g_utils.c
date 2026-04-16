@@ -259,6 +259,53 @@ qboolean G_PlayerModelExistsOnServer( const char *modelName ) { // BFP - Illegal
 	return qfalse;
 }
 
+/*
+==================
+G_ResolvePlayerModel
+
+Resolves a model string (e.g. "bfp3-") to 
+the actual model name (e.g. "bfp3-ryuujin"),
+keeps the skin part if it exists
+==================
+*/
+void G_ResolvePlayerModel( const char userinfo[MAX_INFO_STRING], const char *input, char *output, int outSize ) { // BFP - Resolve player model when loading by prefix
+	char	model[MAX_QPATH];
+	char	skinName[MAX_QPATH];
+	char	resolved[MAX_QPATH];
+	char	*slash;
+	int		len, i;
+
+	Q_strncpyz( output, input, outSize );
+	Q_strncpyz( model, output, sizeof( model ) );
+
+	if ( g_gametype.integer >= GT_TEAM ) {
+		Q_strncpyz( model, Info_ValueForKey (userinfo, "team_model"), sizeof( model ) );
+	} else {
+		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
+	}
+
+	// if only executes the prefix, e.g. "bfp1-", loads the first player model in the list for this prefix
+	len = strlen( model );
+	if ( len > 0 && model[len - 1] == '-' ) {
+		resolved[0] = '\0';
+		for ( i = 0; i < serverModels.numModels; i++ ) {
+			if ( !Q_strncmp( serverModels.modelNames[i], model, len ) ) {
+				Q_strncpyz( resolved, serverModels.modelNames[i], sizeof(resolved) );
+				break;
+			}
+		}
+		// if found, use it; else keep the original one, it might not exist
+		if ( resolved[0] ) {
+			Q_strncpyz( output, resolved, outSize );
+		} else {
+			Q_strncpyz( output, model, outSize ); // fallback
+		}
+	} else {
+		// not a prefix, just use model
+		Q_strncpyz( output, model, outSize );
+	}
+}
+
 //=====================================================================
 
 

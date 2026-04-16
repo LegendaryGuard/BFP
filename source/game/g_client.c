@@ -625,6 +625,8 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	// int		health;
 	char	*s;
 	char	model[MAX_QPATH];
+	// BFP - Check model in list
+	char	modelCheck[MAX_QPATH];
 	char	oldname[MAX_STRING_CHARS];
 	gclient_t	*client;
 	// BFP - No color1
@@ -713,10 +715,12 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	}
 
 	// set model
-	Q_strncpyz( model, G_GetPlayerModelName( clientNum, userinfo ), sizeof( model ) );
+	// BFP - Resolve player model when loading by prefix
+	G_ResolvePlayerModel( userinfo, model, model, sizeof( model ) );
 
 	// BFP - Kick/force to spectate the player who uses an illegal model which isn't available in the server
-	if ( !G_PlayerModelExistsOnServer( model )
+	Q_strncpyz( modelCheck, G_GetPlayerModelName( clientNum, userinfo ), sizeof( modelCheck ) );
+	if ( !G_PlayerModelExistsOnServer( modelCheck )
 	&& ( g_gametype.integer != GT_MONSTER
 	|| ( g_gametype.integer == GT_MONSTER && g_monster.integer < 1 ) ) ) {
 #if KICK_ILLEGAL_PLAYER_MODEL
