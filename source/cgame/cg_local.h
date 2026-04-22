@@ -79,9 +79,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define TEAM_OVERLAY_MAXNAME_WIDTH	12
 #define TEAM_OVERLAY_MAXLOCATION_WIDTH	16
 
-#define	DEFAULT_MODEL			"sarge"
-#define	DEFAULT_TEAM_MODEL		"sarge"
-#define	DEFAULT_TEAM_HEAD		"sarge"
+#define	DEFAULT_MODEL			"bfp1-kyah"	// BFP - Before Q3: "sarge"
+#define	DEFAULT_TEAM_MODEL		"bfp1-kyah"	// BFP - Before Q3: "sarge"
+#define	DEFAULT_TEAM_HEAD		"bfp1-kyah"	// BFP - Before Q3: "sarge"
 
 #define DEFAULT_REDTEAM_NAME		"Warriors"	// BFP - Before Q3: "Stroggs"
 #define DEFAULT_BLUETEAM_NAME		"Fighters"	// BFP - Before Q3: "Pagans"

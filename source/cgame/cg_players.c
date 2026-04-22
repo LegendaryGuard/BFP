@@ -727,7 +727,9 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	modelloaded = qtrue;
 	if ( !CG_RegisterClientModelname( ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname ) ) {
 		if ( cg_buildScript.integer ) {
-			CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s %s ) failed", ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname );
+			// BFP - Use a different error message like original BFP
+			// CG_Error( "CG_RegisterClientModelname( %s, %s, %s, %s %s ) failed", ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname );
+			CG_Error( "Model \"%s\" not found.\n", ci->modelName );
 			modelloaded = qfalse; // BFP - if the model didn't load
 		}
 
@@ -750,6 +752,9 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 			}
 		}
 #endif
+		if ( !CG_RegisterClientModelname( ci, DEFAULT_MODEL, "default", DEFAULT_MODEL, "default", teamname ) ) {
+			CG_Error( "DEFAULT_MODEL (%s) failed to register", DEFAULT_MODEL );
+		}
 	}
 
 	ci->newAnims = qfalse;
