@@ -1114,7 +1114,12 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		VectorNormalize(dir);
 
 		// BFP - Lose altitude while flying/floating underwater
-		dir[2] = -1;
+		if ( !( targ->client->ps.pm_flags & PMF_JUMP_HELD )
+		// BFP - Don't apply for rocket jumping
+		&& dir[2] <= 0.5f
+		|| targ->client->ps.groundEntityNum != ENTITYNUM_NONE ) {
+			dir[2] = -1;
+		}
 	}
 
 	knockback = damage;
@@ -1124,6 +1129,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// BFP - Add enough knockback to push the targets while receiving explosion/projectile impacts
 	if ( mod != MOD_MELEE ) {
 		knockback = 200;
+		// BFP - Rocket jumping
+		if ( dir[2] > 0.5f ) {
+			knockback = 50;
+		}
 	} else { // BFP - Melee knockback
 		knockback = meleeKnockback;
 	}
@@ -1153,6 +1162,18 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		mass = 200;
 
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
+		// BFP - Rocket jumping
+		if ( ( ( targ->client->ps.pm_flags & PMF_JUMP_HELD )
+		|| targ->waterlevel > 1 )
+		&& dir[2] > 0.5f ) {
+			// increase vertical impulse by 25%
+			kvel[2] *= 1.25f;
+			if ( targ->waterlevel > 1 ) { // if underwater double the impulse and a little push
+				VectorScale( kvel, 2, kvel );
+				kvel[0] *= 1.5f;
+				kvel[1] *= 1.5f;
+			}
+		}
 		VectorAdd (targ->client->ps.velocity, kvel, targ->client->ps.velocity);
 
 		// set the timer so that the other client can't cancel

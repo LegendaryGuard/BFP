@@ -654,7 +654,7 @@ static void PM_Drifting( void ) { // BFP - Drifting
 	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR
 	|| ( pm->ps->pm_flags & PMF_RESPAWNED )
 	// handling for underwater
-	|| ( pm->waterlevel && pm->ps->velocity[0] <= 0 && pm->ps->velocity[1] <= 0 && pm->ps->velocity[2] <= 0 ) ) {
+	|| ( pm->waterlevel && pm->ps->velocity[0] <= 0 && pm->ps->velocity[1] <= 0 ) ) {
 		return;
 	}
 
@@ -662,14 +662,14 @@ static void PM_Drifting( void ) { // BFP - Drifting
 	rightSpeed = DotProduct( pm->ps->velocity, pml.right );
 
 	// apply directional drift when keys are released
-	if ( pm->cmd.rightmove == 0 && Q_fabs( rightSpeed ) > 0.0f
+	if ( !pm->cmd.rightmove && Q_fabs( rightSpeed ) > 0.0f
 	&& pm->ps->velocity[2] < 0 ) {
 		driftFactor = 0.001;
 		VectorScale( pml.up, driftFactor * Q_fabs( rightSpeed ), drift );
 		VectorAdd( pm->ps->velocity, drift, pm->ps->velocity );
 	}
 
-	if ( pm->cmd.forwardmove == 0 ) {
+	if ( !pm->cmd.forwardmove ) {
 		// drift a bit more when slowing down
 		if ( Q_fabs( forwardSpeed ) < 100.0f ) {
 			driftFactor = 0.008;
