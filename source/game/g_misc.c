@@ -179,15 +179,12 @@ void locateCamera( gentity_t *ent ) {
 	}
 	ent->r.ownerNum = owner->s.number;
 
-	// BFP - Replaced to send powerlevel info to cgame
-#if 0
 	// frame holds the rotate speed
 	if ( owner->spawnflags & 1 ) {
 		ent->s.frame = 25;
 	} else if ( owner->spawnflags & 2 ) {
 		ent->s.frame = 75;
 	}
-#endif
 
 	// swing camera ?
 	if ( owner->spawnflags & 4 ) {
