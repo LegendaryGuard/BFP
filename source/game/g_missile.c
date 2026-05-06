@@ -828,8 +828,9 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	SnapVector( beam->s.pos.trDelta );			// save net bandwidth
 	VectorCopy( start, beam->r.currentOrigin );
 
-	// BFP - Set beam delta time to avoid timescale < 1 issues
+	// BFP - Set beam delta time and distance to avoid timescale < 1 issues
 	beam->deltaTime = level.time;
+	beam->distance = 0;
 
 	// BFP - Collision radius
 	VectorSet( beam->r.mins, -radius, -radius, -radius );

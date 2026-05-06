@@ -2649,6 +2649,7 @@ static void PM_Melee( void ) { // BFP - Melee
 	if ( ( pm->ps->pm_flags & PMF_MELEE ) 
 	|| ( pm->cmd.buttons & BUTTON_MELEE ) ) {
 		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
+		pm->ps->eFlags &= ~EF_READY_KI_ATTACK; // leave ready ki attack
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_BLOCK );
 	}
 }

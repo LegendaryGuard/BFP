@@ -1115,9 +1115,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 		// BFP - Lose altitude while flying/floating underwater
 		if ( !( ( targ->client->ps.pm_flags & PMF_JUMP_HELD )
+		|| targ->client->ps.groundEntityNum != ENTITYNUM_NONE )
 		// BFP - Don't apply for rocket jumping
-		&& dir[2] <= 0.5f )
-		|| targ->client->ps.groundEntityNum != ENTITYNUM_NONE ) {
+		&& dir[2] <= 0.5f ) {
 			dir[2] = -1;
 		}
 	}

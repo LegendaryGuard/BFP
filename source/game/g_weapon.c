@@ -747,16 +747,15 @@ void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
 }
 
 static void Weapon_BFPBeam_SetDistance( gentity_t *beam, float distance, vec3_t beamViewPos ) { // BFP - Set BFP beam distance
-	gentity_t	*beamOwner = &g_entities[ beam->r.ownerNum ];
 	vec3_t		newPos;
 	float		correctBeamDist;
 
-	if ( !beamOwner->client ) {
+	if ( !beam->parent->client ) {
 		return;
 	}
 
-	AngleVectors( beamOwner->client->ps.viewangles, forward, NULL, NULL );
-	CalcMuzzlePoint( beamOwner, forward, NULL, NULL, muzzle );
+	AngleVectors( beam->parent->client->ps.viewangles, forward, NULL, NULL );
+	CalcMuzzlePoint( beam->parent, forward, NULL, NULL, muzzle );
 
 	VectorMA( muzzle, distance, forward, newPos );
 
@@ -773,7 +772,7 @@ static void Weapon_BFPBeam_SetDistance( gentity_t *beam, float distance, vec3_t 
 	beam->s.pos.trTime = level.time;
 }
 
-static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, gentity_t *owner, vec3_t ownerViewPos, float ownerDist ) { // BFP - BFP Beam struggle
+static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, float ownerDist ) { // BFP - BFP Beam struggle
 	gentity_t	*target = NULL;
 	gentity_t	*rad = NULL;
 	vec3_t		raddir, targetViewPos;
@@ -808,31 +807,29 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, gentity_t *owner, vec3_t
 		return qfalse;
 	}
 
-	// get beam target owner
-	rad = &g_entities[target->r.ownerNum];
-	if ( !rad || !rad->client ) {
+	if ( !target->parent || !target->parent->client ) {
 		return qfalse;
 	}
 
 	// you're in a struggle, don't move!
-	owner->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
-	rad->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
+	ent->parent->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
+	target->parent->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
 
 	// calculate power using ki charge points
-	powerEnt = owner->client->kiChargePoints;
-	powerTarget = rad->client->kiChargePoints;
-	if ( ( owner->client->ps.eFlags & EF_KI_BOOST )
-	|| ( owner->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
+	powerEnt = ent->parent->client->kiChargePoints;
+	powerTarget = target->parent->client->kiChargePoints;
+	if ( ( ent->parent->client->ps.eFlags & EF_KI_BOOST )
+	|| ( ent->parent->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
 		powerEnt *= 2;
 	}
-	if ( ( rad->client->ps.eFlags & EF_KI_BOOST )
-	|| ( rad->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
+	if ( ( target->parent->client->ps.eFlags & EF_KI_BOOST )
+	|| ( target->parent->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
 		powerTarget *= 2;
 	}
 
 	// get beam target distance
-	VectorCopy( rad->client->ps.origin, targetViewPos );
-	targetViewPos[2] += rad->client->ps.viewheight;
+	VectorCopy( target->parent->client->ps.origin, targetViewPos );
+	targetViewPos[2] += target->parent->client->ps.viewheight;
 	VectorSubtract( target->r.currentOrigin, targetViewPos, raddir );
 	distTarget = VectorLength( raddir );
 
@@ -880,15 +877,14 @@ static qboolean Weapon_BFPBeamTrace ( gentity_t *ent, vec3_t origin ) { // BFP -
 
 void Weapon_BFPBeamRun ( gentity_t *ent ) // BFP - BFP Beam run
 {
-	gentity_t	*owner = &g_entities[ent->r.ownerNum];
 	vec3_t		ownerViewPos, vel, dir;
 	float		distance, deltaTime;
 
-	VectorCopy( owner->client->ps.origin, ownerViewPos );
-	ownerViewPos[2] += owner->client->ps.viewheight;
-	AngleVectors( owner->client->ps.viewangles, forward, NULL, NULL );
+	VectorCopy( ent->parent->client->ps.origin, ownerViewPos );
+	ownerViewPos[2] += ent->parent->client->ps.viewheight;
+	AngleVectors( ent->parent->client->ps.viewangles, forward, NULL, NULL );
 
-	CalcMuzzlePoint( owner, forward, NULL, NULL, muzzle );
+	CalcMuzzlePoint( ent->parent, forward, NULL, NULL, muzzle );
 
 	VectorSubtract( ent->r.currentOrigin, ownerViewPos, dir );
 
@@ -900,7 +896,7 @@ void Weapon_BFPBeamRun ( gentity_t *ent ) // BFP - BFP Beam run
 
 	VectorMA( muzzle, distance, forward, ent->s.pos.trBase );
 	distance = VectorLength( dir );
-	if ( !Weapon_BFPBeamStruggle( ent, owner, ownerViewPos, distance ) ) {
+	if ( !Weapon_BFPBeamStruggle( ent, ownerViewPos, distance ) ) {
 		VectorScale( forward, ent->speed, vel );
 		VectorCopy( vel, ent->s.pos.trDelta );
 	}
