@@ -87,6 +87,11 @@ typedef struct {
 	int				nummaps;
 	int				page;
 	int				maxpages;
+
+	// BFP - Maps pagination
+	menutext_s		mapspagetext;
+	char			mapspagetextbuffer[64];
+
 	char			maplist[MAX_SERVERMAPS][MAX_NAMELENGTH];
 	int				mapGamebits[MAX_SERVERMAPS];
 } startserver_t;
@@ -269,6 +274,14 @@ static void StartServer_Update( void ) {
 
 		// set the map name
 		strcpy( s_startserver.mapname.string, s_startserver.maplist[s_startserver.currentmap] );
+	}
+
+	// BFP - Maps pagination
+	if ( s_startserver.nummaps > 0 ) {
+		Com_sprintf( s_startserver.mapspagetextbuffer, sizeof(s_startserver.mapspagetextbuffer),
+					"Page %d of %d", s_startserver.page + 1, s_startserver.maxpages );
+	} else {
+		s_startserver.mapspagetextbuffer[0] = '\0';
 	}
 	
 	Q_strupr( s_startserver.mapname.string );
@@ -506,6 +519,18 @@ static void StartServer_GametypeDescriptionScrollDraw( void *self ) { // BFP - G
 
 /*
 =================
+StartServer_MapsPaginationDraw
+=================
+*/
+static void StartServer_MapsPaginationDraw( void *self ) { // BFP - Maps pagination
+	if ( s_startserver.mapspagetextbuffer[0] ) {
+		UI_DrawString( 432, 408, s_startserver.mapspagetextbuffer, UI_CENTER|UI_SMALLFONT, color_white );
+	}
+}
+
+
+/*
+=================
 StartServer_MenuInit
 =================
 */
@@ -658,6 +683,11 @@ static void StartServer_MenuInit( void ) {
 	s_startserver.item_null.width			= 640;
 	s_startserver.item_null.height			= 480;
 
+	// BFP - Maps pagination
+	s_startserver.mapspagetextbuffer[0] = '\0';
+	s_startserver.mapspagetext.generic.type			= MTYPE_PTEXT;
+    s_startserver.mapspagetext.generic.ownerdraw	= StartServer_MapsPaginationDraw;
+
 	Menu_AddItem( &s_startserver.menu, &s_startserver.menubg ); // BFP - Menu background
 	Menu_AddItem( &s_startserver.menu, &s_startserver.barlog ); // BFP - barlog
 	Menu_AddItem( &s_startserver.menu, &s_startserver.banner );
@@ -676,6 +706,7 @@ static void StartServer_MenuInit( void ) {
 	Menu_AddItem( &s_startserver.menu, &s_startserver.back );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.next );
 	Menu_AddItem( &s_startserver.menu, &s_startserver.mapname );
+	Menu_AddItem( &s_startserver.menu, &s_startserver.mapspagetext ); // BFP - Maps pagination
 	Menu_AddItem( &s_startserver.menu, &s_startserver.item_null );
 
 	StartServer_GametypeEvent( NULL, QM_ACTIVATED );
