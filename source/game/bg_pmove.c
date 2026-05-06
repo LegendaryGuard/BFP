@@ -2682,6 +2682,20 @@ static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 	}
 }
 
+/*
+==============
+PM_BeamStruggleStatus
+
+Handle beam struggle status
+==============
+*/
+static void PM_BeamStruggleStatus( void ) { // BFP - Beam struggle handling
+	if ( pm->ps->weaponstate == WEAPON_BEAMSTRUGGLE ) {
+		// don't move, also these keys cannot be used
+		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
+	}
+}
+
 
 /*
 ===========
@@ -2997,6 +3011,8 @@ static void PM_Weapon( void ) {
 	// BFP - NOTE: The beam is triggering until pressing the attack key again after holded, using ki charge or blocking
 	// Pressing attack key again or changing weapon, the beam is exploded before the impact
 	case WEAPON_BEAMFIRING:
+	// BFP - NOTE: Lock movement during beam struggle
+	case WEAPON_BEAMSTRUGGLE:
 		if ( ( pm->cmd.buttons & BUTTON_ATTACK )
 		|| ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_AURA ) )
 		|| ( pm->ps->pm_flags & PMF_BLOCK )
@@ -3470,6 +3486,9 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Ki explosion wave handling
 	PM_KiExplosionWave();
+
+	// BFP - Beam struggle handling
+	PM_BeamStruggleStatus();
 
 	PM_DropTimers();
 

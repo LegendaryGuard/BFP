@@ -20,7 +20,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [ ] Attacksets (configurable for cfgs)
 - [ ] BFP bots logic (handling the flight, ki boost, ki charge, use of ki attacks, melee, ...)
 - [ ] Cvars as described on old docs
-- [ ] Power Struggles (when two beam attacks collide)
 - [ ] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
 - [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
@@ -51,6 +50,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Melee feature
 - [x] Remove some items like powerups and health pickups
 - [x] Particles
+- [x] Power Struggles (when two beam attacks collide)
 - [x] Powerlevel and Power Tiers indicated on old docs
 - [x] Playable third person mode and first person vis mode
 - [x] Remove weapon visuals (models and stuff)

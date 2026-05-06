@@ -824,6 +824,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 	int			currentTime = level.time; // use level.time which is not affected by timescale
 
 	if ( client->ps.weaponstate == WEAPON_BEAMFIRING
+	|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE
 	|| client->ps.weaponstate == WEAPON_KIEXPLOSIONWAVE
 	|| client->ps.weaponstate == WEAPON_STUN ) {
 		return;

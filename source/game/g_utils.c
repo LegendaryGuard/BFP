@@ -369,6 +369,36 @@ gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match)
 
 
 /*
+================
+FindRadius
+================
+*/
+gentity_t *FindRadius ( gentity_t *from, vec3_t org, float rad ) { // BFP - FindRadius function
+	vec3_t eorg;
+	int j;
+
+	if ( !from )
+		from = g_entities;
+	else
+		from++;
+
+	for ( ; from < &g_entities[level.num_entities]; from++ ) {
+		if ( !from->inuse )
+			continue;
+
+		for ( j = 0; j < 3; j++ )
+			eorg[j] = org[j] - ( from->r.currentOrigin[j] + ( from->r.mins[j] + from->r.maxs[j] ) * 0.5 );
+
+		if ( VectorLength( eorg ) > rad )
+			continue;
+
+		return from;
+	}
+	return NULL;
+}
+
+
+/*
 =============
 G_PickTarget
 

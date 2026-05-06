@@ -144,6 +144,7 @@ typedef enum {
 	// (originally BFP didn't use that because of their abuse of WP_, PW_ and STAT_ stuff in their networking):
 	WEAPON_CHARGING, // BFP - Ki attack charging
 	WEAPON_BEAMFIRING, // BFP - Beam fire
+	WEAPON_BEAMSTRUGGLE, // BFP - Beam struggle
 	WEAPON_EXPLODING_KIBALLFIRING, // BFP - Quick ki explosion and homing ball fire
 	WEAPON_DIVIDINGKIBALLFIRING, // BFP - Dividing ball fire
 	WEAPON_KIEXPLOSIONWAVE, // BFP - Ki explosion wave

@@ -182,6 +182,9 @@ struct gentity_s {
 	team_t		fteam;
 
 	gitem_t		*item;			// for bonus items
+
+	float		deltaTime;		// BFP - For beam struggle
+	float		distance;		// BFP - For beam struggle
 };
 
 
@@ -521,6 +524,8 @@ gentity_t *G_PickTarget ( const char *targetname );
 void	G_UseTargets (gentity_t *ent, gentity_t *activator);
 void	G_SetMovedir ( vec3_t angles, vec3_t movedir);
 
+gentity_t *FindRadius ( gentity_t *from, vec3_t org, float rad ); // BFP - FindRadius function
+
 void	G_InitGentity( gentity_t *e );
 gentity_t	*G_Spawn (void);
 gentity_t *G_TempEntity( vec3_t origin, int event );
@@ -611,7 +616,7 @@ void Weapon_HookThink (gentity_t *ent);
 // BFP - BFP Beam attack
 void Weapon_BFPBeam_Fire ( gentity_t *ent );
 void Weapon_BFPBeamFree ( gentity_t *ent );
-void Weapon_BFPBeamThink ( gentity_t *ent );
+void Weapon_BFPBeamRun ( gentity_t *ent );
 
 
 //

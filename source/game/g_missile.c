@@ -293,20 +293,6 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 
 /*
 ================
-G_BFPBeamStop
-================
-*/
-static void G_BFPBeamStop( gentity_t *ent ) { // BFP - BFP Beam stop
-	if ( ent && ent->client ) {
-		Weapon_BFPBeamFree( ent );
-		ent->client->ps.pm_flags &= ~PMF_KI_ATTACK;
-		ent->client->ps.weaponstate = WEAPON_READY;
-		ent->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
-	}
-}
-
-/*
-================
 G_MissileImpact
 ================
 */
@@ -510,10 +496,9 @@ void G_RunMissile( gentity_t *ent ) {
 
 	// WP_GRAPPLING_HOOK would be the beam
 	if ( client 
-	&& client->ps.weaponstate != WEAPON_BEAMFIRING
+	&& ( client->ps.weaponstate != WEAPON_BEAMFIRING
+	&& client->ps.weaponstate != WEAPON_BEAMSTRUGGLE )
 	&& ent->s.weapon == WP_GRAPPLING_HOOK ) {
-		client->ps.pm_flags &= ~PMF_KI_ATTACK;
-		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 		G_MissileImpact( ent, &tr );
 	}
 
@@ -547,21 +532,13 @@ void G_RunMissile( gentity_t *ent ) {
 	// BFP - Beam handling
 	if ( client 
 	&& ent->s.weapon == WP_GRAPPLING_HOOK ) {
-		Weapon_BFPBeamThink( ent );
+		Weapon_BFPBeamRun( ent );
 
-		// if just died, then stop
-		if ( client->ps.pm_type == PM_DEAD ) {
-			G_BFPBeamStop( ent );
-			return;
-		}
-
-		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
-			G_BFPBeamStop( ent );
-			return;
-		}
-
-		if ( tr.fraction != 1 ) {
-			G_BFPBeamStop( ent );
+		if ( client->ps.pm_type == PM_DEAD 				// if just died, then stop
+		|| client->pers.connected == CON_DISCONNECTED 	// if disconnected, stop
+		|| ( tr.surfaceFlags & SURF_NOIMPACT )
+		|| tr.fraction != 1 ) {
+			Weapon_BFPBeamFree( ent );
 			return;
 		}
 	}
@@ -571,6 +548,7 @@ void G_RunMissile( gentity_t *ent ) {
 		// BFP - When the charged projectile touches into something, disable ki attack PMF flag
 		if ( client 
 		&& ( client->ps.weaponstate == WEAPON_BEAMFIRING
+		|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE
 		|| client->ps.weaponstate == WEAPON_DIVIDINGKIBALLFIRING ) ) {
 			client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		}
@@ -823,7 +801,7 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	beam = G_Spawn();
 	beam->classname = "beam";
-	beam->nextthink = level.time + 10000;
+	beam->nextthink = level.time + 20000;
 	beam->think = Weapon_BFPBeamFree;
 	beam->s.eType = ET_MISSILE;
 	beam->r.svFlags = SVF_USE_CURRENT_ORIGIN;
@@ -849,6 +827,9 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorScale( dir, beam->speed, beam->s.pos.trDelta );	// speed
 	SnapVector( beam->s.pos.trDelta );			// save net bandwidth
 	VectorCopy( start, beam->r.currentOrigin );
+
+	// BFP - Set beam delta time to avoid timescale < 1 issues
+	beam->deltaTime = level.time;
 
 	// BFP - Collision radius
 	VectorSet( beam->r.mins, -radius, -radius, -radius );

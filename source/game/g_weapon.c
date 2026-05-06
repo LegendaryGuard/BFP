@@ -737,71 +737,181 @@ void Weapon_BFPBeam_Fire ( gentity_t *ent ) // BFP - BFP Beam fire
 
 void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
 {
-	ent->parent->client->hook = NULL;
+	if ( ent && ent->parent->client ) {
+		ent->parent->client->hook = NULL;
+		ent->parent->client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		ent->parent->client->ps.weaponstate = WEAPON_READY;
+		ent->parent->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+	}
 	G_FreeEntity( ent );
 }
 
-qboolean Weapon_BFPBeamTrace ( gentity_t *ent, vec3_t origin ) { // BFP - Beam trace
-	gentity_t	*owner = &g_entities[ent->r.ownerNum];
-	gentity_t	*traceEnt = NULL;
+static void Weapon_BFPBeam_SetDistance( gentity_t *beam, float distance, vec3_t beamViewPos ) { // BFP - Set BFP beam distance
+	gentity_t	*beamOwner = &g_entities[ beam->r.ownerNum ];
+	vec3_t		newPos;
+	float		correctBeamDist;
+
+	if ( !beamOwner->client ) {
+		return;
+	}
+
+	AngleVectors( beamOwner->client->ps.viewangles, forward, NULL, NULL );
+	CalcMuzzlePoint( beamOwner, forward, NULL, NULL, muzzle );
+
+	VectorMA( muzzle, distance, forward, newPos );
+
+	VectorCopy( newPos, beam->r.currentOrigin );
+	VectorCopy( newPos, beam->s.pos.trBase );
+	VectorScale( forward, beam->speed, newPos );
+	VectorCopy( newPos, beam->s.pos.trDelta );
+	beam->distance = distance;
+
+	correctBeamDist = Distance( beam->r.currentOrigin, beamViewPos );
+	if ( correctBeamDist != distance ) {
+		VectorClear( beam->s.pos.trDelta );
+	}
+	beam->s.pos.trTime = level.time;
+}
+
+static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, gentity_t *owner, vec3_t ownerViewPos, float ownerDist ) { // BFP - BFP Beam struggle
+	gentity_t	*target = NULL;
+	gentity_t	*rad = NULL;
+	vec3_t		raddir, targetViewPos;
+	float		distTarget, powerEnt, powerTarget;
+	const float	BEAM_PUSH_STEP = 200.0f;
+
+	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, 256) ) != NULL ) {
+		if ( rad && rad->r.ownerNum == ent->r.ownerNum ) {
+			continue;
+		}
+		if ( rad && rad != ent && !Q_stricmp( rad->classname, "beam" ) ) {
+			// BFP - TODO: Enable if weapon config is going to be implemented
+#if 0
+			if ( ent->piercing && !rad->piercing ) {
+				G_MissileImpact( rad, &trace );
+				continue;
+			}
+			if ( rad->piercing && !ent->piercing ) {
+				G_MissileImpact( ent, &trace );
+				continue;
+			}
+#endif
+			VectorSubtract( rad->r.currentOrigin, ent->r.currentOrigin, raddir );
+			distTarget = VectorLength( raddir );
+			if ( target == NULL ) {
+				target = rad;
+			}
+		}
+	}
+
+	if ( !target ) {
+		return qfalse;
+	}
+
+	// get beam target owner
+	rad = &g_entities[target->r.ownerNum];
+	if ( !rad || !rad->client ) {
+		return qfalse;
+	}
+
+	// you're in a struggle, don't move!
+	owner->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
+	rad->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
+
+	// calculate power using ki charge points
+	powerEnt = owner->client->kiChargePoints;
+	powerTarget = rad->client->kiChargePoints;
+	if ( ( owner->client->ps.eFlags & EF_KI_BOOST )
+	|| ( owner->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
+		powerEnt *= 2;
+	}
+	if ( ( rad->client->ps.eFlags & EF_KI_BOOST )
+	|| ( rad->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
+		powerTarget *= 2;
+	}
+
+	// get beam target distance
+	VectorCopy( rad->client->ps.origin, targetViewPos );
+	targetViewPos[2] += rad->client->ps.viewheight;
+	VectorSubtract( target->r.currentOrigin, targetViewPos, raddir );
+	distTarget = VectorLength( raddir );
+
+	if ( powerEnt > powerTarget ) {
+		// target beam loses distance
+		Weapon_BFPBeam_SetDistance( target, distTarget - BEAM_PUSH_STEP, targetViewPos );
+	} else if ( powerTarget > powerEnt ) {
+		// owner beam loses distance
+		Weapon_BFPBeam_SetDistance( ent, ownerDist - BEAM_PUSH_STEP, ownerViewPos );
+	} else {
+		// both beams lose distance
+		Weapon_BFPBeam_SetDistance( ent, ownerDist - BEAM_PUSH_STEP, ownerViewPos );
+		Weapon_BFPBeam_SetDistance( target, distTarget - BEAM_PUSH_STEP, targetViewPos );
+	}
+
+	// visual effect
+	VectorAdd( ent->r.currentOrigin, target->r.currentOrigin, targetViewPos );
+	VectorScale( targetViewPos, 0.5f, targetViewPos );
+	{
+		gentity_t	*effect = G_TempEntity( targetViewPos, EV_BEAM_STRUGGLE );
+		effect->s.otherEntityNum = ent->s.number;
+		effect->s.otherEntityNum2 = target->s.number;
+	}
+	return qtrue;
+}
+
+static qboolean Weapon_BFPBeamTrace ( gentity_t *ent, vec3_t origin ) { // BFP - Beam trace
 	trace_t		trace;
 
 	trap_Trace( &trace, origin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, 
 				ent->r.ownerNum, MASK_SHOT | MASK_SOLID );
 
-	traceEnt = &g_entities[ trace.entityNum ];
-	if ( !Q_stricmp( traceEnt->classname, "beam" ) ) {
-		return qtrue;
-	}
-
 	if ( trace.surfaceFlags & SURF_NOIMPACT ) {
 		Weapon_BFPBeamFree( ent );
-		if ( owner->client ) {
-			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
-			owner->client->ps.weaponstate = WEAPON_READY;
-			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
-		}
 		return qtrue;
 	}
 
 	if ( trace.fraction < 1.0 ) {
 		VectorCopy( trace.endpos, ent->r.currentOrigin );
 		G_MissileImpact( ent, &trace );
-		if ( owner->client ) {
-			owner->client->ps.pm_flags &= ~PMF_KI_ATTACK;
-			owner->client->ps.weaponstate = WEAPON_READY;
-			owner->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
-		}
 		return qtrue;
 	}
 	return qfalse;
 }
 
-void Weapon_BFPBeamThink ( gentity_t *ent ) // BFP - BFP Beam think
+void Weapon_BFPBeamRun ( gentity_t *ent ) // BFP - BFP Beam run
 {
-	gentity_t *owner = &g_entities[ent->r.ownerNum];
-	vec3_t ownerViewPos, previousOrigin, newVelocity;
-	float beamSpeed = 2000;
+	gentity_t	*owner = &g_entities[ent->r.ownerNum];
+	vec3_t		ownerViewPos, vel, dir;
+	float		distance, deltaTime;
 
 	VectorCopy( owner->client->ps.origin, ownerViewPos );
 	ownerViewPos[2] += owner->client->ps.viewheight;
 	AngleVectors( owner->client->ps.viewangles, forward, NULL, NULL );
-	VectorCopy( ent->r.currentOrigin, previousOrigin );
 
-	VectorScale( forward, beamSpeed, newVelocity );
+	CalcMuzzlePoint( owner, forward, NULL, NULL, muzzle );
 
-	VectorCopy( newVelocity, ent->s.pos.trDelta );
-	VectorCopy( ownerViewPos, ent->s.pos.trBase );
+	VectorSubtract( ent->r.currentOrigin, ownerViewPos, dir );
+
+	// to fix timescale < 1 issues
+	deltaTime = ( level.time - ent->deltaTime ) * 0.001f;
+	ent->deltaTime = level.time;
+	distance = ent->distance + ent->speed * deltaTime;
+	ent->distance = distance;
+
+	VectorMA( muzzle, distance, forward, ent->s.pos.trBase );
+	distance = VectorLength( dir );
+	if ( !Weapon_BFPBeamStruggle( ent, owner, ownerViewPos, distance ) ) {
+		VectorScale( forward, ent->speed, vel );
+		VectorCopy( vel, ent->s.pos.trDelta );
+	}
+	ent->s.pos.trTime = level.time;		// smooth it
 
 	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
 
-	if ( Weapon_BFPBeamTrace( ent, ent->s.pos.trBase ) ) {
+	if ( Weapon_BFPBeamTrace( ent, ownerViewPos ) ) {
 		return;
 	}
-
-	if ( Weapon_BFPBeamTrace( ent, previousOrigin ) ) {
-		return;
-	}
+	Weapon_BFPBeamTrace( ent, ent->r.currentOrigin );
 }
 
 /*
