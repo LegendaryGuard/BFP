@@ -260,7 +260,7 @@ static void G_LocateSpawnSpots( void )
 	// locate all spawn spots
 	n = 0;
 	ent = g_entities + MAX_CLIENTS;
-	for ( i = MAX_CLIENTS; i < MAX_GENTITIES; i++, ent++ ) {
+	for ( i = MAX_CLIENTS; i < MAX_GENTITIES - 1; i++, ent++ ) {
 		
 		if ( !ent->inuse || !ent->classname )
 			continue;

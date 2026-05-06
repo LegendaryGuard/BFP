@@ -270,9 +270,7 @@ keeps the skin part if it exists
 */
 void G_ResolvePlayerModel( const char userinfo[MAX_INFO_STRING], const char *input, char *output, int outSize ) { // BFP - Resolve player model when loading by prefix
 	char	model[MAX_QPATH];
-	char	skinName[MAX_QPATH];
 	char	resolved[MAX_QPATH];
-	char	*slash;
 	int		len, i;
 
 	Q_strncpyz( output, input, outSize );
