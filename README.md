@@ -55,6 +55,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Playable third person mode and first person vis mode
 - [x] Remove weapon visuals (models and stuff)
 - [x] Replace ammo to ki energy stamina
+- [x] Rocket jumping (applicable if jumping is pressed at the same time)
 - [x] Short-Range Teleport - Zanzoken (when pressing 2 times left or right)
 - [x] Spectator can stop following the last player
 - [x] Third person traceable crosshair
@@ -152,12 +153,16 @@ You'll notice some differences and things that the original Bid For Power didn't
 - some adjusted UI buttons
 - BFP OPTIONS menu is upgraded, big explosions and smoke options are back (these were removed after RC/beta versions), also shell and ring options are available and these are options are interactive with explosion type option. Sprite and particle aura types are available on aura type option
 - in the first GAME SERVER menu has a horizontal scrolling description about the selected gametype
+- GAME SERVER menu has pagination
+- PLAYER SETTINGS menu has pagination
 - SERVER INFO menu displays all server info (on original BFP, the info was badly displayed and nothing was shown) and it has pagination
 - DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
 - CHANGE MAP button is added in in-game pause MENU, allows you to change the map without restarting the server and making everyone reconnect
+- `cg_drawTeamOverlay 2` is fixed on the lower right corner (on original BFP looks non-visible)
 - explosion dynamic lights are back (these were broken after RC/beta versions)
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
 - `g_allowSpectatorChat` cvar is functional, spectators can't send messages if the cvar is disabled
+- `cg_forceSkin` forces the default skin for each model correctly when changing models/skins (on original BFP, that changes to the first model of the prefix with default skin)
 - spectator mode can toggle ki boost as if the player is flying
 - ki boost consumption is applied in msec if `timescale` is different from it (on original BFP only applies until 0.89 and from 0.89 until 0.80 reduces one per one very slowly)
 - real impact crack mark, when projectiles/ki attacks impact something solid on ground, walls or slopes (on original BFP, that hasn't been fixed)
