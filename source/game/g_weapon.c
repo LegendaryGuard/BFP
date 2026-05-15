@@ -433,7 +433,8 @@ BFG
 void BFG_Fire ( gentity_t *ent ) {
 	gentity_t	*m;
 
-	m = fire_bfg (ent, muzzle, forward);
+	// BFP - Homing disk testing
+	m = fire_disk( ent, muzzle, forward ); // fire_bfg (ent, muzzle, forward);
 	m->damage *= s_quadFactor;
 	m->splashDamage *= s_quadFactor;
 
@@ -783,22 +784,26 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 		if ( rad && rad->r.ownerNum == ent->r.ownerNum ) {
 			continue;
 		}
-		if ( rad && rad != ent && !Q_stricmp( rad->classname, "beam" ) ) {
-			// BFP - TODO: Enable if weapon config is going to be implemented
-#if 0
+		if ( rad && rad != ent ) {
+			// BFP - If there's a piercing projectile, break it
+			trace_t		trace;
+			trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, 
+						ent->r.ownerNum, ent->clipmask );
 			if ( ent->piercing && !rad->piercing ) {
 				G_MissileImpact( rad, &trace );
 				continue;
 			}
 			if ( rad->piercing && !ent->piercing ) {
 				G_MissileImpact( ent, &trace );
-				continue;
+				return qfalse;
 			}
-#endif
-			VectorSubtract( rad->r.currentOrigin, ent->r.currentOrigin, raddir );
-			distTarget = VectorLength( raddir );
-			if ( target == NULL ) {
-				target = rad;
+
+			if ( !Q_stricmp( rad->classname, "beam" ) ) {
+				VectorSubtract( rad->r.currentOrigin, ent->r.currentOrigin, raddir );
+				distTarget = VectorLength( raddir );
+				if ( target == NULL ) {
+					target = rad;
+				}
 			}
 		}
 	}
@@ -807,7 +812,7 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 		return qfalse;
 	}
 
-	if ( !target->parent || !target->parent->client ) {
+	if ( !ent->parent || !ent->parent->client || !target->parent || !target->parent->client ) {
 		return qfalse;
 	}
 

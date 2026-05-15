@@ -801,7 +801,7 @@ qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (
 	}
 
 	// TELEPORT!
-	tr.endpos[2] += 25; // place the position a bit up
+	tr.endpos[2] += 16; // place the position a bit up
 	VectorCopy( tr.endpos, ent->client->ps.origin );
 
 	// sound event
@@ -833,6 +833,10 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 	// check if zanzoken is on cooldown
 	if ( client->zanzokenLastUsed > 0
 	&& currentTime - client->zanzokenLastUsed < ZANZOKEN_COOLDOWN ) {
+		return;
+	}
+
+	if ( client->ps.pm_flags & PMF_ULTIMATE_TIER ) {
 		return;
 	}
 

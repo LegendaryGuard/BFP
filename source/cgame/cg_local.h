@@ -402,6 +402,7 @@ typedef struct weaponInfo_s {
 	qhandle_t		ammoModel;
 
 	qhandle_t		missileModel;
+	qhandle_t		missileShader;		// BFP - For missileShader
 	sfxHandle_t		missileSound;
 	void			(*missileTrailFunc)( centity_t *, const struct weaponInfo_s *wi );
 	float			missileDlight;
@@ -995,6 +996,7 @@ typedef struct {
 	sfxHandle_t defaultKiBeamExplosionWaveSound;	// BFP - Default ki beam and ki explosion wave sound
 	sfxHandle_t defaultKiFiringAttackSound;			// BFP - Default ki firing sound
 	sfxHandle_t defaultKiChargingSound;				// BFP - Default ki attack charging sound
+	sfxHandle_t diskKiChargingSound;				// BFP - Disk ki attack charging sound
 } cgMedia_t;
 
 
@@ -1243,6 +1245,7 @@ qhandle_t CG_StatusHandle(int task);
 qboolean CG_FindClientHeadFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *headModelName, const char *headSkinName, const char *base, const char *ext );
 qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci );
 
+void CG_ModelSize( refEntity_t *model, float size ); // BFP - Model size
 void CG_Player( centity_t *cent );
 void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t re, entityState_t *state, int team );

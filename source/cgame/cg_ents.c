@@ -449,12 +449,25 @@ static void CG_Missile( centity_t *cent ) {
 		ent.axis[0][2] = 1;
 	}
 
+	// BFP - missileShader check
+	if ( weapon->missileShader ) {
+		ent.customShader = weapon->missileShader;
+	}
+
 	// spin as it moves
-	if ( s1->pos.trType != TR_STATIONARY ) {
+	if ( s1->pos.trType != TR_STATIONARY
+	&& s1->weapon != WP_BFG ) { // BFP - For disk or missileSpinHoriz weapons, don't rotate like the rocket
 		RotateAroundDirection( ent.axis, cg.time / 4 );
 	} else {
 		{
+			// BFP - Rotate Z-axis like a wheel
+			vec3_t	temp;
 			RotateAroundDirection( ent.axis, s1->time );
+
+			VectorCopy( ent.axis[0], temp );
+			RotatePointAroundVector( ent.axis[0], ent.axis[2], temp, cg.autoAnglesFast[1] );
+			VectorCopy( ent.axis[1], temp );
+			RotatePointAroundVector( ent.axis[1], ent.axis[2], temp, cg.autoAnglesFast[1] );
 		}
 	}
 

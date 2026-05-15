@@ -185,6 +185,18 @@ struct gentity_s {
 
 	float		deltaTime;		// BFP - For beam struggle
 	float		distance;		// BFP - For beam struggle
+
+	// BFP - Parts of weapon config logic
+	qboolean	piercing;			// BFP - Piercing
+	qboolean	piercingFade;		// BFP - Piercing enter fade
+	int			piercingTouch;		// BFP - Piercing touch detected
+	int			piercingTime;		// BFP - Piercing time
+	int			piercingHitTime;	// BFP - Piercing hit time
+	vec3_t		piercingOrigin;		// BFP - Piercing origin
+
+	float		homing;				// BFP - Homing heading correction intensity (0.0 - 1.0)
+	float		homingRange;		// BFP - Homing range
+	float		homingAcceleration;	// BFP - Homing acceleration
 };
 
 
@@ -525,6 +537,7 @@ void	G_UseTargets (gentity_t *ent, gentity_t *activator);
 void	G_SetMovedir ( vec3_t angles, vec3_t movedir);
 
 gentity_t *FindRadius ( gentity_t *from, vec3_t org, float rad ); // BFP - FindRadius function
+qboolean IsValidTargetRadius( gentity_t *ent, gentity_t *rad ); // BFP - Helper function that validates target within the radius
 
 void	G_InitGentity( gentity_t *e );
 gentity_t	*G_Spawn (void);
@@ -580,6 +593,9 @@ gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir);
 
 // BFP - Beam fire
 gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir);
+
+// BFP - Homing disk
+gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir);
 
 // BFP - Use G_MissileImpact into another files to handle the weapons
 void G_MissileImpact( gentity_t *ent, trace_t *trace );

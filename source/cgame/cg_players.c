@@ -1518,7 +1518,7 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	if ( cent->currentState.eFlags & EF_FLIGHT ) {
 		CG_SwingAngles( dest, 15, 30, 0.1f, &cent->pe.legs.pitchAngle, &cent->pe.legs.pitching );
 		legsAngles[PITCH] = cent->pe.legs.pitchAngle;
-	} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {}
+	}
 
 	// BFP - When flying, set the torso correctly into these angles
 	CG_SwingAngles( dest, 30, 30, 0.1f, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching );
@@ -1546,8 +1546,8 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		float	side;
 
 		// BFP - Speed handling when moving too much the angles
-		if ( speed <= -480.0f ) speed = -480.0f;
-		if ( speed >=  480.0f ) speed =  480.0f;
+		if ( speed < -480.0f ) speed = -480.0f;
+		if ( speed >  480.0f ) speed =  480.0f;
 
 		speed *= 0.03f; // BFP - Adjust speed when rotate the angles (not a starting velocity), before: 0.05f
 
@@ -1851,6 +1851,9 @@ CG_KiAttackSounds
 ===============
 */
 static void CG_KiAttackSounds( centity_t *cent ) { // BFP - Ki attack sounds
+
+	// BFP - TODO: Make the sounds hear everyone, not the player itself
+
 	switch ( cg.predictedPlayerState.weaponstate ) {
 	case WEAPON_KIEXPLOSIONWAVE:
 		trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
@@ -1862,14 +1865,19 @@ static void CG_KiAttackSounds( centity_t *cent ) { // BFP - Ki attack sounds
 		break;
 	case WEAPON_FIRING:
 		// ki attacks like eyebeam shouldn't use that kind of firing sound
-		if ( cg.predictedPlayerState.weapon != WP_LIGHTNING ) {
+		if ( cent->currentState.weapon != WP_LIGHTNING ) {
 			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
 				vec3_origin, cgs.media.defaultKiFiringAttackSound );
 		}
 		break;
 	case WEAPON_CHARGING:
-		trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-			vec3_origin, cgs.media.defaultKiChargingSound );
+		if ( cent->currentState.weapon == WP_BFG ) {
+			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
+				vec3_origin, cgs.media.diskKiChargingSound );
+		} else {
+			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
+				vec3_origin, cgs.media.defaultKiChargingSound );
+		}
 	}
 }
 
@@ -2317,7 +2325,7 @@ CG_ModelSize
 Change/scale model size
 ===============
 */
-static void CG_ModelSize( refEntity_t *model, float size ) { // BFP - Model size
+void CG_ModelSize( refEntity_t *model, float size ) { // BFP - Model size
 	model->axis[0][0] *= size;
 	model->axis[0][1] *= size;
 	model->axis[0][2] *= size;
@@ -2883,21 +2891,21 @@ static void CG_FindAttachMuzzleTag( centity_t *cent, clientInfo_t *ci, refEntity
 	orientation_t tagOrient;
 
 	// legs
-	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "legs" )
+	if ( attackTagPart && attackTagPart[0] && !Q_stricmp( attackTagPart, "legs" )
 	&& trap_R_LerpTag( &tagOrient, legs->hModel, legs->oldframe, legs->frame, 1.0 - legs->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( legs, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// torso
-	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "torso" )
-	&& trap_R_LerpTag( &tagOrient, torso->hModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, attackTagName )) {
+	if ( attackTagPart && attackTagPart[0] && !Q_stricmp( attackTagPart, "torso" )
+	&& trap_R_LerpTag( &tagOrient, torso->hModel, torso->oldframe, torso->frame, 1.0 - torso->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( torso, NULL, cent, ci->team, attackTagName );
 		return;
 	}
 
 	// head
-	if ( attackTagPart && attackTagPart[0] != '\0' && !Q_stricmp( attackTagPart, "head" )
+	if ( attackTagPart && attackTagPart[0] && !Q_stricmp( attackTagPart, "head" )
 	&& trap_R_LerpTag( &tagOrient, head->hModel, head->oldframe, head->frame, 1.0 - head->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( head, NULL, cent, ci->team, attackTagName );
 	}
@@ -3265,7 +3273,11 @@ void CG_Player( centity_t *cent ) {
 	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 && ( cent->currentState.eFlags & EF_MONSTER ) ) {
 		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "head", "tag_mouth" );
 	} else {
-		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &head, "torso", "tag_left" );
+		if ( cent->currentState.weapon == WP_BFG ) { // BFP - Testing disk muzzle
+			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "torso", "tag_right" );
+		} else {
+			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "torso", "tag_left" );
+		}
 	}
 
 	// add powerups floating behind the player

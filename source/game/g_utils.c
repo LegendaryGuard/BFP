@@ -397,6 +397,39 @@ gentity_t *FindRadius ( gentity_t *from, vec3_t org, float rad ) { // BFP - Find
 
 
 /*
+================
+IsValidTargetRadius
+ 
+Validates target within the radius
+================
+*/
+qboolean IsValidTargetRadius( gentity_t *ent, gentity_t *rad ) { // BFP - Helper function that validates target within the radius
+	if ( rad == ent || rad->r.ownerNum == ent->r.ownerNum ) {
+		return qfalse;
+	}
+	if ( rad == ent->parent ) {
+		return qfalse;
+	}
+	if ( !rad->client || !rad->takedamage ) {
+		return qfalse;
+	}
+	if ( rad->health <= 0 || rad->client->ps.pm_type == PM_DEAD ) {
+		return qfalse;
+	}
+	if ( rad->client->pers.connected == CON_DISCONNECTED ) {
+		return qfalse;
+	}
+	if ( rad->client->sess.sessionTeam == TEAM_SPECTATOR ) {
+		return qfalse;
+	}
+	if ( OnSameTeam( rad, ent->parent ) ) {
+		return qfalse;
+	}
+	return qtrue;
+}
+
+
+/*
 =============
 G_PickTarget
 

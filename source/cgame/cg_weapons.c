@@ -30,12 +30,16 @@ CG_AddFlashMissile
 Adds muzzle flash or missile shader/model
 ===================
 */
-void CG_AddFlashMissile( int entityNum, vec3_t origin, const char *flashMissileShader, const char *flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
+void CG_AddFlashMissile( int entityNum, vec3_t origin, refEntity_t *parent, char *tagName, char *flashMissileShader, char *flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
 	refEntity_t	flashMissile;
 
 	// don't show the muzzle flash to the player itself on first person camera, even on first person vis mode
 	if ( cg_thirdPerson.integer <= 0 && entityNum == cg.snap->ps.clientNum ) {
 		return;
+	}
+
+	if ( flashMissileScaleFactor <= 0 ) {
+		flashMissileScaleFactor = 1;
 	}
 
 	memset( &flashMissile, 0, sizeof( flashMissile ) );
@@ -58,18 +62,25 @@ void CG_AddFlashMissile( int entityNum, vec3_t origin, const char *flashMissileS
 
 	VectorCopy( origin, flashMissile.origin );
 
-	flashMissile.reType = RT_SPRITE;
-	if ( flashMissileModel && flashMissileModel[0] != '\0' ) {
+	if ( flashMissileModel && flashMissileModel[0] ) {
 		flashMissile.reType = RT_MODEL;
 		flashMissile.hModel = trap_R_RegisterModel( flashMissileModel );
-	}
-	flashMissile.customShader = trap_R_RegisterShader( flashMissileShader );
 
-	flashMissile.radius = flashMissileRadius;
-	if ( flashMissileScaleFactor <= 0 ) {
-		flashMissileScaleFactor = 1;
+		if ( parent ) {
+			AxisCopy( parent->axis, flashMissile.axis );
+		} else {
+			AxisClear( flashMissile.axis );
+		}
+		CG_ModelSize( &flashMissile, flashMissileScaleFactor );
+	} else {
+		flashMissile.reType = RT_SPRITE;
+		flashMissile.radius = flashMissileRadius;
+		flashMissile.radius *= flashMissileScaleFactor;
 	}
-	flashMissile.radius *= flashMissileScaleFactor;
+
+	if ( flashMissileShader && flashMissileShader[0] ) {
+		flashMissile.customShader = trap_R_RegisterShader( flashMissileShader );
+	}
 
 	flashMissile.shaderRGBA[0] = 0xff;
 	flashMissile.shaderRGBA[1] = 0xff;
@@ -381,9 +392,9 @@ void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Be
 	// ent->trailTime = cg.time;
 
 	// BFP - NOTE: That's where we apply the flash properties read from client cfg
-	CG_AddFlashMissile( es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, "ImpactBeamFlashShader", 0, 25, 1 );
+	CG_AddFlashMissile( es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, NULL, "", "ImpactBeamFlashShader", 0, 25, 1 );
 
-	CG_AddFlashMissile( es->number, origin, "ImpactBeamFlashShader", 0, 50, 1 );
+	CG_AddFlashMissile( es->number, origin, NULL, "", "ImpactBeamFlashShader", 0, 50, 1 );
 
 	CG_BeamTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.PowerWaveBeamShader );
 	// to test corkscrew
@@ -580,15 +591,23 @@ void CG_RegisterWeapon( int weaponNum ) {
 	case WP_BFG:
 		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/bfg/bfg_hum.wav", qfalse );
 
+		// BFP - TODO: From config weapon use like:
+		//missileDlight 3 200
+		//missileDlightColor 3 0.75 0 1
+
 		// bfg dlight
 		weaponInfo->missileDlight = 200;
-		MAKERGB( weaponInfo->missileDlightColor, 0.2f, 1.0f, 0.2f );
+		//MAKERGB( weaponInfo->missileDlightColor, 0.2f, 1.0f, 0.2f );
+		MAKERGB( weaponInfo->missileDlightColor, 0.75, 0, 1 );
 
 		MAKERGB( weaponInfo->flashDlightColor, 1.0f, 0.7f, 1.0f );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/bfg/bfg_fire.wav", qfalse );
 		cgs.media.bfgExplosionShader = trap_R_RegisterShader( "bfgExplosion" );
-		weaponInfo->missileModel = trap_R_RegisterModel( "models/weaphits/bfg.md3" );
-		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
+
+		// BFP - Modified for disk weapon testing
+		weaponInfo->missileModel = trap_R_RegisterModel( "models/weaphits/disk.md3" ); //trap_R_RegisterModel( "models/weaphits/bfg.md3" );
+		weaponInfo->missileShader = trap_R_RegisterShader( "purpleAttackShader" );
+		weaponInfo->missileSound = trap_S_RegisterSound( "sound/bfp/diskfly.wav", qfalse ); //trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
 		break;
 
 	 default:
@@ -913,19 +932,29 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	} else {
 		// impulse flash
 		if ( cg.time - cent->muzzleFlashTime > MUZZLE_FLASH_TIME && !cent->pe.railgunFlash
-		&& weaponNum != WP_GRAPPLING_HOOK ) {
+		&& weaponNum != WP_GRAPPLING_HOOK
+		&& weaponNum != WP_BFG ) {
 			return;
 		}
 	}
 
 	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right, tag_eyes, ...)
-	CG_PositionRotatedEntityOnTag( parent, parent, parent->hModel, tagName );
-	VectorCopy( parent->origin, nonPredictedCent->pe.muzzleOrigin );
+	{
+		refEntity_t	tagEnt;
+		memset( &tagEnt, 0, sizeof( tagEnt ) );
+		CG_PositionEntityOnTag( &tagEnt, parent, parent->hModel, tagName );
+		VectorCopy( tagEnt.origin, nonPredictedCent->pe.muzzleOrigin );
 
-	// BFP - Displaying the muzzle flash to the other player correctly
-	if ( nonPredictedCent->currentState.eFlags & EF_READY_KI_ATTACK ) {
-		// BFP - NOTE: That's where we apply the flash properties read from client cfg
-		CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, "ImpactBeamFlashShader", 0, 15, 1 );
+		// BFP - Displaying the muzzle flash to the other player correctly
+		if ( nonPredictedCent->currentState.eFlags & EF_READY_KI_ATTACK ) {
+			// BFP - NOTE: That's where we apply the flash properties read from client cfg
+			if ( weaponNum == WP_GRAPPLING_HOOK ) {
+				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "ImpactBeamFlashShader", 0, 15, 1 );
+			}
+			if ( weaponNum == WP_BFG ) {
+				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "purpleAttackShader", "models/weaphits/disk.md3", 0, 0.8 );
+			}
+		}
 	}
 
 	if ( ps || cg.renderingThirdPerson ||
@@ -934,7 +963,8 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		// BFP - NOTE: That avoids adding the muzzle light using the beam,
 		// it would be cool adding a light to the player while charging or firing their ki,
 		// but in a custom way
-		if ( weaponNum == WP_GRAPPLING_HOOK ) {
+		if ( weaponNum == WP_GRAPPLING_HOOK
+		|| weaponNum == WP_BFG ) {
 			return;
 		}
 
@@ -1448,7 +1478,6 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	//
 	// impact mark
 	//
-	// BFP - TODO: Disk type weapons don't leave a mark, apply it
 	CG_ImpactMark( cgs.media.crackMarkShader, origin, dir, random()*360, 1,1,1,1, 0, radius, qfalse );
 }
 

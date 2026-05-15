@@ -85,6 +85,7 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 		client->ps.weaponstate = WEAPON_READY;
 		client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
+		client->ps.weaponTime = 0;
 		return;
 	}
 
@@ -111,6 +112,7 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 		client->ps.weaponstate = WEAPON_READY;
 		client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
+		client->ps.weaponTime = 0;
 		return;
 	}
 
@@ -141,6 +143,7 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 	client->ps.weaponstate = WEAPON_READY;
 	client->ps.pm_flags &= ~PMF_KI_ATTACK;
 	client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
+	client->ps.weaponTime = 0;
 }
 
 /*
@@ -261,8 +264,6 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 		v[0] = other->r.currentOrigin[0] + ( other->r.mins[0] + other->r.maxs[0] ) * 0.5;
 		v[1] = other->r.currentOrigin[1] + ( other->r.mins[1] + other->r.maxs[1] ) * 0.5;
 		v[2] = other->r.currentOrigin[2] + ( other->r.mins[2] + other->r.maxs[2] ) * 0.5;
-
-		SnapVectorTowards( v, ent->s.pos.trBase );	// save net bandwidth
 	} else {
 		VectorCopy( trace->endpos, v );
 		// BFP - Detonation check
@@ -290,6 +291,276 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 	// if ( ent->s.weapon == WP_GRAPPLING_HOOK ) {
 		Weapon_BFPBeamFree( ent );
 }
+
+
+/*
+================
+G_Homing
+================
+*/
+static void G_Homing( gentity_t *ent ) { // BFP - Homing
+	gentity_t	*target = NULL, *rad = NULL;
+	vec3_t		dir, raddir;
+
+	// prevents the projectile from getting stuck
+	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
+
+	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->homingRange) ) != NULL ) {
+		if ( IsValidTargetRadius( ent, rad ) ) {
+			VectorSubtract( rad->r.currentOrigin, ent->r.currentOrigin, raddir );
+			raddir[2] += 16;
+			if ( target == NULL ) {
+				target = rad;
+				VectorCopy( raddir, dir );
+			}
+		}
+	}
+
+	if ( target != NULL ) {
+		float		homingAcceleration = ( ent->homingAcceleration <= 0 ) ? 1 : ent->homingAcceleration;
+		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
+		VectorNormalize( dir );
+		VectorScale( dir, ent->homing, dir );
+		VectorAdd( dir, ent->r.currentAngles, dir );
+		VectorNormalize( dir );
+		VectorCopy( dir, ent->r.currentAngles );
+		VectorScale( dir, ent->speed * homingAcceleration, ent->s.pos.trDelta );
+		ent->s.pos.trTime = level.time;
+	}
+}
+
+
+/*
+================
+G_PiercingDamage
+================
+*/
+static void G_PiercingDamage( gentity_t *ent, gentity_t *target, int damage ) { // BFP - Piercing helper function
+	// stops homing
+	ent->homing = 0;
+	ent->homingRange = 0;
+
+	++ent->piercingTouch;
+	G_Damage( target, ent, ent->parent, NULL,
+		ent->s.origin, damage, 0, ent->methodOfDeath );
+	{
+		gentity_t *effect = G_TempEntity( ent->r.currentOrigin, EV_BEAM_STRUGGLE );
+		effect->s.otherEntityNum  = ent->s.number;
+		effect->s.otherEntityNum2 = target->s.number;
+	}
+	ent->piercingTime = level.time + 1000;
+	ent->piercingHitTime = level.time + 200;
+}
+
+
+/*
+================
+G_PiercingFade
+================
+*/
+static void G_PiercingFade( gentity_t *ent ) { // BFP - Piercing helper function
+	if ( ent->nextthink > level.time + 1000 ) {
+		ent->nextthink = level.time + 1000;
+	}
+	ent->piercingFade = qtrue;
+
+	// stops homing
+	ent->homing = 0;
+	ent->homingRange = 0;
+}
+
+
+/*
+================
+G_Piercing
+================
+*/
+static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
+	gentity_t	*rad = NULL, *other = &g_entities[trace.entityNum];
+	int			damage = ( ent->splashDamage ) ? ent->splashDamage : ent->damage;
+	const int	MAX_PIERCING_HITS = 4;
+
+	// corrects the projectile from colliding
+	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
+
+	if ( ent->piercingFade ) {
+		return;
+	}
+
+	// disappear in about 1 second after hitting something solid (no living entities) or going out of boundaries
+	if ( ( ( trace.fraction != 1 && trace.entityNum != ENTITYNUM_NONE )
+	|| ( trace.surfaceFlags & SURF_NOIMPACT ) )
+	&& !other->client
+	&& !ent->piercingFade && !ent->piercingTime ) {
+		G_PiercingFade( ent );
+		return;
+	}
+
+	// disappear in about 1 second after receiving the maximum number of hits
+	if ( ent->piercingTouch >= MAX_PIERCING_HITS ) {
+		G_PiercingFade( ent );
+		return;
+	}
+
+	// can still be gibbed
+	if ( other && other->client
+	&& ( other->health <= 0 || other->client->ps.pm_type == PM_DEAD )
+	&& other->client->pers.connected != CON_DISCONNECTED
+	&& other->client->sess.sessionTeam != TEAM_SPECTATOR
+	&& !OnSameTeam( other, ent->parent ) ) {
+		G_PiercingDamage( ent, other, ent->damage );
+		VectorCopy( ent->r.currentOrigin, ent->piercingOrigin );
+	}
+
+	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->splashRadius) ) != NULL ) {
+		if ( !IsValidTargetRadius( ent, rad ) ) {
+			continue;
+		}
+
+		// around 200 msec of piercing hit
+		if ( ent->piercingHitTime && level.time >= ent->piercingHitTime ) {
+			ent->piercingHitTime = 0;
+		}
+		if ( ent->piercingHitTime && level.time < ent->piercingHitTime ) {
+			continue;
+		}
+
+		// around 1 second of piercing
+		if ( ent->piercingTime && level.time >= ent->piercingTime ) {
+			ent->piercingTime = 0;
+		}
+		if ( ent->piercingTime && level.time < ent->piercingTime ) {
+			continue;
+		}
+
+		// avoid damaging someone alive behind
+		// if the first didn't die and received damage with splash origin
+		if ( rad && rad->client && !ent->piercingHitTime ) {
+			ent->target_ent = rad;
+			if ( other && other->client && other->takedamage
+			&& rad->client == other->client ) {
+				ent->target_ent = other;
+			}
+			G_PiercingDamage( ent, ent->target_ent, damage );
+			VectorCopy( ent->r.currentOrigin, ent->piercingOrigin );
+			if ( ent->target_ent->health <= 0 || ent->target_ent->client->ps.pm_type == PM_DEAD ) {
+				ent->target_ent = NULL;
+				ent->piercingHitTime = 0;
+				ent->piercingTime = 0;
+			}
+			continue;
+		}
+	}
+
+	// piercing radius
+	rad = NULL;
+	while ( ( rad = FindRadius(rad, ent->piercingOrigin, ent->splashRadius) ) != NULL ) {
+		if ( ent->target_ent && rad == ent->target_ent
+		&& ent->piercingHitTime && level.time < ent->piercingHitTime ) {
+			continue;
+		}
+
+		if ( !IsValidTargetRadius( ent, rad ) ) {
+			continue;
+		}
+
+		if ( !ent->target_ent
+		|| ent->target_ent->health <= 0 || ent->target_ent->client->ps.pm_type == PM_DEAD ) {
+			ent->target_ent = rad;
+			ent->piercingHitTime = 0;
+			ent->piercingTime = 0;
+		}
+
+		if ( rad != ent->target_ent ) {
+			continue;
+		}
+
+		G_PiercingDamage( ent, ent->target_ent, damage );
+
+		if ( ent->target_ent->health <= 0 || ent->target_ent->client->ps.pm_type == PM_DEAD ) {
+			// trace along the trajectory the projectile already travelled to find
+			// the next living enemy that was crossed after the one that just died
+			vec3_t		dir, scanOrigin, end;
+			trace_t		tr;
+			float		scanned;
+			int			passent;
+			const float	SCAN_DIST = 9999999;
+			gentity_t	*next = NULL, *dead = ent->target_ent;
+
+			VectorCopy( ent->s.pos.trDelta, dir );
+			VectorNormalize( dir );
+			// start the scan from where the dead target was standing, not from
+			// the projectile's current position, so we pick up enemies the projectile
+			// has already physically crossed along its path
+			VectorCopy( ent->piercingOrigin, scanOrigin );
+			passent = ent->r.ownerNum;
+			scanned = 0.0f;
+
+			while ( scanned < SCAN_DIST ) {
+				float		segLen;
+				gentity_t	*candidate;
+
+				VectorMA( scanOrigin, SCAN_DIST - scanned, dir, end );
+				trap_Trace( &tr, scanOrigin, NULL, NULL, end, passent, MASK_PLAYERSOLID );
+				segLen = tr.fraction * ( SCAN_DIST - scanned );
+
+				if ( tr.startsolid || tr.allsolid ) {
+					scanned += 1.0f;
+					VectorMA( scanOrigin, 1.0f, dir, scanOrigin );
+					continue;
+				}
+				if ( tr.entityNum == ENTITYNUM_NONE ) {
+					break;
+				}
+
+				// step past something solid and keep scanning
+				if ( tr.entityNum != ENTITYNUM_NONE ) {
+					scanned += segLen + 1.0f;
+					VectorMA( tr.endpos, 1.0f, dir, scanOrigin );
+					passent = ent->r.ownerNum;
+					continue;
+				}
+
+				candidate = &g_entities[ tr.entityNum ];
+				if ( !candidate->client ) {
+					scanned += segLen + 1.0f;
+					VectorMA( tr.endpos, 1.0f, dir, scanOrigin );
+					passent = tr.entityNum;
+					continue;
+				}
+
+				// skip the dead target and anyone invalid
+				if ( candidate == dead
+				|| candidate == ent->parent || candidate == ent
+				|| candidate->r.ownerNum == ent->r.ownerNum
+				|| !candidate->takedamage
+				|| candidate->health <= 0 || candidate->client->ps.pm_type == PM_DEAD
+				|| candidate->client->pers.connected == CON_DISCONNECTED
+				|| candidate->client->sess.sessionTeam == TEAM_SPECTATOR
+				|| OnSameTeam( candidate, ent->parent ) ) {
+					scanned += segLen + 1.0f;
+					VectorMA( tr.endpos, 1.0f, dir, scanOrigin );
+					passent = tr.entityNum;
+					continue;
+				}
+				next = candidate;
+				break;
+			}
+
+			ent->target_ent = NULL;
+			ent->piercingHitTime = 0;
+			ent->piercingTime = 0;
+			// snap piercing origin to the next target so the radius loop finds them
+			if ( next ) {
+				VectorCopy( next->r.currentOrigin, ent->piercingOrigin );
+			} else {
+				VectorCopy( ent->r.currentOrigin, ent->piercingOrigin );
+			}
+			rad = NULL;
+		}
+	}
+}
+
 
 /*
 ================
@@ -464,7 +735,7 @@ void G_RunMissile( gentity_t *ent ) {
 	trace_t		tr;
 	int			passent;
 	// BFP - Shortcut variable to make sure who is using this projectile
-	gclient_t	*client = g_entities[ ent->r.ownerNum ].client;
+	gclient_t	*client = ent->parent->client;
 
 	// get current position
 	BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
@@ -522,6 +793,16 @@ void G_RunMissile( gentity_t *ent ) {
 		G_FreeEntity( ent );
 	}
 
+	// BFP - Piercing weapons
+	if ( ent->piercing ) {
+		G_Piercing( ent, tr );
+	}
+
+	// BFP - Homing weapons
+	if ( ent->homingRange ) {
+		G_Homing( ent );
+	}
+
 	if ( client 
 	&& client->ps.weapon == WP_PLASMAGUN
 	&& client->ps.weaponstate == WEAPON_DIVIDINGKIBALLFIRING
@@ -562,10 +843,26 @@ void G_RunMissile( gentity_t *ent ) {
 				ent->parent->client->hook = NULL;
 			}
 #endif
-			G_FreeEntity( ent );
+			// BFP - Don't disappear instantly on piercing weapons
+			if ( !ent->piercing ) {
+				G_FreeEntity( ent );
+			}
 			return;
 		}
-		G_MissileImpact( ent, &tr );
+
+		// BFP - Dividing ball
+		if ( client 
+		&& ent->s.weapon == WP_PLASMAGUN
+		&& !ent->enabledivide ) {
+			G_HandleDivideKiBall( ent, client );
+			ent->enabledivide = qtrue;
+			G_FreeEntity( ent );
+		}
+
+		// BFP - Don't explode on piercing weapons
+		if ( !ent->piercing ) {	
+			G_MissileImpact( ent, &tr );
+		}
 		if ( ent->s.eType != ET_MISSILE ) {
 			return;		// exploded
 		}
@@ -585,6 +882,8 @@ fire_plasma
 */
 gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 	gentity_t	*bolt;
+	// BFP - Projectile radius
+	float		radius = 30;
 
 	VectorNormalize (dir);
 
@@ -607,13 +906,20 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	bolt->enabledivide = qfalse; // BFP - For dividing ki ball
 
+	// BFP - Speed similar to BFP ki blast attack (missileSpeed)
+	bolt->speed = 700;
+
 	bolt->s.pos.trType = TR_LINEAR;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, 2000, bolt->s.pos.trDelta );
-	//SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
+	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
+	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 
 	VectorCopy (start, bolt->r.currentOrigin);
+
+	// BFP - Collision radius
+	VectorSet( bolt->r.mins, -radius, -radius, -10 );
+	VectorSet( bolt->r.maxs, radius, radius, radius );
 
 	return bolt;
 }	
@@ -743,7 +1049,7 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorCopy (start, bolt->r.currentOrigin);
 
 	// BFP - Collision radius
-	VectorSet( bolt->r.mins, -radius, -radius, -radius );
+	VectorSet( bolt->r.mins, -radius, -radius, -10 );
 	VectorSet( bolt->r.maxs, radius, radius, radius );
 
 	return bolt;
@@ -837,4 +1143,55 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorSet( beam->r.maxs, radius, radius, radius );
 
 	return beam;
+}
+
+// BFP - Just a testing disk proyectile
+/*
+=================
+fire_disk
+=================
+*/
+gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir) {
+	gentity_t	*disk;
+	// BFP - Projectile radius
+	float		radius = 75;
+
+	VectorNormalize ( dir );
+
+	disk = G_Spawn();
+	disk->classname = "missile";
+	disk->nextthink = level.time + 10000;
+	disk->think = G_FreeEntity;
+	disk->s.eType = ET_MISSILE;
+	disk->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+	disk->s.weapon = WP_BFG;
+	disk->r.ownerNum = self->s.number;
+	disk->parent = self;
+	disk->damage = 20;
+	disk->splashDamage = 20;
+	disk->splashRadius = 120;
+	disk->methodOfDeath = MOD_KI_ATTACK;
+	disk->splashMethodOfDeath = MOD_KI_ATTACK;
+	disk->clipmask = MASK_SHOT;
+	disk->target_ent = NULL;
+
+	disk->speed = 1000;
+
+	disk->piercing = 1;
+	disk->homing = 0.5;
+	disk->homingRange = 2000;
+	disk->homingAcceleration = 0;
+
+	disk->s.pos.trType = TR_LINEAR;
+	disk->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+	VectorCopy( start, disk->s.pos.trBase );
+	VectorScale( dir, disk->speed, disk->s.pos.trDelta );
+	SnapVector( disk->s.pos.trDelta );			// save net bandwidth
+	VectorCopy (start, disk->r.currentOrigin);
+
+	// BFP - Collision radius
+	VectorSet( disk->r.mins, -radius, -radius, -10 );
+	VectorSet( disk->r.maxs, radius, radius, radius );
+
+	return disk;
 }

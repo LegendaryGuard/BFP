@@ -1042,7 +1042,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		return;
 	}
 
-	if (!targ->takedamage) {
+	if ( !targ || ( targ && !targ->takedamage ) ) {
 		return;
 	}
 
@@ -1114,7 +1114,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		VectorNormalize(dir);
 
 		// BFP - Lose altitude while flying/floating underwater
-		if ( !( ( targ->client->ps.pm_flags & PMF_JUMP_HELD )
+		if ( targ->client && !( ( targ->client->ps.pm_flags & PMF_JUMP_HELD )
 		|| targ->client->ps.groundEntityNum != ENTITYNUM_NONE )
 		// BFP - Don't apply for rocket jumping
 		&& dir[2] <= 0.5f ) {
@@ -1130,7 +1130,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( mod != MOD_MELEE ) {
 		knockback = 200;
 		// BFP - Rocket jumping
-		if ( dir[2] > 0.5f ) {
+		if ( dir && dir[2] > 0.5f ) {
 			knockback = 50;
 		}
 	} else { // BFP - Melee knockback
@@ -1149,7 +1149,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// BFP - Blinds the opponent and it can be blinded again after 4 seconds (look inside cg_draw.c in CG_DrawBlindEffect for more details)
 	if ( mod == MOD_MACHINEGUN // BFP - TODO: That's just a test. Add something to the weapon: 'blinding' for properties of the ki attacks from cfg
 	&& ( !targ->blindedTime || level.time - targ->blindedTime >= 2000 )
-	&& targ->client->ps.pm_type != PM_DEAD ) {
+	&& targ->client && targ->client->ps.pm_type != PM_DEAD ) {
 		targ->blindedTime = level.time;
 		BG_AddPredictableEventToPlayerstate( EV_BLINDING, 0, &targ->client->ps, -1 );
 	}
@@ -1165,7 +1165,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		// BFP - Rocket jumping
 		if ( ( ( targ->client->ps.pm_flags & PMF_JUMP_HELD )
 		|| targ->waterlevel > 1 )
-		&& dir[2] > 0.5f ) {
+		&& dir && dir[2] > 0.5f ) {
 			// increase vertical impulse by 25%
 			kvel[2] *= 1.25f;
 			if ( targ->waterlevel > 1 ) { // if underwater double the impulse and a little push
@@ -1253,7 +1253,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	take -= asave;
 
 	 // BFP - When blocking, don't receive damage
-	if ( client->ps.pm_flags & PMF_BLOCK ) {
+	if ( client && ( client->ps.pm_flags & PMF_BLOCK ) ) {
 		take = asave = 0;
 	}
 
