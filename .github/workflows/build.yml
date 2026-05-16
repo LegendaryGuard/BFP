@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Build Windows QVM
       run: |
         ./build.bat
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: Update and get packages
       run: |
         sudo apt-get update # && sudo apt-get upgrade -y
@@ -51,7 +51,7 @@ jobs:
         ARCHIVE: 1
 
     - name: Store QVM artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: QVMs
         path: |
@@ -60,7 +60,7 @@ jobs:
         retention-days: 5
     
     - name: Store Linux x86 .so artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: linux-x86
         path: |
@@ -70,7 +70,7 @@ jobs:
         retention-days: 5
     
     - name: Store Linux x86_64 .so artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: linux-x86_64
         path: |
@@ -80,7 +80,7 @@ jobs:
         retention-days: 5
     
     - name: Store Windows x86 DLL artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: windows-x86
         path: |
@@ -90,7 +90,7 @@ jobs:
         retention-days: 5
     
     - name: Store Windows x86_64 DLL artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v6
       with:
         name: windows-x86_64
         path: |
@@ -101,7 +101,7 @@ jobs:
 
     - name: Publish a release
       if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         files: |
