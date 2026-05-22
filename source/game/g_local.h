@@ -88,6 +88,7 @@ struct gentity_s {
 
 	qboolean	enabledivide;		// BFP - Projectile state for dividing ball
 
+	qboolean	blinding;			// BFP - Blinding
 	int			blindedTime;		// BFP - Blind time
 
 	int			flags;				// FL_* variables
@@ -197,6 +198,9 @@ struct gentity_s {
 	float		homing;				// BFP - Homing heading correction intensity (0.0 - 1.0)
 	float		homingRange;		// BFP - Homing range
 	float		homingAcceleration;	// BFP - Homing acceleration
+
+	float		radius;				// BFP - Weapon radius
+	int			forcefieldTime;		// BFP - Forcefield time
 };
 
 
@@ -332,7 +336,7 @@ struct gclient_s {
 
 	int			lastKillTime;		// for multiple kill rewards
 
-	// BFP - Reuse as BFP Beam attack
+	// BFP - Reuse as BFP Beam attack and force field
 	qboolean	fireHeld;			// used for hook
 	gentity_t	*hook;				// grapple hook if out
 
@@ -597,6 +601,9 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir);
 // BFP - Homing disk
 gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir);
 
+// BFP - Forcefield
+gentity_t *fire_forcefield (gentity_t *self, vec3_t start);
+
 // BFP - Use G_MissileImpact into another files to handle the weapons
 void G_MissileImpact( gentity_t *ent, trace_t *trace );
 
@@ -633,6 +640,9 @@ void Weapon_HookThink (gentity_t *ent);
 void Weapon_BFPBeam_Fire ( gentity_t *ent );
 void Weapon_BFPBeamFree ( gentity_t *ent );
 void Weapon_BFPBeamRun ( gentity_t *ent );
+
+// BFP - Forcefield
+void Weapon_Forcefield_Think ( gentity_t *ent );
 
 
 //

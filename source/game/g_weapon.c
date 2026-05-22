@@ -442,6 +442,66 @@ void BFG_Fire ( gentity_t *ent ) {
 }
 
 
+// BFP - Forcefield
+/*
+======================================================================
+
+FORCEFIELD
+
+======================================================================
+*/
+
+void Forcefield_Fire ( gentity_t *ent ) { // BFP - Forcefield fire
+	if ( !ent->client->hook ) {
+		fire_forcefield( ent, muzzle );
+	}
+}
+
+static void Forcefield_Free( gentity_t *self ) { // BFP - Forcefield free
+	self->parent->client->hook = NULL;
+	G_FreeEntity( self );
+}
+
+void Weapon_Forcefield_Think ( gentity_t *ent ) { // BFP - Forcefield
+	gentity_t	*rad = NULL;
+	int			damage = ( ent->splashDamage ) ? ent->splashDamage : ent->damage;
+
+	if ( !ent->parent || !ent->parent->client || !ent->parent->client->hook
+	|| ent->parent->client->ps.pm_type == PM_DEAD
+	|| ent->parent->client->pers.connected == CON_DISCONNECTED ) {
+		Forcefield_Free( ent );
+		return;
+	}
+
+	if ( ent->parent->client->ps.weaponstate != WEAPON_FIRING
+	&& ent->parent->client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
+	&& ent->parent->client->ps.weaponstate != WEAPON_EXPLODING_KIBALLFIRING ) {
+		Forcefield_Free( ent );
+		return;
+	}
+	
+	VectorCopy( ent->parent->r.currentOrigin, ent->r.currentOrigin );
+	VectorCopy( ent->parent->r.currentOrigin, ent->s.pos.trBase );
+	ent->s.pos.trTime = level.time;
+
+	// corrects force field origin
+	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
+
+	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->radius) ) != NULL ) {
+		if ( IsValidTargetRadius( ent, rad ) ) {
+			G_Damage( rad, ent, ent->parent, forward, rad->r.currentOrigin, 
+				damage, 0, ent->methodOfDeath );
+		}
+	}
+
+	// no chargeAttack: removes hook pointer at that instant
+	if ( ent->parent->client->ps.weaponstate == WEAPON_EXPLODING_KIBALLFIRING ) {
+		Forcefield_Free( ent );
+		return;
+	}
+	ent->nextthink = level.time + 200;
+}
+
 /*
 ======================================================================
 
@@ -738,7 +798,7 @@ void Weapon_BFPBeam_Fire ( gentity_t *ent ) // BFP - BFP Beam fire
 
 void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
 {
-	if ( ent && ent->parent->client ) {
+	if ( ent && ent->parent && ent->parent->client ) {
 		ent->parent->client->hook = NULL;
 		ent->parent->client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		ent->parent->client->ps.weaponstate = WEAPON_READY;
@@ -1067,8 +1127,9 @@ void FireWeapon( gentity_t *ent ) {
 	case WP_LIGHTNING:
 		Weapon_LightningFire( ent );
 		break;
+// BFP - Using that as forcefield
 	case WP_SHOTGUN:
-		weapon_supershotgun_fire( ent );
+		Forcefield_Fire( ent );
 		break;
 	case WP_MACHINEGUN:
 		if ( g_gametype.integer != GT_TEAM ) {

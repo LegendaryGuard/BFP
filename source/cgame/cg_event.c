@@ -1049,7 +1049,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 
 	case EV_SHOTGUN:				// 78
-		CG_ShotgunFire( es );
+		// BFP - No shotgun fire, just force field test
+		// CG_ShotgunFire( es );
 		break;
 	
 	case EV_UNUSED_INDEX79:			// 79

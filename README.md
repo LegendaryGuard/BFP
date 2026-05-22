@@ -37,6 +37,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [x] Breakable map entities ("func_breakable")
 - [x] Damage calculated by attacker powerlevel, modified knockback and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
+- [x] Forcefield feature
 - [x] Gametype: Survival (`g_gametype 3`)
 - [x] Gametype: Monster (`g_gametype 4`)
 - [x] Gametype: Team Last Man Standing (`g_gametype 6`)

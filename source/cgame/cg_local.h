@@ -154,6 +154,8 @@ typedef struct {
 	float			barrelAngle;
 	int				barrelTime;
 	qboolean		barrelSpinning;
+
+	int				forceFieldStartTime;	// BFP - Forcefield start time
 } playerEntity_t;
 
 //=================================================
@@ -233,9 +235,7 @@ typedef enum {
 
 typedef enum {
 	LEF_PUFF_DONT_SCALE  = 0x0001,			// do not scale size over time
-	LEF_TUMBLE			 = 0x0002,			// tumble over time, used for ejecting shells
-	LEF_SOUND1			 = 0x0004,			// sound 1 for kamikaze
-	LEF_SOUND2			 = 0x0008			// sound 2 for kamikaze
+	LEF_TUMBLE			 = 0x0002			// tumble over time, used for ejecting shells
 } leFlag_t;
 
 typedef enum {
@@ -1369,6 +1369,8 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir );
 void CG_ExplosionSound( vec3_t origin );
 // BFP - Explosion effects
 void CG_ExplosionEffect( vec3_t origin, vec3_t dir );
+// BFP - Forcefield effect
+void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, char *explosionShader );
 
 // BFP - Ki trail
 //

@@ -2400,7 +2400,7 @@ static void PM_TorsoAnimation( void ) {
 PM_CheckFlightState
 ==============
 */
-static void PM_CheckFlightState( void ) { // BFP - Checks if the flight is disabled while the key is held
+static void PM_CheckFlightState( pmove_t *pm ) { // BFP - Checks if the flight is disabled while the key is held
 	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR
 	|| ( pm->ps->pm_flags & PMF_RESPAWNED ) ) {
 		pm->ps->pm_flags &= ~PMF_FLIGHT_LATCH;
@@ -2860,6 +2860,7 @@ static void PM_Weapon( void ) {
 				// - WP_GRAPPLING_HOOK is used as example of ki beam
 				switch( pm->ps->weapon ) {
 				case WP_GRENADE_LAUNCHER:
+				//case WP_SHOTGUN: // no chargeAttack set
 				case WP_PLASMAGUN:
 				case WP_BFG:
 				case WP_GRAPPLING_HOOK:
@@ -2871,7 +2872,7 @@ static void PM_Weapon( void ) {
 					pm->ps->weaponTime += 1000;
 					pm->ps->weaponstate = WEAPON_CHARGING;
 					break;
-				case WP_SHOTGUN: // add time to handle ki explosion wave animation
+				case WP_SHOTGUN: // chargeAttack set, add time to handle ki explosion wave animation
 					pm->ps->weaponTime += 700;
 					pm->ps->weaponstate = WEAPON_KIEXPLOSIONWAVE;
 					break;
@@ -2916,6 +2917,7 @@ static void PM_Weapon( void ) {
 
 			// handle the animation for the start of beam or ball shoot
 			switch( pm->ps->weapon ) {
+			case WP_SHOTGUN: // no chargeAttack set
 			case WP_GRENADE_LAUNCHER:
 			case WP_BFG:
 				PM_FireChargedState( WEAPON_EXPLODING_KIBALLFIRING );
@@ -2951,6 +2953,7 @@ static void PM_Weapon( void ) {
 				case WP_PLASMAGUN:
 					PM_ChargeKiAttackState( 2, ATTACK_CHARGE_LIMIT, 1000, 120 );
 					break;
+				//case WP_SHOTGUN: // no chargeAttack set
 				case WP_BFG:
 				case WP_GRAPPLING_HOOK:
 					PM_ChargeKiAttackState( 2, ATTACK_CHARGE_LIMIT, 1000, 20 );
@@ -3047,8 +3050,9 @@ static void PM_Weapon( void ) {
 			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] < ATTACK_CHARGE_LIMIT ) {
 				++pm->ps->stats[STAT_KI_ATTACK_CHARGE];
 			}
-			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= 1 ) {
+			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= 1 ) { // BFP - TODO: bfp_weapon.cfg: set chargeAutoFire option after that such amount of minCharge
 				pm->ps->pm_flags |= PMF_KI_ATTACK;
+				pm->ps->eFlags |= EF_FIRING;
 				PM_AddEvent( EV_FIRE_WEAPON );
 			}
 		}
@@ -3057,6 +3061,7 @@ static void PM_Weapon( void ) {
 		|| pm->ps->weapon != pm->cmd.weapon ) { // avoid when changing weapon
 			pm->ps->weaponTime = 1000;
 			pm->ps->weaponstate = WEAPON_STUN;
+			pm->ps->eFlags &= ~EF_FIRING;
 		}
 
 		// fall even whether the player is flying
@@ -3342,16 +3347,16 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// set the firing flag for continuous beam weapons
 	if ( !(pm->ps->pm_flags & PMF_RESPAWNED) && pm->ps->pm_type != PM_INTERMISSION
-		&& ( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->ammo[ pm->ps->weapon ] ) {
+	&& ( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->ammo[ pm->ps->weapon ]
+	&& pm->ps->weapon != WP_SHOTGUN ) { // BFP - That would be with chargeAttack set
 		pm->ps->eFlags |= EF_FIRING;
 	} else {
-		pm->ps->eFlags &= ~EF_FIRING;
-		// BFP - Handle attack button when holding to prepare the attack at the start
-		pm->cmd.buttons &= ~BUTTON_ATTACK;
+		if ( pm->ps->weapon != WP_SHOTGUN ) { // BFP - That would be with chargeAttack set
+			pm->ps->eFlags &= ~EF_FIRING;
+			// BFP - Handle attack button when holding to prepare the attack at the start
+			pm->cmd.buttons &= ~BUTTON_ATTACK;
+		}
 	}
-
-	// BFP - Checks if the flight is disabled and the key is held
-	PM_CheckFlightState();
 
 	// clear the respawned flag if attack and use are cleared
 	if ( pm->ps->stats[STAT_HEALTH] > 0 && 
@@ -3583,6 +3588,9 @@ void Pmove (pmove_t *pmove) {
 	}
 
 	pmove->ps->pmove_framecount = (pmove->ps->pmove_framecount+1) & ((1<<PS_PMOVEFRAMECOUNTBITS)-1);
+
+	// BFP - Checks if the flight is disabled and the key is held
+	PM_CheckFlightState( pmove );
 
 	// chop the move up if it is too long, to prevent framerate
 	// dependent behavior

@@ -534,8 +534,9 @@ void CG_RegisterWeapon( int weaponNum ) {
 		break;
 
 	case WP_SHOTGUN:
-		MAKERGB( weaponInfo->flashDlightColor, 1, 1, 0 );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/shotgun/sshotf1b.wav", qfalse );
+		// BFP - No flash light nor sound, just force field test
+		//MAKERGB( weaponInfo->flashDlightColor, 1, 1, 0 );
+		//weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/shotgun/sshotf1b.wav", qfalse );
 		break;
 
 	case WP_ROCKET_LAUNCHER:
@@ -1347,6 +1348,32 @@ void CG_FireWeapon( centity_t *cent ) {
 
 	// BFP - Just testing, WP_SHOTGUN treated as ki explosion example
 	if ( ent->weapon == WP_SHOTGUN ) {
+		// BFP - Use that as blinding_flash weapon, no chargeAttack set
+		// this is when noExplosion is set as weapon config dictates
+#if 0
+		// BFP - Low poly sphere
+		// BFP - TODO: Apply explosionModel from bfp attack config, highPolySphereModel is just a test
+		qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
+		qhandle_t	blindingShader = trap_R_RegisterShader( "BlindingFlashShader" );
+		localEntity_t	*leSphere;
+		const float		MAX_SCALE = 27, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
+		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
+		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
+		float	explosionScaleFactor = 3, explosionScaleFactorChargeMult = 0;
+		float	scale = 1;
+
+		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
+		if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
+		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
+		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+
+		CG_SpawnExplosionModel( cent->lerpOrigin, NULL, LE_EXPLOSION_SPHERE, sphereModel, blindingShader, 1000 );
+		VectorScale( leSphere->refEntity.axis[0], scale, leSphere->refEntity.axis[0] );
+		VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
+		VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
+
+		CG_ExplosionSound( cent->lerpOrigin );
+#endif
 		return;
 	}
 
@@ -1453,6 +1480,11 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 		}
 
 		break;
+	}
+
+	// BFP - Don't display for force field weapons
+	if ( weapon == WP_SHOTGUN ) {
+		return;
 	}
 
 	if ( sfx 

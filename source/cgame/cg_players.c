@@ -2723,8 +2723,8 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		CG_AuraAnims( cent, &aura2, 1, auraInverseRotation );
 
 		// resize the aura
-		CG_ModelSize( &aura, 1.1565f );
-		CG_ModelSize( &aura2, 1.252f );
+		CG_ModelSize( &aura, 1.3f );
+		CG_ModelSize( &aura2, 1.5f );
 
 		// set aura position to the player
 		VectorCopy( legs.origin, aura.origin );
@@ -2769,8 +2769,8 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		// aura tier
 		if ( cent->currentState.eFlags & EF_AURA_TIER_UP ) {
 			// resize the aura
-			CG_ModelSize( &aura, 1.1565f );
-			CG_ModelSize( &aura2, 1.252f );
+			CG_ModelSize( &aura, 1.3f );
+			CG_ModelSize( &aura2, 1.5f );
 		}
 
 		// keep the aura pivot tagged in tag_torso
@@ -3279,6 +3279,9 @@ void CG_Player( centity_t *cent ) {
 			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "torso", "tag_left" );
 		}
 	}
+
+	// BFP - Forcefield test
+	CG_ForceFieldEffect( cent, torso.origin, "models/weaphits/sphere_hi.md3", "AGAAttackShader" );
 
 	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );

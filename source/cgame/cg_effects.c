@@ -323,6 +323,9 @@ localEntity_t *CG_SpawnExplosionModel( vec3_t origin, vec3_t dir, leType_t type,
 	VectorCopy( newOrigin, le->refEntity.oldorigin );
 
 	le->refEntity.reType = RT_MODEL;
+	// BFP - Allows to be seen while looking at the other side 
+	// while the origin isn't present in camera
+	le->refEntity.nonNormalizedAxes = qtrue;
 
 	le->color[0] = le->color[1] = le->color[2] = 1.0;
 
@@ -750,11 +753,8 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 		for ( i = 0; i < numSmokes; ++i ) {
 			localEntity_t	*leSmoke;
 			vec3_t	vel, smokeOrg, spreadDir;
-			float	rightSpread, upSpread;
-			int	timenonscaled = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
-
-			rightSpread = crandom() * 500;
-			upSpread = crandom() * 500;
+			float	rightSpread = crandom() * 500;
+			float	upSpread = crandom() * 500;
 
 			VectorCopy( dir, spreadDir );
 			VectorMA( spreadDir, rightSpread, right, spreadDir );
@@ -772,7 +772,7 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 				explosionSmokeRadius,
 				1, 1, 1, 0.33f,
 				explosionSmokeLife,
-				timenonscaled, 0, 0,
+				cg.time, 0, 0,
 				cgs.media.particleSmokeShader );
 
 			// change to this type, don't use the common smoke puff
@@ -874,4 +874,94 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	leSphere->lightColor[0] = 1;
 	leSphere->lightColor[1] = 0.75;
 	leSphere->lightColor[2] = 0.0;
+}
+
+
+/*
+=================
+CG_ForceFieldEffect
+=================
+*/
+void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, char *explosionShader ) { // BFP - Forcefield effect
+	if ( cent->currentState.weapon == WP_SHOTGUN
+	&& ( cent->currentState.eFlags & EF_FIRING ) ) {
+		if ( !cent->pe.forceFieldStartTime ) {
+			cent->pe.forceFieldStartTime = cg.time;
+		}
+	} else {
+		cent->pe.forceFieldStartTime = 0;
+	}
+
+	if ( cent->pe.forceFieldStartTime ) {
+		const float		MAX_SCALE = 20;
+		int				elapsed = cg.time - cent->pe.forceFieldStartTime;
+		float			scale;
+		// BFP - TODO: Apply explosionModel from bfp attack config
+		qhandle_t		explosionModelRef = trap_R_RegisterModel( explosionModel );
+		// BFP - TODO: Apply explosionShader from bfp attack config
+		qhandle_t		explosionShaderRef = trap_R_RegisterShader( explosionShader );
+		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
+		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
+		float			explosionScaleFactor = 1, explosionScaleFactorChargeMult = 2;
+		refEntity_t		ff;
+
+		memset( &ff, 0, sizeof(ff) );
+
+		ff.reType = RT_MODEL;
+		ff.hModel = explosionModelRef;
+		ff.customShader = explosionShaderRef;
+		ff.renderfx = RF_LIGHTING_ORIGIN;
+
+		VectorCopy( origin, ff.origin );
+		VectorCopy( origin, ff.lightingOrigin );
+		AnglesToAxis( vec3_origin, ff.axis );
+
+		if ( explosionScaleFactor <= 0 ) {
+			explosionScaleFactor = 1;
+		}
+
+// BFP - That version scales smoothly than the original BFP one
+#define	FORCEFIELD_SMOOTH_SCALE		1
+#if FORCEFIELD_SMOOTH_SCALE
+	{
+		int		endTime = cent->pe.forceFieldStartTime + 5400;
+		int		duration = endTime - cent->pe.forceFieldStartTime;
+		float	t = (float)elapsed / (float)duration;
+
+		if ( t > 1 ) {
+			t = 1;
+		}
+		scale = ( explosionScaleFactor + explosionScaleFactorChargeMult ) 
+			* ( 1.0f + t * ( MAX_SCALE - 1.0f ) );
+	}
+#else
+	{
+		const int	MAX_STEPS = 27;
+		const int	STEP_TIME_MSC = 200;	// msc per step
+		int			step = elapsed / STEP_TIME_MSC;
+
+		if ( step > MAX_STEPS ) {
+			step = MAX_STEPS;
+		}
+		//scale = 1.0f + (float)step / (float)MAX_STEPS * ( MAX_SCALE - 1.0f );
+
+		//scale = ( explosionScaleFactor + explosionScaleFactorChargeMult ) 
+		//	* ( 1.0f + (float)step / MAX_STEPS * ( MAX_SCALE - 1.0f ) );
+
+		scale = 1.0f + ( (float)step / (float)MAX_STEPS ) * MAX_SCALE
+			* ( explosionScaleFactor + explosionScaleFactorChargeMult );
+	}
+#endif
+		// BFP - Allows to be seen while looking at the other side 
+		// while the origin isn't present in camera
+		ff.nonNormalizedAxes = qtrue;
+
+		CG_ModelSize( &ff, scale );
+
+		// add the entity
+		trap_R_AddRefEntityToScene( &ff );
+
+		// add the dlight
+		trap_R_AddLightToScene( ff.origin, 600 * scale, 0.25, 0.15, 0.75 );
+	}
 }

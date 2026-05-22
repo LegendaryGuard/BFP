@@ -394,16 +394,14 @@ static void CG_AddMoveScaleFade( localEntity_t *le ) {
 CG_AddMoveDontScaleFade
 ==================
 */
-static void CG_AddMoveDontScaleFade( localEntity_t *le ) { // BFP - For LE_MOVE_DONT_SCALE_FADE type, attention: it's a non-timescaled effect
+static void CG_AddMoveDontScaleFade( localEntity_t *le ) { // BFP - For LE_MOVE_DONT_SCALE_FADE type
 	refEntity_t	*re;
 	float		c;
-	// BFP - NOTE: Explosion effect use non-timescaled, to be timescaled by game, use cg.time
-	le->fadeInTime = trap_Milliseconds(); // BFP - That's what the variable makes non-timescaled
 
 	re = &le->refEntity;
 
 	// fade / grow time
-	c = (float)( le->endTime - le->fadeInTime ) * (float)le->lifeRate;
+	c = (float)( le->endTime - cg.time ) * (float)le->lifeRate;
 
 	// instead 0xff (255), use 510 to make the shader more visible
 	re->shaderRGBA[3] = 510 * c * le->color[3];
@@ -413,20 +411,20 @@ static void CG_AddMoveDontScaleFade( localEntity_t *le ) { // BFP - For LE_MOVE_
 	}
 
 	// slow down the movement during 0.33 sec
-	if ( le->fadeInTime - le->startTime < 330 ) {
+	if ( cg.time - le->startTime < 330 ) {
 		le->pos.trDelta[0] *= 0.998;
 		le->pos.trDelta[1] *= 0.998;
 	} else { // stop moving horizontally
 		vec3_t currentPos;
-		BG_EvaluateTrajectory( &le->pos, le->fadeInTime, currentPos );
+		BG_EvaluateTrajectory( &le->pos, cg.time, currentPos );
 		VectorCopy( currentPos, le->pos.trBase );
-		le->pos.trTime = le->fadeInTime;
+		le->pos.trTime = cg.time;
 		le->pos.trDelta[0] = le->pos.trDelta[1] = 0;
 	}
 
 	re->radius = le->radius;
 
-	BG_EvaluateTrajectory( &le->pos, le->fadeInTime, re->origin );
+	BG_EvaluateTrajectory( &le->pos, cg.time, re->origin );
 
 	trap_R_AddRefEntityToScene( re );
 }

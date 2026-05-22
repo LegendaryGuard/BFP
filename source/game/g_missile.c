@@ -120,6 +120,7 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 		// this is for the new spawning projectiles, 
 		// so, the owner is protected from projectile collisions and 
 		// only can be damaged by explosion
+		vec3_t		forward, right, up;
 		gentity_t *owner = NULL;
 		if ( ent->r.ownerNum < MAX_CLIENTS && ent->r.ownerNum >= 0 ) {
 			owner = &g_entities[ent->r.ownerNum];
@@ -129,13 +130,33 @@ static void G_HandleDivideKiBall( gentity_t *ent, gclient_t *client ) { // BFP -
 			owner = &g_entities[client->ps.clientNum];
 		}
 
+		VectorCopy( ent->s.angles, angles );
+		AngleVectors( angles, forward, right, up );
+		// correct up vector
+		up[0] = up[1] = 0;
+		up[2] = 1;
+
 		for ( i = 0; i < projectiles_to_spawn; ++i ) {
-			VectorCopy( ent->s.angles, angles );
-
-			angles[YAW] += yawAdjustments[i];
-			angles[PITCH] += pitchAdjustments[i];
-
-			AngleVectors( angles, dir, NULL, NULL );
+			switch ( i ) {
+			case 0: // forward
+				VectorCopy( forward, dir );
+				break;
+			case 1: // left
+				VectorNegate( right, dir );
+				break;
+			case 2: // right
+				VectorCopy( right, dir );
+				break;
+			case 3: // backward
+				VectorNegate( forward, dir );
+				break;
+			case 4: // up
+				VectorCopy( up, dir );
+				break;
+			case 5: // down
+				VectorNegate( up, dir );
+			}
+			VectorNormalize( dir );
 			G_DivideProjectile_Fire( owner, ent->r.currentOrigin, dir );
 		}
 	}
@@ -791,6 +812,7 @@ void G_RunMissile( gentity_t *ent ) {
 		G_HandleDivideKiBall( ent, client );
 		ent->enabledivide = qtrue;
 		G_FreeEntity( ent );
+		return;
 	}
 
 	// BFP - Piercing weapons
@@ -856,7 +878,9 @@ void G_RunMissile( gentity_t *ent ) {
 		&& !ent->enabledivide ) {
 			G_HandleDivideKiBall( ent, client );
 			ent->enabledivide = qtrue;
+			G_MissileImpact( ent, &tr );
 			G_FreeEntity( ent );
+			return;
 		}
 
 		// BFP - Don't explode on piercing weapons
@@ -1194,4 +1218,48 @@ gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorSet( disk->r.maxs, radius, radius, radius );
 
 	return disk;
+}
+
+// BFP - Just a testing forcefield
+/*
+=================
+fire_forcefield
+=================
+*/
+gentity_t *fire_forcefield (gentity_t *self, vec3_t start)
+{
+	// BFP - TODO: bfp_weapon.cfg: radius, ...
+	gentity_t   *field;
+
+	field = G_Spawn();
+	field->classname = "forcefield";
+	field->nextthink = level.time + 200;
+	field->think = Weapon_Forcefield_Think;
+	field->s.eType = ET_MISSILE;
+	field->r.svFlags = SVF_USE_CURRENT_ORIGIN;
+	field->s.weapon = WP_SHOTGUN;
+	field->r.ownerNum = self->s.number;
+	field->parent = self;
+	field->clipmask = MASK_SHOT;
+	field->target_ent = NULL;
+
+	field->damage = 20;
+	field->splashDamage = 0;
+	field->splashRadius = 0;
+	field->methodOfDeath = MOD_KI_ATTACK;
+	field->splashMethodOfDeath = MOD_KI_ATTACK;
+
+	field->radius = 900;
+	field->blinding = qfalse;
+
+	field->s.pos.trType = TR_STATIONARY;
+	field->s.pos.trTime = level.time;
+	VectorCopy( start, field->s.pos.trBase );
+	VectorClear( field->s.pos.trDelta );
+
+	VectorCopy( start, field->r.currentOrigin );
+
+	self->client->hook = field;
+
+	return field;
 }
