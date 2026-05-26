@@ -1372,15 +1372,21 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir );
 // BFP - Forcefield effect
 void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, char *explosionShader );
 
-// BFP - Ki trail
+// BFP - Trails
 //
 // cg_trails.c
 //
+/* Trail types */
+#define KI_TRAIL			0
+#define BEAM_TRAIL			1
+#define MISSILE_TRAIL		2
 void CG_InitTrails( void );
 void CG_ResetTrail( const int TRAIL_TYPE, int entityNum, vec3_t origin );
 void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader );
 void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t hShader );
 void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t beamShader, qhandle_t corkscrewShader );
+void CG_MissileTrail( int entityNum, vec3_t origin, qhandle_t hShader, vec3_t color, qboolean rainbow );
+void CG_DrawMissileTrails( void );
 
 //
 // cg_snapshot.c

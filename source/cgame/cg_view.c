@@ -927,6 +927,7 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 			CG_AddParticles ();
 		}
 		CG_AddLocalEntities();
+		CG_DrawMissileTrails(); // BFP - Trails
 	}
 	CG_AddViewWeapon( &cg.predictedPlayerState );
 

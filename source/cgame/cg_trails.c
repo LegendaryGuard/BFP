@@ -9,21 +9,20 @@ BFP TRAILS
 
 #include "cg_local.h"
 
-#define TRAIL_SEGMENTS		99
-#define CORKSCREW_SEGMENTS	150
-
-// Trail types
-#define KI_TRAIL			0
-#define BEAM_TRAIL			1
+#define	TRAIL_SEGMENTS			99
+#define	CORKSCREW_SEGMENTS		150
+#define	MISSILE_TRAIL_SEGMENTS	120
 
 typedef struct {
-	vec3_t segments[TRAIL_SEGMENTS];
+	vec3_t segments[MISSILE_TRAIL_SEGMENTS];
+	int segmentTime[MISSILE_TRAIL_SEGMENTS];
+	vec3_t color;
+	qboolean rainbow;
+	qhandle_t shader;
 	int numSegments;
-	vec3_t lastAimAngles;		// track last aim direction
-	int lastAimChangeTime;		// last time aim direction changed
 } trail_t;
 
-static trail_t cg_trails[MAX_GENTITIES][2];
+static trail_t cg_trails[MAX_GENTITIES][3];
 static vec3_t spiralSegments[CORKSCREW_SEGMENTS];
 
 /*
@@ -55,10 +54,9 @@ void CG_ResetTrail( const int TRAIL_TYPE, int entityNum, vec3_t origin ) {
 
 	for ( i = 0; i < TRAIL_SEGMENTS; ++i ) {
 		VectorCopy( origin, cg_trails[entityNum][TRAIL_TYPE].segments[i] );
+        cg_trails[entityNum][TRAIL_TYPE].segmentTime[i] = 0;
 	}
 	cg_trails[entityNum][TRAIL_TYPE].numSegments = 0;
-	VectorClear( cg_trails[entityNum][TRAIL_TYPE].lastAimAngles );
-	cg_trails[entityNum][TRAIL_TYPE].lastAimChangeTime = 0;
 }
 
 /*
@@ -175,7 +173,6 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 	int nBeamSegments = cg_beamTrail.integer;
 	trail_t *beamTrail = &cg_trails[entityNum][BEAM_TRAIL];
 	const float BEAM_STRAIGHTEN_RATE = 0.2f;	// how quickly segments straighten (0.0 - 1.0)
-	const float BEAM_AIM_THRESHOLD = 1.0f;		// minimum angle change to consider "aiming"
 
 	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
 		return;
@@ -198,8 +195,7 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 	// start stretching segments
 	if ( nBeamSegments >= 10 ) {
 		vec3_t currentAngles, beamDir;
-		float angleDelta = 0, beamLength, lengthFactor;
-		qboolean isAiming = qfalse;
+		float beamLength, lengthFactor;
 
 		// beam length and direction
 		VectorSubtract( origin, muzzleOrigin, beamDir );
@@ -214,16 +210,6 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 		if ( lengthFactor > 2.5f ) {
 			lengthFactor = 2.5f;
 		}
-
-		if ( beamTrail->lastAimChangeTime > 0 ) {
-			angleDelta = Distance( currentAngles, beamTrail->lastAimAngles );
-			isAiming = ( angleDelta > BEAM_AIM_THRESHOLD );
-		}
-
-		if ( isAiming ) {
-			beamTrail->lastAimChangeTime = cg.time + 200;
-		}
-		VectorCopy( currentAngles, beamTrail->lastAimAngles );
 
 		// shift all segments down by one position (creating trail effect)
 		for ( i = nBeamSegments - 1; i > 0; --i ) {
@@ -252,16 +238,6 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 				stretchRatio = distanceToOrigin / maxExpectedDistance;
 			}
 
-			// more stretch = more straightening
-			// stretchRatio: 1.0 = no stretch, >1.0 = stretched
-
-			// currently aiming - allow bending with minimal straightening
-			// length factor: longer beams still straighten a bit more even while aiming
-			straightenFactor = 0.05f * lengthFactor;
-			if ( straightenFactor > 0.3f ) {
-				straightenFactor = 0.3f;
-			}
-
 			if ( stretchRatio > 1.0f ) {
 				// segments are stretching, straighten them out more aggressively
 				// length factor: longer beams straighten more
@@ -269,7 +245,7 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 				if ( straightenFactor > 1.0f ) {
 					straightenFactor = 1.0f;
 				}
-			} else if ( cg.time - beamTrail->lastAimChangeTime > 100 ) {
+			} else {
 				// not aiming and not stretched - gentle straightening
 				// length factor: longer beams straighten faster
 				straightenFactor = BEAM_STRAIGHTEN_RATE * lengthFactor;
@@ -406,6 +382,173 @@ void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhand
 			}
 			VectorCopy( spiralSegments[i + 1], beam.oldorigin );
 			trap_R_AddRefEntityToScene( &beam );
+		}
+	}
+}
+
+
+/*
+=====================
+HSVtoRGB
+=====================
+*/
+static float ModFloat( float a, float b ) {
+	return ( b <= 0.0f ) ? 0 : ( a - (int)( a / b ) * b );
+}
+static void HSVtoRGB( float h, float s, float v, float *r, float *g, float *b ) {
+	int i;
+	float f, p, q, t;
+	h = ModFloat( h, 1.0f );
+	if ( s <= 0.0f ) {
+		*r = *g = *b = v;
+		return;
+	}
+	h *= 6.0f;
+	i = floor( h );
+	f = h - i;
+	p = v * ( 1.0f - s );
+	q = v * ( 1.0f - s * f );
+	t = v * ( 1.0f - s * ( 1.0f - f ) );
+	switch ( i ) {
+	case 0: *r = v; *g = t; *b = p; break;
+	case 1: *r = q; *g = v; *b = p; break;
+	case 2: *r = p; *g = v; *b = t; break;
+	case 3: *r = p; *g = q; *b = v; break;
+	case 4: *r = t; *g = p; *b = v; break;
+	default:*r = v; *g = p; *b = q; break;
+	}
+}
+
+
+/*
+=====================
+CG_MissileTrail
+
+Just adds segments, doesn't draw
+=====================
+*/
+void CG_MissileTrail( int entityNum, vec3_t origin, qhandle_t hShader, vec3_t color, qboolean rainbow ) {
+	int		i;
+	trail_t	*missileTrail = &cg_trails[entityNum][MISSILE_TRAIL];
+
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+		return;
+	}
+
+	if ( missileTrail->numSegments < MISSILE_TRAIL_SEGMENTS ) {
+		++missileTrail->numSegments;
+	}
+
+	for ( i = missileTrail->numSegments - 1; i > 0; --i ) {
+		VectorCopy( missileTrail->segments[i-1], missileTrail->segments[i] );
+		missileTrail->segmentTime[i] = missileTrail->segmentTime[i-1];
+	}
+
+	VectorCopy( origin, missileTrail->segments[0] );
+	missileTrail->segmentTime[0] = cg.time;
+	missileTrail->shader = hShader;
+	VectorCopy( color, missileTrail->color );
+	missileTrail->rainbow = rainbow;
+}
+
+
+/*
+=====================
+CG_DrawMissileTrails
+
+Called once per frame.
+Draw all active missile segments of all entities
+=====================
+*/
+void CG_DrawMissileTrails( void ) {
+	int			entityNum, i;
+	const int	SEGMENT_LIFESPAN_MSEC = 900;
+	const float	START_WIDTH = 15.0f;
+	const float	END_WIDTH = 15.0f;
+
+	for ( entityNum = 0; entityNum < MAX_GENTITIES; ++entityNum ) {
+		trail_t		*trail = &cg_trails[entityNum][MISSILE_TRAIL];
+
+		for ( i = 0; i < trail->numSegments - 1; ++i ) {
+			vec3_t	start, end;
+			float	alpha, width;
+			byte	alphaByte;
+			int		age = cg.time - trail->segmentTime[i];
+			int		ageNext = cg.time - trail->segmentTime[i + 1];
+
+			if ( age >= SEGMENT_LIFESPAN_MSEC ) {
+				continue;
+			}
+
+			// the old end of the quad has expired — don't draw,
+			// but there might be new segments later in the buffer,
+			// so we use continue instead of break
+			if ( ageNext >= SEGMENT_LIFESPAN_MSEC ) {
+				continue;
+			}
+
+			// temporal discontinuity: the two ends belong to different firings.
+			// a gap greater than ~150ms between consecutive segments means that the
+			// buffer was refilled by a new missile on top of the remains of the previous one
+			if ( trail->segmentTime[i] - trail->segmentTime[i + 1] > 150 ) {
+				continue;
+			}
+
+			VectorCopy( trail->segments[i], start );
+			VectorCopy( trail->segments[i + 1], end );
+
+			// calculate opacity and width according to age
+			alpha = 1.0f - (float)age / SEGMENT_LIFESPAN_MSEC;
+			if ( alpha < 0.0f ) alpha = 0.0f;
+			alphaByte = (byte)(alpha * 255.0f);
+			width = START_WIDTH * ( 1.0f - (float)age / SEGMENT_LIFESPAN_MSEC )
+						+ END_WIDTH * ( (float)age / SEGMENT_LIFESPAN_MSEC );
+
+			// render the polys
+			{
+				vec3_t		forward, right, viewAxis;
+				polyVert_t	verts[4];
+				byte		r, g, b;
+
+				r = (byte)(trail->color[0] * alphaByte);
+				g = (byte)(trail->color[1] * alphaByte);
+				b = (byte)(trail->color[2] * alphaByte);
+
+				// rainbow effect
+				if ( trail->rainbow ) {
+					float	rf, gf, bf;
+					float	hue = (float)age / SEGMENT_LIFESPAN_MSEC;
+					hue = ModFloat( cg.time * 0.0006, 1.0f );
+					HSVtoRGB( hue, 1.0f, 1.0f, &rf, &gf, &bf );
+					r = (byte)(rf * alphaByte);
+					g = (byte)(gf * alphaByte);
+					b = (byte)(bf * alphaByte);
+				}
+
+				VectorSubtract( end, start, forward );
+				VectorNormalize( forward );
+				VectorSubtract( cg.refdef.vieworg, start, viewAxis );
+				CrossProduct( viewAxis, forward, right );
+				VectorNormalize( right );
+
+				VectorMA( start,  width, right, verts[0].xyz );
+				Vector2Set( verts[0].st, 0, 0 );
+				Byte4Set( verts[0].modulate, r, g, b, alphaByte );
+
+				VectorMA( end, width, right, verts[1].xyz );
+				Vector2Set( verts[1].st, 1, 0 );
+				Byte4Set( verts[1].modulate, r, g, b, alphaByte );
+
+				VectorMA( end, -width, right, verts[2].xyz );
+				Vector2Set( verts[2].st, 1, 1 );
+				Byte4Set( verts[2].modulate, r, g, b, alphaByte );
+
+				VectorMA( start, -width, right, verts[3].xyz );
+				Vector2Set( verts[3].st, 0, 1 );
+				Byte4Set( verts[3].modulate, r, g, b, alphaByte );
+
+				trap_R_AddPolyToScene( trail->shader, 4, verts );
+			}
 		}
 	}
 }

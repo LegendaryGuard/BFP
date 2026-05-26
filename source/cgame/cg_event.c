@@ -309,7 +309,7 @@ static void CG_Obituary( entityState_t *ent ) {
 		trap_Cvar_Set( "cg_lifedeaths", va( "%i", (int)( cg_lifedeaths.integer + 1 ) ) );
 	}
 	// BFP - Reset ki trails to avoid viewing other trails
-	CG_ResetTrail( 0, target, vec3_origin );
+	CG_ResetTrail( KI_TRAIL, target, vec3_origin );
 }
 
 //==========================================================================
@@ -1005,7 +1005,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	case EV_MISSILE_HIT:			// 73
 		ByteToDir( es->eventParm, dir );
 		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
-		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
 	case EV_MISSILE_MISS:			// 74
@@ -1017,7 +1017,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			// BFP - Spark particles explosion
 			CG_SparksExplosion( position, dir );
 		}
-		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
 	case EV_MISSILE_MISS_METAL:		// 75
@@ -1027,7 +1027,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		CG_DebrisExplosion( position, dir );
 		// BFP - Spark particles explosion
 		CG_SparksExplosion( position, dir );
-		CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
 	// BFP - EV_MISSILE_DETONATE - used on ki grenade bounces and beams, 
@@ -1037,7 +1037,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		{
 			vec3_t	dirDetonate = {0, 0, 1}; // place the explosion position and size correctly
 			CG_MissileHitWall( es->weapon, 0, position, dirDetonate, IMPACTSOUND_DEFAULT );
-			CG_ResetTrail( 1, es->number, es->origin ); // BFP - Reset beam trail
+			CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		}
 		break;
 

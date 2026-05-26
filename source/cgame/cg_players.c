@@ -2516,7 +2516,7 @@ Handle aura animations, when idling it sets the aura vertical rotation, so the a
 */
 static void CG_RemoveKiTrails( centity_t *cent, int clientNum, vec3_t kiTrailOrigin, qhandle_t kiTrailShader, qboolean fastRemove ) { // BFP - Remove ki trails
 	if ( cg.time > cent->pe.kiTrailTime ) { // reset ki trail position avoid being zeroed
-		CG_ResetTrail( 0, clientNum, kiTrailOrigin );
+		CG_ResetTrail( KI_TRAIL, clientNum, kiTrailOrigin );
 	} else { // ki trails keep running in that moment, but their segments are being removed
 		CG_KiTrail( clientNum, kiTrailOrigin, fastRemove, kiTrailShader );
 	}
