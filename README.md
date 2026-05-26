@@ -49,12 +49,12 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Ki trails
 - [x] Load player models only by prefix
 - [x] Melee feature
-- [x] Remove some items like powerups and health pickups
 - [x] Particles
 - [x] Power Struggles (when two beam attacks collide)
 - [x] Powerlevel and Power Tiers indicated on old docs
 - [x] Playable third person mode and first person vis mode
 - [x] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
+- [x] Remove some items like powerups and health pickups
 - [x] Remove weapon visuals (models and stuff)
 - [x] Replace ammo to ki energy stamina
 - [x] Rocket jumping (applicable if jumping is pressed at the same time)
@@ -173,7 +173,10 @@ You'll notice some differences and things that the original Bid For Power didn't
 - while charging ki near water, bubble particles appear
 - when player is still moving with/without friction and charging ki, antigrav rock particles appear
 - when antigrav rock and rock debris particles fall in a slope or inclined places, bounce and slide, that makes the movements more realistic
+- piercing weapons, like Razor disk, emit spark particles when hitting a player
+- beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
 - new particles: charge smoke, which appears when charging ki near the ground
+- new cool missile trails (that replaces original Q3 missile smoke trails), includes rainbow option. These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
 - removed some unused cvars
 - balanced player pmove physics: 
   - players can interact bounce pads like Q3 does (on original BFP, the physics are like you're sliding heavily on the ground and not bouncing as usually do, you're being pushed when touching bounce pads)
