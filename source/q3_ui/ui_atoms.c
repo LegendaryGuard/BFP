@@ -141,9 +141,10 @@ void UI_PopMenu (void)
 	trap_S_StartLocalSound( menu_out_sound, CHAN_LOCAL_SOUND );
 
 	uis.menusp--;
-
-	if (uis.menusp < 0)
+	if (uis.menusp < 0) {
 		trap_Error ("UI_PopMenu: menu stack underflow");
+		return;
+	}
 
 	if (uis.menusp) {
 		uis.activemenu = uis.stack[uis.menusp-1];
@@ -362,7 +363,7 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 	ay = y * uis.scale + uis.biasY;
 
 	s = str;
-	while ( *s )
+	while ( s && *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
@@ -394,7 +395,7 @@ void UI_DrawBannerString( int x, int y, const char* str, int style, vec4_t color
 	// find the width of the drawn text
 	s = str;
 	width = 0;
-	while ( *s ) {
+	while ( s && *s ) {
 		ch = *s;
 		if ( ch == ' ' ) {
 			width += PROPB_SPACE_WIDTH;
@@ -438,7 +439,7 @@ int UI_ProportionalStringWidth( const char* str ) {
 
 	s = str;
 	width = 0;
-	while ( *s ) {
+	while ( s && *s ) {
 		ch = *s & 127;
 		charWidth = propMap[ch][2];
 		if ( charWidth != -1 ) {
@@ -472,7 +473,7 @@ static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t co
 	ay = y * uis.scale + uis.biasY;
 
 	s = str;
-	while ( *s )
+	while ( s && *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
@@ -665,7 +666,7 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 	ah = charh * uis.scale;
 
 	s = str;
-	while ( *s )
+	while ( s && *s )
 	{
 		if ( Q_IsColorString( s ) )
 		{

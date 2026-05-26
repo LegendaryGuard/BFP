@@ -45,7 +45,8 @@ SETUP MENU
 #define ID_SYSTEMCONFIG			13
 #define ID_GAME					14
 #define ID_CDKEY				15
-#define ID_DEFAULTS				16
+// BFP - No defaults available
+//#define ID_DEFAULTS				16
 #define ID_BACK					17
 
 
@@ -64,13 +65,15 @@ typedef struct {
 	menutext_s		cdkey;
 //	menutext_s		load;
 //	menutext_s		save;
-	menutext_s		defaults;
+// BFP - No defaults available
+//	menutext_s		defaults;
 	menubitmap_s	back;
 } setupMenuInfo_t;
 
 static setupMenuInfo_t	setupMenuInfo;
 
-
+// BFP - No defaults available
+#if 0
 /*
 =================
 Setup_ResetDefaults_Action
@@ -95,7 +98,7 @@ static void Setup_ResetDefaults_Draw( void ) {
 	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 0, "WARNING: This will reset *ALL*", UI_CENTER|UI_SMALLFONT, color_yellow );
 	UI_DrawProportionalString( SCREEN_WIDTH/2, 356 + PROP_HEIGHT * 1, "options to their default values.", UI_CENTER|UI_SMALLFONT, color_yellow );
 }
-
+#endif
 
 /*
 ===============
@@ -140,9 +143,10 @@ static void UI_SetupMenu_Event( void *ptr, int event ) {
 //		UI_SaveConfigMenu();
 //		break;
 
-	case ID_DEFAULTS:
-		UI_ConfirmMenu( "SET TO DEFAULTS?", Setup_ResetDefaults_Draw, Setup_ResetDefaults_Action );
-		break;
+// BFP - No defaults available
+//	case ID_DEFAULTS:
+//		UI_ConfirmMenu( "SET TO DEFAULTS?", Setup_ResetDefaults_Draw, Setup_ResetDefaults_Action );
+//		break;
 
 	case ID_BACK:
 		UI_PopMenu();
@@ -286,6 +290,8 @@ static void UI_SetupMenu_Init( void ) {
 	}
 
 	y += SETUP_MENU_VERTICAL_SPACING;
+	// BFP - No defaults available
+#if 0
 	setupMenuInfo.defaults.generic.type				= MTYPE_PTEXT;
 	setupMenuInfo.defaults.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
 	setupMenuInfo.defaults.generic.x				= 320;
@@ -295,6 +301,7 @@ static void UI_SetupMenu_Init( void ) {
 	setupMenuInfo.defaults.string					= "DEFAULTS";
 	setupMenuInfo.defaults.color					= color_white; // BFP - modified DEFAULTS color
 	setupMenuInfo.defaults.style					= UI_CENTER;
+#endif
 
 	setupMenuInfo.back.generic.type					= MTYPE_BITMAP;
 	setupMenuInfo.back.generic.name					= ART_BACK0;
@@ -323,8 +330,8 @@ static void UI_SetupMenu_Init( void ) {
 	if( !trap_Cvar_VariableValue( "cl_paused" ) ) {
 		Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.defaults );
 	}
-#endif
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.defaults );
+#endif
 	Menu_AddItem( &setupMenuInfo.menu, &setupMenuInfo.back );
 }
 
