@@ -2851,6 +2851,18 @@ static void PM_Weapon( void ) {
 			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 			// check for fire
 			if ( pm->cmd.buttons & BUTTON_ATTACK ) {
+// BFP - sbeam test
+#define SBEAM_TESTING	0
+#if SBEAM_TESTING		/* sbeam */
+				if ( pm->ps->weapon == WP_GRAPPLING_HOOK ) {
+					pm->ps->weaponTime += 250;
+					pm->ps->weaponstate = WEAPON_BEAMFIRING;
+					pm->ps->pm_flags |= PMF_KI_ATTACK;
+					// fire and make a sound
+					PM_AddEvent( EV_FIRE_WEAPON );
+					break;
+				}
+#endif					/* sbeam */
 
 				// BFP - NOTE: These are just examples of ki charging and shooting,
 				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNING to keep the continuous shooting animations
@@ -3017,6 +3029,17 @@ static void PM_Weapon( void ) {
 	case WEAPON_BEAMFIRING:
 	// BFP - NOTE: Lock movement during beam struggle
 	case WEAPON_BEAMSTRUGGLE:
+#if SBEAM_TESTING		/* sbeam */
+		if ( pm->ps->weaponTime <= 0 ) {
+			pm->ps->ammo[WP_KI] -= 250;
+			pm->ps->weaponTime += 250;
+		}
+		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
+			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
+			pm->ps->weaponstate = WEAPON_READY;
+		}
+		break;
+#endif					/* sbeam */
 		if ( ( pm->cmd.buttons & BUTTON_ATTACK )
 		|| ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_AURA ) )
 		|| ( pm->ps->pm_flags & PMF_BLOCK )

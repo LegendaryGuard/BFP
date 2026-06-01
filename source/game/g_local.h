@@ -604,6 +604,11 @@ gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir);
 // BFP - Forcefield
 gentity_t *fire_forcefield (gentity_t *self, vec3_t start);
 
+// BFP - sbeam (Super Beam?)
+gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir);
+
+// BFP - rdmissile (Divide ki ball)
+void G_RDMissile( gentity_t *ent, gclient_t *client );
 // BFP - Use G_MissileImpact into another files to handle the weapons
 void G_MissileImpact( gentity_t *ent, trace_t *trace );
 
@@ -643,6 +648,9 @@ void Weapon_BFPBeamRun ( gentity_t *ent );
 
 // BFP - Forcefield
 void Weapon_Forcefield_Think ( gentity_t *ent );
+
+// BFP - sbeam (Super Beam?)
+void Weapon_SBeam_Run ( gentity_t *ent );
 
 
 //

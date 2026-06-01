@@ -803,6 +803,7 @@ void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
 		ent->parent->client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		ent->parent->client->ps.weaponstate = WEAPON_READY;
 		ent->parent->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		ent->parent->client->fireHeld = qfalse;
 	}
 	G_FreeEntity( ent );
 }
@@ -839,9 +840,11 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 	vec3_t		raddir, targetViewPos;
 	float		distTarget, powerEnt, powerTarget;
 	const float	BEAM_PUSH_STEP = 200.0f;
+	float		struggleRadius = ( ent->splashRadius > ent->radius ) ? ent->splashRadius : ent->radius;
 
-	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, 256) ) != NULL ) {
-		if ( rad && rad->r.ownerNum == ent->r.ownerNum ) {
+	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, struggleRadius) ) != NULL ) {
+		if ( rad && ( rad->r.ownerNum == ent->r.ownerNum 
+		|| rad->s.eType != ET_MISSILE ) ) { // projectiles only
 			continue;
 		}
 		if ( rad && rad != ent ) {
@@ -855,7 +858,20 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 			}
 			if ( rad->piercing && !ent->piercing ) {
 				G_MissileImpact( ent, &trace );
-				return qfalse;
+				G_FreeEntity( ent );
+				return qtrue;
+			}
+
+			// BFP - If it's a dividing ki ball, break and divide!
+			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->enabledivide ) {
+				G_RDMissile( rad, rad->parent->client );
+				continue;
+			}
+
+			// BFP - If it isn't a beam, only other weapon classname like missile, break it
+			if ( Q_stricmp( rad->classname, "beam" ) ) {
+				G_MissileImpact( rad, &trace );
+				continue;
 			}
 
 			if ( !Q_stricmp( rad->classname, "beam" ) ) {
@@ -945,6 +961,10 @@ void Weapon_BFPBeamRun ( gentity_t *ent ) // BFP - BFP Beam run
 	vec3_t		ownerViewPos, vel, dir;
 	float		distance, deltaTime;
 
+	if ( Q_stricmp( ent->classname, "beam" ) ) {
+		return;
+	}
+
 	VectorCopy( ent->parent->client->ps.origin, ownerViewPos );
 	ownerViewPos[2] += ent->parent->client->ps.viewheight;
 	AngleVectors( ent->parent->client->ps.viewangles, forward, NULL, NULL );
@@ -965,11 +985,109 @@ void Weapon_BFPBeamRun ( gentity_t *ent ) // BFP - BFP Beam run
 		VectorScale( forward, ent->speed, vel );
 		VectorCopy( vel, ent->s.pos.trDelta );
 	}
+	if ( !ent->inuse ) { // if already disappeared
+		return;
+	}
 	ent->s.pos.trTime = level.time;		// smooth it
 
 	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
 
 	if ( Weapon_BFPBeamTrace( ent, ownerViewPos ) ) {
+		return;
+	}
+	Weapon_BFPBeamTrace( ent, ent->r.currentOrigin );
+}
+
+// BFP - sbeam (Super Beam?)
+/*
+======================================================================
+
+SBEAM
+
+======================================================================
+*/
+
+void Weapon_SBeam_Fire ( gentity_t *ent ) // BFP - sbeam (Super Beam?) fire
+{
+	if ( !ent->client->fireHeld && !ent->client->hook )
+		fire_sbeam ( ent, muzzle, forward );
+
+	ent->client->fireHeld = qtrue;
+}
+
+static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Beam?) radius
+	gentity_t	*rad = NULL;
+	float		radius = ( ent->splashRadius > ent->radius ) ? ent->splashRadius : ent->radius;
+
+	if ( !ent->parent || !ent->parent->client ) {
+		return qtrue;
+	}
+
+	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, radius) ) != NULL ) {
+		if ( rad && ( rad->r.ownerNum == ent->r.ownerNum
+		|| rad->s.eType != ET_MISSILE ) ) { // projectiles only
+			continue;
+		}
+		if ( rad && rad != ent ) {
+			// BFP - If there's a piercing projectile, break it
+			trace_t		trace;
+			trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, 
+						ent->r.ownerNum, ent->clipmask );
+			if ( ent->piercing && !rad->piercing ) {
+				G_MissileImpact( rad, &trace );
+				continue;
+			}
+			if ( rad->piercing && !ent->piercing ) {
+				G_MissileImpact( ent, &trace );
+				return qtrue;
+			}
+
+			// BFP - If it's a dividing ki ball, break and divide!
+			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->enabledivide ) {
+				G_RDMissile( rad, rad->parent->client );
+				continue;
+			}
+
+			// BFP - If it isn't a sbeam nor a beam, only other weapon classname like missile, break it
+			if ( Q_stricmp( rad->classname, "sbeam" ) && Q_stricmp( rad->classname, "beam" ) ) {
+				G_MissileImpact( rad, &trace );
+				continue;
+			}
+
+			if ( !Q_stricmp( rad->classname, "sbeam" ) ) {
+				G_MissileImpact( rad, &trace );
+				G_MissileImpact( ent, &trace );
+				return qtrue;
+			}
+		}
+	}
+	return qfalse;
+}
+
+void Weapon_SBeam_Run ( gentity_t *ent ) // BFP - sbeam (Super Beam?) run
+{
+	vec3_t		ownerViewPos, vel;
+
+	if ( Q_stricmp( ent->classname, "sbeam" ) ) {
+		return;
+	}
+
+	VectorCopy( ent->parent->client->ps.origin, ownerViewPos );
+	ownerViewPos[2] += ent->parent->client->ps.viewheight;
+	AngleVectors( ent->parent->client->ps.viewangles, forward, NULL, NULL );
+
+	CalcMuzzlePoint( ent->parent, forward, NULL, NULL, muzzle );
+
+	VectorScale( forward, ent->speed, vel );
+	VectorCopy( vel, ent->s.pos.trDelta );
+	VectorCopy( ownerViewPos, ent->s.pos.trBase );
+
+	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
+
+	if ( Weapon_BFPBeamTrace( ent, ownerViewPos ) ) {
+		return;
+	}
+	if ( Weapon_SBeamRadius( ent ) ) {
 		return;
 	}
 	Weapon_BFPBeamTrace( ent, ent->r.currentOrigin );
@@ -1155,6 +1273,7 @@ void FireWeapon( gentity_t *ent ) {
 		break;
 // BFP - Using that as BFP Beam
 	case WP_GRAPPLING_HOOK:
+		//Weapon_SBeam_Fire( ent );
 		Weapon_BFPBeam_Fire( ent );
 		break;
 	default:

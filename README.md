@@ -37,6 +37,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [x] Breakable map entities ("func_breakable")
 - [x] Damage calculated by attacker powerlevel, modified knockback and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
+- [x] Dividing ki ball (rdmissile attack type) feature
 - [x] Forcefield feature
 - [x] Gametype: Survival (`g_gametype 3`)
 - [x] Gametype: Monster (`g_gametype 4`)
@@ -58,6 +59,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Remove weapon visuals (models and stuff)
 - [x] Replace ammo to ki energy stamina
 - [x] Rocket jumping (applicable if jumping is pressed at the same time)
+- [x] sbeam attack type feature
 - [x] Short-Range Teleport - Zanzoken (when pressing 2 times left or right)
 - [x] Spectator can stop following the last player
 - [x] Third person traceable crosshair
