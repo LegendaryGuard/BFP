@@ -516,8 +516,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	case EV_TIER_2:					// 16
 	case EV_TIER_3:					// 17
 	case EV_TIER_4:					// 18
-		trap_S_StartSound ( NULL, es->number, CHAN_BODY, cgs.media.tierUpSound );
-		if ( event == EV_TIER_4 && es->number == cg.snap->ps.clientNum ) {
+		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
+		if ( event == EV_TIER_4 && es->otherEntityNum == cg.snap->ps.clientNum ) {
 			trap_SendConsoleCommand( "transformorbit\n" );
 		}
 		break;

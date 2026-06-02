@@ -254,6 +254,16 @@ void CheckAlmostCapture( gentity_t *self, gentity_t *attacker ) {
 }
 
 /*
+==============
+SendTierEvent
+==============
+*/
+static void SendTierEvent( const entity_event_t EVENT, gentity_t *ent ) { // BFP - Send tier event
+	gentity_t	*t = G_TempEntity( ent->client->ps.origin, EVENT );
+	t->s.otherEntityNum = ent->client->ps.clientNum;
+}
+
+/*
 ======================
 GainPowerlevelKiHealth
 ======================
@@ -286,20 +296,20 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	if ( !alreadyTier1 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
-		BG_AddPredictableEventToPlayerstate( EV_TIER_1, 0, &attacker->client->ps, -1 );
+		SendTierEvent( EV_TIER_1, attacker );
 	} else if ( !alreadyTier2 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
-		BG_AddPredictableEventToPlayerstate( EV_TIER_2, 0, &attacker->client->ps, -1 );
+		SendTierEvent( EV_TIER_2, attacker );
 	} else if ( !alreadyTier3 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
-		BG_AddPredictableEventToPlayerstate( EV_TIER_3, 0, &attacker->client->ps, -1 );
+		SendTierEvent( EV_TIER_3, attacker );
 	} else if ( !alreadyTransformed && attacker->client->ps.persistant[PERS_POWERLEVEL] > 999 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->ps.pm_flags |= PMF_ULTIMATE_TIER;
 		attacker->client->tierUnlockedTime = level.time + 5000;
-		BG_AddPredictableEventToPlayerstate( EV_TIER_4, 0, &attacker->client->ps, -1 );
+		SendTierEvent( EV_TIER_4, attacker );
 	}
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000
 		attacker->client->ps.persistant[PERS_POWERLEVEL] = 1000;
