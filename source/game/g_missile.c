@@ -621,6 +621,54 @@ static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
 
 /*
 ================
+G_Reflective
+================
+*/
+void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end ) {
+	gentity_t	*rad = NULL;
+	vec3_t		forward;
+	// BFP - TODO: For weapon config: range, ...
+	float		range = 500;
+	int			i;
+
+	if ( !ent || !ent->client ) {
+		return;
+	}
+
+	AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+
+	for ( i = 0; i < level.num_entities; i++ ) {
+		rad = &g_entities[i];
+		if ( !rad->inuse || rad->s.eType != ET_MISSILE ) {
+			continue;
+		}
+		if ( rad->parent == ent || rad->r.ownerNum == ent->s.number ) {
+			continue;
+		}
+		if ( rad->freeAfterEvent || rad->nextthink <= level.time ) {
+			continue;
+		}
+
+		BG_EvaluateTrajectory( &rad->s.pos, level.time, rad->r.currentOrigin );
+
+		if ( Distance( rad->r.currentOrigin, start ) > range ) {
+			continue;
+		}
+
+		VectorScale( forward, rad->speed, rad->s.pos.trDelta );
+		VectorCopy( rad->r.currentOrigin, rad->s.pos.trBase );
+		rad->s.pos.trTime = level.time;
+
+		rad->r.ownerNum = ent->s.number;
+		rad->parent = ent;
+
+		rad->homingRange = 0;
+		rad->homing = 0;
+    }
+}
+
+/*
+================
 G_MissileImpact
 ================
 */

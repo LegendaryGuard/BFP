@@ -1110,16 +1110,6 @@ void ClientThink_real( gentity_t *ent ) {
 		}
 	}
 
-	// BFP - TODO: That's just a test for gauntlet. 
-	// It might modify if weapon config is going to be implemented
-
-	// check for the hit-scan gauntlet, don't let the action
-	// go through as an attack unless it actually hits something
-	if ( client->ps.weapon == WP_GAUNTLET && !( ucmd->buttons & BUTTON_TALK ) &&
-		( ucmd->buttons & BUTTON_ATTACK ) && client->ps.weaponTime <= 0 ) {
-		CheckKiShockwavePushAttack( ent );
-	}
-
 	// BFP - No flight
 	pm.noFlight = qfalse;
 	if ( g_noFlight.integer > 0 ) {

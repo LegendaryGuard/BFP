@@ -55,6 +55,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Powerlevel and Power Tiers indicated on old docs
 - [x] Playable third person mode and first person vis mode
 - [x] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
+- [x] Reflective feature
 - [x] Remove some items like powerups and health pickups
 - [x] Remove weapon visuals (models and stuff)
 - [x] Replace ammo to ki energy stamina

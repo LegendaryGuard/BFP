@@ -201,6 +201,8 @@ struct gentity_s {
 
 	float		radius;				// BFP - Weapon radius
 	int			forcefieldTime;		// BFP - Forcefield time
+
+	qboolean	reflective;			// BFP - Reflective
 };
 
 
@@ -609,6 +611,8 @@ gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir);
 
 // BFP - rdmissile (Divide ki ball)
 void G_RDMissile( gentity_t *ent, gclient_t *client );
+// BFP - Reflective
+void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end );
 // BFP - Use G_MissileImpact into another files to handle the weapons
 void G_MissileImpact( gentity_t *ent, trace_t *trace );
 

@@ -55,8 +55,13 @@ GAUNTLET
 ======================================================================
 */
 
-void Weapon_Gauntlet( gentity_t *ent ) {
+// BFP - TODO: That's just a test for gauntlet. 
+// It might modify if weapon config is going to be implemented
 
+// check for the hit-scan gauntlet, don't let the action
+// go through as an attack unless it actually hits something
+void Weapon_Gauntlet( gentity_t *ent ) {
+	CheckKiShockwavePushAttack( ent );
 }
 
 // BFP - TODO: There's a ki attack that acts like a shockwave to push opponents, 
@@ -76,6 +81,16 @@ qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 	int			damage = 8;
 	int			range = 500;
 
+	// BFP - TODO: For weapon config, set this as hitscan attack type conditional
+	// if ( Q_stricmp( ent->classname, "hitscan" ) ) {
+	//	return;
+	// }
+
+	// BFP - TODO: For weapon config, apply the logic of weaponTime
+	if ( ent->client->ps.weaponTime < 100 ) {
+		return;
+	}
+
 	// set aiming directions
 	AngleVectors (ent->client->ps.viewangles, forward, right, up);
 
@@ -83,10 +98,16 @@ qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 
 	VectorMA (muzzle, range, forward, end);
 
+	// BFP - Reflective
+	ent->reflective = qtrue;
+
 	trap_Trace (&tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT);
 	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 		return qfalse;
 	}
+
+	// BFP - Reflective
+	G_Reflective( ent, muzzle, end );
 
 	traceEnt = &g_entities[ tr.entityNum ];
 

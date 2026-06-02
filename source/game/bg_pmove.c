@@ -2871,6 +2871,10 @@ static void PM_Weapon( void ) {
 				// - WP_PLASMAGUN is used as example of dividing ki ball
 				// - WP_GRAPPLING_HOOK is used as example of ki beam
 				switch( pm->ps->weapon ) {
+				case WP_GAUNTLET:
+					pm->ps->weaponstate = WEAPON_FIRING;
+					pm->ps->weaponTime += 100;
+					break;
 				case WP_GRENADE_LAUNCHER:
 				//case WP_SHOTGUN: // no chargeAttack set
 				case WP_PLASMAGUN:
@@ -3010,6 +3014,13 @@ static void PM_Weapon( void ) {
 			pm->ps->pm_flags |= PMF_KI_ATTACK;
 			break;
 		case WP_GAUNTLET:
+			addTime = 100;
+			if ( pm->ps->weaponTime <= 0 ) {
+				PM_AddEvent( EV_FIRE_WEAPON );
+				pm->ps->ammo[WP_KI] -= 70;
+			}
+			pm->ps->pm_flags |= PMF_KI_ATTACK;
+			break;
 		case WP_LIGHTNING:
 			if ( pm->ps->weaponTime <= 0 ) {
 				// keep shooting
