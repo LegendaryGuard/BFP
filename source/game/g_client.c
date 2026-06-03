@@ -83,18 +83,18 @@ SpotWouldTelefrag
 */
 qboolean SpotWouldTelefrag( gentity_t *spot ) {
 	int			i, num;
-	int			touch[MAX_GENTITIES];
+	int			touch[MAX_CLIENTS];
 	gentity_t	*hit;
 	vec3_t		mins, maxs;
 
 	VectorAdd( spot->s.origin, playerMins, mins );
 	VectorAdd( spot->s.origin, playerMaxs, maxs );
-	num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
+	num = G_EntitiesInBox( mins, maxs, touch, level.maxclients );
 
-	for (i=0 ; i<num ; i++) {
+	for ( i = 0; i < num ; i++ ) {
 		hit = &g_entities[touch[i]];
 		//if ( hit->client && hit->client->ps.stats[STAT_HEALTH] > 0 ) {
-		if ( hit->client) {
+		if ( hit->client ) {
 			return qtrue;
 		}
 
@@ -266,7 +266,7 @@ __search:
 
 	VectorCopy( spot->s.angles, angles );
 	VectorCopy( spot->s.origin, origin );
-	origin[2] += 9.0f;
+	origin[2] += SPAWN_HEIGHT;
 
 	return spot;
 }
@@ -312,7 +312,7 @@ gentity_t *SelectInitialSpawnPoint( gentity_t *ent, vec3_t origin, vec3_t angles
 
 	VectorCopy( spot->s.angles, angles );
 	VectorCopy( spot->s.origin, origin );
-	origin[2] += 9.0f;
+	origin[2] += SPAWN_HEIGHT;
 
 	return spot;
 }
@@ -1322,12 +1322,12 @@ void ClientSpawn(gentity_t *ent) {
 	if ( client->pers.maxHealth < 1 || client->pers.maxHealth > 100 ) {
 		client->pers.maxHealth = 100;
 	}
-	// clear entity values
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
 #endif
 
 	client->ps.eFlags = flags;
 
+	// clear entity values
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
 	ent->client = &level.clients[index];
 	ent->takedamage = qtrue;
@@ -1434,8 +1434,11 @@ void ClientSpawn(gentity_t *ent) {
 
 	// the respawned flag will be cleared after the attack and jump keys come up
 	client->ps.pm_flags |= PMF_RESPAWNED;
+	client->ps.viewheight = DEFAULT_VIEWHEIGHT;
+	client->ps.gravity = g_gravity.integer;
+	client->ps.speed = g_speed.integer;
 
-	trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );
+	trap_GetUsercmd( client - level.clients, &client->pers.cmd );
 	SetClientViewAngle( ent, spawn_angles );
 
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {

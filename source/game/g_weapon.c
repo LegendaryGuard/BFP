@@ -83,12 +83,12 @@ qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 
 	// BFP - TODO: For weapon config, set this as hitscan attack type conditional
 	// if ( Q_stricmp( ent->classname, "hitscan" ) ) {
-	//	return;
+	//	return qfalse;
 	// }
 
 	// BFP - TODO: For weapon config, apply the logic of weaponTime
 	if ( ent->client->ps.weaponTime < 100 ) {
-		return;
+		return qfalse;
 	}
 
 	// set aiming directions
@@ -149,7 +149,12 @@ GetEntityNearMeleeRadius
 ===================
 */
 gentity_t *GetEntityNearMeleeRadius( vec3_t point, gentity_t *attacker, gentity_t *target ) { // BFP - Melee near radius detection
-	int			i, num, touch[MAX_GENTITIES];
+	// BFP - NOTE: Maybe there's an idea that could be detected for any entity than client,
+	// imagine a player who wants to use melee against a rock and break it.
+	// So, that would be MAX_GENTITIES and trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
+	// to trace entities that doesn't have ->client data and just ->takedamage and ->health
+	// like func_breakable ones
+	int			i, num, touch[MAX_CLIENTS];
 	vec3_t		mins, maxs;
 	gentity_t	*prevTarget = target;
 
@@ -160,9 +165,9 @@ gentity_t *GetEntityNearMeleeRadius( vec3_t point, gentity_t *attacker, gentity_
 
 	VectorAdd( point, attacker->r.mins, mins );
 	VectorAdd( point, attacker->r.maxs, maxs );
-	num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
+	num = G_EntitiesInBox( mins, maxs, touch, level.maxclients );
 
-	for ( i = 0 ; i < num ; i++ ) {
+	for ( i = 0; i < num; i++ ) {
 		target = &g_entities[ touch[i] ];
 		if ( target->client && target->client != attacker->client ) {
 			return target;
@@ -182,13 +187,17 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	vec3_t		end;
 	gentity_t	*traceTarget;
 	vec3_t		traceMins, traceMaxs;
+	float		diveRange = g_meleeDiveRange.integer;
+
+	// BFP - Monster gamemode, adjust dive range for player monster
+	if ( attacker->client->ps.eFlags & EF_MONSTER ) {
+		diveRange *= 2.5;
+	}
 
 	// set aiming directions
 	AngleVectors( attacker->client->ps.viewangles, forward, NULL, NULL );
-
 	CalcMuzzlePoint( attacker, forward, NULL, NULL, muzzle );
-
-	VectorMA( muzzle, g_meleeDiveRange.integer, forward, end );
+	VectorMA( muzzle, diveRange, forward, end );
 
 	// BFP - Monster gamemode, use scaled bounding box for player monster
 	if ( attacker->client->ps.eFlags & EF_MONSTER ) {

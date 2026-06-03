@@ -318,7 +318,7 @@ TTimo: this function is common to the main menu and errorMessage menu
 */
 
 static void Main_MenuDraw( void ) {
-	if (strlen(s_errorMessage.errorMessage))
+	if (s_errorMessage.errorMessage[0] != '\0')
 	{
 		UI_DrawProportionalString_AutoWrapped( 320, 192, 600, 20, s_errorMessage.errorMessage, UI_CENTER|UI_SMALLFONT|UI_DROPSHADOW, menu_text_color );
 	}
@@ -395,7 +395,7 @@ void UI_MainMenu( void ) {
 	MainMenu_Cache();
 	
 	trap_Cvar_VariableStringBuffer( "com_errorMessage", s_errorMessage.errorMessage, sizeof(s_errorMessage.errorMessage) );
-	if (strlen(s_errorMessage.errorMessage))
+	if (s_errorMessage.errorMessage[0] != '\0')
 	{	
 		s_errorMessage.menu.draw = Main_MenuDraw;
 		s_errorMessage.menu.key = ErrorMessage_Key;

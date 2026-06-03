@@ -162,7 +162,7 @@ CG_SpawnEffect
 Player teleporting in or out
 ==================
 */
-void CG_SpawnEffect( vec3_t org ) {
+refEntity_t *CG_SpawnEffect( const vec3_t origin, qboolean firstPerson ) {
 	localEntity_t	*le;
 	refEntity_t		*re;
 
@@ -184,8 +184,19 @@ void CG_SpawnEffect( vec3_t org ) {
 	re->hModel = cgs.media.teleportEffectModel;
 	AxisClear( re->axis );
 
-	VectorCopy( org, re->origin );
-	re->origin[2] -= 24;
+	VectorCopy( origin, re->origin );
+	if ( firstPerson ) {
+		// adjust teleport effect model to cover whole FOV for better immersion
+		re->origin[2] -= 5.0f;
+		re->renderfx = RF_FIRST_PERSON;
+		// add second model visible through portals only
+		re = CG_SpawnEffect( origin, qfalse );
+		re->renderfx = RF_THIRD_PERSON;
+	} else {
+		re->origin[2] -= 24.0f;
+	}
+
+	return re;
 }
 
 /*

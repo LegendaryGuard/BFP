@@ -1058,7 +1058,7 @@ void BotMatch_LeaveSubteam(bot_state_t *bs, bot_match_t *match) {
 	//if not addressed to this bot
 	if (!BotAddressedToBot(bs, match)) return;
 	//
-	if (strlen(bs->subteam))
+	if (bs->subteam[0] != '\0')
 	{
 		BotAI_BotInitialChat(bs, "leftteam", bs->subteam, NULL);
 		trap_BotMatchVariable(match, NETNAME, netname, sizeof(netname));
@@ -1078,7 +1078,7 @@ void BotMatch_WhichTeam(bot_state_t *bs, bot_match_t *match) {
 	//if not addressed to this bot
 	if (!BotAddressedToBot(bs, match)) return;
 	//
-	if (strlen(bs->subteam)) {
+	if (bs->subteam[0] != '\0') {
 		BotAI_BotInitialChat(bs, "inteam", bs->subteam, NULL);
 	}
 	else {

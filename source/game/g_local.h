@@ -205,6 +205,7 @@ struct gentity_s {
 	qboolean	reflective;			// BFP - Reflective
 };
 
+#define	SPAWN_HEIGHT	0.0f
 
 typedef enum {
 	CON_DISCONNECTED,
@@ -454,6 +455,12 @@ typedef struct {
 	int			numSpawnVarChars;
 	char		spawnVarChars[MAX_SPAWN_VARS_CHARS];
 
+#ifndef OLD_CHECK_EXIT_RULES
+	// `CheckExitRulesLater()` has been called, and we'll need to
+	// `CheckExitRules()` when we're done doing stuff.
+	qboolean	needToCheckExitRules;
+#endif
+
 	// intermission state
 	int			intermissionQueued;		// intermission was qualified, but
 										// wait INTERMISSION_DELAY_TIME before
@@ -535,6 +542,7 @@ const char	*G_GetPlayerModelName( int clientNum, const char userinfo[MAX_INFO_ST
 void	G_InitPlayerModelList( void ); // BFP - Initialize player model list
 qboolean G_PlayerModelExistsOnServer( const char *modelName ); // BFP - Check player model existence in the server
 void	G_ResolvePlayerModel( const char userinfo[MAX_INFO_STRING], const char *input, char *output, int outSize ); // BFP - Resolve player model when loading by prefix
+int		G_EntitiesInBox( vec3_t mins, vec3_t maxs, int *touch, int maxents );
 void	G_TeamCommand( team_t team, const char *cmd );
 void	G_KillBox (gentity_t *ent);
 gentity_t *G_Find (gentity_t *from, int fieldofs, const char *match);

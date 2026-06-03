@@ -540,6 +540,8 @@ void ClientIntermissionThink( gclient_t *client ) {
 		// this used to be an ^1 but once a player says ready, it should stick
 		client->readyToExit = 1;
 	}
+
+	client->ps.commandTime = client->pers.cmd.serverTime;
 }
 
 
@@ -951,7 +953,7 @@ void ClientThink_real( gentity_t *ent ) {
 		return;
 	}
 	// mark the time, so the connection sprite can be removed
-	ucmd = &ent->client->pers.cmd;
+	ucmd = &client->pers.cmd;
 
 	// sanity check the command time to prevent speedup cheating
 	if ( ucmd->serverTime > level.time + 200 ) {
@@ -1126,7 +1128,7 @@ void ClientThink_real( gentity_t *ent ) {
 #if 0
 	if ( ent->flags & FL_FORCE_GESTURE ) {
 		ent->flags &= ~FL_FORCE_GESTURE;
-		ent->client->pers.cmd.buttons |= BUTTON_GESTURE;
+		client->pers.cmd.buttons |= BUTTON_GESTURE;
 	}
 #endif
 
@@ -1154,19 +1156,19 @@ void ClientThink_real( gentity_t *ent ) {
 	Pmove (&pm);
 
 	// save results of pmove
-	if ( ent->client->ps.eventSequence != oldEventSequence ) {
+	if ( client->ps.eventSequence != oldEventSequence ) {
 		ent->eventTime = level.time;
 	}
 	if (g_smoothClients.integer) {
-		BG_PlayerStateToEntityStateExtraPolate( &ent->client->ps, &ent->s, ent->client->ps.commandTime, qtrue );
+		BG_PlayerStateToEntityStateExtraPolate( &client->ps, &ent->s, client->ps.commandTime, qtrue );
 	}
 	else {
-		BG_PlayerStateToEntityState( &ent->client->ps, &ent->s, qtrue );
+		BG_PlayerStateToEntityState( &client->ps, &ent->s, qtrue );
 	}
-	SendPendingPredictableEvents( &ent->client->ps );
+	SendPendingPredictableEvents( &client->ps );
 
 	// BFP - Beam fire hold handling
-	if ( !( ent->client->ps.eFlags & EF_FIRING ) ) {
+	if ( !( client->ps.eFlags & EF_FIRING ) ) {
 		client->fireHeld = qfalse;		// for grapple
 	}
 
@@ -1184,12 +1186,12 @@ void ClientThink_real( gentity_t *ent ) {
 
 	// link entity now, after any personal teleporters have been used
 	trap_LinkEntity (ent);
-	if ( !ent->client->noclip ) {
+	if ( !client->noclip ) {
 		G_TouchTriggers( ent );
 	}
 
 	// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
-	VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
+	VectorCopy( client->ps.origin, ent->r.currentOrigin );
 
 	//test for solid areas in the AAS file
 	BotTestAAS(ent->r.currentOrigin);
@@ -1198,7 +1200,7 @@ void ClientThink_real( gentity_t *ent ) {
 	ClientImpacts( ent, &pm );
 
 	// save results of triggers and client events
-	if (ent->client->ps.eventSequence != oldEventSequence) {
+	if (client->ps.eventSequence != oldEventSequence) {
 		ent->eventTime = level.time;
 	}
 
@@ -1269,13 +1271,13 @@ SpectatorClientEndFrame
 ==================
 */
 void SpectatorClientEndFrame( gentity_t *ent ) {
-	gclient_t	*cl;
+	gclient_t	*cl, *client;
+
+	client = ent->client;
 
 	// if we are doing a chase cam or a remote view, grab the latest info
-	if ( ent->client->sess.spectatorState == SPECTATOR_FOLLOW ) {
-		int		clientNum, flags;
-
-		clientNum = ent->client->sess.spectatorClient;
+	if ( client->sess.spectatorState == SPECTATOR_FOLLOW ) {
+		int		clientNum = client->sess.spectatorClient;
 
 		// team follow1 and team follow2 go to whatever clients are playing
 		if ( clientNum == -1 ) {
@@ -1286,16 +1288,16 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 		if ( (unsigned)clientNum < MAX_CLIENTS ) {
 			cl = &level.clients[ clientNum ];
 			if ( cl->pers.connected == CON_CONNECTED && cl->sess.sessionTeam != TEAM_SPECTATOR ) {
-				flags = (cl->ps.eFlags & ~(EF_VOTED | EF_TEAMVOTED)) | (ent->client->ps.eFlags & (EF_VOTED | EF_TEAMVOTED));
-				ent->client->ps = cl->ps;
-				ent->client->ps.pm_flags |= PMF_FOLLOW;
-				ent->client->ps.eFlags = flags;
+				int	flags = (cl->ps.eFlags & ~(EF_VOTED | EF_TEAMVOTED)) | (client->ps.eFlags & (EF_VOTED | EF_TEAMVOTED));
+				client->ps = cl->ps;
+				client->ps.pm_flags |= PMF_FOLLOW;
+				client->ps.eFlags = flags;
 				return;
 			} else {
 				// drop them to free spectators unless they are dedicated camera followers
-				if ( ent->client->sess.spectatorClient >= 0 ) {
-					ent->client->sess.spectatorState = SPECTATOR_FREE;
-					ClientBegin( ent->client - level.clients );
+				if ( client->sess.spectatorClient >= 0 ) {
+					client->sess.spectatorState = SPECTATOR_FREE;
+					ClientBegin( client - level.clients );
 				}
 			}
 		}
@@ -1303,10 +1305,10 @@ void SpectatorClientEndFrame( gentity_t *ent ) {
 
 	// BFP - PMF_SCOREBOARD is unused
 #if 0
-	if ( ent->client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
-		ent->client->ps.pm_flags |= PMF_SCOREBOARD;
+	if ( client->sess.spectatorState == SPECTATOR_SCOREBOARD ) {
+		client->ps.pm_flags |= PMF_SCOREBOARD;
 	} else {
-		ent->client->ps.pm_flags &= ~PMF_SCOREBOARD;
+		client->ps.pm_flags &= ~PMF_SCOREBOARD;
 	}
 #endif
 }
