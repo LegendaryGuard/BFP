@@ -637,7 +637,7 @@ void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end ) {
 
 	AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
 
-	for ( i = 0; i < level.num_entities; i++ ) {
+	for ( i = 0; i < level.num_entities; ++i ) {
 		rad = &g_entities[i];
 		if ( !rad->inuse || rad->s.eType != ET_MISSILE ) {
 			continue;
@@ -646,6 +646,12 @@ void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end ) {
 			continue;
 		}
 		if ( rad->freeAfterEvent || rad->nextthink <= level.time ) {
+			continue;
+		}
+		if ( !Q_stricmp( rad->classname, "beam" ) || !Q_stricmp( rad->classname, "sbeam" ) ) { // cannot defend from beam & sbeam attack types
+			continue;
+		}
+		if ( rad->piercing ) { // cannot defend from piercing attacks
 			continue;
 		}
 
