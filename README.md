@@ -36,8 +36,9 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Blinding Flash (blinds opponents during 6 seconds)
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [x] Breakable map entities ("func_breakable")
+- [x] Bounce features (bounces, bounceFriction, noZBounce)
+- [x] Cone of fire feature (coneOfFireX and coneOfFireY)
 - [x] Damage calculated by attacker powerlevel, modified knockback and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
-- [x] Dividing ki ball (rdmissile attack type) feature
 - [x] Forcefield feature
 - [x] Gametype: Survival (`g_gametype 3`)
 - [x] Gametype: Monster (`g_gametype 4`)
@@ -50,10 +51,12 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Ki trails
 - [x] Load player models only by prefix
 - [x] Melee feature
+- [x] Offset features (randXOffset, randYOffset and alternatingXOffset)
 - [x] Particles
 - [x] Power Struggles (when two beam attacks collide)
 - [x] Powerlevel and Power Tiers indicated on old docs
 - [x] Playable third person mode and first person vis mode
+- [x] Missile properties (missileSpeed, missileDuration, missileGravity and missileAcceleration)
 - [x] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
 - [x] Reflective feature
 - [x] Remove some items like powerups and health pickups
@@ -63,6 +66,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] sbeam attack type feature
 - [x] Short-Range Teleport - Zanzoken (when pressing 2 times left or right)
 - [x] Spectator can stop following the last player
+- [x] Splitting ki ball (rdmissile attack type) feature
 - [x] Third person traceable crosshair
 - [x] Toggeable flight (bind key)
 - [x] Transformations (related to Power Tiers)

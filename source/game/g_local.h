@@ -86,11 +86,6 @@ struct gentity_s {
 	qboolean	neverFree;			// if true, FreeEntity will only unlink
 									// bodyque uses this
 
-	qboolean	enabledivide;		// BFP - Projectile state for dividing ball
-
-	qboolean	blinding;			// BFP - Blinding
-	int			blindedTime;		// BFP - Blind time
-
 	int			flags;				// FL_* variables
 
 	char		*model;
@@ -184,10 +179,26 @@ struct gentity_s {
 
 	gitem_t		*item;			// for bonus items
 
+	// BFP - Ki charge points
+	int			kiChargePoints;
+
 	float		deltaTime;		// BFP - For beam struggle
 	float		distance;		// BFP - For beam struggle
 
 	// BFP - Parts of weapon config logic
+	int			missileDuration;		// BFP - Missile duration
+	int			missileGravity;			// BFP - Missile gravity
+	float		missileAcceleration;	// BFP - Missile acceleration
+
+	qboolean	splitKiBall;		// BFP - Projectile state for splitting ki ball
+
+	qboolean	blinding;			// BFP - Blinding
+	int			blindedTime;		// BFP - Blind time
+
+	qboolean	bounces;			// BFP - Bounces
+	float		bounceFriction;		// BFP - Bounce friction
+	qboolean	noZBounce;			// BFP - No Z bounce
+
 	qboolean	piercing;			// BFP - Piercing
 	qboolean	piercingFade;		// BFP - Piercing enter fade
 	int			piercingTouch;		// BFP - Piercing touch detected
@@ -378,8 +389,8 @@ struct gclient_s {
 	int			zanzokenDelay;
 	int			zanzokenLastUsed;
 
-	// BFP - Ki charge points from STAT_KI_ATTACK_CHARGE
-	int			kiChargePoints;
+	// BFP - For alternatingXOffset
+	qboolean	alternatingOffsetSide;
 
 	char		*areabits;
 };
@@ -617,7 +628,7 @@ gentity_t *fire_forcefield (gentity_t *self, vec3_t start);
 // BFP - sbeam (Super Beam?)
 gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir);
 
-// BFP - rdmissile (Divide ki ball)
+// BFP - rdmissile (Splitting ki ball)
 void G_RDMissile( gentity_t *ent, gclient_t *client );
 // BFP - Reflective
 void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end );

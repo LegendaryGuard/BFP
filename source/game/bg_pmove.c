@@ -133,6 +133,33 @@ static void PM_ForceLegsAnim( int anim ) {
 }
 
 
+/*
+================
+PM_IsInKiAttackState
+
+Returns qtrue when the player is actively attacking
+(ki attack animation phase, or rapid-fire cooldown)
+================
+*/
+static qboolean PM_IsInKiAttackState( void ) { // BFP - Ki attack state
+	switch ( pm->ps->weaponstate ) {
+	case WEAPON_BEAMFIRING:
+	case WEAPON_BEAMSTRUGGLE:
+	case WEAPON_EXPLODING_KIBALLFIRING:
+	case WEAPON_SPLITTINGKIBALLFIRING:
+		return qtrue;
+	case WEAPON_KIEXPLOSIONWAVE:
+		return ( pm->ps->eFlags & EF_FIRING );
+	case WEAPON_FIRING:
+	case WEAPON_READY:
+		// Rapid-fire weapons set weaponstate back to READY immediately
+		// but weaponTime stays > 0 during cooldown. Keep ki attack anim running
+		return ( pm->ps->weaponTime > 0 ) ? qtrue : qfalse;
+	default:
+		return qfalse;
+	}
+}
+
 
 /*
 ==================
@@ -173,7 +200,7 @@ doesn't shoot anything while the ki is wasted out of control.
 ==================
 */
 static void PM_KiAttackTorsoAnim( void ) { // BFP - Torso ki attack anims
-	if ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !( pm->ps->pm_flags & PMF_KI_ATTACK ) ) {
+	if ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !PM_IsInKiAttackState() ) {
 		switch( pm->ps->weapon ) {
 		case WP_ROCKET_LAUNCHER: { PM_StartTorsoAnim( TORSO_ATTACK1_PREPARE ); break; }
 		case WP_GRENADE_LAUNCHER: { PM_ContinueTorsoAnim( TORSO_ATTACK2_PREPARE ); break; }
@@ -183,7 +210,7 @@ static void PM_KiAttackTorsoAnim( void ) { // BFP - Torso ki attack anims
 		case WP_BFG:
 		case WP_GRAPPLING_HOOK: { PM_ContinueTorsoAnim( TORSO_ATTACK4_PREPARE ); break; }
 		}
-	} else if ( pm->ps->pm_flags & PMF_KI_ATTACK ) {
+	} else if ( PM_IsInKiAttackState() ) {
 		pm->cmd.buttons &= ~BUTTON_GESTURE;
 		switch( pm->ps->weapon ) {
 		default:
@@ -212,8 +239,8 @@ static void PM_TorsoStatusAnim( int anim ) { // BFP - Torso status handling
 	if ( pm->ps->pm_flags & PMF_BLOCK ) PM_ContinueTorsoAnim( TORSO_BLOCK );
 	else if ( ( pm->cmd.buttons & BUTTON_MELEE ) && !( pm->ps->pm_flags & PMF_MELEE ) ) PM_ContinueTorsoAnim( TORSO_MELEE_READY );
 	else if ( pm->ps->pm_flags & PMF_MELEE ) PM_ContinueTorsoAnim( TORSO_MELEE_STRIKE );
-	else if ( ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !( pm->ps->pm_flags & PMF_KI_ATTACK ) ) 
-		|| ( pm->ps->pm_flags & PMF_KI_ATTACK ) ) PM_KiAttackTorsoAnim();
+	else if ( ( pm->cmd.buttons & BUTTON_ATTACK )  
+		|| PM_IsInKiAttackState() ) PM_KiAttackTorsoAnim();
     else PM_ContinueTorsoAnim( anim );
 }
 
@@ -2417,7 +2444,7 @@ static void PM_CheckFlightState( pmove_t *pm ) { // BFP - Checks if the flight i
 		if ( !( pm->ps->pm_flags & PMF_FLIGHT_LATCH ) ) {
 			// do not play the sound in the charging status
 			if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
-				PM_AddEvent( EV_ENABLE_FLIGHT ); // play the sound
+				BG_AddPredictableEventToPlayerstate( EV_ENABLE_FLIGHT, 0, pm->ps, -1 ); // play the sound
 			}
 			// change state and lock until release
 			pm->ps->eFlags ^= EF_FLIGHT;
@@ -2484,7 +2511,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 
 		// don't play the animation when being transformed
 		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
-			if ( !( pm->ps->pm_flags & PMF_KI_ATTACK )
+			if ( !PM_IsInKiAttackState()
 			&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
 				if ( pm->cmd.forwardmove > 0 ) {
 					PM_TorsoStatusAnim( TORSO_FLYA );
@@ -2614,7 +2641,7 @@ PM_UltimateTierTransformAnimation
 */
 static void PM_UltimateTierTransformAnimation( void ) { // BFP - Ultimate Tier transform animation
 	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
-		pm->ps->pm_flags &= ~( PMF_KI_ATTACK| PMF_BLOCK | PMF_MELEE );
+		pm->ps->pm_flags &= ~( PMF_BLOCK | PMF_MELEE );
 		pm->ps->eFlags &= ~EF_FIRING;
 		pm->ps->weaponstate = WEAPON_READY;
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_WALKING | BUTTON_GESTURE | BUTTON_USE_HOLDABLE | BUTTON_MELEE | BUTTON_BLOCK );
@@ -2677,7 +2704,7 @@ static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 		// don't move, also these keys cannot be used; melee, attacking, blocking, ki charge and ki boost statuses are removed
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_CHARGE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_MELEE );
-		pm->ps->pm_flags &= ~( PMF_KI_ATTACK | PMF_KI_CHARGE | PMF_BLOCK | PMF_MELEE );
+		pm->ps->pm_flags &= ~( PMF_KI_CHARGE | PMF_BLOCK | PMF_MELEE );
 		pm->ps->eFlags &= ~EF_KI_BOOST;
 		return;
 	}
@@ -2726,19 +2753,6 @@ static void PM_ChargeKiAttackState( int minCharge, int maxCharge, int addTime, i
 		pm->ps->eFlags |= EF_READY_KI_ATTACK;
 	}
 	PM_KiConsumption( addTime, kiConsume );
-}
-
-
-/*
-===============
-PM_FireChargedState
-
-Handle weapon state and PMF flag when the ki attack is fully charged
-===============
-*/
-static void PM_FireChargedState( int wepstate ) { // BFP - Ki attack fire charged
-	pm->ps->pm_flags |= PMF_KI_ATTACK;
-	pm->ps->weaponstate = wepstate;
 }
 
 
@@ -2820,9 +2834,9 @@ static void PM_Weapon( void ) {
 
 	// BFP - Melee, avoid shooting if the player is in this status
 	if ( pm->cmd.buttons & BUTTON_MELEE ) {
-		// only use when there's no dividing ki ball until it has been divided or collided, 
+		// only use when there's no splitting ki ball until it has been splitted or collided, 
 		// unless if the player wanna change the weapon from this state
-		if ( pm->ps->weaponstate != WEAPON_DIVIDINGKIBALLFIRING ) {
+		if ( pm->ps->weaponstate != WEAPON_SPLITTINGKIBALLFIRING ) {
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
 		}
@@ -2848,7 +2862,6 @@ static void PM_Weapon( void ) {
 		}
 		if ( pm->ps->weaponTime <= 0 ) {
 			pm->ps->weaponTime = 0;
-			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 			// check for fire
 			if ( pm->cmd.buttons & BUTTON_ATTACK ) {
 // BFP - sbeam test
@@ -2857,7 +2870,6 @@ static void PM_Weapon( void ) {
 				if ( pm->ps->weapon == WP_GRAPPLING_HOOK ) {
 					pm->ps->weaponTime += 250;
 					pm->ps->weaponstate = WEAPON_BEAMFIRING;
-					pm->ps->pm_flags |= PMF_KI_ATTACK;
 					// fire and make a sound
 					PM_AddEvent( EV_FIRE_WEAPON );
 					break;
@@ -2868,14 +2880,19 @@ static void PM_Weapon( void ) {
 				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNING to keep the continuous shooting animations
 				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
 				// - WP_SHOTGUN is used as example of ki explosion wave
-				// - WP_PLASMAGUN is used as example of dividing ki ball
+				// - WP_PLASMAGUN is used as example of splitting ki ball
 				// - WP_GRAPPLING_HOOK is used as example of ki beam
 				switch( pm->ps->weapon ) {
 				case WP_GAUNTLET:
 					pm->ps->weaponstate = WEAPON_FIRING;
 					pm->ps->weaponTime += 100;
 					break;
-				case WP_GRENADE_LAUNCHER:
+				case WP_GRENADE_LAUNCHER: // BFP - To test the rapid fire
+				/*
+					PM_AddEvent( EV_FIRE_WEAPON );
+					pm->ps->weaponstate = WEAPON_FIRING;
+					break;
+				*/
 				//case WP_SHOTGUN: // no chargeAttack set
 				case WP_PLASMAGUN:
 				case WP_BFG:
@@ -2922,12 +2939,13 @@ static void PM_Weapon( void ) {
 	case WEAPON_CHARGING:
 		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
 			// BFP - When the ki attack is fully charged, enter beam firing state
-			// or enter dividing ki ball firing state if it's a dividing ki ball
+			// or enter splitting ki ball firing state if it's a splitting ki ball
 			pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
 			// no fully charged, skip...
 			// BFP - TODO: Apply minCharge in that condition also
 			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] < 2 ) {
 				pm->ps->weaponstate = WEAPON_READY;
+				pm->ps->weaponTime = 0;
 				break;
 			}
 
@@ -2936,14 +2954,14 @@ static void PM_Weapon( void ) {
 			case WP_SHOTGUN: // no chargeAttack set
 			case WP_GRENADE_LAUNCHER:
 			case WP_BFG:
-				PM_FireChargedState( WEAPON_EXPLODING_KIBALLFIRING );
+				pm->ps->weaponstate = WEAPON_EXPLODING_KIBALLFIRING;
 				pm->ps->weaponTime += 500;
 				break;
 			case WP_PLASMAGUN:
-				PM_FireChargedState( WEAPON_DIVIDINGKIBALLFIRING );
+				pm->ps->weaponstate =  WEAPON_SPLITTINGKIBALLFIRING;
 				break;
 			case WP_GRAPPLING_HOOK:
-				PM_FireChargedState( WEAPON_BEAMFIRING );
+				pm->ps->weaponstate = WEAPON_BEAMFIRING;
 				pm->ps->weaponTime += 500;
 			}
 			// fire and make a sound
@@ -2958,7 +2976,7 @@ static void PM_Weapon( void ) {
 				// - WP_GRENADE_LAUNCHER should be like WP_MACHINEGUN and WP_LIGHTNING to keep the continuous shooting animations
 				//   WP_GRENADE_LAUNCHER is used as example of charge homing ball shot
 				// - WP_SHOTGUN is used as example of ki explosion wave
-				// - WP_PLASMAGUN is used as example of dividing ki ball
+				// - WP_PLASMAGUN is used as example of splitting ki ball
 				// - WP_GRAPPLING_HOOK is used as example of ki beam
 
 				// BFP - TODO: Also? Apply minCharge and maxCharge from reading bfp_weapon.cfg 
@@ -2986,32 +3004,24 @@ static void PM_Weapon( void ) {
 			break;
 		}
 
-		if ( pm->ps->weaponTime <= 0
-		&& pm->ps->weapon != WP_LIGHTNING ) {
-			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
-		}
-
 		switch( pm->ps->weapon ) {
 		default:
 		case WP_MACHINEGUN:
 			addTime = 100;
 			pm->ps->ammo[WP_KI] -= 10;
 			pm->ps->weaponstate = WEAPON_READY;
-			pm->ps->pm_flags |= PMF_KI_ATTACK;
 			break;
 		case WP_ROCKET_LAUNCHER:
 			PM_AddEvent( EV_FIRE_WEAPON );
 			addTime = 800;
 			pm->ps->ammo[WP_KI] -= 50;
 			pm->ps->weaponstate = WEAPON_READY;
-			pm->ps->pm_flags |= PMF_KI_ATTACK;
 			break;
 		case WP_RAILGUN:
 			PM_AddEvent( EV_FIRE_WEAPON );
 			addTime = 1500;
 			pm->ps->ammo[WP_KI] -= 150;
 			pm->ps->weaponstate = WEAPON_READY;
-			pm->ps->pm_flags |= PMF_KI_ATTACK;
 			break;
 		case WP_GAUNTLET:
 			addTime = 100;
@@ -3019,7 +3029,6 @@ static void PM_Weapon( void ) {
 				PM_AddEvent( EV_FIRE_WEAPON );
 				pm->ps->ammo[WP_KI] -= 70;
 			}
-			pm->ps->pm_flags |= PMF_KI_ATTACK;
 			break;
 		case WP_LIGHTNING:
 			if ( pm->ps->weaponTime <= 0 ) {
@@ -3028,7 +3037,6 @@ static void PM_Weapon( void ) {
 				addTime = 50;
 				pm->ps->ammo[WP_KI] -= 70;
 			}
-			pm->ps->pm_flags |= PMF_KI_ATTACK;
 		}
 
 		if ( pm->ps->weaponTime <= 0 ) {
@@ -3046,32 +3054,27 @@ static void PM_Weapon( void ) {
 			pm->ps->weaponTime += 250;
 		}
 		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
-			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 			pm->ps->weaponstate = WEAPON_READY;
 		}
 		break;
 #endif					/* sbeam */
 		if ( ( pm->cmd.buttons & BUTTON_ATTACK )
 		|| ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_AURA ) )
-		|| ( pm->ps->pm_flags & PMF_BLOCK )
-		|| !( pm->ps->pm_flags & PMF_KI_ATTACK ) ) {
-			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
+		|| ( pm->ps->pm_flags & PMF_BLOCK ) ) {
 			pm->ps->weaponstate = WEAPON_READY;
 		}
 		break;
 	// BFP - NOTE: That happens when the player uses a quick ki explosion themself or a homing ki ball is being triggered
 	case WEAPON_EXPLODING_KIBALLFIRING:
 		if ( pm->ps->weaponTime <= 0 ) {
-			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->weaponTime = 0;
 		}
 		break;
-	// BFP - NOTE: The dividing ki ball is triggering until pressing the attack key again after holded or changing weapon
-	case WEAPON_DIVIDINGKIBALLFIRING:
+	// BFP - NOTE: The splitting ki ball is triggering until pressing the attack key again after holded or changing weapon
+	case WEAPON_SPLITTINGKIBALLFIRING:
 		if ( pm->cmd.buttons & BUTTON_ATTACK ) {
 			PM_KiConsumption( 0, 120 );
-			pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->weaponTime += 100;
 		}
@@ -3085,7 +3088,6 @@ static void PM_Weapon( void ) {
 				++pm->ps->stats[STAT_KI_ATTACK_CHARGE];
 			}
 			if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= 1 ) { // BFP - TODO: bfp_weapon.cfg: set chargeAutoFire option after that such amount of minCharge
-				pm->ps->pm_flags |= PMF_KI_ATTACK;
 				pm->ps->eFlags |= EF_FIRING;
 				PM_AddEvent( EV_FIRE_WEAPON );
 			}
@@ -3123,7 +3125,7 @@ static void PM_Weapon( void ) {
 	case WEAPON_FIRING: Com_Printf( "WEAPON_FIRING\n" ); break;
 	case WEAPON_BEAMFIRING: Com_Printf( "WEAPON_BEAMFIRING\n" ); break;
 	case WEAPON_CHARGING: Com_Printf( "WEAPON_CHARGING\n" ); break;
-	case WEAPON_DIVIDINGKIBALLFIRING: Com_Printf( "WEAPON_DIVIDINGKIBALLFIRING\n" ); break;
+	case WEAPON_SPLITTINGKIBALLFIRING: Com_Printf( "WEAPON_SPLITTINGKIBALLFIRING\n" ); break;
 	case WEAPON_READY: Com_Printf( "WEAPON_READY\n" ); break;
 	case WEAPON_EXPLODING_KIBALLFIRING: Com_Printf( "WEAPON_EXPLODING_KIBALLFIRING\n" ); break;
 	case WEAPON_RAISING: Com_Printf( "WEAPON_RAISING\n" ); break;
@@ -3311,7 +3313,6 @@ static void PM_HitStun( void ) { // BFP - Hit stun
 
 	pm->ps->eFlags &= ~EF_FLIGHT;
 	pm->ps->eFlags &= ~EF_KI_BOOST;
-	pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 	// don't display shot effects on the stunned status
 	pm->ps->eFlags &= ~EF_FIRING;
 	pm->ps->eFlags &= ~EF_AURA;
@@ -3370,7 +3371,6 @@ void PmoveSingle (pmove_t *pmove) {
 	// BFP - Melee only
 	if ( pm->meleeOnly ) {
 		pm->cmd.buttons &= ~BUTTON_ATTACK;
-		pm->ps->pm_flags &= ~PMF_KI_ATTACK;
 		pm->ps->eFlags &= ~EF_FIRING;
 	}
 

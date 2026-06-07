@@ -26,18 +26,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ================
-G_DivideProjectile_Fire
+G_SplitProjectile_Fire
 ================
 */
-static void G_DivideProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir ) {
+static void G_SplitProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir ) {
 	gentity_t	*m;
 
 	// BFP - TODO: IMPORTANT, look (homing_special) and (homing_special_spawn), 
-	// (homing_special) has explosionSpawn set to divide the projectiles, then if that happens,
-	// goes to (homing_special_spawn) and fires there x number of divided projectiles
+	// (homing_special) has explosionSpawn set to split the projectiles, then if that happens,
+	// goes to (homing_special_spawn) and fires there x number of splitted projectiles
 
 	m = fire_plasma( ent, start, dir );
-	m->enabledivide = qtrue; // handle divided ki ball, otherwise crashes (in DLL/SO)
+	m->splitKiBall = qtrue; // handle splitted ki ball, otherwise crashes (in DLL/SO)
 
 	// example of how would be the special spawn
 	m->classname = "missile";
@@ -52,12 +52,11 @@ static void G_DivideProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir ) 
 G_HandleRDMissile
 ================
 */
-static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP_PLASMAGUN would be that dividing ball, when pressing the attack key again, divides by the number of balls depending on the ki attack charge points had
+static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP_PLASMAGUN would be that splitting ki ball, when pressing the attack key again, splits by the number of balls depending on the ki attack charge points had
 	vec3_t	dir, angles;
 	int		i;
-	int		chargePoints = client->kiChargePoints;
 	int		projectiles_to_spawn = 0;
-	// BFP - NOTE: That makes us to understand how the projectile is being divided by x projectiles
+	// BFP - NOTE: That makes us to understand how the projectile is being split by x projectiles
 	/* 
 	int		yawAdjustments[6] = {
 		// if charge attack is 2:
@@ -93,16 +92,15 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 	*/
 
 	// BFP - TODO: Apply minCharge and maxCharge from reading bfp_weapon.cfg 
-	if ( chargePoints < 2 ) {
+	if ( ent->kiChargePoints < 2 ) {
 		client->ps.weaponstate = WEAPON_READY;
-		client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 		client->ps.weaponTime = 0;
 		return;
 	}
 
 	// determine the number of projectiles to spawn based on the ki attack charge points
-	switch( chargePoints ) {
+	switch( ent->kiChargePoints ) {
 	case 2:
 		projectiles_to_spawn = 3;
 		break;
@@ -122,7 +120,6 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 
 	if ( projectiles_to_spawn == 0 ) {
 		client->ps.weaponstate = WEAPON_READY;
-		client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 		client->ps.weaponTime = 0;
 		return;
@@ -169,12 +166,11 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 				VectorNegate( up, dir );
 			}
 			VectorNormalize( dir );
-			G_DivideProjectile_Fire( owner, ent->r.currentOrigin, dir );
+			G_SplitProjectile_Fire( owner, ent->r.currentOrigin, dir );
 		}
 	}
 
 	client->ps.weaponstate = WEAPON_READY;
-	client->ps.pm_flags &= ~PMF_KI_ATTACK;
 	client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
 	client->ps.weaponTime = 0;
 }
@@ -184,9 +180,9 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 G_RDMissile
 ================
 */
-void G_RDMissile( gentity_t *ent, gclient_t *client ) { // BFP - rdmissile (Divide ki ball)
+void G_RDMissile( gentity_t *ent, gclient_t *client ) { // BFP - rdmissile (Splitting ki ball)
 	G_HandleRDMissile( ent, client );
-	ent->enabledivide = qtrue;
+	ent->splitKiBall = qtrue;
 	G_FreeEntity( ent );
 }
 
@@ -208,7 +204,16 @@ void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
 	VectorMA( velocity, -2*dot, trace->plane.normal, ent->s.pos.trDelta );
 
 	if ( ent->s.eFlags & EF_BOUNCE_HALF ) {
-		VectorScale( ent->s.pos.trDelta, 0.65, ent->s.pos.trDelta );
+		if ( ent && !ent->client ) {
+			VectorScale( ent->s.pos.trDelta, ent->bounceFriction, ent->s.pos.trDelta );
+		}
+
+		// BFP - noZBounce: fix the vertical component to a deterministic bounce height
+		// but... what the hell BFP dev was thinking for this behavior here? That isn't a float... 
+		if ( ent->noZBounce && trace->plane.normal[2] > 0.2 ) {
+			ent->s.pos.trDelta[2] = 325.0f;
+		}
+
 		// check for stop
 		if ( trace->plane.normal[2] > 0.2 && VectorLength( ent->s.pos.trDelta ) < 40 ) {
 			G_SetOrigin( ent, trace->endpos );
@@ -293,7 +298,7 @@ static void G_CollideDetonationCheck( gentity_t *ent, trace_t *trace ) { // BFP 
 G_BFPBeamImpact
 ================
 */
-static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) {
+static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) { // BFP - Beam impact
 	gentity_t *nent;
 	vec3_t v;
 
@@ -346,8 +351,11 @@ static void G_Homing( gentity_t *ent ) { // BFP - Homing
 	gentity_t	*target = NULL, *rad = NULL;
 	vec3_t		dir, raddir;
 
-	// prevents the projectile from getting stuck
-	BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
+	// BFP - Don't apply gravity on this part, otherwise causes stucking or out of bounds glitches
+	if ( ent->missileGravity > 0 ) {
+		// prevents the projectile from getting stuck
+		BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
+	}
 
 	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->homingRange) ) != NULL ) {
 		if ( IsValidTargetRadius( ent, rad ) ) {
@@ -457,9 +465,9 @@ static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
 	}
 
 	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->splashRadius) ) != NULL ) {
-		// BFP - If it's a dividing ki ball, break and divide!
+		// BFP - If it's a splitting ki ball, break and split!
 		if ( rad && rad->s.eType == ET_MISSILE
-		&& !Q_stricmp( rad->classname, "rdmissile" ) && !rad->enabledivide
+		&& !Q_stricmp( rad->classname, "rdmissile" ) && !rad->splitKiBall
 		&& !rad->piercing ) {
 			G_RDMissile( rad, rad->parent->client );
 			continue;
@@ -673,6 +681,37 @@ void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end ) {
     }
 }
 
+
+/*
+================
+G_MissileGravity
+================
+*/
+static void G_MissileGravity( gentity_t* ent ) { // BFP - Missile gravity
+	if ( ent->missileGravity > 0 && !ent->noZBounce ) {
+		float	deltaTime	= ( level.time - ent->deltaTime ) * 0.001f;
+		ent->deltaTime = level.time;
+		ent->s.pos.trDelta[2] -= ( DEFAULT_GRAVITY + ent->missileGravity ) * deltaTime;
+		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
+		ent->s.pos.trTime = level.time;
+	}
+}
+
+
+/*
+=====================
+G_MissileAcceleration
+=====================
+*/
+static void G_MissileAcceleration( gentity_t* ent ) { // BFP - Missile acceleration
+	if ( ent->missileAcceleration > 0 ) {
+		VectorScale( ent->s.pos.trDelta, ent->missileAcceleration, ent->s.pos.trDelta );
+		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
+		ent->s.pos.trTime = level.time;
+	}
+}
+
+
 /*
 ================
 G_MissileImpact
@@ -884,22 +923,28 @@ void G_RunMissile( gentity_t *ent ) {
 		G_MissileImpact( ent, &tr );
 	}
 
-	// WP_PLASMAGUN would be that dividing ball, when pressing the attack key again, divides by the number of balls depending on the ki attack charge points had
+	// WP_PLASMAGUN would be that splitting ki ball, when pressing the attack key again, splits by the number of balls depending on the ki attack charge points had
 	if ( client 
-	&& !( client->ps.pm_flags & PMF_KI_ATTACK ) 
+	&& client->ps.weaponstate != WEAPON_SPLITTINGKIBALLFIRING 
 	&& client->ps.weapon == WP_PLASMAGUN
 	&& ent->s.weapon == WP_PLASMAGUN
-	&& !ent->enabledivide ) {
-		client->ps.weaponstate = WEAPON_DIVIDINGKIBALLFIRING;
-		client->ps.pm_flags |= PMF_KI_ATTACK;
+	&& !ent->splitKiBall ) {
+		client->ps.weaponstate = WEAPON_SPLITTINGKIBALLFIRING;
 	}
+
+	// BFP - Missile gravity
+	G_MissileGravity( ent );
+
+	// BFP - Missile acceleration
+	G_MissileAcceleration( ent );
 
 	if ( client 
 	&& ( client->pers.cmd.buttons & BUTTON_ATTACK )
 	&& client->ps.weapon == WP_PLASMAGUN
 	&& ent->s.weapon == WP_PLASMAGUN
-	&& !ent->enabledivide ) {
+	&& !ent->splitKiBall ) {
 		G_RDMissile( ent, client );
+		client->ps.weaponstate = WEAPON_READY;
 		return;
 	}
 
@@ -911,13 +956,6 @@ void G_RunMissile( gentity_t *ent ) {
 	// BFP - Homing weapons
 	if ( ent->homingRange ) {
 		G_Homing( ent );
-	}
-
-	if ( client 
-	&& client->ps.weapon == WP_PLASMAGUN
-	&& client->ps.weaponstate == WEAPON_DIVIDINGKIBALLFIRING
-	&& ent->s.weapon == WP_PLASMAGUN ) {
-		client->ps.pm_flags |= PMF_KI_ATTACK;
 	}
 
 	// BFP - Beam handling
@@ -941,8 +979,8 @@ void G_RunMissile( gentity_t *ent ) {
 		if ( client 
 		&& ( client->ps.weaponstate == WEAPON_BEAMFIRING
 		|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE
-		|| client->ps.weaponstate == WEAPON_DIVIDINGKIBALLFIRING ) ) {
-			client->ps.pm_flags &= ~PMF_KI_ATTACK;
+		|| client->ps.weaponstate == WEAPON_SPLITTINGKIBALLFIRING ) ) {
+			client->ps.weaponstate = WEAPON_READY;
 		}
 
 		// never explode or bounce on sky
@@ -964,7 +1002,7 @@ void G_RunMissile( gentity_t *ent ) {
 		// BFP - Dividing ball
 		if ( client 
 		&& ent->s.weapon == WP_PLASMAGUN
-		&& !ent->enabledivide ) {
+		&& !ent->splitKiBall ) {
 			G_RDMissile( ent, client );
 			return;
 		}
@@ -1014,7 +1052,10 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
-	bolt->enabledivide = qfalse; // BFP - For dividing ki ball
+	// BFP - Save ki charged points
+	bolt->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+
+	bolt->splitKiBall = qfalse; // BFP - For splitting ki ball
 
 	// BFP - Speed similar to BFP ki blast attack (missileSpeed)
 	bolt->speed = 700;
@@ -1045,33 +1086,74 @@ fire_grenade
 gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	gentity_t	*bolt;
 
+	// BFP - TODO: For weapon config, apply the properties from bfp_weapon.cfg
+
+	// BFP - Like (multiball) weapon
+
 	VectorNormalize (dir);
 
 	bolt = G_Spawn();
-	bolt->classname = "grenade";
-	bolt->nextthink = level.time + 2500;
+	// BFP - missileDuration, bounces...
+	bolt->missileDuration = 1500;
+	bolt->bounces = qtrue;
+
+	bolt->classname = "missile";
+	bolt->nextthink = level.time + bolt->missileDuration;
 	bolt->think = G_ExplodeMissile;
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_GRENADE_LAUNCHER;
-	bolt->s.eFlags = EF_BOUNCE_HALF;
+	if ( bolt->bounces ) {
+		bolt->s.eFlags = EF_BOUNCE_HALF;
+	}
 	bolt->r.ownerNum = self->s.number;
 	bolt->parent = self;
-	bolt->damage = 100;
-	bolt->splashDamage = 100;
-	bolt->splashRadius = 150;
+	bolt->damage = 8;
+	bolt->splashDamage = 8;
+	bolt->splashRadius = 250;
 	bolt->methodOfDeath = MOD_GRENADE;
 	bolt->splashMethodOfDeath = MOD_GRENADE_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
-	bolt->s.pos.trType = TR_GRAVITY;
+	// BFP - Applying radius, missileSpeed, bounceFriction, ...
+	bolt->radius = 50;
+	bolt->speed = 3000;
+	bolt->bounceFriction = 0.9;
+	bolt->noZBounce = 0; //0.000001; // weird value found in the cfg files, really, it's a boolean though :/
+
+	bolt->homing = 0.3;
+	bolt->homingRange = 300;
+	bolt->homingAcceleration = 0;
+
+	bolt->missileGravity = 100;
+	bolt->missileAcceleration = 0;
+
+	bolt->s.pos.trType = TR_LINEAR;
+	// BFP - NOTE: Does original BFP missileGravity uses that?
+	// if ( bolt->missileGravity > 0 ) {
+	// 	bolt->s.pos.trType = TR_GRAVITY;
+	// }
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
+	if ( bolt->missileAcceleration > 0 ) { // BFP - Start from the very first frame if there's acceleration
+		bolt->s.pos.trTime = level.time;
+	}
 	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, 700, bolt->s.pos.trDelta );
+	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
+	// BFP - NOTE: Another same note, does original BFP missileGravity uses that too?
+	// if ( bolt->missileGravity > 0 ) {
+	// 	bolt->s.pos.trDelta[2] -= bolt->missileGravity;
+	// }
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 
 	VectorCopy (start, bolt->r.currentOrigin);
+
+	// BFP - Set delta time to avoid timescale < 1 issues
+	bolt->deltaTime = level.time;
+
+	// BFP - Collision radius
+	VectorSet( bolt->r.mins, -bolt->radius, -bolt->radius, -10 );
+	VectorSet( bolt->r.maxs, bolt->radius, bolt->radius, bolt->radius );
 
 	return bolt;
 }
@@ -1147,6 +1229,9 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->splashMethodOfDeath = MOD_ROCKET_SPLASH;
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
+
+	// BFP - Save ki charged points
+	bolt->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
 
 	// BFP - Speed similar to BFP ki blast attack (missileSpeed)
 	bolt->speed = 6000;
@@ -1233,6 +1318,9 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	beam->splashRadius = 350;
 	beam->splashMethodOfDeath = MOD_KI_ATTACK;
 
+	// BFP - Save ki charged points
+	beam->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+
 	// BFP - Speed similar to BFP lightning blast/heaven's wrath attack (missileSpeed)
 	beam->speed = 2000;
 
@@ -1250,8 +1338,8 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	// BFP - TODO: For weapon config, if uses chargeAttack, maxRadius, chargeRadiusMult, calculate the radius here
 #if 0
-	if ( beam->chargeAttack && self->client ) {
-		float	r = cfg->radius + ( self->client->kiChargePoints - cfg->minCharge ) * cfg->chargeRadiusMult;
+	if ( beam->chargeAttack ) {
+		float	r = cfg->radius + ( beam->kiChargePoints - cfg->minCharge ) * cfg->chargeRadiusMult;
 		if ( r > cfg->maxRadius && cfg->maxRadius > 0 ) {
 			r = cfg->maxRadius;
 		}
@@ -1295,6 +1383,9 @@ gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir) {
 	disk->splashMethodOfDeath = MOD_KI_ATTACK;
 	disk->clipmask = MASK_SHOT;
 	disk->target_ent = NULL;
+
+	// BFP - Save ki charged points
+	disk->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
 
 	disk->speed = 1000;
 
@@ -1346,6 +1437,9 @@ gentity_t *fire_forcefield (gentity_t *self, vec3_t start)
 	field->methodOfDeath = MOD_KI_ATTACK;
 	field->splashMethodOfDeath = MOD_KI_ATTACK;
 
+	// BFP - Save ki charged points
+	field->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+
 	field->radius = 900;
 	field->blinding = qfalse;
 
@@ -1391,6 +1485,9 @@ gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir)
 	sbeam->splashMethodOfDeath = MOD_KI_ATTACK;
 
 	sbeam->radius = 50;
+
+	// BFP - Save ki charged points
+	sbeam->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
 
 	// BFP - Speed similar to BFP mouth beam (missileSpeed)
 	sbeam->speed = 1000;

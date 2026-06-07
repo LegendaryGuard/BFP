@@ -146,7 +146,7 @@ typedef enum {
 	WEAPON_BEAMFIRING, // BFP - Beam fire
 	WEAPON_BEAMSTRUGGLE, // BFP - Beam struggle
 	WEAPON_EXPLODING_KIBALLFIRING, // BFP - Quick ki explosion and homing ball fire
-	WEAPON_DIVIDINGKIBALLFIRING, // BFP - Dividing ball fire
+	WEAPON_SPLITTINGKIBALLFIRING, // BFP - Dividing ball fire
 	WEAPON_KIEXPLOSIONWAVE, // BFP - Ki explosion wave
 	WEAPON_STUN // BFP - Stun status (not hit stun) when using ki explosion wave
 } weaponstate_t;
@@ -173,8 +173,8 @@ typedef enum {
 #define PMF_FOLLOW			4096	// spectate following another player
 // BFP - PMF_SCOREBOARD is renamed	// spectate as a scoreboard
 #define PMF_ULTIMATE_TIER	8192	// BFP - Ultimate tier status
-#define	PMF_KI_ATTACK		16384	// BFP - Ki attack
-#define	PMF_FLIGHT_LATCH	32768	// BFP - Flight latch toggling
+#define	PMF_FLIGHT_LATCH	16384	// BFP - Flight latch toggling
+// #define	PMF_UNUSED_FLAG		32768	// BFP - Some unused pm_flag
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 

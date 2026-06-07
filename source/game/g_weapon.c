@@ -364,6 +364,47 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 }
 
 /*
+===============
+ApplyMuzzleOffsets
+===============
+*/
+static void ApplyMuzzleOffsets( gentity_t *ent, float randXOffset, float randYOffset, float alternatingXOffset ) { // BFP - Muzzle offsets
+	// randXOffset, randYOffset and alternatingXOffset
+	if ( randXOffset > 0 ) {
+		VectorMA( muzzle, crandom() * randXOffset, right, muzzle );
+	}
+	if ( randYOffset > 0 ) {
+		VectorMA( muzzle, crandom() * randYOffset, up, muzzle );
+	}
+
+	if ( alternatingXOffset > 0 ) {
+		float	side = ( ent->client->alternatingOffsetSide ) ? alternatingXOffset : -alternatingXOffset;
+		VectorMA( muzzle, side, right, muzzle );
+		ent->client->alternatingOffsetSide = !ent->client->alternatingOffsetSide;
+	}
+}
+
+/*
+===============
+ApplyConeOfFire
+===============
+*/
+static void ApplyConeOfFire( float coneOfFireX, float coneOfFireY ) { // BFP - Cone of fire
+	if ( coneOfFireX <= 0 && coneOfFireY <= 0 ) {
+		return;
+	}
+	if ( coneOfFireX > 0 ) {
+		VectorMA( forward, crandom() * coneOfFireX * 0.001f, right, forward );
+	}
+	if ( coneOfFireY > 0 ) {
+		VectorMA( forward, crandom() * coneOfFireY * 0.001f, up, forward );
+	}
+	if ( coneOfFireX > 0 || coneOfFireY > 0 ) {
+		VectorNormalize( forward );
+	}
+}
+
+/*
 ======================================================================
 
 MACHINEGUN
@@ -627,12 +668,25 @@ void weapon_grenadelauncher_fire (gentity_t *ent) {
 	gentity_t	*m;
 
 	// extra vertical velocity
-	forward[2] += 0.2f;
-	VectorNormalize( forward );
+	//forward[2] += 0.2f;
+	//VectorNormalize( forward );
 
+	ApplyMuzzleOffsets( ent, 7, 25, 15 ); // BFP - Muzzle offsets
+	ApplyConeOfFire( 40, 50 ); // BFP - Cone of fire
 	m = fire_grenade (ent, muzzle, forward);
-	m->damage *= s_quadFactor;
-	m->splashDamage *= s_quadFactor;
+
+	// BFP - If the projectile muzzle offset landed within solid or out of bounds geometry,
+	// then remove
+	{
+		trace_t	tr;
+		trap_Trace( &tr, m->s.pos.trBase, m->r.mins, m->r.maxs, muzzle, m->s.number, MASK_SOLID );
+		if ( tr.fraction < 1.0f || ( tr.surfaceFlags & SURF_NOIMPACT ) ) {
+			G_FreeEntity( m );
+		}
+	}
+
+	//m->damage *= s_quadFactor;
+	//m->splashDamage *= s_quadFactor;
 
 //	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 }
@@ -830,7 +884,6 @@ void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
 {
 	if ( ent && ent->parent && ent->parent->client ) {
 		ent->parent->client->hook = NULL;
-		ent->parent->client->ps.pm_flags &= ~PMF_KI_ATTACK;
 		ent->parent->client->ps.weaponstate = WEAPON_READY;
 		ent->parent->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
 		ent->parent->client->fireHeld = qfalse;
@@ -892,8 +945,8 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 				return qtrue;
 			}
 
-			// BFP - If it's a dividing ki ball, break and divide!
-			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->enabledivide ) {
+			// BFP - If it's a splitting ki ball, break and split!
+			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->splitKiBall ) {
 				G_RDMissile( rad, rad->parent->client );
 				continue;
 			}
@@ -927,8 +980,8 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 	target->parent->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
 
 	// calculate power using ki charge points
-	powerEnt = ent->parent->client->kiChargePoints;
-	powerTarget = target->parent->client->kiChargePoints;
+	powerEnt = ent->kiChargePoints;
+	powerTarget = target->kiChargePoints;
 	if ( ( ent->parent->client->ps.eFlags & EF_KI_BOOST )
 	|| ( ent->parent->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
 		powerEnt *= 2;
@@ -1072,8 +1125,8 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 				return qtrue;
 			}
 
-			// BFP - If it's a dividing ki ball, break and divide!
-			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->enabledivide ) {
+			// BFP - If it's a splitting ki ball, break and split!
+			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->splitKiBall ) {
 				G_RDMissile( rad, rad->parent->client );
 				continue;
 			}

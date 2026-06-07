@@ -1062,9 +1062,6 @@ void ClientThink_real( gentity_t *ent ) {
 		// BFP - Short-Range Teleport (Zanzoken)
 		ZanzokenHandling( ent, ucmd );
 
-		// BFP - Charged points for beam and ki dividing ball
-		client->kiChargePoints = client->ps.stats[STAT_KI_ATTACK_CHARGE];
-
 		// BFP - Hit stun melee delay time
 		if ( client->hitStunMeleeDelayTime > 0 
 		&& level.time >= client->hitStunMeleeDelayTime ) {
