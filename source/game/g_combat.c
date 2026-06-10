@@ -1049,10 +1049,12 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	gclient_t	*client;
 	int			take;
 	int			asave;
-	int			knockback;
+	float		knockback; // BFP - Before Q3: int
 	int			max;
 	// BFP - Melee knockback
 	int			meleeKnockback = 0;
+	// BFP - Damage force for knockback
+	float		damageForce = (float)damage * 0.1;
 
 	// BFP - Ultimate tier status is invulnerable!
 	if ( targ && targ->client // BFP - NOTE: Avoid DLL/SO crashing when impacting a door or any map entity (ET_MOVER), this is important for implementations like that!
@@ -1140,13 +1142,25 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		}
 	}
 
-	knockback = damage;
-	if ( knockback > 200 ) {
-		knockback = 200;
+	// BFP - Apply knockback multiplied with damage force
+	knockback = damage * damageForce;
+	// BFP - extraKnockback from weapon/projectile
+	if ( inflictor && inflictor->extraKnockback != 0 ) {
+		knockback += inflictor->extraKnockback;
 	}
+
+	// BFP - Knockback can't be negative
+	if ( knockback < 0 ) {
+	 	knockback = 0;
+	}
+
+	// BFP - Before Q3:
+	// if ( knockback > 200 ) {
+	// 	knockback = 200;
+	// }
+
 	// BFP - Add enough knockback to push the targets while receiving explosion/projectile impacts
 	if ( mod != MOD_MELEE ) {
-		knockback = 200;
 		// BFP - Rocket jumping
 		if ( dir && dir[2] > 0.5f ) {
 			knockback = 50;
@@ -1154,7 +1168,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	} else { // BFP - Melee knockback
 		knockback = meleeKnockback;
 	}
-	if ( knockback > 2000 ) { // BFP - Melee knockback cannot be more than 2000
+
+	if ( mod == MOD_MELEE && knockback > 2000 ) { // BFP - Melee knockback cannot be more than 2000
 		knockback = 2000;
 	}
 	if ( targ->flags & FL_NO_KNOCKBACK ) {
@@ -1179,6 +1194,11 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		float	mass;
 
 		mass = 200;
+		// BFP - Using hitscan weapons, the mass is different
+		if ( targ->client != attacker->client
+		&& !Q_stricmp( inflictor->classname, "hitscan" ) ) {
+			mass = 50;
+		}
 
 		VectorScale (dir, g_knockback.value * (float)knockback / mass, kvel);
 		// BFP - Rocket jumping

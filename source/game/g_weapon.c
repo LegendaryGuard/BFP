@@ -82,12 +82,8 @@ qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 	int			range = 500;
 
 	// BFP - TODO: For weapon config, set this as hitscan attack type conditional
-	// if ( Q_stricmp( ent->classname, "hitscan" ) ) {
-	//	return qfalse;
-	// }
-
-	// BFP - TODO: For weapon config, apply the logic of weaponTime
-	if ( ent->client->ps.weaponTime < 100 ) {
+	ent->classname = "hitscan";
+	if ( Q_stricmp( ent->classname, "hitscan" ) ) {
 		return qfalse;
 	}
 
@@ -100,6 +96,9 @@ qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 
 	// BFP - Reflective
 	ent->reflective = qtrue;
+
+	// BFP - Extra knockback
+    ent->extraKnockback = 200;
 
 	trap_Trace (&tr, muzzle, NULL, NULL, end, ent->s.number, MASK_SHOT);
 	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
@@ -681,6 +680,7 @@ void weapon_grenadelauncher_fire (gentity_t *ent) {
 		trace_t	tr;
 		trap_Trace( &tr, m->s.pos.trBase, m->r.mins, m->r.maxs, muzzle, m->s.number, MASK_SOLID );
 		if ( tr.fraction < 1.0f || ( tr.surfaceFlags & SURF_NOIMPACT ) ) {
+			m->parent->client->hook = NULL;
 			G_FreeEntity( m );
 		}
 	}
@@ -935,26 +935,19 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 			trace_t		trace;
 			trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, 
 						ent->r.ownerNum, ent->clipmask );
-			if ( ent->piercing && !rad->piercing ) {
-				G_MissileImpact( rad, &trace );
-				continue;
-			}
-			if ( rad->piercing && !ent->piercing ) {
-				G_MissileImpact( ent, &trace );
-				G_FreeEntity( ent );
-				return qtrue;
-			}
 
-			// BFP - If it's a splitting ki ball, break and split!
-			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->splitKiBall ) {
-				G_RDMissile( rad, rad->parent->client );
-				continue;
-			}
-
-			// BFP - If it isn't a beam, only other weapon classname like missile, break it
+			// BFP - Priority (only for non-beam weapons)
 			if ( Q_stricmp( rad->classname, "beam" ) ) {
-				G_MissileImpact( rad, &trace );
-				continue;
+				if ( ent->priority > rad->priority || rad->priority <= 0 ) {
+					// BFP - If it's a splitting ki ball, break and split!
+					if ( !G_BreakRDMissile( rad ) ) {
+						G_MissileImpact( rad, &trace );
+					}
+					continue;
+				} else if ( ent->priority < rad->priority ) {
+					G_MissileImpact( rad, &trace );
+					return qtrue;
+				}
 			}
 
 			if ( !Q_stricmp( rad->classname, "beam" ) ) {
@@ -979,9 +972,9 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 	ent->parent->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
 	target->parent->client->ps.weaponstate = WEAPON_BEAMSTRUGGLE;
 
-	// calculate power using ki charge points
-	powerEnt = ent->kiChargePoints;
-	powerTarget = target->kiChargePoints;
+	// calculate power using calculated damage
+	powerEnt = (float)ent->damage;
+	powerTarget = (float)target->damage;
 	if ( ( ent->parent->client->ps.eFlags & EF_KI_BOOST )
 	|| ( ent->parent->client->pers.cmd.buttons & BUTTON_KI_USE ) ) {
 		powerEnt *= 2;
@@ -1116,28 +1109,30 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 			trace_t		trace;
 			trap_Trace( &trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin, 
 						ent->r.ownerNum, ent->clipmask );
-			if ( ent->piercing && !rad->piercing ) {
-				G_MissileImpact( rad, &trace );
-				continue;
-			}
-			if ( rad->piercing && !ent->piercing ) {
-				G_MissileImpact( ent, &trace );
-				return qtrue;
+
+			// BFP - Priority (only for non-beam weapons)
+			if ( Q_stricmp( rad->classname, "sbeam" ) ) {
+				if ( ent->priority > rad->priority ) {
+					// BFP - If it's a splitting ki ball, break and split!
+					if ( !G_BreakRDMissile( rad ) ) {
+						G_MissileImpact( rad, &trace );
+					}
+					continue;
+				} else if ( ent->priority < rad->priority ) {
+					G_MissileImpact( rad, &trace );
+					return qtrue;
+				}
 			}
 
-			// BFP - If it's a splitting ki ball, break and split!
-			if ( !Q_stricmp( rad->classname, "rdmissile" ) && !rad->splitKiBall ) {
-				G_RDMissile( rad, rad->parent->client );
-				continue;
-			}
-
-			// BFP - If it isn't a sbeam nor a beam, only other weapon classname like missile, break it
-			if ( Q_stricmp( rad->classname, "sbeam" ) && Q_stricmp( rad->classname, "beam" ) ) {
-				G_MissileImpact( rad, &trace );
-				continue;
-			}
-
+			// if one of them has more damage power, the other breaks
 			if ( !Q_stricmp( rad->classname, "sbeam" ) ) {
+				if ( ent->damage > rad->damage ) {
+					G_MissileImpact( ent, &trace );
+					continue;
+				} else if ( ent->damage < rad->damage ) {
+					G_MissileImpact( rad, &trace );
+					return qtrue;
+				}
 				G_MissileImpact( rad, &trace );
 				G_MissileImpact( ent, &trace );
 				return qtrue;
@@ -1340,8 +1335,17 @@ void FireWeapon( gentity_t *ent ) {
 		}
 		break;
 	case WP_GRENADE_LAUNCHER:
-		weapon_grenadelauncher_fire( ent );
+	{
+		int	i;
+		// BFP - Multishot
+		if ( ent->multishot <= 0 ) {
+			ent->multishot = 1;
+		}
+		for ( i = 0; i < ent->multishot; ++i ) {
+			weapon_grenadelauncher_fire( ent );
+		}
 		break;
+	}
 	case WP_ROCKET_LAUNCHER:
 		Weapon_RocketLauncher_Fire( ent );
 		break;

@@ -195,6 +195,16 @@ struct gentity_s {
 	qboolean	blinding;			// BFP - Blinding
 	int			blindedTime;		// BFP - Blind time
 
+	int			multishot;			// BFP - Multishot
+
+	float		radius;					// BFP - Collision radius
+	float		maxRadius;				// BFP - Collision radius cap when charged
+	int			maxDamage;				// BFP - Damage cap when charged
+	float		maxExpRadius;			// BFP - Explosion radius cap when charged
+	float		chargeRadiusMult;		// BFP - Collision radius added per charge level
+	int			chargeDamageMult;		// BFP - Damage added per charge level
+	float		chargeExpRadiusMult;	// BFP - Explosion radius added per charge level
+
 	qboolean	bounces;			// BFP - Bounces
 	float		bounceFriction;		// BFP - Bounce friction
 	qboolean	noZBounce;			// BFP - No Z bounce
@@ -210,10 +220,13 @@ struct gentity_s {
 	float		homingRange;		// BFP - Homing range
 	float		homingAcceleration;	// BFP - Homing acceleration
 
-	float		radius;				// BFP - Weapon radius
 	int			forcefieldTime;		// BFP - Forcefield time
 
 	qboolean	reflective;			// BFP - Reflective
+
+	int			priority;			// BFP - Priority
+
+	int			extraKnockback;		// BFP - Extra knockback
 };
 
 #define	SPAWN_HEIGHT	0.0f
@@ -630,6 +643,8 @@ gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir);
 
 // BFP - rdmissile (Splitting ki ball)
 void G_RDMissile( gentity_t *ent, gclient_t *client );
+// BFP - Break and split the ki ball
+qboolean G_BreakRDMissile( gentity_t* ent );
 // BFP - Reflective
 void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end );
 // BFP - Use G_MissileImpact into another files to handle the weapons

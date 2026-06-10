@@ -410,7 +410,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	// BFP - Ki boost consumption
 	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.eFlags & EF_KI_BOOST ) )
 	&& client->ps.ammo[WP_KI] > 0
-	&& !( client->ps.pm_flags & PMF_BLOCK ) ) {
+	&& !( client->ps.pm_flags & PMF_BLOCK )
+	&& client->ps.weaponstate != WEAPON_STUN ) {
 		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
 		float boostCostTotal = ( g_boostCost.value * 0.001 ) + ( g_boostCostPct.value * 0.1 ) * client->ps.stats[STAT_MAX_KI] * 0.0001;
 		// use msec to adjust the consumption
@@ -595,8 +596,14 @@ void ClientEvents( gentity_t *ent, int oldEventSequence ) {
 			break;
 
 		case EV_FIRE_WEAPON:
+		{
+			// BFP - Multishot test
+			if ( client->ps.weapon == WP_GRENADE_LAUNCHER ) {
+				ent->multishot = 3;
+			}
 			FireWeapon( ent );
 			break;
+		}
 
 		case EV_USE_ITEM1:		// teleporter
 			// drop flags in CTF

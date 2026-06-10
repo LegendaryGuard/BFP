@@ -39,6 +39,8 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Bounce features (bounces, bounceFriction, noZBounce)
 - [x] Cone of fire feature (coneOfFireX and coneOfFireY)
 - [x] Damage calculated by attacker powerlevel, modified knockback and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
+- [x] Charge multipliers and maximum damage for weapons (maxDamage, chargeRadiusMult, chargeDamageMult, chargeExpRadiusMult)
+- [x] Extraknockback for weapons (extraKnockback)
 - [x] Forcefield feature
 - [x] Gametype: Survival (`g_gametype 3`)
 - [x] Gametype: Monster (`g_gametype 4`)
@@ -50,13 +52,16 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Ki shockwave (or Tornado Blast) weapon (a shockwave to push opponents)
 - [x] Ki trails
 - [x] Load player models only by prefix
+- [x] Multishot feature
 - [x] Melee feature
 - [x] Offset features (randXOffset, randYOffset and alternatingXOffset)
 - [x] Particles
 - [x] Power Struggles (when two beam attacks collide)
 - [x] Powerlevel and Power Tiers indicated on old docs
 - [x] Playable third person mode and first person vis mode
+- [x] Priority for projectiles
 - [x] Missile properties (missileSpeed, missileDuration, missileGravity and missileAcceleration)
+- [x] Radius feature (radius, maxRadius, maxExpRadius)
 - [x] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
 - [x] Reflective feature
 - [x] Remove some items like powerups and health pickups

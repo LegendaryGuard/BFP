@@ -175,7 +175,7 @@ minCharge (int [0-6]), // min charge points
 maxCharge (int [0-6]), // max charge points
 loopAnim (int / qboolean), // Maybe it's: use PM_ContinueTorsoAnim, if not: PM_StartTorsoAnim
 noAttackAnim (int / qboolean), // no animation strike yes or no
-priority (int [0-2]), // if 2, it'll act like a overpowered forcefield, if 1 like a beam, if 0 nothing
+priority (int [0-32767]), // projectile's priority
 movementPenalty (int, number of seconds) // enters WEAPON_STUN when the ki attack was being used
 -----
 The following sample testing torso ki attack animations are used with:
@@ -620,7 +620,7 @@ static qboolean PM_CheckJump( void ) {
 	// BFP - Double jump velocity when using ki boost
 	if ( ( pm->ps->eFlags & EF_KI_BOOST )
 	|| ( pm->cmd.buttons & BUTTON_KI_USE ) ) { // BFP - Handle the ki boost button if it's being pressed, that avoids jittering movements
-		pm->ps->velocity[2] = 1080;
+		pm->ps->velocity[2] = 1085;
 	}
 
 	// BFP - Jumping from slopes without backoffs
@@ -2883,9 +2883,8 @@ static void PM_Weapon( void ) {
 				// - WP_PLASMAGUN is used as example of splitting ki ball
 				// - WP_GRAPPLING_HOOK is used as example of ki beam
 				switch( pm->ps->weapon ) {
-				case WP_GAUNTLET:
+				case WP_GAUNTLET: // just start firing without weaponTime delay
 					pm->ps->weaponstate = WEAPON_FIRING;
-					pm->ps->weaponTime += 100;
 					break;
 				case WP_GRENADE_LAUNCHER: // BFP - To test the rapid fire
 				/*
