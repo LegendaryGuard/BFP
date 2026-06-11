@@ -1006,7 +1006,7 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 	VectorAdd( ent->r.currentOrigin, target->r.currentOrigin, targetViewPos );
 	VectorScale( targetViewPos, 0.5f, targetViewPos );
 	{
-		gentity_t	*effect = G_TempEntity( targetViewPos, EV_BEAM_STRUGGLE );
+		gentity_t	*effect = G_TempEntity( targetViewPos, EV_SPARK );
 		effect->s.otherEntityNum = ent->s.number;
 		effect->s.otherEntityNum2 = target->s.number;
 	}

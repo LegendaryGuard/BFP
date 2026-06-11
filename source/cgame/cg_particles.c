@@ -81,7 +81,7 @@ typedef enum
 	P_BUBBLE,
 	P_BUBBLE_TURBULENT,
 	P_AURA, // BFP - Particle aura
-	P_BEAMSTRUGGLE_SPARK, // BFP - Beam struggle spark
+	P_SPARK, // BFP - Beam struggle spark
 	P_SPRITE
 } particle_type_t;
 
@@ -220,7 +220,7 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	|| p->type == P_ANTIGRAV_ROCK // BFP - Added antigrav rock type
 	|| p->type == P_AURA // BFP - Particle aura
 	|| p->type == P_DEBRIS // BFP - Debris type
-	|| p->type == P_BEAMSTRUGGLE_SPARK) // BFP - Beam struggle spark type
+	|| p->type == P_SPARK) // BFP - Beam struggle spark type
 	{// create a front rotating facing polygon
 
 // BFP - No smoke distance
@@ -443,9 +443,16 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 			}
 		}
 
-		if ( (p->type == P_DEBRIS && p->snum > 0) || p->type == P_BEAMSTRUGGLE_SPARK ) { // render spark particles
+		if ( (p->type == P_DEBRIS && p->snum > 0) || p->type == P_SPARK ) { // render spark particles
 			vec3_t	forward, right, endPoint;
-			float	length = (rand() % 15) + 25; // multiplier to tweak trail length
+			float	lifeFraction = (p->endtime - timenonscaled) / (p->endtime - p->time);
+			const float	SPARK_MAX_LENGTH = 50.0f;
+			const float	SPARK_MIN_LENGTH = 0.5f;
+			const float	SPARK_MIN_WIDTH = 1.0f;
+			float	length = SPARK_MIN_LENGTH + (SPARK_MAX_LENGTH - SPARK_MIN_LENGTH) * lifeFraction;
+			float	currentWidth = SPARK_MIN_WIDTH + (p->width - SPARK_MIN_WIDTH) * lifeFraction;
+
+			p->width = currentWidth;
 
 			// direction of the particle
 			VectorNormalize2( p->vel, forward );
@@ -603,7 +610,7 @@ void CG_AddParticles (void)
 		|| p->type == P_ANTIGRAV_ROCK // BFP - Add P_ANTIGRAV_ROCK to remove particles
 		|| p->type == P_AURA // BFP - Add P_AURA to remove particles
 		|| p->type == P_DEBRIS // BFP - Add P_DEBRIS to remove particles
-		|| p->type == P_BEAMSTRUGGLE_SPARK) // BFP - Add P_BEAMSTRUGGLE_SPARK to remove particles
+		|| p->type == P_SPARK) // BFP - Add P_SPARK to remove particles
 		{
 			if (timenonscaled > p->endtime)
 			{
@@ -1213,25 +1220,23 @@ void CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel)
 	p->next = active_particles;
 	active_particles = p;
 	p->time = timenonscaled;
-	p->endtime = timenonscaled + 400;
+	p->endtime = timenonscaled + 150;
 
 	p->color = 0;
 	p->alpha = 1;
 	p->alphavel = 0;
 	p->pshader = pshader;
-	p->height = p->width = (rand() % 10) + 5;
+	p->height = p->width = (rand() % 6) + 5;
 
 	p->type = P_DEBRIS;
 
 	VectorCopy( origin, p->org );
-
 	p->start = origin[2];
-
 	VectorCopy( vel, p->vel );
 
 	p->accel[0] = (crandom() * 600);
 	p->accel[1] = (crandom() * 600);
-	p->accel[2] = 300 + (crandom() * 100);
+	p->accel[2] = 50 + (crandom() * 25);
 
 	p->roll = 0; // no bounce
 	p->link = qfalse;
@@ -1257,12 +1262,12 @@ void CG_ParticleBeamStruggleSpark (qhandle_t pshader, vec3_t origin, vec3_t vel)
 
 	p->accel[0] = (crandom() * 300);
 	p->accel[1] = (crandom() * 300);
-	p->accel[2] = -1200 - (crandom() * 300);
+	p->accel[2] = -10 - (crandom() * 20);
 
-	p->type = P_BEAMSTRUGGLE_SPARK;
+	p->type = P_SPARK;
 	p->color = 0;
 	p->alpha = 1.0;
 	p->alphavel = 0;
 	p->pshader = pshader;
-	p->height = p->width = (rand() % 10) + 5;
+	p->height = p->width = (rand() % 4) + 2;
 }

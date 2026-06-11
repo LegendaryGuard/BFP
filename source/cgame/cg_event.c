@@ -1138,8 +1138,8 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		es->loopSound = 0;
 		break;
 
-	// BFP - Beam struggle effect
-	case EV_BEAM_STRUGGLE:			// 99
+	// BFP - Spark and beam struggle effect
+	case EV_SPARK:					// 99
 		ByteToDir( es->eventParm, dir );
 		// BFP - Beam struggle effect
 		CG_BeamStruggleEffect( position, dir );

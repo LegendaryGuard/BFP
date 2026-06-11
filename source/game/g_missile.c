@@ -150,6 +150,15 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 		up[2] = 1;
 
 		for ( i = 0; i < projectiles_to_spawn; ++i ) {
+			vec3_t	origin;
+			trace_t	tr;
+			VectorCopy( ent->r.currentOrigin, origin );
+
+			// a trace to correct the projectile that goes up
+			VectorCopy( origin, tr.endpos );
+			tr.endpos[2] -= 128;
+			trap_Trace( &tr, origin, ent->r.mins, ent->r.maxs, tr.endpos, ent->r.ownerNum, MASK_SOLID );
+
 			switch ( i ) {
 			case 0: // forward
 				VectorCopy( forward, dir );
@@ -164,13 +173,16 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 				VectorNegate( forward, dir );
 				break;
 			case 4: // up
+				if ( tr.fraction < 1.0f && tr.entityNum != ENTITYNUM_NONE ) {
+					origin[2] = tr.endpos[2] + ent->radius + 1;
+				}
 				VectorCopy( up, dir );
 				break;
 			case 5: // down
 				VectorNegate( up, dir );
 			}
 			VectorNormalize( dir );
-			G_SplitProjectile_Fire( owner, ent->r.currentOrigin, dir );
+			G_SplitProjectile_Fire( owner, origin, dir );
 		}
 	}
 
@@ -419,7 +431,7 @@ static void G_PiercingDamage( gentity_t *ent, gentity_t *target, int damage ) { 
 	G_Damage( target, ent, ent->parent, velocity,
 		ent->s.origin, damage, 0, ent->methodOfDeath );
 	{
-		gentity_t *effect = G_TempEntity( target->r.currentOrigin, EV_BEAM_STRUGGLE );
+		gentity_t *effect = G_TempEntity( target->r.currentOrigin, EV_SPARK );
 		effect->s.otherEntityNum  = ent->s.number;
 		effect->s.otherEntityNum2 = target->s.number;
 	}
