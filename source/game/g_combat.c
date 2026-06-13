@@ -1169,8 +1169,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		knockback = meleeKnockback;
 	}
 
-	if ( mod == MOD_MELEE && knockback > 2000 ) { // BFP - Melee knockback cannot be more than 2000
-		knockback = 2000;
+	if ( knockback > 1800 ) { // BFP - Knockback cannot be more than 1800
+		knockback = 1800;
 	}
 	if ( targ->flags & FL_NO_KNOCKBACK ) {
 		knockback = 0;

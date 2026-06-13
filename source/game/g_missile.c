@@ -462,9 +462,9 @@ static void G_PiercingFade( gentity_t *ent ) { // BFP - Piercing helper function
 G_Piercing
 ================
 */
-static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
+static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
 	if ( ent->piercing ) {
-		gentity_t	*rad = NULL, *other = &g_entities[trace.entityNum];
+		gentity_t	*rad = NULL, *other = &g_entities[trace->entityNum];
 		int			damage = ( ent->splashDamage ) ? ent->splashDamage : ent->damage;
 		const int	MAX_PIERCING_HITS = 4;
 
@@ -476,8 +476,8 @@ static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
 		}
 
 		// disappear in about 1 second after hitting something solid (no living entities) or going out of boundaries
-		if ( ( ( trace.fraction != 1 && trace.entityNum != ENTITYNUM_NONE )
-		|| ( trace.surfaceFlags & SURF_NOIMPACT ) )
+		if ( ( ( trace->fraction != 1 && trace->entityNum != ENTITYNUM_NONE )
+		|| ( trace->surfaceFlags & SURF_NOIMPACT ) )
 		&& !other->client
 		&& !ent->piercingFade && !ent->piercingTime ) {
 			G_PiercingFade( ent );
@@ -500,7 +500,7 @@ static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
 			VectorCopy( ent->r.currentOrigin, ent->piercingOrigin );
 		}
 
-		while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->splashRadius) ) != NULL ) {
+		while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->radius) ) != NULL ) {
 			// BFP - If it's a splitting ki ball, break and split!
 			if ( rad && rad->s.eType == ET_MISSILE
 			&& G_BreakRDMissile( rad ) ) {
@@ -508,7 +508,7 @@ static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
 			}
 
 			if ( rad && rad->s.eType == ET_MISSILE && !rad->piercing ) { // pierce that projectile, let it explode
-				G_MissileImpact( rad, &trace );
+				G_MissileImpact( rad, trace );
 				continue;
 			}
 
@@ -553,7 +553,7 @@ static void G_Piercing( gentity_t *ent, trace_t trace ) { // BFP - Piercing
 
 		// piercing radius
 		rad = NULL;
-		while ( ( rad = FindRadius(rad, ent->piercingOrigin, ent->splashRadius) ) != NULL ) {
+		while ( ( rad = FindRadius(rad, ent->piercingOrigin, ent->radius) ) != NULL ) {
 			if ( ent->target_ent && rad == ent->target_ent
 			&& ent->piercingHitTime && level.time < ent->piercingHitTime ) {
 				continue;
@@ -1040,14 +1040,6 @@ void G_RunMissile( gentity_t *ent ) {
 	// BFP - When the player stopped shooting the charged beam/projectile by pressing the attack key
 	// These are sample weapons used as examples for BFP: 
 
-	// WP_GRAPPLING_HOOK would be the beam
-	if ( client 
-	&& ( client->ps.weaponstate != WEAPON_BEAMFIRING
-	&& client->ps.weaponstate != WEAPON_BEAMSTRUGGLE )
-	&& ent->s.weapon == WP_GRAPPLING_HOOK ) {
-		G_MissileImpact( ent, &tr );
-	}
-
 	// WP_PLASMAGUN would be that splitting ki ball, when pressing the attack key again, splits by the number of balls depending on the ki attack charge points had
 	if ( client 
 	&& client->ps.weaponstate != WEAPON_SPLITTINGKIBALLFIRING 
@@ -1077,14 +1069,21 @@ void G_RunMissile( gentity_t *ent ) {
 	}
 
 	// BFP - Piercing weapons
-	G_Piercing( ent, tr );
+	G_Piercing( ent, &tr );
 
 	// BFP - Homing weapons
 	G_Homing( ent );
 
+	// WP_GRAPPLING_HOOK would be the beam
 	// BFP - Beam handling
 	if ( client 
 	&& ent->s.weapon == WP_GRAPPLING_HOOK ) {
+		if ( client->ps.weaponstate != WEAPON_BEAMFIRING
+		&& client->ps.weaponstate != WEAPON_BEAMSTRUGGLE ) {
+			G_MissileImpact( ent, &tr );
+			client->ps.weaponTime = 0;
+		}
+
 		Weapon_BFPBeamRun( ent );
 		Weapon_SBeam_Run( ent );
 
@@ -1099,7 +1098,7 @@ void G_RunMissile( gentity_t *ent ) {
 
 	if ( tr.fraction != 1 ) {
 
-		// BFP - When the charged projectile touches into something, disable ki attack PMF flag
+		// BFP - When the charged projectile touches into something, return to ready state
 		if ( client 
 		&& ( client->ps.weaponstate == WEAPON_BEAMFIRING
 		|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE
@@ -1476,8 +1475,11 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	// BFP - Projectile radius
 	beam->radius = 30;
 
+	// BFP - Piercing
+	beam->piercing = 0;
+
 	// BFP - Priority
-	beam->priority = 0;
+	beam->priority = 1;
 
 	beam->s.pos.trType = TR_LINEAR;
 	beam->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
@@ -1508,11 +1510,12 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	// BFP - Weapon config charge fields
 	beam->damage = 10;
+	beam->maxDamage = 50;
 	beam->splashDamage = 10;
 	beam->splashRadius = 350;
 	beam->chargeDamageMult = 10;
 	beam->chargeExpRadiusMult = 200;
-	// maxDamage = maxExpRadius = 0;
+	// beam->maxExpRadius = 0;
 	G_ChargeDamageScaling( beam, 2 );
 
 	return beam;
