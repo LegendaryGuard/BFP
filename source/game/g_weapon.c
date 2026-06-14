@@ -106,7 +106,7 @@ qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 	}
 
 	// BFP - Reflective
-	G_Reflective( ent, muzzle, end );
+	G_Reflective( ent, qtrue, muzzle );
 
 	traceEnt = &g_entities[ tr.entityNum ];
 

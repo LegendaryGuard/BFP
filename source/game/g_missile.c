@@ -377,7 +377,7 @@ G_Homing
 ================
 */
 static void G_Homing( gentity_t *ent ) { // BFP - Homing
-	if ( ent->homing > 0 && ent->homingRange > 0 ) {
+	if ( ent && ent->homing > 0 && ent->homingRange > 0 ) {
 		gentity_t	*target = NULL, *rad = NULL;
 		vec3_t		dir, raddir;
 
@@ -463,7 +463,7 @@ G_Piercing
 ================
 */
 static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
-	if ( ent->piercing ) {
+	if ( ent && ent->piercing ) {
 		gentity_t	*rad = NULL, *other = &g_entities[trace->entityNum];
 		int			damage = ( ent->splashDamage ) ? ent->splashDamage : ent->damage;
 		const int	MAX_PIERCING_HITS = 4;
@@ -667,53 +667,59 @@ static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
 G_Reflective
 ================
 */
-void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end ) {
-	gentity_t	*rad = NULL;
-	vec3_t		forward;
-	// BFP - TODO: For weapon config: range, ...
-	float		range = 500;
-	int			i;
+void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start ) { // BFP - Reflective
+	if ( ent && ent->reflective ) {
+		gentity_t	*rad = NULL;
+		vec3_t		forward;
+		// BFP - TODO: For weapon config: range, ...
+		float		range = 500;
+		int			i;
 
-	if ( !ent || !ent->client ) {
-		return;
+		// BFP - For hitscan weapons: reflect toward where the player aims
+		if ( useViewAngles ) {
+			AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+		}
+
+		for ( i = 0; i < level.num_entities; ++i ) {
+			rad = &g_entities[i];
+			if ( !rad->inuse || rad->s.eType != ET_MISSILE ) {
+				continue;
+			}
+			if ( rad->parent == ent || rad->r.ownerNum == ent->s.number ) {
+				continue;
+			}
+			if ( rad->freeAfterEvent || rad->nextthink <= level.time ) {
+				continue;
+			}
+			if ( !Q_stricmp( rad->classname, "beam" ) || !Q_stricmp( rad->classname, "sbeam" ) ) { // cannot defend from beam & sbeam attack types
+				continue;
+			}
+			if ( rad->piercing ) { // cannot defend from piercing attacks
+				continue;
+			}
+
+			BG_EvaluateTrajectory( &rad->s.pos, level.time, rad->r.currentOrigin );
+
+			if ( Distance( rad->r.currentOrigin, start ) > range ) {
+				continue;
+			}
+
+			// BFP - Projectile weapons: reflect using the missile's own travel direction
+			if ( !useViewAngles ) {
+				VectorNormalize2( rad->s.pos.trDelta, forward );
+			}
+
+			VectorScale( forward, rad->speed, rad->s.pos.trDelta );
+			VectorCopy( rad->r.currentOrigin, rad->s.pos.trBase );
+			rad->s.pos.trTime = level.time;
+
+			rad->r.ownerNum = ent->s.number;
+			rad->parent = ent;
+
+			rad->homingRange = 0;
+			rad->homing = 0;
+		}
 	}
-
-	AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
-
-	for ( i = 0; i < level.num_entities; ++i ) {
-		rad = &g_entities[i];
-		if ( !rad->inuse || rad->s.eType != ET_MISSILE ) {
-			continue;
-		}
-		if ( rad->parent == ent || rad->r.ownerNum == ent->s.number ) {
-			continue;
-		}
-		if ( rad->freeAfterEvent || rad->nextthink <= level.time ) {
-			continue;
-		}
-		if ( !Q_stricmp( rad->classname, "beam" ) || !Q_stricmp( rad->classname, "sbeam" ) ) { // cannot defend from beam & sbeam attack types
-			continue;
-		}
-		if ( rad->piercing ) { // cannot defend from piercing attacks
-			continue;
-		}
-
-		BG_EvaluateTrajectory( &rad->s.pos, level.time, rad->r.currentOrigin );
-
-		if ( Distance( rad->r.currentOrigin, start ) > range ) {
-			continue;
-		}
-
-		VectorScale( forward, rad->speed, rad->s.pos.trDelta );
-		VectorCopy( rad->r.currentOrigin, rad->s.pos.trBase );
-		rad->s.pos.trTime = level.time;
-
-		rad->r.ownerNum = ent->s.number;
-		rad->parent = ent;
-
-		rad->homingRange = 0;
-		rad->homing = 0;
-    }
 }
 
 
@@ -723,7 +729,7 @@ G_MissileGravity
 ================
 */
 static void G_MissileGravity( gentity_t *ent ) { // BFP - Missile gravity
-	if ( ent->missileGravity > 0 && !ent->noZBounce ) {
+	if ( ent && ent->missileGravity > 0 && !ent->noZBounce ) {
 		float	deltaTime	= ( level.time - ent->deltaTime ) * 0.001f;
 		ent->deltaTime = level.time;
 		ent->s.pos.trDelta[2] -= ( DEFAULT_GRAVITY + ent->missileGravity ) * deltaTime;
@@ -739,7 +745,7 @@ G_MissileAcceleration
 =====================
 */
 static void G_MissileAcceleration( gentity_t *ent ) { // BFP - Missile acceleration
-	if ( ent->missileAcceleration > 0 ) {
+	if ( ent && ent->missileAcceleration > 0 ) {
 		VectorScale( ent->s.pos.trDelta, ent->missileAcceleration, ent->s.pos.trDelta );
 		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
 		ent->s.pos.trTime = level.time;
@@ -798,6 +804,10 @@ static void G_Priority( gentity_t *ent, trace_t *trace ) { // BFP - Priority
 	int			numEntities, i;
 	vec3_t		mins, maxs;
 	gentity_t	*other;
+
+	if ( !ent ) {
+		return;
+	}
 
 	VectorAdd( ent->r.mins, ent->r.currentOrigin, mins );
 	VectorAdd( ent->r.maxs, ent->r.currentOrigin, maxs );
@@ -1047,10 +1057,14 @@ void G_RunMissile( gentity_t *ent ) {
 	&& ent->s.weapon == WP_PLASMAGUN
 	&& !ent->splitKiBall ) {
 		client->ps.weaponstate = WEAPON_SPLITTINGKIBALLFIRING;
+		client->ps.weaponTime = 0;
 	}
 
 	// BFP - Priority
 	G_Priority( ent, &tr );
+
+	// BFP - Reflective
+	G_Reflective( ent, qfalse, ent->r.currentOrigin );
 
 	// BFP - Missile gravity
 	G_MissileGravity( ent );

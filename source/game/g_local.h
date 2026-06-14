@@ -646,7 +646,7 @@ void G_RDMissile( gentity_t *ent, gclient_t *client );
 // BFP - Break and split the ki ball
 qboolean G_BreakRDMissile( gentity_t* ent );
 // BFP - Reflective
-void G_Reflective( gentity_t *ent, const vec3_t start, const vec3_t end );
+void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start );
 // BFP - Use G_MissileImpact into another files to handle the weapons
 void G_MissileImpact( gentity_t *ent, trace_t *trace );
 
