@@ -937,7 +937,8 @@ void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, 
 	{
 		int		endTime = cent->pe.forceFieldStartTime + 5400;
 		int		duration = endTime - cent->pe.forceFieldStartTime;
-		float	t = (float)elapsed / (float)duration;
+		const float	TIMESCALE_FF = 13;
+		float	t = (float)(elapsed * TIMESCALE_FF) / (float)duration;
 
 		if ( t > 1 ) {
 			t = 1;
