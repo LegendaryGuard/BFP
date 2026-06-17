@@ -716,11 +716,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 
 			// Splash!
 			// BFP - NOTE: These are not debris :P
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
-			CG_ParticleDebris( cgs.media.waterBubbleShader, splashOrigin, end, qtrue, debrisSize, velocity, accel );
+			CG_ParticleWaterSplash( cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, debrisSize, velocity, accel );
+			CG_ParticleWaterSplash( cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, debrisSize, velocity, accel );
+			CG_ParticleWaterSplash( cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, debrisSize, velocity, accel );
+			CG_ParticleWaterSplash( cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, debrisSize, velocity, accel );
+			CG_ParticleWaterSplash( cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, debrisSize, velocity, accel );
 
 			splashOrigin[2] -= 25; // place a bit below
 			// BFP - Monster gamemode, player monster particle size and positions
@@ -730,11 +730,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			}
 
 			// Blub, blub, blub...
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
 		}
 		break;
 

@@ -820,6 +820,17 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.sparkShader1 = trap_R_RegisterShader( "sparkShader1" ); // BFP - Spark particle for explosion
 	cgs.media.sparkShader2 = trap_R_RegisterShader( "sparkShader2" ); // BFP - Spark particle for explosion
 
+	// BFP - Optional 3D pebble/rock models
+	cgs.media.pebbleMdl1 = trap_R_RegisterModel( "models/effects/pebble1.md3" );
+	cgs.media.pebbleMdl2 = trap_R_RegisterModel( "models/effects/pebble2.md3" );
+	cgs.media.pebbleMdl3 = trap_R_RegisterModel( "models/effects/pebble3.md3" );
+
+	if ( !cgs.media.pebbleMdl1
+	|| !cgs.media.pebbleMdl2
+	|| !cgs.media.pebbleMdl3 ) {
+		CG_Printf( "^3Unable to load pebble models, some of them are missing. Remember: must be in models/effects/pebble[1-3].md3 one per each, all 3 of them must be available" );
+	}
+
 	// register the inline models
 	cgs.numInlineModels = trap_CM_NumInlineModels();
 	for ( i = 1 ; i < cgs.numInlineModels ; i++ ) {

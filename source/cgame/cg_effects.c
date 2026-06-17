@@ -623,17 +623,39 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 		sprVel[1] += crandom() * 100;
 		sprVel[2] += crandom() * 100;
 
+		// BFP - Rock models
+		if ( cg_3dparticles.integer > 0
+		&& cgs.media.pebbleMdl1
+		&& cgs.media.pebbleMdl2
+		&& cgs.media.pebbleMdl3 ) {
+			int		rockModelIndex = rand() % 3;
+			switch ( rockModelIndex ) {
+				case 0: {
+					CG_ParticleRockDebris( cgs.media.pebbleShader1, cgs.media.pebbleMdl1, sprOrg, sprVel, 3, 150, 250 );
+					break;
+				}
+				case 1: {
+					CG_ParticleRockDebris( cgs.media.pebbleShader2, cgs.media.pebbleMdl2, sprOrg, sprVel, 3, 150, 250 );
+					break;
+				}
+				default: {
+					CG_ParticleRockDebris( cgs.media.pebbleShader3, cgs.media.pebbleMdl3, sprOrg, sprVel, 3, 150, 250 );
+				}
+			}
+			continue;
+		}
+
 		switch ( shaderIndex ) {
 			case 0: {
-				CG_ParticleDebris( cgs.media.pebbleShader1, sprOrg, sprVel, qfalse, 3, 150, 250 );
+				CG_ParticleRockDebris( cgs.media.pebbleShader1, 0, sprOrg, sprVel, 3, 150, 250 );
 				break;
 			}
 			case 1: {
-				CG_ParticleDebris( cgs.media.pebbleShader2, sprOrg, sprVel, qfalse, 3, 150, 250 );
+				CG_ParticleRockDebris( cgs.media.pebbleShader2, 0, sprOrg, sprVel, 3, 150, 250 );
 				break;
 			}
 			default: {
-				CG_ParticleDebris( cgs.media.pebbleShader3, sprOrg, sprVel, qfalse, 3, 150, 250 );
+				CG_ParticleRockDebris( cgs.media.pebbleShader3, 0, sprOrg, sprVel, 3, 150, 250 );
 			}
 		}
 	}

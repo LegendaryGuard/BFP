@@ -185,6 +185,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - while charging ki near water, bubble particles appear
 - when player is still moving with/without friction and charging ki, antigrav rock particles appear
 - when antigrav rock and rock debris particles fall in a slope or inclined places, bounce and slide, that makes the movements more realistic
+- 3d particles for bubbles, antigrav rock and rock debris, that can be enabled with `cg_3dparticles` cvar. For 3d rock particles, you need 3 models inside models/effects/ directory: `pebble1.md3`, `pebble2.md3` and `pebble3.md3`; otherwise, it will appear the standard ones. That option is included in BFP OPTIONS menu in VIEW & FX, also with a new explosion type option in EXPLOSIONS: Ultra Harcode
 - piercing weapons, like Razor disk, emit spark particles when hitting a player
 - beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
 - new particles: charge smoke, which appears when charging ki near the ground

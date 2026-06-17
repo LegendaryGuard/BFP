@@ -98,6 +98,7 @@ CG_CVAR( cg_transformationAura, "cg_transformationAura", "1", CVAR_ARCHIVE ) // 
 CG_CVAR( cg_thirdPerson, "cg_thirdPerson", "1", 0 ) // BFP
 CG_CVAR( cg_superdeformed, "cg_superdeformed", "0", CVAR_ARCHIVE ) // BFP - Super Deformed (Chibi style) easter egg
 CG_CVAR( cg_yrgolroxor, "cg_yrgolroxor", "0", 0 ) // BFP - Yrgol Roxor easter egg
+CG_CVAR( cg_3dparticles, "cg_3dparticles", "0", CVAR_ARCHIVE ) // BFP - 3D particles
 CG_CVAR( cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE )
 CG_CVAR( cg_teamChatHeight, "cg_teamChatHeight", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_forceModel, "cg_forceModel", "0", CVAR_ARCHIVE ) // BFP - TODO: In the future, remove cg_forceModel, which wasn't removed originally?

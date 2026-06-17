@@ -799,6 +799,11 @@ typedef struct {
 	qhandle_t	sparkShader1;
 	qhandle_t	sparkShader2;
 
+	// BFP - Optional 3D pebble/rock models
+	qhandle_t	pebbleMdl1;
+	qhandle_t	pebbleMdl2;
+	qhandle_t	pebbleMdl3;
+
 	// BFP - Aura models
 	qhandle_t	auraModel; // BFP - Normal aura model
 	qhandle_t	backauraModel; // BFP - Back aura model
@@ -1625,17 +1630,19 @@ qboolean	trap_GetEntityToken( char *buffer, int bufferSize );
 void	CG_ClearParticles (void);
 void	CG_AddParticles (void);
 // BFP - Bubble particle
-void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, vec3_t origin, vec3_t origin2, int turbtime, float range, float size);
+void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, qhandle_t pmodel, vec3_t origin, vec3_t origin2, int turbtime, float range, float size);
 // BFP - Dash smoke particle for ki boost when moving in the ground
 void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float velocityDisp, float upVelocity, float accel);
 // BFP - Antigrav rock particles for charging
-void	CG_ParticleAntigravRock (qhandle_t pshader, centity_t *cent, int entityNum, vec3_t origin, float size, float spawnRange, float endTime);
+void	CG_ParticleAntigravRock (qhandle_t pshader, qhandle_t pmodel, centity_t *cent, int entityNum, vec3_t origin, float size, float spawnRange, float endTime);
 void	CG_AntigravRockHandling (centity_t *cent);
 // BFP - Particle aura
-void	CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, vec3_t origin, vec3_t origin2, float range);
+void	CG_ParticleAura (centity_t *cent, int entityNum, qhandle_t pshader, qhandle_t pmodel, vec3_t origin, vec3_t origin2, float range);
 void	CG_ParticleAuraHandling (centity_t *cent);
-// BFP - Debris particle
-void	CG_ParticleDebris (qhandle_t pshader, vec3_t origin, vec3_t vel, qboolean water, float size, float velocity, float accel);
+// BFP - Bouncing debris rock fragment (explosion)
+void	CG_ParticleRockDebris (qhandle_t pshader, qhandle_t pmodel, vec3_t origin, vec3_t vel, float size, float velocity, float accel);
+// BFP - Water entry splash
+void	CG_ParticleWaterSplash (qhandle_t pshader, qhandle_t pmodel, vec3_t origin, vec3_t vel, float size, float velocity, float accel);
 // BFP - Spark particle
 void	CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel);
 // BFP - Charge smoke particle for ki charge

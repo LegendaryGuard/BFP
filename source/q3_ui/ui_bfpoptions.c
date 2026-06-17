@@ -10,56 +10,58 @@ BFP OPTIONS MENU
 #include "ui_local.h"
 
 
-#define ART_BACK0				"menu/art/back_0"
-#define ART_BACK1				"menu/art/back_1"
-#define ART_MENUBG				"menu/art/menubg"
-#define ART_BARLOG				"menu/art/cap_barlog"
+#define	ART_BACK0				"menu/art/back_0"
+#define	ART_BACK1				"menu/art/back_1"
+#define	ART_MENUBG				"menu/art/menubg"
+#define	ART_BARLOG				"menu/art/cap_barlog"
 
-#define BFPOPTIONS_X_POS		450
+#define	BFPOPTIONS_X_POS		450
 #define	BFPOPTIONS_SECTION_Y	(BIGCHAR_HEIGHT * 2)
 
-#define ID_AURATYPE			138
-#define ID_EXPLOTYPE		139
-#define ID_VIEWPOINT		140
-#define ID_FIX3PERSON       141
-#define ID_PARTICLESFX      142
-#define ID_DYNAURALIGHT     143
-#define ID_DYNEXPLOLIGHT    144
-#define ID_KITRAILENGTH     145
-#define ID_BEAMCMPXY        146
-#define ID_TRANSFORMATIONAURA        147
-#define ID_SMALLAURA        148
-#define ID_ULTIMAPERMAGLOW  149
-#define ID_ACCUCROSSHAIR    150
-#define ID_SIMPLEHUD        151
-#define ID_CHARGEALERT      152
-#define ID_Q3HITSFX         153
-#define ID_FLIGHTILT        154
-#define ID_BIGHEADS         155
-#define ID_DEFAULTSKINS    	156
-#define ID_STFU             157
-#define ID_LOWPOLYSPHERE 	158
-#define ID_BIGEXPLOSIONS    159
-#define ID_EXPLOSIONSHELL   160
-#define ID_EXPLOSIONSMOKE   161
-#define ID_EXPLOSIONRING    162
-#define ID_BACK				163
-#define ID_AURASCONFIG		164
-#define ID_EXPLOSIONSCONFIG	165
-#define ID_VIEWEFFSNDCONFIG	166
+#define	ID_AURATYPE				138
+#define	ID_EXPLOTYPE			139
+#define	ID_VIEWPOINT			140
+#define	ID_FIX3PERSON			141
+#define	ID_PARTICLESFX			142
+#define	ID_3DPARTICLESFX		143
+#define	ID_DYNAURALIGHT			144
+#define	ID_DYNEXPLOLIGHT		145
+#define	ID_KITRAILENGTH			146
+#define	ID_BEAMCMPXY			147
+#define	ID_TRANSFORMATIONAURA	148
+#define	ID_SMALLAURA			149
+#define	ID_ULTIMAPERMAGLOW		150
+#define	ID_ACCUCROSSHAIR		151
+#define	ID_SIMPLEHUD			152
+#define	ID_CHARGEALERT			153
+#define	ID_Q3HITSFX				154
+#define	ID_FLIGHTILT			155
+#define	ID_BIGHEADS				156
+#define	ID_DEFAULTSKINS			157
+#define	ID_STFU					158
+#define	ID_LOWPOLYSPHERE		159
+#define	ID_BIGEXPLOSIONS		160
+#define	ID_EXPLOSIONSHELL		161
+#define	ID_EXPLOSIONSMOKE		162
+#define	ID_EXPLOSIONRING		163
+#define	ID_BACK					164
+#define	ID_AURASCONFIG			165
+#define	ID_EXPLOSIONSCONFIG		166
+#define	ID_VIEWEFFSNDCONFIG		167
 
 // Macros to handle the cases in that order
-#define SPRITE_AURA         0
-#define LIGHTWEIGHT_AURA    1
-#define POLYGON_AURA        2
-#define HIGHPOLYCOUNT_AURA  3
-#define PARTICLE_AURA       4
-#define SHADER_AURA         5
+#define SPRITE_AURA				0
+#define LIGHTWEIGHT_AURA		1
+#define POLYGON_AURA			2
+#define HIGHPOLYCOUNT_AURA		3
+#define PARTICLE_AURA			4
+#define SHADER_AURA				5
 
-#define WIMPY_EXPLO         0
-#define WEAK_EXPLO          1
-#define SO_SO_EXPLO         2
-#define HARDCORE_EXPLO      3
+#define	WIMPY_EXPLO				0
+#define	WEAK_EXPLO				1
+#define	SO_SO_EXPLO				2
+#define	HARDCORE_EXPLO			3
+#define	ULTRA_HARDCORE_EXPLO	4
 
 static const char *auratype_items[] = {
 	"Sprite Aura",
@@ -83,6 +85,7 @@ static const char* explotype_items[] = {
 	"Weak",
 	"So-So",
 	"Hardcore",
+	"Ultra Hardcore",
 	NULL
 };
 
@@ -101,6 +104,7 @@ typedef struct {
 	menulist_s			viewpoint;
 	menuradiobutton_s	fix3person;
 	menuradiobutton_s	particlesfx;
+	menuradiobutton_s	particles3dfx;
 	menuradiobutton_s	dynauralight;
 	menuradiobutton_s	dynamiclights;
 	menuradiobutton_s	dynexplolights;
@@ -140,6 +144,7 @@ static void BFPOptions_MenuItem( int *menu_item_curvalue, const char *cvar, int 
 static void BFPOptions_SetMenuItems( void ) {
 	BFPOptions_MenuItem( &s_bfpoptions.fix3person.curvalue,     "cg_fixedThirdPerson",   0 );
 	BFPOptions_MenuItem( &s_bfpoptions.particlesfx.curvalue,    "cg_particles",          0 );
+	BFPOptions_MenuItem( &s_bfpoptions.particles3dfx.curvalue, "cg_3dparticles",        0 );
 	BFPOptions_MenuItem( &s_bfpoptions.dynauralight.curvalue,   "cg_lightAuras",         0 );
 	BFPOptions_MenuItem( &s_bfpoptions.dynexplolights.curvalue, "cg_lightExplosions",    0 );
 	BFPOptions_MenuItem( &s_bfpoptions.bigexplosions.curvalue,  "cg_bigExplosions",      0 );
@@ -173,34 +178,50 @@ static void BFPOptions_Viewpoint_Setup( int tp, int ownmodel ) {
 	trap_Cvar_SetValue( "cg_drawOwnModel", ownmodel );
 }
 
-static void BFPOptions_ExploType_Setup( int expShell, int expSmoke, int particles, int expRing ) {
+static void BFPOptions_ExploType_Setup( int expShell, int expSmoke, int particles, int expRing, int particles3d ) {
 	trap_Cvar_SetValue( "cg_explosionShell", expShell );
 	trap_Cvar_SetValue( "cg_explosionSmoke", expSmoke );
 	trap_Cvar_SetValue( "cg_explosionRing", expRing );
 	trap_Cvar_SetValue( "cg_particles", particles );
+	trap_Cvar_SetValue( "cg_3dparticles", particles3d );
 	s_bfpoptions.explosionshell.curvalue = expShell;
 	s_bfpoptions.explosionsmoke.curvalue = expSmoke;
 	s_bfpoptions.explosionring.curvalue = expRing;
 	s_bfpoptions.particlesfx.curvalue = particles;
+	s_bfpoptions.particles3dfx.curvalue = particles3d;
 }
 
 static void BFPOptions_ExplosionsTypeCheck( void ) {
 	int particles = s_bfpoptions.particlesfx.curvalue;
+	int particles3d = s_bfpoptions.particles3dfx.curvalue;
 	int explosionSmoke = s_bfpoptions.explosionsmoke.curvalue;
 	int explosionShell = s_bfpoptions.explosionshell.curvalue;
 	int explosionRing = s_bfpoptions.explosionring.curvalue;
 
-	if ( particles <= 0 && explosionSmoke <= 0 && explosionShell <= 0 && explosionRing <= 0 ) {
+	if ( particles <= 0 && particles3d <= 0 && explosionSmoke <= 0 && explosionShell <= 0 && explosionRing <= 0 ) {
 		s_bfpoptions.explotype.curvalue = WIMPY_EXPLO;
 	}
-	if ( particles <= 0 && explosionSmoke <= 0 && explosionShell >= 1 && explosionRing >= 1 ) {
+	if ( particles <= 0 && particles3d <= 0 && explosionSmoke <= 0 && explosionShell >= 1 && explosionRing >= 1 ) {
 		s_bfpoptions.explotype.curvalue = WEAK_EXPLO;
 	}
-	if ( particles >= 1 && explosionSmoke <= 0 && explosionShell >= 1 && explosionRing >= 1 ) {
+	if ( particles >= 1 && particles3d <= 0 && explosionSmoke <= 0 && explosionShell >= 1 && explosionRing >= 1 ) {
 		s_bfpoptions.explotype.curvalue = SO_SO_EXPLO;
 	}
-	if ( particles >= 1 && explosionSmoke >= 1 && explosionShell >= 1 && explosionRing >= 1 ) {
+	if ( particles >= 1 && particles3d <= 0 && explosionSmoke >= 1 && explosionShell >= 1 && explosionRing >= 1 ) {
 		s_bfpoptions.explotype.curvalue = HARDCORE_EXPLO;
+	}
+	if ( particles >= 1 && particles3d >= 1 && explosionSmoke >= 1 && explosionShell >= 1 && explosionRing >= 1 ) {
+		s_bfpoptions.explotype.curvalue = ULTRA_HARDCORE_EXPLO;
+	}
+}
+
+static void BFPOptions_ParticlesCheck( void ) {
+	int particles   = s_bfpoptions.particlesfx.curvalue;
+	int particles3d  = s_bfpoptions.particles3dfx.curvalue;
+
+	if ( particles <= 0 && particles3d >= 1 ) {
+		s_bfpoptions.particles3dfx.curvalue = 0;
+		trap_Cvar_SetValue( "cg_3dparticles", 0 );
 	}
 }
 
@@ -285,19 +306,23 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 	case ID_EXPLOTYPE:
 		switch ( s_bfpoptions.explotype.curvalue ) {
 		case WIMPY_EXPLO: // Wimpy
-			BFPOptions_ExploType_Setup( 0, 0, 0, 0 );
+			BFPOptions_ExploType_Setup( 0, 0, 0, 0, 0 );
 			break;
 
 		case WEAK_EXPLO: // Weak
-			BFPOptions_ExploType_Setup( 1, 0, 0, 1 );
+			BFPOptions_ExploType_Setup( 1, 0, 0, 1, 0 );
 			break;
 
 		case SO_SO_EXPLO: // So-So
-			BFPOptions_ExploType_Setup( 1, 0, 1, 1 );
+			BFPOptions_ExploType_Setup( 1, 0, 1, 1, 0 );
 			break;
 
 		case HARDCORE_EXPLO: // Hardcore
-			BFPOptions_ExploType_Setup( 1, 1, 1, 1 );
+			BFPOptions_ExploType_Setup( 1, 1, 1, 1, 0 );
+			break;
+
+		case ULTRA_HARDCORE_EXPLO: // Ultra Hardcore
+			BFPOptions_ExploType_Setup( 1, 1, 1, 1, 1 );
 			break;
 		}
 		break;
@@ -310,6 +335,16 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 
 	case ID_PARTICLESFX:
 		trap_Cvar_SetValue( "cg_particles", s_bfpoptions.particlesfx.curvalue );
+		BFPOptions_ParticlesCheck();
+		BFPOptions_ExplosionsTypeCheck();
+		break;
+
+	case ID_3DPARTICLESFX:
+		if ( s_bfpoptions.particles3dfx.curvalue >= 1 && s_bfpoptions.particlesfx.curvalue <= 0 ) {
+			s_bfpoptions.particlesfx.curvalue = 1;
+			trap_Cvar_SetValue( "cg_particles", 1 );
+		}
+		trap_Cvar_SetValue( "cg_3dparticles", s_bfpoptions.particles3dfx.curvalue );
 		BFPOptions_ExplosionsTypeCheck();
 		break;
 	
@@ -584,7 +619,7 @@ void BFPAuraOptions_MenuInit( void ) {
 void BFPExplosionsOptions_MenuInit( void ) {
 	int		y;
 	int		explosionRing, explosionShell, explosionSmoke;
-	int		particles;
+	int		particles, particles3d;
 
 	memset( &s_bfpoptions, 0, sizeof(bfpoptions_t) );
 
@@ -682,6 +717,7 @@ void BFPExplosionsOptions_MenuInit( void ) {
 	explosionShell = trap_Cvar_VariableValue( "cg_explosionShell" );
 	explosionRing = trap_Cvar_VariableValue( "cg_explosionRing" );
 	particles = trap_Cvar_VariableValue( "cg_particles" );
+	particles3d = trap_Cvar_VariableValue( "cg_3dparticles" );
 
 	s_bfpoptions.bigexplosions.curvalue = trap_Cvar_VariableValue( "cg_bigExplosions" );
 	s_bfpoptions.explosionsmoke.curvalue = explosionSmoke;
@@ -689,6 +725,7 @@ void BFPExplosionsOptions_MenuInit( void ) {
 	s_bfpoptions.explosionring.curvalue = explosionRing;
 
 	s_bfpoptions.particlesfx.curvalue = particles;
+	s_bfpoptions.particles3dfx.curvalue = particles3d;
 
 	BFPOptions_ExplosionsTypeCheck();
 
@@ -766,6 +803,15 @@ void BFPViewEffSndsOptions_MenuInit( void ) {
 	s_bfpoptions.particlesfx.generic.id			= ID_PARTICLESFX;
 	s_bfpoptions.particlesfx.generic.x			= BFPOPTIONS_X_POS;
 	s_bfpoptions.particlesfx.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.particles3dfx.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.particles3dfx.generic.name		= "3D Particle Effects:";
+	s_bfpoptions.particles3dfx.generic.flags	= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.particles3dfx.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.particles3dfx.generic.id		= ID_3DPARTICLESFX;
+	s_bfpoptions.particles3dfx.generic.x		= BFPOPTIONS_X_POS;
+	s_bfpoptions.particles3dfx.generic.y		= y;
 
 	y += BIGCHAR_HEIGHT + 2;
 	s_bfpoptions.kitrailength.generic.type		= MTYPE_SLIDER;
@@ -856,6 +902,7 @@ void BFPViewEffSndsOptions_MenuInit( void ) {
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.accucrosshair );
 
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.particlesfx );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.particles3dfx );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.kitrailength );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.beamcmpxy );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.bigheads );

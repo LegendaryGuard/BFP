@@ -2046,9 +2046,9 @@ static void CG_ChargeSmokeBubbles( centity_t *cent, vec3_t mins, vec3_t maxs,
 			waterTrace.endpos[2] -= 20;
 		}
 		if ( waterTrace.fraction >= 0 && waterTrace.fraction <= 0.70f ) {
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
 		}
 	}
 }
@@ -2173,7 +2173,6 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 		|| cent->currentState.groundEntityNum != ENTITYNUM_NONE )
 		&& !( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) ) {
 			// BFP - Spawn randomly the antigrav rock shaders with the particles
-			int		shaderIndex = rand() % 3;
 			vec3_t	antigravRockPos;
 			VectorCopy( trace.endpos, antigravRockPos );
 
@@ -2182,19 +2181,43 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 			&& cent->currentState.groundEntityNum != ENTITYNUM_NONE ) {
 				antigravRockPos[2] += 100;
 			}
-			switch ( shaderIndex ) {
-				case 0: {
-					CG_ParticleAntigravRock( cgs.media.pebbleShader1, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
-					break;
+
+			// BFP - Rock models on ki recharge
+			if ( cg_3dparticles.integer > 0
+			&& cgs.media.pebbleMdl1
+			&& cgs.media.pebbleMdl2
+			&& cgs.media.pebbleMdl3 ) {
+				int		rockModelIndex = rand() % 3;
+				switch ( rockModelIndex ) {
+					case 0: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader1, cgs.media.pebbleMdl1, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+						break;
+					}
+					case 1: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader2, cgs.media.pebbleMdl2, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+						break;
+					}
+					default: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader3, cgs.media.pebbleMdl3, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+					}
 				}
-				case 1: {
-					CG_ParticleAntigravRock( cgs.media.pebbleShader2, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
-					break;
-				}
-				default: {
-					CG_ParticleAntigravRock( cgs.media.pebbleShader3, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+			} else {
+				int		shaderIndex = rand() % 3;
+				switch ( shaderIndex ) {
+					case 0: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader1, 0, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+						break;
+					}
+					case 1: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader2, 0, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+						break;
+					}
+					default: {
+						CG_ParticleAntigravRock( cgs.media.pebbleShader3, 0, cent, cent->currentState.clientNum, antigravRockPos, antigravRockSize, antigravRockSpawnRange, antigravRockEndTime );
+					}
 				}
 			}
+
 		}
 	}
 
@@ -2694,20 +2717,20 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
 				bubbleOrigin[2] += 6; // put the origin near the player origin point
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -3; // put the origin a little below
 				bubbleRange *= 2;
 
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
 			}
 		}
 
@@ -2804,8 +2827,8 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 
 			pAuraOrigin[2] += -18; // put the origin a little below
 
-			CG_ParticleAura( cent, clientNum, cgs.media.waterBubbleShader, pAuraOrigin, NULL, 20 );
-			CG_ParticleAura( cent, clientNum, cgs.media.waterBubbleShader, pAuraOrigin, NULL, 20 );
+			CG_ParticleAura( cent, clientNum, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, pAuraOrigin, NULL, 20 );
+			CG_ParticleAura( cent, clientNum, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, pAuraOrigin, NULL, 20 );
 			return;
 		}
 
