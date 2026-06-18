@@ -195,6 +195,10 @@ struct gentity_s {
 	qboolean	blinding;			// BFP - Blinding
 	int			blindedTime;		// BFP - Blind time
 
+	// BFP - NOTE: That weapon property is unused in original BFP, so it won't make any difference
+	// just use missileGravity
+	// qboolean	usesGravity;		// BFP - Projectile uses gravity
+
 	int			multishot;			// BFP - Multishot
 
 	float		radius;					// BFP - Collision radius

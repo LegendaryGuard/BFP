@@ -35,6 +35,7 @@ static void G_SplitProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir ) {
 	// BFP - TODO: IMPORTANT, look (homing_special) and (homing_special_spawn), 
 	// (homing_special) has explosionSpawn set to split the projectiles, then if that happens,
 	// goes to (homing_special_spawn) and fires there x number of splitted projectiles
+	// explosionSpawn is a weaponNum of the attack to set
 
 	m = fire_plasma( ent, start, dir );
 	m->splitKiBall = qtrue; // handle splitted ki ball, otherwise crashes (in DLL/SO)
@@ -730,9 +731,7 @@ G_MissileGravity
 */
 static void G_MissileGravity( gentity_t *ent ) { // BFP - Missile gravity
 	if ( ent && ent->missileGravity > 0 && !ent->noZBounce ) {
-		float	deltaTime	= ( level.time - ent->deltaTime ) * 0.001f;
-		ent->deltaTime = level.time;
-		ent->s.pos.trDelta[2] -= ( DEFAULT_GRAVITY + ent->missileGravity ) * deltaTime;
+		ent->s.pos.trDelta[2] -= ent->missileGravity;
 		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
 		ent->s.pos.trTime = level.time;
 	}
@@ -1271,20 +1270,16 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->missileAcceleration = 0;
 
 	bolt->s.pos.trType = TR_LINEAR;
-	// BFP - NOTE: Does original BFP missileGravity uses that?
-	// if ( bolt->missileGravity > 0 ) {
-	// 	bolt->s.pos.trType = TR_GRAVITY;
-	// }
+	// BFP - missileGravity
+	if ( bolt->missileGravity > 0 ) {
+		bolt->s.pos.trType = TR_GRAVITY;
+	}
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	if ( bolt->missileAcceleration > 0 ) { // BFP - Start from the very first frame if there's acceleration
 		bolt->s.pos.trTime = level.time;
 	}
 	VectorCopy( start, bolt->s.pos.trBase );
 	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
-	// BFP - NOTE: Another same note, does original BFP missileGravity uses that too?
-	// if ( bolt->missileGravity > 0 ) {
-	// 	bolt->s.pos.trDelta[2] -= bolt->missileGravity;
-	// }
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 
 	VectorCopy (start, bolt->r.currentOrigin);
@@ -1397,7 +1392,14 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	// BFP - Priority
 	bolt->priority = 0;
 
+	bolt->missileGravity = 0;
+	bolt->missileAcceleration = 0;
+
 	bolt->s.pos.trType = TR_LINEAR;
+	// BFP - missileGravity
+	if ( bolt->missileGravity > 0 ) {
+		bolt->s.pos.trType = TR_GRAVITY;
+	}
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
 	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
