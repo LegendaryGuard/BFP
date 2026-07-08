@@ -534,8 +534,15 @@ void CG_RegisterWeapon( int weaponNum ) {
 		MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
 		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew" );
 		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum.wav", qfalse );
-		// BFP - No firingSound in this weaponInfo
-		// weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun.wav", qfalse );
+
+		// BFP - chargeSound
+		weaponInfo->chargeSound = cgs.media.defaultKiChargingSound;
+
+		// BFP - missileSound
+		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
+
+		// BFP - firingSound
+		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
 		break;
 
 	case WP_MACHINEGUN:
@@ -548,9 +555,12 @@ void CG_RegisterWeapon( int weaponNum ) {
 		break;
 
 	case WP_SHOTGUN:
-		// BFP - No flash light nor sound, just force field test
+		// BFP - No flash light, just force field test
 		//MAKERGB( weaponInfo->flashDlightColor, 1, 1, 0 );
 		//weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/shotgun/sshotf1b.wav", qfalse );
+
+		// BFP - firingSound
+		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
 		break;
 
 	case WP_ROCKET_LAUNCHER:
@@ -588,6 +598,9 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->missileDlight = 200;
 		MAKERGB( weaponInfo->missileDlightColor, 0.2f, 0.2f, 1.0f );
 
+		// BFP - chargeSound
+		weaponInfo->chargeSound = cgs.media.defaultKiChargingSound;
+
 		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/plasma/hyprbf1a.wav", qfalse );
 		cgs.media.plasmaExplosionShader = trap_R_RegisterShader( "plasmaExplosion" );
@@ -618,6 +631,9 @@ void CG_RegisterWeapon( int weaponNum ) {
 		MAKERGB( weaponInfo->flashDlightColor, 1.0f, 0.7f, 1.0f );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/bfg/bfg_fire.wav", qfalse );
 		cgs.media.bfgExplosionShader = trap_R_RegisterShader( "bfgExplosion" );
+
+		// BFP - Charge sound
+		weaponInfo->chargeSound = cgs.media.diskKiChargingSound;
 
 		// BFP - Modified for disk weapon testing
 		weaponInfo->missileModel = trap_R_RegisterModel( "models/weaphits/disk.md3" ); //trap_R_RegisterModel( "models/weaphits/bfg.md3" );
@@ -922,7 +938,17 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	if ( !ps ) {
 		// add weapon ready sound
 		cent->pe.lightningFiring = qfalse;
-		if ( ( cent->currentState.eFlags & EF_FIRING ) && weapon->firingSound ) {
+
+		// BFP - chargeSound
+		if ( weapon->chargeSound 
+		&& ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK3_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK4_PREPARE ) ) {
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
+				vec3_origin, weapon->chargeSound );
+		} else if ( ( cent->currentState.eFlags & EF_FIRING ) && weapon->firingSound ) {
 			// lightning gun and guantlet make a different sound when fire is held down
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, weapon->firingSound );
 			cent->pe.lightningFiring = qtrue;
@@ -948,6 +974,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		// impulse flash
 		if ( cg.time - cent->muzzleFlashTime > MUZZLE_FLASH_TIME && !cent->pe.railgunFlash
 		&& weaponNum != WP_GRAPPLING_HOOK
+		&& weaponNum != WP_PLASMAGUN
 		&& weaponNum != WP_BFG ) {
 			return;
 		}
@@ -966,6 +993,9 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			if ( weaponNum == WP_GRAPPLING_HOOK ) {
 				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "ImpactBeamFlashShader", 0, 15, 1 );
 			}
+			if ( weaponNum == WP_PLASMAGUN ) {
+				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "plasmaExplosion", 0, 15, 1 );
+			}
 			if ( weaponNum == WP_BFG ) {
 				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "purpleAttackShader", "models/weaphits/disk.md3", 0, 0.8 );
 			}
@@ -979,6 +1009,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		// it would be cool adding a light to the player while charging or firing their ki,
 		// but in a custom way
 		if ( weaponNum == WP_GRAPPLING_HOOK
+		|| weaponNum == WP_PLASMAGUN
 		|| weaponNum == WP_BFG ) {
 			return;
 		}
@@ -1362,9 +1393,12 @@ void CG_FireWeapon( centity_t *cent ) {
 
 	// BFP - Just testing, WP_SHOTGUN treated as ki explosion example
 	if ( ent->weapon == WP_SHOTGUN ) {
-		// BFP - Use that as blinding_flash weapon, no chargeAttack set
+		cent->pe.chargeAutoFire = qtrue;
+	}
+	if ( ent->weapon == WP_SHOTGUN && !cent->pe.chargeAutoFire ) {
+		// BFP - Use that as blinding_flash weapon, no chargeAutoFire set
 		// this is when noExplosion is set as weapon config dictates
-#if 0
+
 		// BFP - Low poly sphere
 		// BFP - TODO: Apply explosionModel from bfp attack config, highPolySphereModel is just a test
 		qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
@@ -1381,13 +1415,12 @@ void CG_FireWeapon( centity_t *cent ) {
 		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
 		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
 
-		CG_SpawnExplosionModel( cent->lerpOrigin, NULL, LE_EXPLOSION_SPHERE, sphereModel, blindingShader, 1000 );
+		leSphere = CG_SpawnExplosionModel( cent->lerpOrigin, NULL, LE_EXPLOSION_SPHERE, sphereModel, blindingShader, 1000 );
 		VectorScale( leSphere->refEntity.axis[0], scale, leSphere->refEntity.axis[0] );
 		VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
 		VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
 
 		CG_ExplosionSound( cent->lerpOrigin );
-#endif
 		return;
 	}
 

@@ -522,9 +522,14 @@ FORCEFIELD
 */
 
 void Forcefield_Fire ( gentity_t *ent ) { // BFP - Forcefield fire
-	if ( !ent->client->hook ) {
-		fire_forcefield( ent, muzzle );
+	if ( ent->client->hook ) {
+		if ( !ent->client->hook->inuse ) {
+			ent->client->hook = NULL;
+		} else {
+			return;
+		}
 	}
+	fire_forcefield( ent, muzzle );
 }
 
 static void Forcefield_Free( gentity_t *self ) { // BFP - Forcefield free
@@ -535,6 +540,7 @@ static void Forcefield_Free( gentity_t *self ) { // BFP - Forcefield free
 void Weapon_Forcefield_Think ( gentity_t *ent ) { // BFP - Forcefield
 	gentity_t	*rad = NULL;
 	int			damage = ( ent->splashDamage ) ? ent->splashDamage : ent->damage;
+	qboolean	chargeAutoFire = qtrue;
 
 	if ( !ent->parent || !ent->parent->client || !ent->parent->client->hook
 	|| ent->parent->client->ps.pm_type == PM_DEAD
@@ -543,9 +549,8 @@ void Weapon_Forcefield_Think ( gentity_t *ent ) { // BFP - Forcefield
 		return;
 	}
 
-	if ( ent->parent->client->ps.weaponstate != WEAPON_FIRING
-	&& ent->parent->client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
-	&& ent->parent->client->ps.weaponstate != WEAPON_EXPLODING_KIBALLFIRING ) {
+	if ( chargeAutoFire && ent->parent->client->ps.weaponstate != WEAPON_FIRING
+	&& ent->parent->client->ps.weaponstate != WEAPON_ACTIVE ) {
 		Forcefield_Free( ent );
 		return;
 	}
@@ -564,8 +569,8 @@ void Weapon_Forcefield_Think ( gentity_t *ent ) { // BFP - Forcefield
 		}
 	}
 
-	// no chargeAttack: removes hook pointer at that instant
-	if ( ent->parent->client->ps.weaponstate == WEAPON_EXPLODING_KIBALLFIRING ) {
+	// no chargeAutoFire: removes hook pointer at that instant
+	if ( !chargeAutoFire ) {
 		Forcefield_Free( ent );
 		return;
 	}

@@ -1379,7 +1379,7 @@ static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up
 
 	if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] > 0
 	// don't draw unless the player is charging/exploding a ki wave
-	&& ( cg.predictedPlayerState.weaponstate == WEAPON_CHARGING || cg.predictedPlayerState.weaponstate == WEAPON_KIEXPLOSIONWAVE ) ) {
+	&& ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING || cg.predictedPlayerState.weaponstate == WEAPON_ACTIVE ) ) {
 		while ( i <= 6 ) {
 			if ( cg.predictedPlayerState.stats[STAT_KI_ATTACK_CHARGE] >= i ) {
 				CG_DrawPic( x, 412, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );

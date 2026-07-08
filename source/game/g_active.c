@@ -832,9 +832,8 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 	gclient_t	*client = ent->client;
 	int			currentTime = level.time; // use level.time which is not affected by timescale
 
-	if ( client->ps.weaponstate == WEAPON_BEAMFIRING
+	if ( client->ps.weaponstate == WEAPON_ACTIVE
 	|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE
-	|| client->ps.weaponstate == WEAPON_KIEXPLOSIONWAVE
 	|| client->ps.weaponstate == WEAPON_STUN ) {
 		return;
 	}
@@ -1087,8 +1086,7 @@ void ClientThink_real( gentity_t *ent ) {
 		&& !( client->ps.pm_flags & PMF_BLOCK )
 		&& ( ( ucmd->buttons & BUTTON_KI_USE ) // BFP - Using Ki
 			|| ( client->ps.eFlags & EF_KI_BOOST ) ) // BFP - When "kiusetoggle" is binded, enables/disables
-		&& ( client->ps.weaponstate != WEAPON_KIEXPLOSIONWAVE
-			&& client->ps.weaponstate != WEAPON_STUN ) ) {
+		&& client->ps.weaponstate != WEAPON_STUN ) {
 			client->ps.eFlags |= EF_KI_BOOST; // Handle ki boost status
 			client->ps.eFlags |= EF_AURA;
 		} else {

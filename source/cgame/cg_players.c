@@ -1847,43 +1847,6 @@ static void CG_PlayerPowerups( centity_t *cent, refEntity_t *torso ) {
 
 /*
 ===============
-CG_KiAttackSounds
-===============
-*/
-static void CG_KiAttackSounds( centity_t *cent ) { // BFP - Ki attack sounds
-
-	// BFP - TODO: Make the sounds hear everyone, not the player itself
-
-	switch ( cg.predictedPlayerState.weaponstate ) {
-	case WEAPON_KIEXPLOSIONWAVE:
-		trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-			vec3_origin, cgs.media.defaultKiBeamExplosionWaveSound );
-		break;
-	case WEAPON_BEAMFIRING:
-		trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-			vec3_origin, cgs.media.defaultKiBeamExplosionWaveSound );
-		break;
-	case WEAPON_FIRING:
-		// ki attacks like eyebeam shouldn't use that kind of firing sound
-		if ( cent->currentState.weapon != WP_LIGHTNING ) {
-			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-				vec3_origin, cgs.media.defaultKiFiringAttackSound );
-		}
-		break;
-	case WEAPON_CHARGING:
-		if ( cent->currentState.weapon == WP_BFG ) {
-			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-				vec3_origin, cgs.media.diskKiChargingSound );
-		} else {
-			trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
-				vec3_origin, cgs.media.defaultKiChargingSound );
-		}
-	}
-}
-
-
-/*
-===============
 CG_PlayerFloatSprite
 
 Float a sprite over the player's head
@@ -3253,9 +3216,6 @@ void CG_Player( centity_t *cent ) {
 	//
 	CG_Aura( cent, clientNum, ci, renderfx, legs, kiTrailShader );
 
-	// BFP - Ki attack sounds
-	CG_KiAttackSounds( cent );
-
 	// BFP - Render ultimate perma-glow dynamic lights when already transformed
 	if ( cg_lightAuras.integer > 0 && cg_permaglowUltimate.integer > 0 && powerlevel >= 1000 ) {
 		int dLightSize = 50;
@@ -3304,7 +3264,9 @@ void CG_Player( centity_t *cent ) {
 	}
 
 	// BFP - Forcefield test
-	CG_ForceFieldEffect( cent, torso.origin, "models/weaphits/sphere_hi.md3", "AGAAttackShader" );
+	if ( cent->pe.chargeAutoFire ) {
+		CG_ForceFieldEffect( cent, torso.origin, "models/weaphits/sphere_hi.md3", "AGAAttackShader" );
+	}
 
 	// add powerups floating behind the player
 	CG_PlayerPowerups( cent, &torso );

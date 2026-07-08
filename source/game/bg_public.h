@@ -142,14 +142,18 @@ typedef enum {
 
 	// BFP - The following weapon states are to handle the movements 
 	// (originally BFP didn't use that because of their abuse of WP_, PW_ and STAT_ stuff in their networking):
-	WEAPON_CHARGING, // BFP - Ki attack charging
-	WEAPON_BEAMFIRING, // BFP - Beam fire
+	WEAPON_ACTIVE, // BFP - Active fire
 	WEAPON_BEAMSTRUGGLE, // BFP - Beam struggle
-	WEAPON_EXPLODING_KIBALLFIRING, // BFP - Quick ki explosion and homing ball fire
-	WEAPON_SPLITTINGKIBALLFIRING, // BFP - Dividing ball fire
-	WEAPON_KIEXPLOSIONWAVE, // BFP - Ki explosion wave
 	WEAPON_STUN // BFP - Stun status (not hit stun) when using ki explosion wave
 } weaponstate_t;
+
+// BFP - Attack types
+#define	ATK_MISSILE			0
+#define	ATK_RDMISSILE		1
+#define	ATK_BEAM			2
+#define	ATK_SBEAM			3
+#define	ATK_HITSCAN			4
+#define	ATK_FORCEFIELD		5
 
 // BFP - TODO: Change the way to use the PMF_ flags in order to keep original BFP networking
 // pmove->pm_flags
@@ -195,6 +199,26 @@ typedef struct {
 
 	qboolean	noFlight;			// BFP - No flight
 	qboolean	meleeOnly;			// BFP - Melee only
+
+	// BFP - TODO: bfp_weapon.cfg
+	int			weaponTime;			// BFP - Weapon time
+	int			randomWeaponTime;	// BFP - Milliseconds of random extra fire delay
+	qboolean	kiCostAsPct;		// BFP - Enables ki cost percentage
+	float		kiPct;				// BFP - Ki cost percentage (0.0 - 1.0)
+	int			kiCost;				// BFP - Ki cost
+
+	qboolean	chargeAttack;		// BFP - Charge attack
+	qboolean	chargeAutoFire;		// BFP - Charge autofire
+	int			minCharge;			// BFP - Minimum charge points
+	int			maxCharge;			// BFP - Maximum charge points
+
+	qboolean	loopingAnim;		// BFP - Looping ki attack animation
+	qboolean	noAttackAnim;		// BFP - No prepare ki attack animation
+
+	qboolean	railTrail;			// BFP - Rail trail weapon check
+	int			attackType;			// BFP - Attack type check
+	
+	int			movementPenalty;	// BFP - Seconds of movement penalty
 
 	int			framecount;
 
@@ -246,8 +270,8 @@ typedef enum {
 	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
 	STAT_UNUSED_INDEX13,			// BFP - Beam firing weapon state
 	STAT_UNUSED_INDEX14,			// BFP - Force field weapon state
-	//STAT_UNUSED_INDEX15			// BFP - TODO: Fly tilt angles (left: moves to -80, right: moves to 80), rename during the config implementation
-	STAT_HITSTUN_TIME				// BFP - TODO: Replace hit stun time to PW_UNUSED_INDEX10
+	//STAT_UNUSED_INDEX15			// BFP - Fly tilt angles (left: moves to -80, right: moves to 80), rename during the config implementation
+	STAT_HITSTUN_TIME				// BFP - Hit stun time
 } statIndex_t;
 
 // player_state->persistant[] indexes

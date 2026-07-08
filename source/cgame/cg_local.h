@@ -156,6 +156,9 @@ typedef struct {
 	qboolean		barrelSpinning;
 
 	int				forceFieldStartTime;	// BFP - Forcefield start time
+
+	// BFP - TODO: Handle chargeAttack and chargeAutoFire for forcefield attack
+	qboolean		chargeAutoFire;
 } playerEntity_t;
 
 //=================================================
@@ -417,6 +420,8 @@ typedef struct weaponInfo_s {
 	sfxHandle_t		readySound;
 	sfxHandle_t		firingSound;
 	qboolean		loopFireSound;
+
+	sfxHandle_t		chargeSound;		// BFP - Charge sound
 } weaponInfo_t;
 
 

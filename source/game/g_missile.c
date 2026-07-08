@@ -96,14 +96,6 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 	};
 	*/
 
-	// BFP - TODO: Apply minCharge and maxCharge from reading bfp_weapon.cfg 
-	if ( ent->kiChargePoints < 2 ) {
-		client->ps.weaponstate = WEAPON_READY;
-		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
-		client->ps.weaponTime = 0;
-		return;
-	}
-
 	// determine the number of projectiles to spawn based on the ki attack charge points
 	switch( ent->kiChargePoints ) {
 	case 2:
@@ -120,13 +112,6 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 		projectiles_to_spawn = 6;
 		break;
 	default:
-		projectiles_to_spawn = 0;
-	}
-
-	if ( projectiles_to_spawn == 0 ) {
-		client->ps.weaponstate = WEAPON_READY;
-		client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
-		client->ps.weaponTime = 0;
 		return;
 	}
 
@@ -186,10 +171,6 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 			G_SplitProjectile_Fire( owner, origin, dir );
 		}
 	}
-
-	client->ps.weaponstate = WEAPON_READY;
-	client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // reset ki charge points
-	client->ps.weaponTime = 0;
 }
 
 /*
@@ -319,7 +300,7 @@ static void G_CollideDetonationCheck( gentity_t *ent, trace_t *trace ) { // BFP 
 		gentity_t *te = G_TempEntity( impactPoint, EV_MISSILE_MISS );
 		te->s.eventParm = DirToByte( trace->plane.normal );
 	} else {
-		G_AddEvent( ent, EV_MISSILE_DETONATE, 0 );
+		G_AddEvent( ent, EV_MISSILE_DETONATE, DirToByte( trace->plane.normal ) );
 	}
 }
 
@@ -1051,11 +1032,9 @@ void G_RunMissile( gentity_t *ent ) {
 
 	// WP_PLASMAGUN would be that splitting ki ball, when pressing the attack key again, splits by the number of balls depending on the ki attack charge points had
 	if ( client 
-	&& client->ps.weaponstate != WEAPON_SPLITTINGKIBALLFIRING 
+	&& client->ps.weaponstate != WEAPON_FIRING 
 	&& client->ps.weapon == WP_PLASMAGUN
-	&& ent->s.weapon == WP_PLASMAGUN
-	&& !ent->splitKiBall ) {
-		client->ps.weaponstate = WEAPON_SPLITTINGKIBALLFIRING;
+	&& ent->s.weapon == WP_PLASMAGUN && !ent->splitKiBall ) {
 		client->ps.weaponTime = 0;
 	}
 
@@ -1074,8 +1053,7 @@ void G_RunMissile( gentity_t *ent ) {
 	if ( client 
 	&& ( client->pers.cmd.buttons & BUTTON_ATTACK )
 	&& client->ps.weapon == WP_PLASMAGUN
-	&& ent->s.weapon == WP_PLASMAGUN
-	&& !ent->splitKiBall ) {
+	&& ent->s.weapon == WP_PLASMAGUN && !ent->splitKiBall ) {
 		G_RDMissile( ent, client );
 		client->ps.weaponstate = WEAPON_READY;
 		return;
@@ -1091,14 +1069,18 @@ void G_RunMissile( gentity_t *ent ) {
 	// BFP - Beam handling
 	if ( client 
 	&& ent->s.weapon == WP_GRAPPLING_HOOK ) {
-		if ( client->ps.weaponstate != WEAPON_BEAMFIRING
+		if ( client->ps.weaponstate != WEAPON_ACTIVE
 		&& client->ps.weaponstate != WEAPON_BEAMSTRUGGLE ) {
 			G_MissileImpact( ent, &tr );
 			client->ps.weaponTime = 0;
 		}
-
-		Weapon_BFPBeamRun( ent );
-		Weapon_SBeam_Run( ent );
+		if ( tr.fraction != 1 && !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
+			G_MissileImpact( ent, &tr );
+			client->ps.weaponTime = 0;
+		} else {
+			Weapon_BFPBeamRun( ent );
+			Weapon_SBeam_Run( ent );
+		}
 
 		if ( client->ps.pm_type == PM_DEAD 				// if just died, then stop
 		|| client->pers.connected == CON_DISCONNECTED 	// if disconnected, stop
@@ -1113,9 +1095,16 @@ void G_RunMissile( gentity_t *ent ) {
 
 		// BFP - When the charged projectile touches into something, return to ready state
 		if ( client 
-		&& ( client->ps.weaponstate == WEAPON_BEAMFIRING
-		|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE
-		|| client->ps.weaponstate == WEAPON_SPLITTINGKIBALLFIRING ) ) {
+		&& ( client->ps.weaponstate == WEAPON_ACTIVE
+		|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE )
+		&& ent->s.weapon != WP_PLASMAGUN ) {
+			client->ps.weaponstate = WEAPON_READY;
+		}
+
+		// BFP - Splitting ki ball
+		if ( client 
+		&& ent->s.weapon == WP_PLASMAGUN
+		&& !ent->splitKiBall ) {
 			client->ps.weaponstate = WEAPON_READY;
 		}
 
@@ -1128,6 +1117,7 @@ void G_RunMissile( gentity_t *ent ) {
 				ent->parent->client->hook = NULL;
 			}
 #endif
+
 			// BFP - Don't disappear instantly on piercing weapons
 			if ( !ent->piercing ) {
 				G_FreeEntity( ent );
@@ -1137,8 +1127,7 @@ void G_RunMissile( gentity_t *ent ) {
 
 		// BFP - Splitting ki ball
 		if ( client 
-		&& ent->s.weapon == WP_PLASMAGUN
-		&& !ent->splitKiBall ) {
+		&& ent->s.weapon == WP_PLASMAGUN && !ent->splitKiBall ) {
 			G_RDMissile( ent, client );
 			return;
 		}
