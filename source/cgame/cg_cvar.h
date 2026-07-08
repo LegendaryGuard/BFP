@@ -135,10 +135,10 @@ CG_CVAR( cg_noProjectileTrail, "cg_noProjectileTrail", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_smallFont, "ui_smallFont", "0.25", CVAR_ARCHIVE )
 CG_CVAR( cg_bigFont, "ui_bigFont", "0.4", CVAR_ARCHIVE )
 
+CG_CVAR( cg_oldRocket, "cg_oldRocket", "0", CVAR_ARCHIVE )
 /*
 // BFP - Remove these unused cvars from the code in the future
 CG_CVAR( cg_oldRail, "cg_oldRail", "1", CVAR_ARCHIVE )
-CG_CVAR( cg_oldRocket, "cg_oldRocket", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_oldPlasma, "cg_oldPlasma", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_trueLightning, "cg_trueLightning", "0.0", CVAR_ARCHIVE )
 */

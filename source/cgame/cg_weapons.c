@@ -176,17 +176,18 @@ CG_RocketTrail
 ==========================
 */
 static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
-// BFP - A macro to enable original Q3 rocket trail, disabled by default
-#define	Q3_ROCKET_TRAIL	0
 	vec3_t	origin, lastPos;
 	int		lastContents, contents;
 	entityState_t	*es;
-#if Q3_ROCKET_TRAIL
+
+	// BFP - NOTE: cg_oldRocket is for these who wanna to play Q3 rocket smoke trails
+
 	int		step;
 	int		t;
 	int		startTime;
 	vec3_t	up;
 	localEntity_t	*smoke;
+	vec3_t	color = {1, 0.75, 0}; // BFP - Color for missile trail
 
 	up[0] = 0;
 	up[1] = 0;
@@ -196,9 +197,6 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 
 	startTime = ent->trailTime;
 	t = step * ( (startTime + step) / step );
-#else
-	vec3_t	color = {1, 0.75, 0}; // BFP - Color for missile trail
-#endif
 
 	if ( cg_noProjectileTrail.integer ) {
 		return;
@@ -218,10 +216,10 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	BG_EvaluateTrajectory( &es->pos, ent->trailTime, lastPos );
 	lastContents = CG_PointContents( lastPos, -1 );
 
-#if !Q3_ROCKET_TRAIL
 	// BFP - Missile trail
-	CG_MissileTrail( ent->currentState.number, origin, cgs.media.railCoreShader, color, qfalse );
-#endif
+	if ( cg_oldRocket.integer <= 0 ) {
+		CG_MissileTrail( ent->currentState.number, origin, cgs.media.railCoreShader, color, qfalse );
+	}
 
 	if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
 		if ( ( contents & lastContents & CONTENTS_WATER ) 
@@ -235,24 +233,24 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 		return;
 	}
 
-#if Q3_ROCKET_TRAIL
-	ent->trailTime = cg.time;
+	if ( cg_oldRocket.integer > 0 ) {
+		ent->trailTime = cg.time;
 
-	for ( ; t <= ent->trailTime ; t += step ) {
-		BG_EvaluateTrajectory( &es->pos, t, lastPos );
+		for ( ; t <= ent->trailTime ; t += step ) {
+			BG_EvaluateTrajectory( &es->pos, t, lastPos );
 
-		smoke = CG_SmokePuff( lastPos, up, 
-					  wi->trailRadius, 
-					  1, 1, 1, 0.33f,
-					  wi->wiTrailTime, 
-					  t,
-					  0,
-					  0, 
-					  cgs.media.smokePuffShader );
-		// use the optimized local entity add
-		smoke->leType = LE_SCALE_FADE;
+			smoke = CG_SmokePuff( lastPos, up, 
+						wi->trailRadius, 
+						1, 1, 1, 0.33f,
+						wi->wiTrailTime, 
+						t,
+						0,
+						0, 
+						cgs.media.smokePuffShader );
+			// use the optimized local entity add
+			smoke->leType = LE_SCALE_FADE;
+		}
 	}
-#endif
 }
 
 // BFP - Unused CG_PlasmaTrail function
