@@ -12,7 +12,8 @@ The following stuff is used in original BFP networking and has been found using 
     * STAT_8 = ki
     * STAT_9 = maximum ki
     * STAT_10 = melee attack time
-    * STAT_13 = looks like it's a beam firing state
+    * STAT_11 = a weird timer with 2 msec appears in the first 3 msec of melee attack time (STAT_10) when melee attack time is starting from 25 msec (what the hell?)
+    * STAT_13 = active firing state (for rdmissile and beam attack types with attackCharge)
     * STAT_14 = force field weapon state
     * STAT_15 = fly tilt: moving left is lesser than 0 until -80, moving right is more than 0 until 80
 * PERS_ (persistant) indexes:

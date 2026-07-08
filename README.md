@@ -31,6 +31,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Balanced player physics movements (different from the original BFP, but balanced for gameplay)
 - [x] Beam trails
 - [x] BFP config file ([bfp.cfg](bfp.cfg)) (a sample of how the game saves general binding and BFP cvar stuff in a cfg file)
+- [x] bg_ weapon properties: weaponTime, randomWeaponTime, kiCostAsPct, kiPct, kiCost, chargeAttack, chargeAutoFire, minCharge, maxCharge, loopingAnim, noAttackAnim and movementPenalty
 - [x] Bind key to recover ki energy
 - [x] Bind key to toggle speed (ki boost)
 - [x] Blinding Flash (blinds opponents during 6 seconds)
@@ -61,6 +62,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Playable third person mode and first person vis mode
 - [x] Priority for projectiles
 - [x] Missile properties (missileSpeed, missileDuration, missileGravity and missileAcceleration)
+- [x] railTrail weapon property
 - [x] Radius feature (radius, maxRadius, maxExpRadius)
 - [x] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
 - [x] Reflective feature
@@ -185,7 +187,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - while charging ki near water, bubble particles appear
 - when player is still moving with/without friction and charging ki, antigrav rock particles appear
 - when antigrav rock and rock debris particles fall in a slope or inclined places, bounce and slide, that makes the movements more realistic
-- 3d particles for bubbles, antigrav rock and rock debris, that can be enabled with `cg_3dparticles` cvar. For 3d rock particles, you need 3 models inside models/effects/ directory: `pebble1.md3`, `pebble2.md3` and `pebble3.md3`; otherwise, it will appear the standard ones. That option is included in BFP OPTIONS menu in VIEW & FX, also with a new explosion type option in EXPLOSIONS: Ultra Harcode
+- 3d particles for bubbles, antigrav rock and rock debris, that can be enabled with `cg_3dparticles` cvar. For 3d rock particles, you need 3 models inside models/effects/ directory: `pebble1.md3`, `pebble2.md3` and `pebble3.md3`; otherwise, it will appear the standard ones. That option is included in BFP OPTIONS menu in VIEW & FX, also with a new explosion type option in EXPLOSIONS: Ultra Hardcore
 - piercing weapons, like Razor disk, emit spark particles when hitting a player
 - beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
 - new particles: charge smoke, which appears when charging ki near the ground
@@ -196,6 +198,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - no weird underwater movements while going intentionally down and moving crazily fast touching the ground (this might be a bug/glitch from original BFP)
   - no specified stuck animation, so any animation is correctly handled when being stuck (on original BFP, when the player is stuck or pretty near to something solid, the reason is still unknown though. It does a jumping forward/backward animation, that doesn't make sense)
   - water movement handling is different from original BFP, but it works similarly
+- the owner who fires rdmissile with chargeAutoFire, can fire without dealing damage (on original BFP, every time is being used after some charge, player gets damaged after firing per weaponTime)
 - survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own prefix, dies and respawns during warmup, the warmup resets. So, that's unfair)
 - monster/oozaru gamemode has the following in-game differences compared to the original:
   - the player monster is labeled 'MON' on the scoreboard
