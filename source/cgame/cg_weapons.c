@@ -707,7 +707,7 @@ CG_MapTorsoToWeaponFrame
 */
 static int CG_MapTorsoToWeaponFrame( clientInfo_t *ci, int frame ) {
 
-	// BFP - TODO: These animations aren't definitive
+	// BFP - That was changed for the animations, but in that case, it isn't necessary
 
 	// change weapon
 	// BFP doesn't use this animation
@@ -938,7 +938,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		cent->pe.lightningFiring = qfalse;
 
 		// BFP - chargeSound
-		if ( weapon->chargeSound 
+		if ( weapon->chargeSound && !( cent->currentState.eFlags & EF_FIRING )
 		&& ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE

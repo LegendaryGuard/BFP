@@ -191,13 +191,14 @@ You'll notice some differences and things that the original Bid For Power didn't
 - piercing weapons, like Razor disk, emit spark particles when hitting a player
 - beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
 - new particles: charge smoke, which appears when charging ki near the ground
-- new cool missile trails (that replaces original Q3 missile smoke trails), includes rainbow option. These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
+- new cool missile trails (that replaces original Q3 missile smoke trails), includes rainbow option (it can be disabled by setting `cg_oldRocket 1`). These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
 - removed some unused cvars
 - balanced player pmove physics: 
   - players can interact bounce pads like Q3 does (on original BFP, the physics are like you're sliding heavily on the ground and not bouncing as usually do, you're being pushed when touching bounce pads)
   - no weird underwater movements while going intentionally down and moving crazily fast touching the ground (this might be a bug/glitch from original BFP)
   - no specified stuck animation, so any animation is correctly handled when being stuck (on original BFP, when the player is stuck or pretty near to something solid, the reason is still unknown though. It does a jumping forward/backward animation, that doesn't make sense)
   - water movement handling is different from original BFP, but it works similarly
+- beam with chargeAutoFire can fire correctly by holding the attack key (on original BFP, beam is detonated at the first instance and player gets damaged by the detonation)
 - the owner who fires rdmissile with chargeAutoFire, can fire without dealing damage (on original BFP, every time is being used after some charge, player gets damaged after firing per weaponTime)
 - survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own prefix, dies and respawns during warmup, the warmup resets. So, that's unfair)
 - monster/oozaru gamemode has the following in-game differences compared to the original:

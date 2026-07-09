@@ -2930,9 +2930,10 @@ PM_KiCost
 ===========
 */
 static float PM_KiCost( void ) { // BFP - kiCost, kiCostAsPct and kiPct
-	float	kiCost = pm->kiCost;
-	if ( pm->kiCostAsPct && pm->kiPct > 0 ) {
-		kiCost = pm->ps->stats[STAT_MAX_KI] * pm->kiPct;
+	float	kiCost = ( pm->kiCost > 0 ) ? pm->kiCost : 0;
+	float	kiPct = ( pm->kiPct > 1 ) ? 1 : pm->kiPct;
+	if ( pm->kiCostAsPct && kiPct > 0 ) {
+		kiCost = pm->ps->stats[STAT_MAX_KI] * kiPct;
 	}
 	return kiCost;
 }
@@ -3165,7 +3166,8 @@ static void PM_Weapon( void ) {
 				pm->ps->eFlags |= EF_FIRING;
 				PM_AddEvent( EV_FIRE_WEAPON );
 			}
-			if ( pm->attackType == ATK_FORCEFIELD
+			if ( pm->attackType == ATK_BEAM
+			|| pm->attackType == ATK_FORCEFIELD
 			|| pm->attackType == ATK_RDMISSILE ) {
 				pm->ps->weaponstate = WEAPON_ACTIVE;
 			}
@@ -3213,6 +3215,21 @@ static void PM_Weapon( void ) {
 		pm->ps->eFlags |= EF_FIRING; // keep playing firing sound
 
 		// chargeAutoFire: keep firing while attack key is holding
+		if ( pm->attackType == ATK_BEAM 
+		&& pm->chargeAutoFire ) {
+			if ( ( pm->cmd.buttons & BUTTON_ATTACK )
+			&& pm->ps->weaponTime <= 0 ) {
+				PM_AddEvent( EV_FIRE_WEAPON );
+				PM_ChargeKiAttackState( pm->minCharge, pm->maxCharge, weaponTime, kiCost );
+			}
+			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
+			|| ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_AURA ) )
+			|| ( pm->ps->pm_flags & PMF_BLOCK ) ) {
+				pm->ps->weaponstate = WEAPON_READY;
+			}
+			break;
+		}
+
 		if ( ( pm->chargeAttack || pm->chargeAutoFire ) 
 		&& pm->attackType == ATK_FORCEFIELD ) {
 			if ( ( pm->cmd.buttons & BUTTON_ATTACK )
