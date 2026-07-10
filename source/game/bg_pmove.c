@@ -2945,6 +2945,8 @@ PM_ChargeKiAttackState
 ============
 */
 static void PM_ChargeKiAttackState( int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
+	const int	ATTACK_CHARGE_LIMIT = 6;
+
 	PM_KiConsumption( addTime, kiConsume );
 	if ( !pm->chargeAttack && !pm->chargeAutoFire ) {
 		return;
@@ -2952,7 +2954,7 @@ static void PM_ChargeKiAttackState( int minCharge, int maxCharge, int addTime, i
 	if ( ( pm->chargeAutoFire
 	|| maxCharge <= minCharge
 	|| ( maxCharge > 0 && pm->ps->stats[STAT_KI_ATTACK_CHARGE] < maxCharge ) )
-	&& pm->ps->stats[STAT_KI_ATTACK_CHARGE] < 6 ) {
+	&& pm->ps->stats[STAT_KI_ATTACK_CHARGE] < ATTACK_CHARGE_LIMIT ) {
 		++pm->ps->stats[STAT_KI_ATTACK_CHARGE];
 	}
 	if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= minCharge && !pm->chargeAutoFire ) {
@@ -2985,8 +2987,6 @@ Generates weapon events and modifes the weapon counter
 */
 static void PM_Weapon( void ) {
 	// BFP - HIGHLY MODIFIED
-	int			addTime;
-	const int	ATTACK_CHARGE_LIMIT = 6; // BFP - Ki attack charge limit
 	// BFP - Ki cost
 	float		kiCost = PM_KiCost();
 	// BFP - Weapon time
