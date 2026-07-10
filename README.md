@@ -166,21 +166,10 @@ On markdown editions, the data log is complete.
 We're making a replica of the lost source code. <br/>
 The highest priority goal is to copy and recreate the complete logical structure of the BFP game. It would be a game SDK that'll provide a structured and standardized way to modify the mod.<br/>
 You'll notice some differences and things that the original Bid For Power didn't have/were forgotten, incomplete or poorly made such as:
-- some adjusted UI buttons
-- BFP OPTIONS menu is upgraded, big explosions and smoke options are back (these were removed after RC/beta versions), also shell and ring options are available and these are options are interactive with explosion type option. Sprite and particle aura types are available on aura type option
-- in the first GAME SERVER menu has a horizontal scrolling description about the selected gametype
-- GAME SERVER menu has pagination
-- PLAYER SETTINGS menu has pagination
-- SERVER INFO menu displays all server info (on original BFP, the info was badly displayed and nothing was shown) and it has pagination
-- DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
-- CHANGE MAP button is added in in-game pause MENU, allows you to change the map without restarting the server and making everyone reconnect
-- `cg_drawTeamOverlay 2` is fixed on the lower right corner (on original BFP looks non-visible)
-- explosion dynamic lights are back (these were broken after RC/beta versions)
+
+#### EFFECTS:
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
-- `g_allowSpectatorChat` cvar is functional, spectators can't send messages if the cvar is disabled
-- `cg_forceSkin` forces the default skin for each model correctly when changing models/skins (on original BFP, that changes to the first model of the prefix with default skin)
-- spectator mode can toggle ki boost as if the player is flying
-- ki boost consumption is applied in msec if `timescale` is different from it (on original BFP only applies until 0.89 and from 0.89 until 0.80 reduces one per one very slowly)
+- explosion dynamic lights are back (these were broken after RC/beta versions)
 - real impact crack mark, when projectiles/ki attacks impact something solid on ground, walls or slopes (on original BFP, that hasn't been fixed)
 - particle aura is almost implemented
 - beam trails are bendy, almost similar to original BFP though
@@ -192,14 +181,19 @@ You'll notice some differences and things that the original Bid For Power didn't
 - beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
 - new particles: charge smoke, which appears when charging ki near the ground
 - new cool missile trails (that replaces original Q3 missile smoke trails), includes rainbow option (it can be disabled by setting `cg_oldRocket 1`). These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
-- removed some unused cvars
+
+#### PMOVE:
 - balanced player pmove physics: 
   - players can interact bounce pads like Q3 does (on original BFP, the physics are like you're sliding heavily on the ground and not bouncing as usually do, you're being pushed when touching bounce pads)
   - no weird underwater movements while going intentionally down and moving crazily fast touching the ground (this might be a bug/glitch from original BFP)
   - no specified stuck animation, so any animation is correctly handled when being stuck (on original BFP, when the player is stuck or pretty near to something solid, the reason is still unknown though. It does a jumping forward/backward animation, that doesn't make sense)
   - water movement handling is different from original BFP, but it works similarly
+
+#### ATTACKS:
 - beam with chargeAutoFire can fire correctly by holding the attack key (on original BFP, beam is detonated at the first instance and player gets damaged by the detonation)
 - the owner who fires rdmissile with chargeAutoFire, can fire without dealing damage (on original BFP, every time is being used after some charge, player gets damaged after firing per weaponTime)
+
+#### GAMEMODES:
 - survival gamemode is pretty well balanced (on original BFP, when everytime the player changes a different character model from their own prefix, dies and respawns during warmup, the warmup resets. So, that's unfair)
 - monster/oozaru gamemode has the following in-game differences compared to the original:
   - the player monster is labeled 'MON' on the scoreboard
@@ -217,9 +211,27 @@ You'll notice some differences and things that the original Bid For Power didn't
   - players cannot voluntarily switch to spectator after joining a team
   - players attempting to switch teams/spectate receive centerprint messages
   - maps marked as `tlms` besides `lms` can be viewed in the GAME SERVER menu
+
+#### UI:
+- some adjusted UI buttons
+- BFP OPTIONS menu is upgraded, big explosions and smoke options are back (these were removed after RC/beta versions), also shell and ring options are available and these are options are interactive with explosion type option. Sprite and particle aura types are available on aura type option
+- in the first GAME SERVER menu has a horizontal scrolling description about the selected gametype
+- GAME SERVER menu has pagination
+- PLAYER SETTINGS menu has pagination
+- SERVER INFO menu displays all server info (on original BFP, the info was badly displayed and nothing was shown) and it has pagination
+- DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
+- CHANGE MAP button is added in in-game pause MENU, allows you to change the map without restarting the server and making everyone reconnect
+
+#### MISC:
+- `cg_drawTeamOverlay 2` is fixed on the lower right corner (on original BFP looks non-visible)
+- `g_allowSpectatorChat` cvar is functional, spectators can't send messages if the cvar is disabled
+- `cg_forceSkin` forces the default skin for each model correctly when changing models/skins (on original BFP, that changes to the first model of the prefix with default skin)
 - some cvars didn't save changed values after quitting the game that happened on original BFP (means that `CVAR_ARCHIVE` wasn't on them), but these are now applied on replica
-- file size differences between the QVM and the original BFP QVM can be quite significant
 - kiCharge, boostCost and blockCost cvars work differently
+- removed some unused cvars
+- spectator mode can toggle ki boost as if the player is flying
+- ki boost consumption is applied in msec if `timescale` is different from it (on original BFP only applies until 0.89 and from 0.89 until 0.80 reduces one per one very slowly)
+- file size differences between the QVM and the original BFP QVM can be quite significant
 - configstrings in CS_PLAYERS like "c1" and "hc" are removed to be optimized, handicap is disabled logically because it isn't used at all
 - some Q3e patches are applied, like events and function stuff...
 - ...
@@ -243,6 +255,13 @@ Documentations, references and extracted stuff will give us clues to reach the g
     * [Bindlist](docs/bind_bfp_list.txt)
     * [Cmdlist](docs/cmd_bfp_list.txt)
     * [Cvarlist](docs/cvar_bfp_list.txt)
+
+<br/>
+
+- Attackset and Weapon config files:
+
+    * [Attackset Config File](docs/bfp_attacksets_config_file.md)
+    * [Weapon Config File](docs/bfp_weapon_config_file.md)
 
 <br/>
 
