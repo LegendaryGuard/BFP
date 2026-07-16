@@ -459,9 +459,10 @@ typedef struct {
 
 	animation_t		animations[MAX_ANIMATIONS];
 
-	qhandle_t		weaponModel;
-	qhandle_t		barrelModel;
-	qhandle_t		flashModel;
+	// BFP - No handsModel, weaponModel and barrelModel
+	//qhandle_t		weaponModel;
+	//qhandle_t		barrelModel;
+	//qhandle_t		flashModel;
 	vec3_t			flashDlightColor;
 	int				muzzleFlashTime;
 

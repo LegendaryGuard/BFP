@@ -45,6 +45,8 @@ static int			dp_realtime;
 static float		jumpHeight;
 
 
+// BFP - No player info set weapon
+#if 0
 /*
 ===============
 UI_PlayerInfo_SetWeapon
@@ -145,6 +147,7 @@ tryagain:
 		break;
 	}
 }
+#endif
 
 
 /*
@@ -272,6 +275,8 @@ static void UI_LegsSequencing( playerInfo_t *pi ) {
 }
 
 
+// BFP - No UI_PositionEntityOnTag
+#if 0
 /*
 ======================
 UI_PositionEntityOnTag
@@ -296,6 +301,7 @@ static void UI_PositionEntityOnTag( refEntity_t *entity, const refEntity_t *pare
 	MatrixMultiply( lerped.axis, ((refEntity_t*)parent)->axis, entity->axis );
 	entity->backlerp = parent->backlerp;
 }
+#endif
 
 
 /*
@@ -633,6 +639,8 @@ static void UI_PlayerFloatSprite( playerInfo_t *pi, vec3_t origin, qhandle_t sha
 }
 
 
+// BFP - No machine gun spin angle
+#if 0
 /*
 ======================
 UI_MachinegunSpinAngle
@@ -668,6 +676,7 @@ float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {
 
 	return angle;
 }
+#endif
 
 
 /*
@@ -680,9 +689,12 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	refEntity_t		legs;
 	refEntity_t		torso;
 	refEntity_t		head;
+	// BFP - No gun, barrel and flash
+#if 0
 	refEntity_t		gun;
 	refEntity_t		barrel;
 	refEntity_t		flash;
+#endif
 	vec3_t			origin;
 	int				renderfx;
 	vec3_t			mins = {-16, -16, -24};
@@ -801,6 +813,8 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 
 	trap_R_AddRefEntityToScene( &head );
 
+	// BFP - No gun, spinning barrel and muzzle flash
+#if 0
 	//
 	// add the gun
 	//
@@ -857,6 +871,7 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 				pi->flashDlightColor[1], pi->flashDlightColor[2] );
 		}
 	}
+#endif
 
 	//
 	// add the chat icon
@@ -1152,7 +1167,7 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 
 
 // BFP - 5th parameter for the function has been disabled/removed
-#if 1
+#if 0
 		if ( weaponNumber != -1 ) {
 			pi->weapon = weaponNumber;
 			pi->currentWeapon = weaponNumber;
@@ -1185,7 +1200,8 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	if ( torsoAnim == BOTH_DEATH1 || legsAnim == BOTH_DEATH1 ) {
 		torsoAnim = legsAnim = BOTH_DEATH1;
 		pi->weapon = pi->currentWeapon = WP_NONE;
-		UI_PlayerInfo_SetWeapon( pi, pi->weapon );
+		// BFP - No player info set weapon
+		//UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 
 		jumpHeight = 0;
 		pi->pendingLegsAnim = 0;
