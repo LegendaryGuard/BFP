@@ -2919,6 +2919,9 @@ void CG_Player( centity_t *cent ) {
 	// BFP - Monster gamemode with g_monster enabled, temporarily swap animations
 	animation_t		backupAnimations[MAX_TOTALANIMATIONS];
 
+	// BFP - Weapon info to extract
+	weaponInfo_t	*weap = &cg_weapons[ cent->currentState.weapon ];
+
 	// BFP - That macro makes all body being transformed during tier up. 
 	// Enabled by default, originally on BFP only shows the head as transformation transition
 	// while the body is already transformed.
@@ -3264,7 +3267,8 @@ void CG_Player( centity_t *cent ) {
 	}
 
 	// BFP - Forcefield test
-	if ( cent->pe.chargeAutoFire ) {
+	if ( cent->currentState.weapon == WP_SHOTGUN
+	&& cent->pe.chargeAutoFire && weap->noExplosion ) {
 		CG_ForceFieldEffect( cent, torso.origin, "models/weaphits/sphere_hi.md3", "AGAAttackShader" );
 	}
 

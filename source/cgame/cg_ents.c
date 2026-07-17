@@ -426,11 +426,33 @@ static void CG_Missile( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, ent.origin);
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
-	if ( cent->currentState.weapon == WP_PLASMAGUN ) {
+	// BFP - missileShader
+	if ( weapon->missileShader ) {
+		ent.customShader = weapon->missileShader;
+	}
+
+	// BFP - missileRotation
+	if ( weapon->missileRotation > 0 ) {
+		ent.rotation = weapon->missileRotation;
+	}
+
+	// BFP - missileModel and missileShader
+	if ( !weapon->missileModel && weapon->missileShader ) {
 		ent.reType = RT_SPRITE;
-		ent.radius = 16;
-		ent.rotation = 0;
-		ent.customShader = cgs.media.plasmaBallShader;
+
+		// BFP - missileRadius and missileRadiusChargeMult
+		if ( ent.reType == RT_SPRITE ) {
+			float	missileRadius = 50, missileRadiusChargeMult = 75;
+			float	minCharge = 2;
+			float	totalCharge = cent->currentState.generic1 - minCharge;
+			if ( totalCharge < 0 ) {
+				totalCharge = 0;
+			}
+			if ( missileRadius > 0 ) {
+				ent.radius = missileRadius + missileRadiusChargeMult * totalCharge;
+			}
+		}
+
 		trap_R_AddRefEntityToScene( &ent );
 		return;
 	}
@@ -449,15 +471,12 @@ static void CG_Missile( centity_t *cent ) {
 		ent.axis[0][2] = 1;
 	}
 
-	// BFP - missileShader check
-	if ( weapon->missileShader ) {
-		ent.customShader = weapon->missileShader;
-	}
-
 	// spin as it moves
 	if ( s1->pos.trType != TR_STATIONARY
-	&& s1->weapon != WP_BFG ) { // BFP - For disk or missileSpinHoriz weapons, don't rotate like the rocket
-		RotateAroundDirection( ent.axis, cg.time / 4 );
+	&& s1->weapon != WP_BFG ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
+		// BFP - missileModelRotation
+		float	missileModelRotation = 0.2;
+		RotateAroundDirection( ent.axis, cg.time * missileModelRotation );
 	} else {
 		{
 			// BFP - Rotate Z-axis like a wheel
@@ -469,6 +488,22 @@ static void CG_Missile( centity_t *cent ) {
 			VectorCopy( ent.axis[1], temp );
 			RotatePointAroundVector( ent.axis[1], ent.axis[2], temp, cg.autoAnglesFast[1] );
 		}
+	}
+
+	// BFP - missileScaleFactor and missileScaleFactorChargeMult
+	// BFP - TODO: Handle saved ki charge points and calculate the total of number of points charged over the min
+	if ( ent.reType == RT_MODEL ) {
+		float	scale = 1;
+		float	missileScaleFactor = 3, missileScaleFactorChargeMult = 1;
+		float	minCharge = 2;
+		float	totalCharge = cent->currentState.generic1 - minCharge;
+		if ( totalCharge < 0 ) {
+			totalCharge = 0;
+		}
+		if ( missileScaleFactor > 0 ) {
+			scale = missileScaleFactor + missileScaleFactorChargeMult * totalCharge;
+		}
+		CG_ModelSize( &ent, scale );
 	}
 
 	// add to refresh list, possibly with quad glow

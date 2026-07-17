@@ -190,7 +190,7 @@ G_BreakRDMissile
 ===================
 */
 qboolean G_BreakRDMissile( gentity_t* ent ) { // BFP - Break and split the ki ball
-	if ( !Q_stricmp( ent->classname, "rdmissile" ) && !ent->splitKiBall ) {
+	if ( ent->attackType == ATK_RDMISSILE && !ent->splitKiBall ) {
 		G_RDMissile( ent, ent->parent->client );
 		return qtrue;
 	}
@@ -271,6 +271,37 @@ void G_ExplodeMissile( gentity_t *ent ) {
 	}
 
 	trap_LinkEntity( ent );
+}
+
+
+/*
+================
+G_DetonateMissile
+
+Detonate a missile
+================
+*/
+void G_DetonateMissile( gentity_t *ent ) {	// BFP - Detonate a missile, for nextthink
+	gentity_t *tempEnt = G_TempEntity( ent->r.currentOrigin, EV_MISSILE_DETONATE );
+	tempEnt->s.otherEntityNum  = ent->s.number;
+
+	// BFP - That's for ki charge points, make it lesser than 0
+	ent->s.generic1 = 0;
+
+	// BFP - Splitting ki ball
+	if ( ent->parent && ent->parent->client
+	&& ent->parent->client->ps.weapon == WP_PLASMAGUN
+	&& ent->s.weapon == WP_PLASMAGUN && !ent->splitKiBall ) {
+		ent->parent->client->ps.weaponstate = WEAPON_READY;
+		G_RDMissile( ent, ent->parent->client );
+	}
+
+	// splash damage
+	if ( ent->splashDamage 
+	&& G_RadiusDamage( ent, ent->r.currentOrigin, ent->parent, ent->splashDamage, ent->splashRadius, ent
+		, ent->splashMethodOfDeath ) ) {
+		g_entities[ent->r.ownerNum].client->accuracy_hits++;
+	}
 }
 
 
@@ -673,7 +704,7 @@ void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start ) 
 			if ( rad->freeAfterEvent || rad->nextthink <= level.time ) {
 				continue;
 			}
-			if ( !Q_stricmp( rad->classname, "beam" ) || !Q_stricmp( rad->classname, "sbeam" ) ) { // cannot defend from beam & sbeam attack types
+			if ( rad->attackType == ATK_BEAM || rad->attackType == ATK_SBEAM ) { // cannot defend from beam & sbeam attack types
 				continue;
 			}
 			if ( rad->piercing ) { // cannot defend from piercing attacks
@@ -760,7 +791,7 @@ static void G_ChargeDamageScaling( gentity_t *ent, int minCharge ) { // BFP - Ch
 	}
 	ent->radius = r;
 	rdown = r;
-	if ( Q_stricmp( ent->classname, "beam" ) && Q_stricmp( ent->classname, "sbeam" ) ) {
+	if ( ent->attackType != ATK_BEAM && ent->attackType != ATK_SBEAM ) {
 		rdown = 10;
 	}
 	VectorSet( ent->r.mins, -r, -r, -rdown );
@@ -806,10 +837,10 @@ static void G_Priority( gentity_t *ent, trace_t *trace ) { // BFP - Priority
 			continue;
 		}
 
-		if ( !Q_stricmp( other->classname, "beam" )
-		|| !Q_stricmp( other->classname, "sbeam" )
-		|| !Q_stricmp( other->classname, "rdmissile" )
-		|| !Q_stricmp( other->classname, "forcefield" ) ) {
+		if ( other->attackType == ATK_BEAM
+		|| other->attackType == ATK_SBEAM
+		|| other->attackType == ATK_RDMISSILE
+		|| other->attackType == ATK_FORCEFIELD ) {
 			continue;
 		}
 
@@ -842,6 +873,9 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	}
 
 	other = &g_entities[trace->entityNum];
+
+	// BFP - That's for ki charge points, make it lesser than 0
+	ent->s.generic1 = 0;
 
 	// check for bounce
 	if ( !other->takedamage &&
@@ -902,7 +936,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	}
 
 	// BFP - Changed "hook" to "beam" classname
-	if ( !Q_stricmp( ent->classname, "beam" ) || !Q_stricmp( ent->classname, "sbeam" ) ) {
+	if ( ent->attackType == ATK_BEAM || ent->attackType == ATK_SBEAM ) {
 		G_BFPBeamImpact( ent, other, trace );
 		return;
 	}
@@ -1160,8 +1194,9 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	bolt = G_Spawn();
 	bolt->classname = "rdmissile";
+	bolt->attackType = ATK_RDMISSILE; // BFP - Attack type
 	bolt->nextthink = level.time + 10000;
-	bolt->think = G_ExplodeMissile;
+	bolt->think = G_DetonateMissile;
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_PLASMAGUN;
@@ -1176,7 +1211,8 @@ gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->target_ent = NULL;
 
 	// BFP - Save ki charged points
-	bolt->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	bolt->kiChargePoints = self->client->ps.generic1;
+	bolt->s.generic1 = self->client->ps.generic1;
 
 	bolt->splitKiBall = qfalse; // BFP - For splitting ki ball
 
@@ -1227,6 +1263,7 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->bounces = qtrue;
 
 	bolt->classname = "missile";
+	bolt->attackType = ATK_MISSILE; // BFP - Attack type
 	bolt->nextthink = level.time + bolt->missileDuration;
 	bolt->think = G_ExplodeMissile;
 	bolt->s.eType = ET_MISSILE;
@@ -1281,7 +1318,8 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	VectorSet( bolt->r.maxs, bolt->radius, bolt->radius, bolt->radius );
 
 	// BFP - Save ki charged points
-	bolt->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	bolt->kiChargePoints = self->client->ps.generic1;
+	bolt->s.generic1 = self->client->ps.generic1;
 
 	// BFP - Priority
 	bolt->priority = 1;
@@ -1354,6 +1392,7 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	bolt = G_Spawn();
 	bolt->classname = "missile";
+	bolt->attackType = ATK_MISSILE; // BFP - Attack type
 	bolt->nextthink = level.time + 15000;
 	bolt->think = G_ExplodeMissile;
 	bolt->s.eType = ET_MISSILE;
@@ -1370,7 +1409,8 @@ gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->target_ent = NULL;
 
 	// BFP - Save ki charged points
-	bolt->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	bolt->kiChargePoints = self->client->ps.generic1;
+	bolt->s.generic1 = self->client->ps.generic1;
 
 	// BFP - Speed similar to BFP ki blast attack (missileSpeed)
 	bolt->speed = 6000;
@@ -1455,6 +1495,7 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	beam = G_Spawn();
 	beam->classname = "beam";
+	beam->attackType = ATK_BEAM; // BFP - Attack type
 	beam->nextthink = level.time + 20000;
 	beam->think = Weapon_BFPBeamFree;
 	beam->s.eType = ET_MISSILE;
@@ -1472,7 +1513,8 @@ gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
 	beam->splashMethodOfDeath = MOD_KI_ATTACK;
 
 	// BFP - Save ki charged points
-	beam->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	beam->kiChargePoints = self->client->ps.generic1;
+	beam->s.generic1 = self->client->ps.generic1;
 
 	// BFP - Speed similar to BFP lightning blast/heaven's wrath attack (missileSpeed)
 	beam->speed = 2000;
@@ -1539,6 +1581,7 @@ gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	disk = G_Spawn();
 	disk->classname = "missile";
+	disk->attackType = ATK_MISSILE; // BFP - Attack type
 	disk->nextthink = level.time + 10000;
 	disk->think = G_FreeEntity;
 	disk->s.eType = ET_MISSILE;
@@ -1555,7 +1598,8 @@ gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir) {
 	disk->target_ent = NULL;
 
 	// BFP - Save ki charged points
-	disk->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	disk->kiChargePoints = self->client->ps.generic1;
+	disk->s.generic1 = self->client->ps.generic1;
 
 	disk->speed = 1000;
 
@@ -1603,6 +1647,7 @@ gentity_t *fire_forcefield (gentity_t *self, vec3_t start)
 
 	field = G_Spawn();
 	field->classname = "forcefield";
+	field->attackType = ATK_FORCEFIELD; // BFP - Attack type
 	field->nextthink = level.time + 200;
 	field->think = Weapon_Forcefield_Think;
 	field->s.eType = ET_MISSILE;
@@ -1620,7 +1665,8 @@ gentity_t *fire_forcefield (gentity_t *self, vec3_t start)
 	field->splashMethodOfDeath = MOD_KI_ATTACK;
 
 	// BFP - Save ki charged points
-	field->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	field->kiChargePoints = self->client->ps.generic1;
+	field->s.generic1 = self->client->ps.generic1;
 
 	field->radius = 900;
 	field->blinding = qfalse;
@@ -1650,6 +1696,7 @@ gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir)
 
 	sbeam = G_Spawn();
 	sbeam->classname = "sbeam";
+	sbeam->attackType = ATK_SBEAM; // BFP - Attack type
 	sbeam->nextthink = level.time + 20000;
 	sbeam->think = G_FreeEntity;
 	sbeam->s.eType = ET_MISSILE;
@@ -1669,7 +1716,8 @@ gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir)
 	sbeam->radius = 50;
 
 	// BFP - Save ki charged points
-	sbeam->kiChargePoints = self->client->ps.stats[STAT_KI_ATTACK_CHARGE];
+	sbeam->kiChargePoints = self->client->ps.generic1;
+	sbeam->s.generic1 = self->client->ps.generic1;
 
 	// BFP - Speed similar to BFP mouth beam (missileSpeed)
 	sbeam->speed = 1000;

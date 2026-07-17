@@ -2,15 +2,12 @@
 
 For more, look in [cvar_bfp_list.txt](docs/cvar_bfp_list.txt)
 
-## DONE BUT NOT IN CGAME:
-
-- cg_stfu [0/1]: disable character voices when firing attacks.
-
 ## COMPLETED:
 
 - [x] cg_superdeformed
 - [x] cg_beamTrail
 - [x] cg_kiTrail
+- [x] cg_stfu
 - [x] cg_forceSkin
 - [x] cg_yrgolroxor
 - [x] cg_thirdPersonHeight

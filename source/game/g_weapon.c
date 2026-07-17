@@ -83,7 +83,8 @@ qboolean CheckKiShockwavePushAttack( gentity_t *ent ) {
 
 	// BFP - TODO: For weapon config, set this as hitscan attack type conditional
 	ent->classname = "hitscan";
-	if ( Q_stricmp( ent->classname, "hitscan" ) ) {
+	ent->attackType = ATK_HITSCAN; // BFP - Attack type
+	if ( ent->attackType != ATK_HITSCAN ) {
 		return qfalse;
 	}
 
@@ -890,7 +891,7 @@ void Weapon_BFPBeamFree ( gentity_t *ent ) // BFP - BFP Beam free
 	if ( ent && ent->parent && ent->parent->client ) {
 		ent->parent->client->hook = NULL;
 		ent->parent->client->ps.weaponstate = WEAPON_READY;
-		ent->parent->client->ps.stats[STAT_KI_ATTACK_CHARGE] = 0; // BFP - Reset ki charge points
+		ent->parent->client->ps.generic1 = 0; // BFP - Reset ki charge points
 		ent->parent->client->fireHeld = qfalse;
 	}
 	G_FreeEntity( ent );
@@ -942,7 +943,7 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 						ent->r.ownerNum, ent->clipmask );
 
 			// BFP - Priority (only for non-beam weapons)
-			if ( Q_stricmp( rad->classname, "beam" ) ) {
+			if ( rad->attackType != ATK_BEAM ) {
 				if ( ent->priority > rad->priority || rad->priority <= 0 ) {
 					// BFP - If it's a splitting ki ball, break and split!
 					if ( !G_BreakRDMissile( rad ) ) {
@@ -955,7 +956,7 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 				}
 			}
 
-			if ( !Q_stricmp( rad->classname, "beam" ) ) {
+			if ( rad->attackType == ATK_BEAM ) {
 				VectorSubtract( rad->r.currentOrigin, ent->r.currentOrigin, raddir );
 				distTarget = VectorLength( raddir );
 				if ( target == NULL ) {
@@ -1042,7 +1043,7 @@ void Weapon_BFPBeamRun ( gentity_t *ent ) // BFP - BFP Beam run
 	vec3_t		ownerViewPos, vel, dir;
 	float		distance, deltaTime;
 
-	if ( Q_stricmp( ent->classname, "beam" ) ) {
+	if ( ent->attackType != ATK_BEAM ) {
 		return;
 	}
 
@@ -1116,7 +1117,7 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 						ent->r.ownerNum, ent->clipmask );
 
 			// BFP - Priority (only for non-beam weapons)
-			if ( Q_stricmp( rad->classname, "sbeam" ) ) {
+			if ( rad->attackType != ATK_SBEAM ) {
 				if ( ent->priority > rad->priority ) {
 					// BFP - If it's a splitting ki ball, break and split!
 					if ( !G_BreakRDMissile( rad ) ) {
@@ -1130,7 +1131,7 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 			}
 
 			// if one of them has more damage power, the other breaks
-			if ( !Q_stricmp( rad->classname, "sbeam" ) ) {
+			if ( rad->attackType == ATK_SBEAM ) {
 				if ( ent->damage > rad->damage ) {
 					G_MissileImpact( ent, &trace );
 					continue;
@@ -1151,7 +1152,7 @@ void Weapon_SBeam_Run ( gentity_t *ent ) // BFP - sbeam (Super Beam?) run
 {
 	vec3_t		ownerViewPos, vel;
 
-	if ( Q_stricmp( ent->classname, "sbeam" ) ) {
+	if ( ent->attackType != ATK_SBEAM ) {
 		return;
 	}
 

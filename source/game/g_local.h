@@ -182,6 +182,9 @@ struct gentity_s {
 	// BFP - Ki charge points
 	int			kiChargePoints;
 
+	// BFP - Attack type
+	int			attackType;
+
 	float		deltaTime;		// BFP - For beam struggle
 	float		distance;		// BFP - For beam struggle
 

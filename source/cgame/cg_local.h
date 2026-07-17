@@ -139,7 +139,7 @@ typedef struct {
 	lerpFrame_t		legs, torso, flag;
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
-	int				lightningFiring;
+	//int				lightningFiring;
 	int				kiTrailTime;	// BFP - Ki trail time
 	int				chargeSmokeTime;	// BFP - Charge smoke time
 	int				ultTierTransformTime;	// BFP - Ultimate tier transformation time
@@ -150,15 +150,20 @@ typedef struct {
 	vec3_t			railgunImpact;
 	qboolean		railgunFlash;
 
+	// BFP - No machinegun spinning
 	// machinegun spinning
-	float			barrelAngle;
-	int				barrelTime;
-	qboolean		barrelSpinning;
+	//float			barrelAngle;
+	//int				barrelTime;
+	//qboolean		barrelSpinning;
 
 	int				forceFieldStartTime;	// BFP - Forcefield start time
 
 	// BFP - TODO: Handle chargeAttack and chargeAutoFire for forcefield attack
 	qboolean		chargeAutoFire;
+
+	qboolean		constantFireAtkPlayed;	// BFP - To play constantFireAttack fire sound once
+
+	qboolean		lastChargeVoiceLevel;	// BFP - To play charge voice once
 } playerEntity_t;
 
 //=================================================
@@ -388,42 +393,59 @@ typedef struct weaponInfo_s {
 	qboolean		registered;
 	gitem_t			*item;
 
-	qhandle_t		handsModel;			// the hands don't actually draw, they just position the weapon
-	qhandle_t		weaponModel;
-	qhandle_t		barrelModel;
+	// BFP - No handsModel, weaponModel and barrelModel
+	//qhandle_t		handsModel;			// the hands don't actually draw, they just position the weapon
+	//qhandle_t		weaponModel;
+	//qhandle_t		barrelModel;
 	qhandle_t		flashModel;
 
 	vec3_t			weaponMidpoint;		// so it will rotate centered instead of by tag
 
 	float			flashDlight;
 	vec3_t			flashDlightColor;
+	// BFP - Indication here: flashSound
 	sfxHandle_t		flashSound[4];		// fast firing weapons randomly choose
 
-	qhandle_t		weaponIcon;
-	qhandle_t		ammoIcon;
+	sfxHandle_t		attackChargeVoice;	// BFP - attackChargeVoice
+	sfxHandle_t		attackFireVoice;	// BFP - attackFireVoice
+
+	qhandle_t		weaponIcon;			// BFP - Indication here: attackIcon
+	// BFP - No ammoIcon
+	//qhandle_t		ammoIcon;
 
 	qhandle_t		ammoModel;
 
-	qhandle_t		missileModel;
+	qhandle_t		missileModel;		// BFP - Indication here: missileModel
 	qhandle_t		missileShader;		// BFP - For missileShader
-	sfxHandle_t		missileSound;
+	int				missileRotation;	// BFP - For missileRotation
+	sfxHandle_t		missileSound;		// BFP - Indication here: missileSound
 	void			(*missileTrailFunc)( centity_t *, const struct weaponInfo_s *wi );
-	float			missileDlight;
-	vec3_t			missileDlightColor;
+	int				missileTrailFuncType;	// BFP - Indication here: missileTrailFunc, for MISSILE_TRAIL_FUNC_* macro types
+	float			missileDlight;		// BFP - Indication here: missileDlight
+	vec3_t			missileDlightColor;	// BFP - Indication here: missileDlightColor
 	int				missileRenderfx;
+
+	qboolean		constantFireAttack;	// BFP - constantFireAttack
 
 	void			(*ejectBrassFunc)( centity_t * );
 
-	float			trailRadius;
-	float			wiTrailTime;
+	float			trailRadius;		// BFP - Indication here: missileTrailRadius
+	float			wiTrailTime;		// BFP - Indication here: missileTrailTime
+
+	qboolean		noExplosion;		// BFP - noExplosion
 
 	sfxHandle_t		readySound;
-	sfxHandle_t		firingSound;
+	sfxHandle_t		firingSound;		// BFP - Indication here: firingSound
 	qboolean		loopFireSound;
 
 	sfxHandle_t		chargeSound;		// BFP - Charge sound
 } weaponInfo_t;
 
+// BFP - missileTrailFunc types
+#define	MISSILE_TRAIL_FUNC_BEAM			1	// "beam"
+#define	MISSILE_TRAIL_FUNC_ROCKET		2	// "rocket"
+#define	MISSILE_TRAIL_FUNC_SPIRALBEAM	3	// "spiralbeam"
+// "none" can be any value, anyway it's nothing
 
 // each IT_* item has an associated itemInfo_t
 // that constains media references necessary to present the

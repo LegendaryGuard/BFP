@@ -30,12 +30,20 @@ CG_AddFlashMissile
 Adds muzzle flash or missile shader/model
 ===================
 */
-void CG_AddFlashMissile( int entityNum, vec3_t origin, refEntity_t *parent, char *tagName, char *flashMissileShader, char *flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
+void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec3_t origin, refEntity_t *parent, char *tagName, char *flashMissileShader, char *flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
 	refEntity_t	flashMissile;
+	float		missileRadiusChargeMult = 75, missileScaleFactorChargeMult = 1;
+	float		scale = 0;
+	float		minCharge = 2;
+	float		totalCharge = cent->currentState.generic1 - minCharge;
 
 	// don't show the muzzle flash to the player itself on first person camera, even on first person vis mode
 	if ( cg_thirdPerson.integer <= 0 && entityNum == cg.snap->ps.clientNum ) {
 		return;
+	}
+
+	if ( totalCharge < 0 ) {
+		totalCharge = 0;
 	}
 
 	if ( flashMissileScaleFactor <= 0 ) {
@@ -71,11 +79,22 @@ void CG_AddFlashMissile( int entityNum, vec3_t origin, refEntity_t *parent, char
 		} else {
 			AxisClear( flashMissile.axis );
 		}
-		CG_ModelSize( &flashMissile, flashMissileScaleFactor );
+
+		if ( isMissile ) {
+			scale = flashMissileScaleFactor + missileScaleFactorChargeMult * totalCharge;
+		} else {
+			scale = flashMissileScaleFactor;
+		}
+		CG_ModelSize( &flashMissile, scale );
 	} else {
 		flashMissile.reType = RT_SPRITE;
-		flashMissile.radius = flashMissileRadius;
-		flashMissile.radius *= flashMissileScaleFactor;
+
+		if ( isMissile ) {
+			scale = flashMissileRadius + missileRadiusChargeMult * totalCharge;
+		} else {
+			scale = flashMissileRadius;
+		}
+		flashMissile.radius = scale;
 	}
 
 	if ( flashMissileShader && flashMissileShader[0] ) {
@@ -403,13 +422,35 @@ void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Be
 	// ent->trailTime = cg.time;
 
 	// BFP - NOTE: That's where we apply the flash properties read from client cfg
-	CG_AddFlashMissile( es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, NULL, "", "ImpactBeamFlashShader", 0, 25, 1 );
+	CG_AddFlashMissile( qfalse, ent, es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, NULL, "", "ImpactBeamFlashShader", 0, 25, 1 );
 
-	CG_AddFlashMissile( es->number, origin, NULL, "", "ImpactBeamFlashShader", 0, 50, 1 );
+	CG_AddFlashMissile( qtrue, ent, es->number, origin, NULL, "", "ImpactBeamFlashShader", 0, 50, 1 );
 
 	CG_BeamTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.PowerWaveBeamShader );
 	// to test corkscrew
 	// CG_CorkscrewTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.SSBBeamShader, cgs.media.SSBSpiralShader );
+}
+
+/*
+==========================
+CG_BFPSpiralBeamTrail
+==========================
+*/
+void CG_BFPSpiralBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Spiral beam trail handling
+	vec3_t	origin;
+	entityState_t	*es;
+
+	es = &ent->currentState;
+
+	BG_EvaluateTrajectory( &es->pos, cg.time, origin );
+	// ent->trailTime = cg.time;
+
+	// BFP - NOTE: That's where we apply the flash properties read from client cfg
+	CG_AddFlashMissile( qfalse, ent, es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, NULL, "", "ImpactBeamFlashShader", 0, 25, 1 );
+
+	CG_AddFlashMissile( qtrue, ent, es->number, origin, NULL, "", "ImpactBeamFlashShader", 0, 50, 1 );
+
+	CG_CorkscrewTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.SSBBeamShader, cgs.media.SSBSpiralShader );
 }
 
 /*
@@ -432,9 +473,10 @@ The server says this item is used on this level
 void CG_RegisterWeapon( int weaponNum ) {
 	weaponInfo_t	*weaponInfo;
 	gitem_t			*item, *ammo;
-	char			path[MAX_QPATH];
-	vec3_t			mins, maxs;
-	int				i;
+	// BFP - Unused variables
+	//char			path[MAX_QPATH];
+	//vec3_t			mins, maxs;
+	//int				i;
 
 	weaponInfo = &cg_weapons[weaponNum];
 
@@ -460,6 +502,8 @@ void CG_RegisterWeapon( int weaponNum ) {
 	}
 	CG_RegisterItemVisuals( item - bg_itemlist );
 
+	// BFP - No weaponModel
+#if 0
 	// load cmodel before model so filecache works
 	weaponInfo->weaponModel = trap_R_RegisterModel( item->world_model[0] );
 
@@ -468,9 +512,10 @@ void CG_RegisterWeapon( int weaponNum ) {
 	for ( i = 0 ; i < 3 ; i++ ) {
 		weaponInfo->weaponMidpoint[i] = mins[i] + 0.5 * ( maxs[i] - mins[i] );
 	}
+#endif
 
 	weaponInfo->weaponIcon = trap_R_RegisterShader( item->icon );
-	weaponInfo->ammoIcon = trap_R_RegisterShader( item->icon );
+	//weaponInfo->ammoIcon = trap_R_RegisterShader( item->icon ); // BFP - No ammoIcon
 
 	for ( ammo = bg_itemlist + 1 ; ammo->classname ; ammo++ ) {
 		if ( ammo->giType == IT_AMMO && ammo->giTag == weaponNum ) {
@@ -481,6 +526,8 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->ammoModel = trap_R_RegisterModel( ammo->world_model[0] );
 	}
 
+	// BFP - No handsModel, weaponModel and barrelModel
+#if 0
 	COM_StripExtension( item->world_model[0], path, sizeof(path) );
 	Q_strcat( path, sizeof(path), "_flash.md3" );
 	weaponInfo->flashModel = trap_R_RegisterModel( path );
@@ -496,8 +543,23 @@ void CG_RegisterWeapon( int weaponNum ) {
 	if ( !weaponInfo->handsModel ) {
 		weaponInfo->handsModel = trap_R_RegisterModel( "models/weapons2/shotgun/shotgun_hand.md3" );
 	}
+#endif
 
 	weaponInfo->loopFireSound = qfalse;
+
+	// BFP - missileTrailFunc
+	switch ( weaponInfo->missileTrailFuncType ) {
+	case MISSILE_TRAIL_FUNC_BEAM:		// "beam"
+		weaponInfo->missileTrailFunc = CG_BFPBeamTrail;
+		break;
+	case MISSILE_TRAIL_FUNC_ROCKET:		// "rocket"
+		weaponInfo->missileTrailFunc = CG_RocketTrail;
+		break;
+	case MISSILE_TRAIL_FUNC_SPIRALBEAM:	// "spiralbeam"
+		weaponInfo->missileTrailFunc = CG_BFPSpiralBeamTrail;
+	default:							// "none"
+		break;
+	}
 
 	switch ( weaponNum ) {
 	case WP_GAUNTLET:
@@ -505,14 +567,20 @@ void CG_RegisterWeapon( int weaponNum ) {
 		// BFP - TODO: Maybe hitscan weapons use firingSound only, it has some firing sound at the beginning
 		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
 		// weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/melee/fstatck.wav", qfalse );
+
+		// BFP - constantFireAttack
+		weaponInfo->constantFireAttack = qtrue;
 		break;
 
 	case WP_LIGHTNING:
 		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
 		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum.wav", qfalse );
 		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/lightning/lg_hum.wav", qfalse );
-
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/lightning/lg_fire.wav", qfalse );
+
+		// BFP - constantFireAttack
+		weaponInfo->constantFireAttack = qtrue;
+
 		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew");
 		cgs.media.lightningExplosionModel = trap_R_RegisterModel( "models/weaphits/crackle.md3" );
 		cgs.media.sfx_lghit1 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit.wav", qfalse );
@@ -541,6 +609,9 @@ void CG_RegisterWeapon( int weaponNum ) {
 
 		// BFP - firingSound
 		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
+
+		// BFP - flashSound
+		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/bfp/beamflash1.wav", qfalse );
 		break;
 
 	case WP_MACHINEGUN:
@@ -556,6 +627,9 @@ void CG_RegisterWeapon( int weaponNum ) {
 		// BFP - No flash light, just force field test
 		//MAKERGB( weaponInfo->flashDlightColor, 1, 1, 0 );
 		//weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/shotgun/sshotf1b.wav", qfalse );
+
+		// BFP - noExplosion test
+		weaponInfo->noExplosion = qtrue;
 
 		// BFP - firingSound
 		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
@@ -596,11 +670,18 @@ void CG_RegisterWeapon( int weaponNum ) {
 		weaponInfo->missileDlight = 200;
 		MAKERGB( weaponInfo->missileDlightColor, 0.2f, 0.2f, 1.0f );
 
+		// BFP - missileRotation
+		weaponInfo->missileRotation = 15;
+
 		// BFP - chargeSound
 		weaponInfo->chargeSound = cgs.media.defaultKiChargingSound;
 
 		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
 		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/plasma/hyprbf1a.wav", qfalse );
+
+		// BFP - missileShader
+		weaponInfo->missileShader = cgs.media.plasmaBallShader;
+
 		cgs.media.plasmaExplosionShader = trap_R_RegisterShader( "plasmaExplosion" );
 		cgs.media.railRingsShader = trap_R_RegisterShader( "railDisc" );
 		break;
@@ -617,7 +698,7 @@ void CG_RegisterWeapon( int weaponNum ) {
 	case WP_BFG:
 		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/bfg/bfg_hum.wav", qfalse );
 
-		// BFP - TODO: From config weapon use like:
+		// BFP - TODO: From skin config use like:
 		//missileDlight 3 200
 		//missileDlightColor 3 0.75 0 1
 
@@ -699,6 +780,8 @@ VIEW WEAPON
 ========================================================================================
 */
 
+// BFP - No CG_MapTorsoToWeaponFrame and CG_CalculateWeaponPosition
+#if 0
 /*
 =================
 CG_MapTorsoToWeaponFrame
@@ -783,6 +866,7 @@ static void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles ) {
 	angles[YAW] += scale * fracsin * 0.01;
 	angles[PITCH] += scale * fracsin * 0.01;
 }
+#endif
 
 
 /*
@@ -801,6 +885,12 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 	refEntity_t  beam;
 	vec3_t   forward;
 	vec3_t   muzzlePoint, endPoint;
+	// BFP - lightningBolt config property
+	qboolean	lightningBolt = qtrue;
+
+	if ( !lightningBolt ) {
+		return;
+	}
 
 	if (cent->currentState.weapon != WP_LIGHTNING) {
 		return;
@@ -934,11 +1024,34 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	weapon = &cg_weapons[weaponNum];
 
 	if ( !ps ) {
-		// add weapon ready sound
-		cent->pe.lightningFiring = qfalse;
+		// BFP - With constantFireAttack, don't play and start the sound looply
+		if ( !( cent->currentState.eFlags & EF_FIRING ) ) {
+			cent->pe.constantFireAtkPlayed = qfalse;
+		}
+
+		// BFP - attackChargeVoice [attack index] [charge count] ["path of sound"]
+		weapon->attackChargeVoice = trap_S_RegisterSound( "sound/player/bfp1-kyah/attack4V1.wav", qtrue );
+		if ( cg_stfu.integer <= 0
+		&& weapon->attackChargeVoice
+        && !cent->pe.lastChargeVoiceLevel
+		&& cent->currentState.generic1 == 2 // BFP - TODO: [charge count] set here
+		&& ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK3_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK4_PREPARE ) ) {
+			trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_WORLD, CHAN_VOICE, weapon->attackChargeVoice );
+        	cent->pe.lastChargeVoiceLevel = qtrue;
+		} else if ( !( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK3_PREPARE
+		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK4_PREPARE ) ) { // stopped charging ki attack, resets to the next cycle
+			cent->pe.lastChargeVoiceLevel = qfalse;
+		}
 
 		// BFP - chargeSound
-		if ( weapon->chargeSound && !( cent->currentState.eFlags & EF_FIRING )
+		if ( weapon->chargeSound 
 		&& ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
 		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE
@@ -949,7 +1062,6 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		} else if ( ( cent->currentState.eFlags & EF_FIRING ) && weapon->firingSound ) {
 			// lightning gun and guantlet make a different sound when fire is held down
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, weapon->firingSound );
-			cent->pe.lightningFiring = qtrue;
 		}
 	}
 
@@ -964,7 +1076,8 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	}
 
 	// add the flash
-	if ( ( weaponNum == WP_LIGHTNING || weaponNum == WP_GAUNTLET || weaponNum == WP_GRAPPLING_HOOK )
+	// BFP - constantFireAttack
+	if ( ( weapon->constantFireAttack || weaponNum == WP_GRAPPLING_HOOK )
 		&& ( nonPredictedCent->currentState.eFlags & EF_FIRING ) ) 
 	{
 		// continuous flash
@@ -989,13 +1102,13 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		if ( nonPredictedCent->currentState.eFlags & EF_READY_KI_ATTACK ) {
 			// BFP - NOTE: That's where we apply the flash properties read from client cfg
 			if ( weaponNum == WP_GRAPPLING_HOOK ) {
-				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "ImpactBeamFlashShader", 0, 15, 1 );
+				CG_AddFlashMissile( qfalse, nonPredictedCent, -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "ImpactBeamFlashShader", 0, 15, 1 );
 			}
 			if ( weaponNum == WP_PLASMAGUN ) {
-				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "plasmaExplosion", 0, 15, 1 );
+				CG_AddFlashMissile( qfalse, nonPredictedCent, -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "plasmaExplosion", 0, 15, 1 );
 			}
 			if ( weaponNum == WP_BFG ) {
-				CG_AddFlashMissile( -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "purpleAttackShader", "models/weaphits/disk.md3", 0, 0.8 );
+				CG_AddFlashMissile( qfalse, nonPredictedCent, -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "purpleAttackShader", "models/weaphits/disk.md3", 0, 0.8 );
 			}
 		}
 	}
@@ -1033,12 +1146,13 @@ Add the weapon, and flash for the player's view
 ==============
 */
 void CG_AddViewWeapon( playerState_t *ps ) {
-	refEntity_t	hand;
-	centity_t	*cent;
-	clientInfo_t	*ci;
-	float		fovOffset;
-	vec3_t		angles;
-	weaponInfo_t	*weapon;
+	// BFP - Unused variables
+	//refEntity_t	hand;
+	//clientInfo_t	*ci;
+	//vec3_t		angles;
+	//weaponInfo_t	*weapon;
+	//centity_t	*cent;
+	//float		fovOffset;
 
 	if ( ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		return;
@@ -1073,15 +1187,20 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 		return;
 	}
 
+	// BFP - No fovOffset
+#if 0
 	// drop gun lower at higher fov
 	if ( cg_fov.integer > 90 ) {
 		fovOffset = -0.2 * ( cg_fov.integer - 90 );
 	} else {
 		fovOffset = 0;
 	}
+#endif
 
-	cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
+	//cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
 	CG_RegisterWeapon( ps->weapon );
+	// BFP - No draw hand and gun
+#if 0
 	weapon = &cg_weapons[ ps->weapon ];
 
 	memset (&hand, 0, sizeof(hand));
@@ -1113,6 +1232,7 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 
 	// add everything onto the hand
 	CG_AddPlayerWeapon( &hand, ps, &cg.predictedPlayerEntity, ps->persistant[PERS_TEAM], "" );
+#endif
 }
 
 /*
@@ -1187,6 +1307,8 @@ void CG_DrawWeaponSelect( void ) { // BFP - Modified Q3 selectable weapon HUD
 
 		y += 47;
 	}
+
+	// BFP - attackName
 
 	// draw the selected name
 	if ( cg_weapons[ cg.weaponSelect ].item ) {
@@ -1382,18 +1504,28 @@ void CG_FireWeapon( centity_t *cent ) {
 	// append the flash to the weapon model
 	cent->muzzleFlashTime = cg.time;
 
-	// lightning gun only does this this on initial press
-	if ( ent->weapon == WP_LIGHTNING ) {
-		if ( cent->pe.lightningFiring ) {
-			return;
+	// BFP - constantFireAttack
+	if ( weap->constantFireAttack ) {
+		if ( cent->pe.constantFireAtkPlayed ) {
+			goto _skipFlashSound;
 		}
+		cent->pe.constantFireAtkPlayed = qtrue;
+	}
+
+	// BFP - attackFireVoice
+	weap->attackFireVoice = trap_S_RegisterSound( "sound/player/bfp1-kyah/attack5F.wav", qtrue );
+	if ( cg_stfu.integer <= 0
+	&& weap->attackFireVoice && ( cent->currentState.eFlags & EF_FIRING )
+	&& ent->weapon != WP_SHOTGUN ) { // BFP - TODO: Handle forcefield
+		trap_S_StartSound( cent->lerpOrigin, ent->number, CHAN_VOICE, weap->attackFireVoice );
 	}
 
 	// BFP - Just testing, WP_SHOTGUN treated as ki explosion example
 	if ( ent->weapon == WP_SHOTGUN ) {
 		cent->pe.chargeAutoFire = qtrue;
 	}
-	if ( ent->weapon == WP_SHOTGUN && !cent->pe.chargeAutoFire ) {
+	if ( ent->weapon == WP_SHOTGUN && !cent->pe.chargeAutoFire
+	&& weap->noExplosion ) {
 		// BFP - Use that as blinding_flash weapon, no chargeAutoFire set
 		// this is when noExplosion is set as weapon config dictates
 
@@ -1440,6 +1572,9 @@ void CG_FireWeapon( centity_t *cent ) {
 			trap_S_StartSound( NULL, ent->number, CHAN_WEAPON, weap->flashSound[c] );
 		}
 	}
+
+// BFP - constantFireAttack handling
+_skipFlashSound:
 
 	// do brass ejection
 	if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {

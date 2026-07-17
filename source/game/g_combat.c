@@ -1195,7 +1195,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		mass = 200;
 		// BFP - Using hitscan weapons, the mass is different
 		if ( targ->client != attacker->client
-		&& !Q_stricmp( inflictor->classname, "hitscan" ) ) {
+		&& inflictor->attackType == ATK_HITSCAN ) {
 			mass = 50;
 		}
 

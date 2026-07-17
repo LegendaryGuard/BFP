@@ -301,12 +301,12 @@ static void PM_AttackAnim( int anim, int prepareAnim ) { // BFP - Handles attack
 
 	// loopingAnim
 	if ( !pm->loopingAnim // chargeAutoFire animates this way
-	&& pm->chargeAutoFire && pm->ps->stats[STAT_KI_ATTACK_CHARGE] < 3 ) {
+	&& pm->chargeAutoFire && pm->ps->generic1 < 3 ) {
 		PM_ContinueTorsoAnim( prepareAnim );
 		return;
 	}
 	if ( !pm->loopingAnim // chargeAutoFire animates this way
-	&& pm->chargeAutoFire && pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= 3 ) {
+	&& pm->chargeAutoFire && pm->ps->generic1 >= 3 ) {
 		PM_ContinueTorsoAnim( anim );
 		return;
 	}
@@ -2681,7 +2681,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN ) 
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
 	&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
-	&& ( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate != WEAPON_ACTIVE )
+	&& !( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE )
 	&& pm->ps->weaponstate != WEAPON_STUN ) {
 		pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
 		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
@@ -2953,11 +2953,11 @@ static void PM_ChargeKiAttackState( int minCharge, int maxCharge, int addTime, i
 	}
 	if ( ( pm->chargeAutoFire
 	|| maxCharge <= minCharge
-	|| ( maxCharge > 0 && pm->ps->stats[STAT_KI_ATTACK_CHARGE] < maxCharge ) )
-	&& pm->ps->stats[STAT_KI_ATTACK_CHARGE] < ATTACK_CHARGE_LIMIT ) {
-		++pm->ps->stats[STAT_KI_ATTACK_CHARGE];
+	|| ( maxCharge > 0 && pm->ps->generic1 < maxCharge ) )
+	&& pm->ps->generic1 < ATTACK_CHARGE_LIMIT ) {
+		++pm->ps->generic1;
 	}
-	if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] >= minCharge && !pm->chargeAutoFire ) {
+	if ( pm->ps->generic1 >= minCharge && !pm->chargeAutoFire ) {
 		pm->ps->eFlags |= EF_READY_KI_ATTACK;
 	}
 }
@@ -2995,7 +2995,7 @@ static void PM_Weapon( void ) {
 	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
 	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
 		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
-		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+		pm->ps->generic1 = 0;
 		pm->ps->weaponTime = 0;
 		return;
 	}
@@ -3064,7 +3064,7 @@ static void PM_Weapon( void ) {
 		// unless if the player wanna change the weapon from this state
 		if ( pm->ps->weaponstate != WEAPON_ACTIVE ) {
 			pm->ps->weaponstate = WEAPON_READY;
-			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+			pm->ps->generic1 = 0;
 		}
 		// Melee fight handling
 		if ( pm->meleeHit && pm->ps->weaponTime <= 0 ) {
@@ -3084,18 +3084,19 @@ static void PM_Weapon( void ) {
 	case WEAPON_READY:
 		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
 		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
-			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+			pm->ps->generic1 = 0;
 		} else {
 			if ( pm->ps->weaponTime <= 0 ) {
 				// BFP - sbeam attack type
 				if ( pm->attackType == ATK_SBEAM ) {
 					pm->ps->weaponTime += weaponTime;
+					pm->ps->ammo[WP_KI] -= kiCost;
 					pm->ps->weaponstate = WEAPON_ACTIVE;
 					// fire and make a sound
 					PM_AddEvent( EV_FIRE_WEAPON );
 					break;
 				}
-				if ( pm->chargeAutoFire ) {
+				if ( pm->chargeAttack || pm->chargeAutoFire ) {
 					pm->ps->weaponTime += weaponTime;
 				}
 				pm->ps->weaponstate = WEAPON_FIRING;
@@ -3106,7 +3107,7 @@ static void PM_Weapon( void ) {
 	case WEAPON_RAISING:
 		if ( pm->ps->weaponTime <= 0 ) {
 			pm->ps->weaponTime = 0;
-			pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+			pm->ps->generic1 = 0;
 			pm->ps->weaponstate = WEAPON_READY;
 		}
 		break;
@@ -3125,7 +3126,7 @@ static void PM_Weapon( void ) {
 				// or enter splitting ki ball firing state if it's a splitting ki ball
 				pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
 				// no fully charged, skip...
-				if ( pm->ps->stats[STAT_KI_ATTACK_CHARGE] < pm->minCharge ) {
+				if ( pm->ps->generic1 < pm->minCharge ) {
 					pm->ps->weaponstate = WEAPON_READY;
 					pm->ps->weaponTime = 0;
 					break;
@@ -3219,7 +3220,7 @@ static void PM_Weapon( void ) {
 		&& pm->chargeAutoFire ) {
 			if ( ( pm->cmd.buttons & BUTTON_ATTACK )
 			&& pm->ps->weaponTime <= 0 ) {
-				PM_AddEvent( EV_FIRE_WEAPON );
+				// PM_AddEvent( EV_FIRE_WEAPON );
 				PM_ChargeKiAttackState( pm->minCharge, pm->maxCharge, weaponTime, kiCost );
 			}
 			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
@@ -3273,7 +3274,7 @@ static void PM_Weapon( void ) {
 			}
 			break;
 		}
-		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+		pm->ps->generic1 = 0;
 
 		// BFP - sbeam attack type
 		if ( pm->attackType == ATK_SBEAM ) {
@@ -3301,7 +3302,7 @@ static void PM_Weapon( void ) {
 			pm->ps->weaponTime = 0;
 			pm->ps->weaponstate = WEAPON_READY;
 		}
-		pm->ps->stats[STAT_KI_ATTACK_CHARGE] = 0;
+		pm->ps->generic1 = 0;
 
 		// fall even whether the player is flying
 		if ( pm->ps->eFlags & EF_FLIGHT ) {

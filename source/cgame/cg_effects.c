@@ -821,6 +821,7 @@ CG_ExplosionSound
 =================
 */
 void CG_ExplosionSound( vec3_t origin ) { // BFP - Explosion sounds
+	// BFP - TODO: noExplosionSound from skin config
 	int	i = rand() % 6;
 
 	switch ( i ) {

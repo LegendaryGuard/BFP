@@ -155,7 +155,7 @@ typedef enum {
 #define	ATK_HITSCAN			4
 #define	ATK_FORCEFIELD		5
 
-// BFP - TODO: Change the way to use the PMF_ flags in order to keep original BFP networking
+// BFP - If you want to keep demo networking, change the way to use the PMF_ flags
 // pmove->pm_flags
 #define	PMF_DUCKED			1
 #define	PMF_JUMP_HELD		2
@@ -267,7 +267,7 @@ typedef enum {
 	STAT_MAX_KI,					// BFP - Maximum ki
 	STAT_UNUSED_INDEX10,			// BFP - Melee attack time
 	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
-	STAT_KI_ATTACK_CHARGE,			// BFP - Ki charging points
+	STAT_UNUSED_INDEX12,			// unused stat index (don't remove if you want to keep demo networking!)
 	STAT_UNUSED_INDEX13,			// BFP - Beam firing weapon state
 	STAT_UNUSED_INDEX14,			// BFP - Force field weapon state
 	//STAT_UNUSED_INDEX15			// BFP - Fly tilt angles (left: moves to -80, right: moves to 80), rename during the config implementation
@@ -304,7 +304,7 @@ typedef enum {
 	PERS_UNUSED_INDEX15				// BFP - ??? (Original BFP networking says it appears when spawning at the first time of all in-game)
 } persEnum_t;
 
-// BFP - TODO: Change the way to use the EF_ flags in order to keep original BFP networking 
+// BFP - If you want to keep demo networking, change the way to use the EF_ flags 
 // entityState_t->eFlags
 #define	EF_DEAD				0x00000001		// don't draw a foe marker over players with EF_DEAD
 #define EF_AURA				0x00000002		// BFP - Aura, used to display players' aura
@@ -338,6 +338,7 @@ typedef enum {
 #define EF_TEAMVOTED		0x00080000		// already cast a team vote
 
 // BFP - We can use generic1 integer 8-bit fields, but if we use as integer, only can use until 128 ~ 256
+// used for ki charge points
 // entityState_t->generic1
 // #define	GENF_FLAG_1		1
 // #define	GENF_FLAG_2		2
@@ -395,18 +396,18 @@ typedef enum {
 	WP_SHOTGUN,				// BFP - TODO: Fourth attack selected, rename during the config implementation
 	WP_GRENADE_LAUNCHER,	// BFP - TODO: Fifth (or last) attack selected and also for a timer of 2000 msec when being attacked/damaged, rename during the config implementation
 
-	WP_ROCKET_LAUNCHER,		// BFP - TODO: Ki recharge delay time (for g_chargeDelay), rename during the config implementation
-	WP_LIGHTNING,			// BFP - TODO: Hit stun delay after receiving hit stun, rename during the config implementation
-	WP_RAILGUN,				// BFP - TODO: Block delay, rename during the config implementation
-	WP_PLASMAGUN,			// BFP - TODO: Ki use/boost toggle, rename during the config implementation
-	WP_BFG,					// BFP - TODO: Flight toggle key control, rename during the config implementation
-	WP_GRAPPLING_HOOK,		// BFP - TODO: Blind seconds, rename during the config implementation
+	WP_ROCKET_LAUNCHER,		// BFP - Original demo networking: Ki recharge delay time (for g_chargeDelay), rename during the config implementation
+	WP_LIGHTNING,			// BFP - Original demo networking: Hit stun delay after receiving hit stun, rename during the config implementation
+	WP_RAILGUN,				// BFP - Original demo networking: Block delay, rename during the config implementation
+	WP_PLASMAGUN,			// BFP - Original demo networking: Ki use/boost toggle, rename during the config implementation
+	WP_BFG,					// BFP - Original demo networking: Flight toggle key control, rename during the config implementation
+	WP_GRAPPLING_HOOK,		// BFP - Original demo networking: Blind seconds, rename during the config implementation
 
-//	WP_UNUSED_INDEX11,		// BFP - TODO: Rapid attacks like ki storm (alternates -1 and 1), rename during the config implementation
+//	WP_UNUSED_INDEX11,		// BFP - Original demo networking: Rapid attacks like ki storm (alternates -1 and 1), rename during the config implementation
 	WP_KI,					// BFP - Ammo bit used for ki, that isn't from original BFP networking, but for optimization reasons is used. Unknown or unused index for original BFP networking
-//	WP_UNUSED_INDEX13,		// BFP - TODO: Toggle to use Short-Range Teleport - Zanzoken, rename during the config implementation
-//	WP_UNUSED_INDEX14,		// BFP - TODO: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken, rename during the config implementation
-//	WP_UNUSED_INDEX15,		// BFP - TODO: Enables/disables beam struggle , rename during the config implementation
+//	WP_UNUSED_INDEX13,		// BFP - Original demo networking: Toggle to use Short-Range Teleport - Zanzoken, rename during the config implementation
+//	WP_UNUSED_INDEX14,		// BFP - Original demo networking: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken, rename during the config implementation
+//	WP_UNUSED_INDEX15,		// BFP - Original demo networking: Enables/disables beam struggle , rename during the config implementation
 
 	WP_NUM_WEAPONS
 } weapon_t;
@@ -681,6 +682,7 @@ typedef struct gitem_s {
 	char		*world_model[MAX_ITEM_MODELS];
 
 	char		*icon;
+	// BFP - TODO: Use as attackName for skin config
 	char		*pickup_name;	// for printing on pickup
 
 	int			quantity;		// for ammo how much, or duration of powerup
