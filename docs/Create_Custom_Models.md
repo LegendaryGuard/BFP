@@ -297,6 +297,11 @@ treated as a sprite. Has no effect for hitscan attacks.
 The rotation of the missile.
 <br/><br/>
 
+- ```missileModelRotation [attack index] [float]```
+
+The rotation of the missile model. Set with float number: between 0.1 and 999.0 ...
+<br/><br/>
+
 - ```missileSpinHoriz [attack index] [0/1]```
 
 Used to switch the axis of rotation on the missile.

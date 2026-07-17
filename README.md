@@ -17,12 +17,10 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 ### Pending:
 
-- [ ] Attacksets (configurable for cfgs)
+- [ ] Attacksets ([bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg))
 - [ ] BFP bots logic (handling the flight, ki boost, ki charge, use of ki attacks, melee, ...)
-- [ ] Cvars as described on old docs
-- [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, … look old docs and cfgs about that: Custom plugin models)
-- [ ] 21 different ki attacks including controllable, homing, and chargeable attacks (no guns) (can be referenced to some previous tasks)
-- [ ] 6 different selectable characters, each with 5 attacks (can be referenced to some previous tasks)
+- [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs and cfgs about that: Custom plugin models - default.cfg for each player model)
+- [ ] Weapon Config File ([bfp_weapon.cfg](cfgs/bfp_weapon.cfg) & [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg))
 
 ### Done:
 
@@ -30,7 +28,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Auras
 - [x] Balanced player physics movements (different from the original BFP, but balanced for gameplay)
 - [x] Beam trails
-- [x] BFP config file ([bfp.cfg](bfp.cfg)) (a sample of how the game saves general binding and BFP cvar stuff in a cfg file)
+- [x] BFP config file ([bfp.cfg](cfgs/bfp.cfg)) (a sample of how the game saves general binding and BFP cvar stuff in a cfg file)
 - [x] bg_ weapon properties: weaponTime, randomWeaponTime, kiCostAsPct, kiPct, kiCost, chargeAttack, chargeAutoFire, minCharge, maxCharge, loopingAnim, noAttackAnim and movementPenalty
 - [x] Bind key to recover ki energy
 - [x] Bind key to toggle speed (ki boost)
@@ -39,6 +37,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Breakable map entities ("func_breakable")
 - [x] Bounce features (bounces, bounceFriction, noZBounce)
 - [x] Cone of fire feature (coneOfFireX and coneOfFireY)
+- [x] Cvars
 - [x] Damage calculated by attacker powerlevel, modified knockback and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
 - [x] Charge multipliers and maximum damage for weapons (maxDamage, chargeRadiusMult, chargeDamageMult, chargeExpRadiusMult)
 - [x] Extraknockback for weapons (extraKnockback)
@@ -247,14 +246,6 @@ Documentations, references and extracted stuff will give us clues to reach the g
     * [Guide](docs/Guide.md)
     * [Creating custom plugin models](docs/Create_Custom_Models.md)
     * [Networking](docs/bfp_networking.md)
-
-<br/>
-
-- Cvars, cmd and bind stuff about the old game:
-
-    * [Bindlist](docs/bind_bfp_list.txt)
-    * [Cmdlist](docs/cmd_bfp_list.txt)
-    * [Cvarlist](docs/cvar_bfp_list.txt)
 
 <br/>
 
