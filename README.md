@@ -18,7 +18,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 ### Pending:
 
 - [ ] Attacksets ([bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg))
-- [ ] BFP bots logic (handling the flight, ki boost, ki charge, use of ki attacks, melee, ...)
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs and cfgs about that: Custom plugin models - default.cfg for each player model)
 - [ ] Weapon Config File ([bfp_weapon.cfg](cfgs/bfp_weapon.cfg) & [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg))
 
@@ -35,6 +34,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Blinding Flash (blinds opponents during 6 seconds)
 - [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
 - [x] Breakable map entities ("func_breakable")
+- [x] Bots behavior
 - [x] Bounce features (bounces, bounceFriction, noZBounce)
 - [x] Cone of fire feature (coneOfFireX and coneOfFireY)
 - [x] Cvars
@@ -518,6 +518,8 @@ The information in the map file can be useful for debugging and performance anal
 
 #### Added source code files:
 
+- ai_bfp.c
+- ai_bfp.h
 - bg_events.h
 - bg_meansofdeath.h
 - cg_cvar.h

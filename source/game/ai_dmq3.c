@@ -592,7 +592,7 @@ void BotCTFSeekGoals(bot_state_t *bs) {
 	if (bs->ctfroam_time > FloatTime())
 		return;
 	//if the bot has anough aggression to decide what to do
-	if (BotAggression(bs) < 50)
+	if (BotAggression(bs) < 0.5)
 		return;
 	//set the time to send a message to the team mates
 	bs->teammessage_time = FloatTime() + 2 * random();
@@ -961,19 +961,18 @@ void BotUpdateInventory(bot_state_t *bs) {
 	//armor
 	bs->inventory[INVENTORY_ARMOR] = bs->cur_ps.stats[STAT_ARMOR];
 	//weapons
-	// BFP - Just a test, make the bot get all weapons
-	// before Q3 for each weapon: 
-	// bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GAUNTLET)) != 0;
-	bs->inventory[INVENTORY_GAUNTLET] = 
-	bs->inventory[INVENTORY_SHOTGUN] = 
-	bs->inventory[INVENTORY_MACHINEGUN] = 
-	bs->inventory[INVENTORY_GRENADELAUNCHER] = 
-	bs->inventory[INVENTORY_ROCKETLAUNCHER] = 
-	bs->inventory[INVENTORY_LIGHTNING] = 
-	bs->inventory[INVENTORY_RAILGUN] = 
-	bs->inventory[INVENTORY_PLASMAGUN] = 
-	bs->inventory[INVENTORY_BFG10K] = 
-	bs->inventory[INVENTORY_GRAPPLINGHOOK] = 1;
+	// BFP - TODO: Just a test, bfp_weapon.cfg needs to be implemented and replace all stuff here
+	bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GAUNTLET)) != 0;
+	bs->inventory[INVENTORY_MACHINEGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_MACHINEGUN)) != 0;
+	bs->inventory[INVENTORY_SHOTGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_SHOTGUN)) != 0;
+	bs->inventory[INVENTORY_GRENADELAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRENADE_LAUNCHER)) != 0;
+	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRAPPLING_HOOK)) != 0;
+
+	bs->inventory[INVENTORY_ROCKETLAUNCHER] =
+	bs->inventory[INVENTORY_LIGHTNING] =
+	bs->inventory[INVENTORY_RAILGUN] =
+	bs->inventory[INVENTORY_PLASMAGUN] =
+	bs->inventory[INVENTORY_BFG10K] = 0;
 	//ammo
 	bs->inventory[INVENTORY_SHELLS] = 
 	bs->inventory[INVENTORY_BULLETS] = 
@@ -1183,37 +1182,8 @@ BotAggression
 ==================
 */
 float BotAggression(bot_state_t *bs) {
-	//if the bot has quad
-	if (bs->inventory[INVENTORY_QUAD]) {
-		//if the bot is not holding the gauntlet or the enemy is really nearby
-		if (bs->weaponnum != WP_GAUNTLET ||
-			bs->inventory[ENEMY_HORIZONTAL_DIST] < 80) {
-			return 70;
-		}
-	}
-
-	// BFP - Some weapon handlings are removed
-
-	//if the enemy is located way higher than the bot
-	if (bs->inventory[ENEMY_HEIGHT] > 200) return 0;
-	//if the bot is very low on health
-	if (bs->inventory[INVENTORY_HEALTH] < 60) return 0;
-	//if the bot is low on health
-	if (bs->inventory[INVENTORY_HEALTH] < 80) {
-		//if the bot has insufficient armor
-		if (bs->inventory[INVENTORY_ARMOR] < 40) return 0;
-	}
-	//if the bot can use the railgun
-	if (bs->inventory[INVENTORY_RAILGUN] > 0 &&
-			bs->inventory[INVENTORY_SLUGS] > 5) return 95;
-	//if the bot can use the rocketlauncher
-	if (bs->inventory[INVENTORY_ROCKETLAUNCHER] > 0 &&
-			bs->inventory[INVENTORY_ROCKETS] > 5) return 90;
-	//if the bot can use the plasmagun
-	if (bs->inventory[INVENTORY_PLASMAGUN] > 0 &&
-			bs->inventory[INVENTORY_CELLS] > 40) return 85;
-	//otherwise the bot is not feeling too good
-	return 0;
+	// BFP - Read CHARACTERISTIC_AGGRESSION from botfiles
+	return trap_Characteristic_BFloat( bs->character, CHARACTERISTIC_AGGRESSION, 0, 1 );
 }
 
 /*
@@ -1261,7 +1231,7 @@ int BotWantsToRetreat(bot_state_t *bs) {
 	if (bs->ltgtype == LTG_GETFLAG)
 		return qtrue;
 	//
-	if (BotAggression(bs) < 50)
+	if (BotAggression(bs) < 0.5)
 		return qtrue;
 	return qfalse;
 }
@@ -1287,7 +1257,7 @@ int BotWantsToChase(bot_state_t *bs) {
 	if (bs->ltgtype == LTG_GETFLAG)
 		return qfalse;
 	//
-	if (BotAggression(bs) > 50)
+	if (BotAggression(bs) > 0.5)
 		return qtrue;
 	return qfalse;
 }
@@ -1418,7 +1388,7 @@ int BotWantsToCamp(bot_state_t *bs) {
 		return qfalse;
 	}
 	//if the bot isn't healthy anough
-	if (BotAggression(bs) < 50) return qfalse;
+	if (BotAggression(bs) < 0.5) return qfalse;
 	//the bot should have at least have the rocket launcher, the railgun or the bfg10k with some ammo
 	if ((bs->inventory[INVENTORY_ROCKETLAUNCHER] <= 0 || bs->inventory[INVENTORY_ROCKETS] < 10) &&
 		(bs->inventory[INVENTORY_RAILGUN] <= 0 || bs->inventory[INVENTORY_SLUGS] < 10) &&
@@ -1839,7 +1809,7 @@ BotFindEnemy
 */
 int BotFindEnemy(bot_state_t *bs, int curenemy) {
 	int i, healthdecrease;
-	float f, alertness, easyfragger, vis;
+	float alertness, easyfragger, vis;
 	float squaredist, cursquaredist;
 	aas_entityinfo_t entinfo, curenemyinfo;
 	vec3_t dir, angles;
@@ -1895,16 +1865,12 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 			if (curenemy >= 0 && squaredist > cursquaredist) continue;
 		} //end if
 		//if the bot has no
-		if (squaredist > Square(900.0 + alertness * 4000.0)) continue;
+		if (squaredist > Square(1200.0 + alertness * 9000.0)) continue;
 		//if on the same team
 		if (BotSameTeam(bs, i)) continue;
-		//if the bot's health decreased or the enemy is shooting
-		if (curenemy < 0 && (healthdecrease || EntityIsShooting(&entinfo)))
-			f = 360;
-		else
-			f = 90 + 90 - (90 - (squaredist > Square(810) ? Square(810) : squaredist) / (810 * 9));
+		// BFP - No fov adjustment, just 360, very visible, even behind
 		//check if the enemy is visible
-		vis = BotEntityVisible(bs->entitynum, bs->eye, bs->viewangles, f, i);
+		vis = BotEntityVisible(bs->entitynum, bs->eye, bs->viewangles, 360, i);
 		if (vis <= 0) continue;
 		//if the enemy is quite far away, not shooting and the bot is not damaged
 		if (curenemy < 0 && squaredist > Square(100) && !healthdecrease && !EntityIsShooting(&entinfo))
@@ -2414,16 +2380,8 @@ void BotCheckAttack(bot_state_t *bs) {
 	if (bs->weaponchange_time > FloatTime() - 0.1) return;
 	//check fire throttle characteristic
 	if (bs->firethrottlewait_time > FloatTime()) return;
-
-	// BFP - Make the fire throttle wait a bit more, before: 1, now: 24
-	firethrottle = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_FIRETHROTTLE, 0, 24);
-	//Com_Printf( "firethrottle: %f\n", firethrottle );
+	firethrottle = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_FIRETHROTTLE, 0, 1);
 	if (bs->firethrottleshoot_time < FloatTime()) {
-		// BFP - When it's ready to attack, fire
-		if ( bs->cur_ps.eFlags & EF_READY_KI_ATTACK ) {
-			bs->firethrottleshoot_time = FloatTime() + 1 - firethrottle;
-			bs->firethrottlewait_time = 0;
-		}
 		if (random() > firethrottle) {
 			bs->firethrottlewait_time = FloatTime() + firethrottle;
 			bs->firethrottleshoot_time = 0;
@@ -3637,11 +3595,19 @@ void BotCheckEvents(bot_state_t *bs, entityState_t *state) {
 			if (gametype == GT_CTF) {
 				switch(state->eventParm) {
 					case GTS_RED_CAPTURE:
+						// BFP - Gesture after capturing the flag
+						if ( BotTeam( bs ) == TEAM_RED && bs->flagcarrier == bs->client ) {
+							trap_EA_Gesture( bs->client );
+						}
 						bs->blueflagstatus = 0;
 						bs->redflagstatus = 0;
 						bs->flagstatuschanged = qtrue;
 						break; //see BotMatch_CTF
 					case GTS_BLUE_CAPTURE:
+						// BFP - Gesture after capturing the flag
+						if ( BotTeam( bs ) == TEAM_BLUE && bs->flagcarrier == bs->client ) {
+							trap_EA_Gesture( bs->client );
+						}
 						bs->blueflagstatus = 0;
 						bs->redflagstatus = 0;
 						bs->flagstatuschanged = qtrue;

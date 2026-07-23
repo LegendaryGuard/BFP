@@ -259,6 +259,7 @@ char *BotWeaponNameForMeansOfDeath(int mod) {
 		case MOD_BFG:
 		case MOD_BFG_SPLASH: return "BFG10K";
 		case MOD_GRAPPLE: return "Grapple";
+		case MOD_KI_ATTACK: return "Ki Blast";
 		default: return "[unknown weapon]";
 	}
 }
@@ -571,16 +572,26 @@ int BotChat_Death(bot_state_t *bs) {
 				bs->botdeathtype == MOD_SUICIDE ||
 				bs->botdeathtype == MOD_TARGET_LASER ||
 				bs->botdeathtype == MOD_TRIGGER_HURT ||
+				// BFP - Ki attack method of death
+				bs->botdeathtype == MOD_KI_ATTACK ||
 				bs->botdeathtype == MOD_UNKNOWN)
 			BotAI_BotInitialChat(bs, "death_suicide", BotRandomOpponentName(bs), NULL);
 		else if (bs->botdeathtype == MOD_TELEFRAG)
 			BotAI_BotInitialChat(bs, "death_telefrag", name, NULL);
 		else {
+			// BFP - That part is replaced to "death_suicide" because in the BFP player_t.c botfiles mention the following notes:
+			// note to anyone who may read this: there shouldn't be any gauntlets
+			// note to anyone who may read this: there shouldn't be any rails
+			// note to anyone who may read this: there shouldn't be any BFGs
 			if ((bs->botdeathtype == MOD_GAUNTLET ||
 				bs->botdeathtype == MOD_RAILGUN ||
 				bs->botdeathtype == MOD_BFG ||
-				bs->botdeathtype == MOD_BFG_SPLASH) && random() < 0.5) {
+				bs->botdeathtype == MOD_BFG_SPLASH ||
+				// BFP - Ki attack method of death
+				bs->botdeathtype == MOD_KI_ATTACK) && random() < 0.5) {
 
+				BotAI_BotInitialChat(bs, "death_suicide", name, NULL);
+#if 0
 				if (bs->botdeathtype == MOD_GAUNTLET)
 					BotAI_BotInitialChat(bs, "death_gauntlet",
 							name,												// 0
@@ -596,6 +607,7 @@ int BotChat_Death(bot_state_t *bs) {
 							name,												// 0
 							BotWeaponNameForMeansOfDeath(bs->botdeathtype),		// 1
 							NULL);
+#endif
 			}
 			//choose between insult and praise
 			else if (random() < trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_CHAT_INSULT, 0, 1)) {

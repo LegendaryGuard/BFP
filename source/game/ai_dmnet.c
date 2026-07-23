@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ai_cmd.h"
 #include "ai_dmnet.h"
 #include "ai_team.h"
+#include "ai_bfp.h"
 //data file headers
 #include "chars.h"			//characteristics
 #include "inv.h"			//indexes into the inventory
@@ -1815,6 +1816,10 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 			if (bs->enemysuicide) {
 				BotChat_EnemySuicide(bs);
 			}
+			// BFP - Gesture after killing opponent
+			if ( bs->lastkilledplayer == bs->enemy ) {
+				trap_EA_Gesture( bs->client );
+			}
 			if (bs->lastkilledplayer == bs->enemy && BotChat_Kill(bs)) {
 				bs->stand_time = FloatTime() + BotChatTime(bs);
 				AIEnter_Stand(bs, "battle fight: enemy dead");
@@ -1889,8 +1894,7 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 	if (BotCanAndWantsToRocketJump(bs)) {
 		bs->tfl |= TFL_ROCKETJUMP;
 	}
-	//choose the best weapon to fight with
-	BotChooseWeapon(bs);
+	// BFP - before Q3 line here: BotChooseWeapon(bs);
 	//do attack movements
 	moveresult = BotAttackMove(bs, bs->tfl);
 	//if the movement failed
@@ -1906,6 +1910,8 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 	BotAimAtEnemy(bs);
 	//attack the enemy if possible
 	BotCheckAttack(bs);
+	// BFP - BFP bot combat
+	BotBFPCombatAI( bs );
 	//if the bot wants to retreat
 	if (!(bs->flags & BFL_FIGHTSUICIDAL)) {
 		if (BotWantsToRetreat(bs)) {
@@ -2196,8 +2202,7 @@ int AINode_Battle_Retreat(bot_state_t *bs) {
 	}
 	//
 	BotAIBlocked(bs, &moveresult, qfalse);
-	//choose the best weapon to fight with
-	BotChooseWeapon(bs);
+	// BFP - before Q3 line here: BotChooseWeapon(bs);
 	//if the view is fixed for the movement
 	if (moveresult.flags & (MOVERESULT_MOVEMENTVIEW|MOVERESULT_SWIMVIEW)) {
 		VectorCopy(moveresult.ideal_viewangles, bs->ideal_viewangles);
@@ -2224,6 +2229,8 @@ int AINode_Battle_Retreat(bot_state_t *bs) {
 	if (moveresult.flags & MOVERESULT_MOVEMENTWEAPON) bs->weaponnum = moveresult.weapon;
 	//attack the enemy if possible
 	BotCheckAttack(bs);
+	// BFP - BFP bot combat
+	BotBFPCombatAI( bs );
 	//
 	return qtrue;
 }
@@ -2335,8 +2342,7 @@ int AINode_Battle_NBG(bot_state_t *bs) {
 	BotAIBlocked(bs, &moveresult, qfalse);
 	//update the attack inventory values
 	BotUpdateBattleInventory(bs, bs->enemy);
-	//choose the best weapon to fight with
-	BotChooseWeapon(bs);
+	// BFP - before Q3 line here: BotChooseWeapon(bs);
 	//if the view is fixed for the movement
 	if (moveresult.flags & (MOVERESULT_MOVEMENTVIEW|MOVERESULT_SWIMVIEW)) {
 		VectorCopy(moveresult.ideal_viewangles, bs->ideal_viewangles);
@@ -2364,6 +2370,8 @@ int AINode_Battle_NBG(bot_state_t *bs) {
 	if (moveresult.flags & MOVERESULT_MOVEMENTWEAPON) bs->weaponnum = moveresult.weapon;
 	//attack the enemy if possible
 	BotCheckAttack(bs);
+	// BFP - BFP bot combat
+	BotBFPCombatAI( bs );
 	//
 	return qtrue;
 }

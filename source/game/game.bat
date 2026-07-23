@@ -24,6 +24,8 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 %cc%  %src%/game/q_shared.c
 @if errorlevel 1 goto quit
 
+%cc%  %src%/game/ai_bfp.c
+@if errorlevel 1 goto quit
 %cc%  %src%/game/ai_dmnet.c
 @if errorlevel 1 goto quit
 %cc%  %src%/game/ai_dmq3.c

@@ -276,6 +276,36 @@ typedef struct bot_state_s
 	bot_waypoint_t *patrolpoints;					//patrol points
 	bot_waypoint_t *curpatrolpoint;					//current patrol point the bot is going for
 	int patrolflags;								//patrol flags
+
+	// BFP - BFP combat AI (ai_bfp.c)
+	int			bfpButtons;								// BFP button bits (BUTTON_ENABLEFLIGHT/KI_USE/KI_CHARGE/MELEE) requested this frame
+	qboolean	bfpKiRecharging;						// true while the bot is deliberately charging ki
+	float		bfpKiRechargeInterrupted_time;			// time the bot's ki charge was broken by taking damage
+	int			bfpLastHealth;							// health value the BFP AI last saw, -1 until initialized
+
+	float		bfpLastMelee_time;						// time the bot last pressed BUTTON_MELEE, for a breather between swings
+	float		bfpStrafeFlip_time;						// next time the bot's forced close-range strafe direction may flip
+
+	qboolean	bfpFlightDecision;						// cached on/off flight decision, held for a while instead of re-rolled every think frame
+	qboolean	bfpLastFlightDecision;					// previous flight decision, to detect toggles
+	float		bfpFlightReroll_time;					// next time the flight decision above is allowed to change
+
+	int			bfpZanzokenPhase;						// 0=idle, 1=first tap held, 2=released waiting gap, 3=second tap held (see BotBFPCheckZanzoken)
+	float		bfpZanzokenPhaseEnd_time;				// when the current phase ends and the machine advances
+	int			bfpZanzokenDir;							// +1 or -1, which direction the in-progress zanzoken attempt is going
+	float		bfpZanzokenHitstunRetry_time;			// next time BotBFPCheckZanzoken() is allowed to re-roll its escape chance while hitstun is active, so it can retry a few times over the ~3s stun instead of only once
+
+	int			bfpRightmoveOverride;					// value to force onto lastucmd.rightmove this frame while a zanzoken attempt is in progress
+	qboolean	bfpRightmoveOverrideActive;				// true while bfpRightmoveOverride should be applied (0 is a valid override value, so this can't be inferred from the int alone)
+
+	qboolean	bfpForceAttackOff;						// forces and stops attacking
+	float		bfpKiCompensate_time;					// last real time BotBFPCompensateKiCharge() topped up ki, so it can scale the gain by actual elapsed time
+	float		bfpSixthSenseStep_time;					// cooldown between BotBFPCheckSixthSense()'s instinctive step-back reaction
+	float		bfpChargeAutoFireStartTime;				// time when chargeAutoFire weapon started firing, used for 4s limit
+	int			bfpLastWeaponState;						// last weaponstate, used to detect transitions (e.g. SBEAM ending)
+
+	float		bfpEvadeTime;							// evasion mode bot time
+	vec3_t		bfpEvadeDir;							// direction in which to move during the evasion
 } bot_state_t;
 
 //resets the whole bot state

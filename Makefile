@@ -433,6 +433,7 @@ $(B)/cgame$(SHLIBNAME): $(CGOBJ)
 
 QAOBJ_ = \
   $(B)/game/g_main.o \
+  $(B)/game/ai_bfp.o \
   $(B)/game/ai_chat.o \
   $(B)/game/ai_cmd.o \
   $(B)/game/ai_dmnet.o \

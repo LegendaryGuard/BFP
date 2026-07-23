@@ -49,6 +49,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ai_cmd.h"
 #include "ai_dmnet.h"
 #include "ai_vcmd.h"
+#include "ai_bfp.h"
 
 //
 #include "chars.h"
@@ -1035,9 +1036,15 @@ int BotAI(int client, float thinktime) {
 	bs->eye[2] += bs->cur_ps.viewheight;
 	//get the area the bot is in
 	bs->areanum = BotPointAreaNum(bs->origin);
+	// BFP - Reset per-frame button state
+	BotBFPBeginFrame( bs );
 	//the real AI
 	BotDeathmatchAI(bs, thinktime);
 	//set the weapon selection every AI frame
+	// BFP - Avoid "weapon number out of range" engine print error
+	if ( bs->weaponnum <= WP_NONE || bs->weaponnum >= WP_KI ) {
+		bs->weaponnum = WP_GAUNTLET;
+	}
 	trap_EA_SelectWeapon(bs->client, bs->weaponnum);
 	//subtract the delta angles
 	for (j = 0; j < 3; j++) {
@@ -1321,6 +1328,8 @@ void BotResetState(bot_state_t *bs) {
 	BotFreeWaypoints(bs->patrolpoints);
 	//reset the whole state
 	memset(bs, 0, sizeof(bot_state_t));
+	// BFP - Reset BFP bot state
+	BotBFPResetState( bs );
 	//copy back some state stuff that should not be reset
 	bs->ms = movestate;
 	bs->gs = goalstate;
@@ -1562,6 +1571,10 @@ int BotAIStartFrame(int time) {
 		}
 
 		BotUpdateInput(botstates[i], time, elapsed_time);
+		// BFP - BFP Battle nodes
+		BotBFPUniversalCheck( botstates[i] );
+		// BFP - BFP buttons
+		BotBFPApplyButtons( botstates[i], &botstates[i]->lastucmd );
 		trap_BotUserCommand(botstates[i]->client, &botstates[i]->lastucmd);
 	}
 
