@@ -410,6 +410,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	// BFP - Ki boost consumption
 	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.eFlags & EF_KI_BOOST ) )
 	&& client->ps.ammo[WP_KI] > 0
+	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
 	&& !( client->ps.pm_flags & PMF_BLOCK )
 	&& client->ps.weaponstate != WEAPON_STUN ) {
 		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
@@ -762,6 +763,10 @@ static void MeleeHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 
 	client = ent->client;
 
+	if ( client->ps.stats[STAT_HITSTUN_TIME] > 0 ) {
+		return;
+	}
+
 	if ( !( ucmd->buttons & BUTTON_MELEE ) ) {
 		client->ps.pm_flags &= ~PMF_MELEE;
 	}
@@ -782,11 +787,6 @@ qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (
 	trace_t	tr;
 	vec3_t	right, up, start, direction;
 	int		startRightRange = ( range < 0 ) ? -10 : 10;
-
-	// BFP - Don't allow bots use zanzoken
-	if ( ent->r.svFlags & SVF_BOT ) {
-		return qfalse;
-	}
 
 	// set diagonal direction, included the up vector for upward detection
 	AngleVectors( ent->client->ps.viewangles, NULL, right, up );
@@ -908,8 +908,8 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 			return;
 		}
 
-		// put in 1 second delay before the player can 'zanzoken' out of stun
-		if ( client->ps.stats[STAT_HITSTUN_TIME] > 2000 ) {
+		// put in 0.1 msec delay before the player can 'zanzoken' out of stun
+		if ( client->ps.stats[STAT_HITSTUN_TIME] > 2900 ) {
 			client->zanzokenPressTime = 0;
 			client->zanzokenNow = qfalse;
 			client->zanzokenLeft = qfalse;
@@ -919,7 +919,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 
 		if ( Zanzoken( ent, range ) ) {
 			// block and stun statuses are removed when using zanzoken
-			if ( client->ps.stats[STAT_HITSTUN_TIME] <= 2000 ) {
+			if ( client->ps.stats[STAT_HITSTUN_TIME] <= 3000 ) {
 				client->ps.stats[STAT_HITSTUN_TIME] = 0;
 			}
 			client->ps.pm_flags &= ~PMF_BLOCK;

@@ -835,7 +835,10 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 
 	case EV_CHANGE_WEAPON:			// 45
-		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.selectSound );
+		// BFP - Don't play select sound to other players and spectators, only the player itself
+		if ( es->number == cg.snap->ps.clientNum && !( cg.snap->ps.pm_flags & PMF_FOLLOW ) ) {
+			trap_S_StartSound( NULL, es->number, CHAN_AUTO, cgs.media.selectSound );
+		}
 		break;
 
 	case EV_FIRE_WEAPON:			// 46

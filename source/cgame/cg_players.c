@@ -3080,6 +3080,7 @@ void CG_Player( centity_t *cent ) {
 
 	legs.shadowPlane = shadowPlane;
 	legs.renderfx = renderfx;
+	legs.nonNormalizedAxes = qtrue;		// BFP - Keep legs visible while being near to the camera
 	VectorCopy (legs.origin, legs.oldorigin);	// don't positionally lerp at all
 
 	CG_AddRefEntityWithPowerups( legs, &cent->currentState, ci->team );

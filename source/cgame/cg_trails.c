@@ -18,6 +18,7 @@ typedef struct {
 	int segmentTime[MISSILE_TRAIL_SEGMENTS];
 	vec3_t color;
 	qboolean rainbow;
+	int rainbowStartTime;
 	qhandle_t shader;
 	int numSegments;
 } trail_t;
@@ -435,6 +436,10 @@ void CG_MissileTrail( int entityNum, vec3_t origin, qhandle_t hShader, vec3_t co
 		return;
 	}
 
+	if ( missileTrail->numSegments == 0 ) {
+		missileTrail->rainbowStartTime = cg.time;
+	}
+
 	if ( missileTrail->numSegments < MISSILE_TRAIL_SEGMENTS ) {
 		++missileTrail->numSegments;
 	}
@@ -517,8 +522,9 @@ void CG_DrawMissileTrails( void ) {
 				// rainbow effect
 				if ( trail->rainbow ) {
 					float	rf, gf, bf;
+					float elapsed = ( cg.time - trail->rainbowStartTime ) * 0.0006f;
 					float	hue = (float)age / SEGMENT_LIFESPAN_MSEC;
-					hue = ModFloat( cg.time * 0.0006, 1.0f );
+					hue = ModFloat( elapsed, 1.0f );
 					HSVtoRGB( hue, 1.0f, 1.0f, &rf, &gf, &bf );
 					r = (byte)(rf * alphaByte);
 					g = (byte)(gf * alphaByte);

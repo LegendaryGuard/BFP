@@ -685,12 +685,15 @@ static float PM_CmdScale( usercmd_t *cmd ) {
 	// BFP - Monster gamemode, player monster speed is faster
 	float	speed = pm->ps->speed;
 	if ( pm->ps->eFlags & EF_MONSTER ) {
-		if ( !( pm->ps->eFlags & EF_KI_BOOST )
-		&& !( pm->cmd.buttons & BUTTON_KI_USE )
-		&& !( pm->ps->eFlags & EF_FLIGHT ) ) {
-			speed *= 3.25;
+		if ( !( pm->ps->eFlags & EF_FLIGHT ) ) {
+			speed *= 2;
 		} else {
-			speed *= 1.5;
+			if ( !( pm->ps->eFlags & EF_KI_BOOST )
+			&& !( pm->cmd.buttons & BUTTON_KI_USE ) ) {
+				speed *= 1.5;
+			} else {
+				speed *= 2;
+			}
 		}
 	}
 
@@ -788,10 +791,16 @@ static qboolean PM_CheckJump( void ) {
 
 	pm->ps->groundEntityNum = ENTITYNUM_NONE;
 	pm->ps->velocity[2] = JUMP_VELOCITY;
+	if ( pm->ps->eFlags & EF_MONSTER ) { // BFP - Add more vertical jumping for player monster
+		pm->ps->velocity[2] += 250;
+	}
 	// BFP - Double jump velocity when using ki boost
 	if ( ( pm->ps->eFlags & EF_KI_BOOST )
 	|| ( pm->cmd.buttons & BUTTON_KI_USE ) ) { // BFP - Handle the ki boost button if it's being pressed, that avoids jittering movements
 		pm->ps->velocity[2] = 1085;
+		if ( pm->ps->eFlags & EF_MONSTER ) { // BFP - Add more vertical jumping for player monster
+			pm->ps->velocity[2] += 400;
+		}
 	}
 
 	// BFP - Jumping from slopes without backoffs
@@ -1376,7 +1385,12 @@ static void PM_AirMove( void ) {
 
 	// BFP - Handle gravity, make the player heavier
 	if ( !( pm->ps->pm_flags & PMF_AIR_GRAVITY ) ) {
-		PM_SlideMove ( qtrue );
+		// BFP - Adjust step slide movement for player monster
+		if ( !( pm->ps->eFlags & EF_MONSTER ) ) {
+			PM_SlideMove ( qtrue );
+		} else {
+			PM_StepSlideMove ( qtrue );
+		}
 		return;
 	}
 
@@ -1749,7 +1763,8 @@ static void PM_CrashLand( void ) {
 
 	// SURF_NODAMAGE is used for bounce pads where you don't ever
 	// want to take damage or play a crunch sound
-	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE) )  {
+	if ( !(pml.groundTrace.surfaceFlags & SURF_NODAMAGE)
+	&& pm->ps->pm_type != PM_DEAD ) { // BFP - Don't play on dead status
 		if ( delta > 180 ) { // BFP - Before Q3 default value (60), the far fall in BFP is deeper
 			PM_AddEvent( EV_FALL_FAR );
 		} else if ( delta > 60 ) { // BFP - Before Q3 default value (40), the far medium in BFP is a bit deeper
@@ -2617,7 +2632,7 @@ static void PM_CheckFlightState( pmove_t *pm ) { // BFP - Checks if the flight i
 		return;
 	}
 
-	if ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) {
+	if ( ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) && !pm->noFlight ) {
 		if ( !( pm->ps->pm_flags & PMF_FLIGHT_LATCH ) ) {
 			// do not play the sound in the charging status
 			if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
@@ -3648,11 +3663,8 @@ void PmoveSingle (pmove_t *pmove) {
 		pm->ps->eFlags &= ~EF_KI_BOOST;
 		pm->ps->eFlags &= ~EF_AURA;
 
-// BFP - NOTE: disabled for notes, don't allow pressing these buttons
-#if 0
 		pm->cmd.buttons &= ~BUTTON_KI_CHARGE;
 		pm->cmd.buttons &= ~BUTTON_KI_USE;
-#endif
 
 		pm->cmd.forwardmove = 0;
 		pm->cmd.rightmove = 0;

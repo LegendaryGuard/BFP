@@ -480,7 +480,11 @@ CG_DrawSelectedKiAttack
 */
 static void CG_DrawSelectedKiAttack( void ) { // BFP - Show selected ki attack
 	// BFP - TODO: Replace weapons to ki attack configs
-	CG_DrawPic( 535, 383, 96, 37, cg_weapons[ cg.weaponSelect ].weaponIcon );
+	// cg.weaponSelect frozen at whatever it initialized to, so the icon
+	// never reflected the actual active attack slot, particularly
+	// noticeable when spectating another player using a different slot than expected. 
+	// cg.predictedPlayerState.weapon already tracks the correct player automatically
+	CG_DrawPic( 535, 383, 96, 37, cg_weapons[ cg.predictedPlayerState.weapon ].weaponIcon );
 }
 
 /*

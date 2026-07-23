@@ -80,8 +80,30 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 			AxisClear( flashMissile.axis );
 		}
 
+		// convert direction of travel into axis
+		if ( VectorNormalize2( cent->currentState.pos.trDelta, flashMissile.axis[0] ) == 0 ) {
+			flashMissile.axis[0][2] = 1;
+		}
+
 		if ( isMissile ) {
+			qboolean	missileSpinHoriz = qfalse;
 			scale = flashMissileScaleFactor + missileScaleFactorChargeMult * totalCharge;
+
+			// spin as it moves
+			if ( !missileSpinHoriz ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
+				// BFP - missileModelRotation
+				float	missileModelRotation = 0.2;
+				RotateAroundDirection( flashMissile.axis, cg.time * missileModelRotation );
+			} else {
+				// BFP - Rotate Z-axis like a wheel
+				vec3_t	temp;
+				RotateAroundDirection( flashMissile.axis, cent->currentState.time );
+
+				VectorCopy( flashMissile.axis[0], temp );
+				RotatePointAroundVector( flashMissile.axis[0], flashMissile.axis[2], temp, cg.autoAnglesFast[1] );
+				VectorCopy( flashMissile.axis[1], temp );
+				RotatePointAroundVector( flashMissile.axis[1], flashMissile.axis[2], temp, cg.autoAnglesFast[1] );
+			}
 		} else {
 			scale = flashMissileScaleFactor;
 		}
@@ -90,7 +112,9 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 		flashMissile.reType = RT_SPRITE;
 
 		if ( isMissile ) {
+			float	missileRotation = 15;
 			scale = flashMissileRadius + missileRadiusChargeMult * totalCharge;
+			flashMissile.rotation = missileRotation;
 		} else {
 			scale = flashMissileRadius;
 		}

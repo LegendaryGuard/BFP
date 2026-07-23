@@ -759,7 +759,8 @@ void weapon_railgun_fire (gentity_t *ent) {
 	// BFP - For splash damage
 	int			splashRadius = 120;
 
-	damage = 100 * s_quadFactor;
+	// BFP - Damage
+	damage = 60;
 
 	VectorMA (muzzle, 8192, forward, end);
 
@@ -947,6 +948,7 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 				if ( ent->priority > rad->priority || rad->priority <= 0 ) {
 					// BFP - If it's a splitting ki ball, break and split!
 					if ( !G_BreakRDMissile( rad ) ) {
+						rad->parent->client->ps.weaponstate = WEAPON_READY;
 						G_MissileImpact( rad, &trace );
 					}
 					continue;
@@ -1121,6 +1123,7 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 				if ( ent->priority > rad->priority ) {
 					// BFP - If it's a splitting ki ball, break and split!
 					if ( !G_BreakRDMissile( rad ) ) {
+						rad->parent->client->ps.weaponstate = WEAPON_READY;
 						G_MissileImpact( rad, &trace );
 					}
 					continue;

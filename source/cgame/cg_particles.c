@@ -349,7 +349,9 @@ static void AddGenericParticle( cparticle_t *p, vec3_t org, float alpha )
 	height = p->height + ratio * ( p->endheight - p->height );
 
 	// compute rotated axes for non-smoke and non-aura types
-	if ( p->type != P_SMOKE && p->type != P_AURA )
+	if ( p->type != P_SMOKE && p->type != P_AURA
+	&& p->type != P_BUBBLE && p->type != P_BUBBLE_TURBULENT
+	&& p->type != P_WATER_SPLASH )
 	{
 		vec3_t temp;
 		vectoangles( rforward, temp );
@@ -861,6 +863,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, qhandle_t pmodel, ve
 				1200 );
 	}
 
+	p->accumroll = 0;
 	p->custom = 3 - (crandom() * 6); // used to randomize where the bubbles stop when these touches the surface
 	p->stopped = qfalse; // used to handle the bubbles when touching the surface
 }
@@ -1374,6 +1377,7 @@ void CG_ParticleWaterSplash (qhandle_t pshader, qhandle_t pmodel, vec3_t origin,
 	p->accel[2] = accel + (crandom() * 50);
 
 	p->rollBounceCount = 0;
+	p->accumroll = 0;
 	p->stopped = qtrue;   // stops when it reaches the water surface
 	p->custom = 0;
 }

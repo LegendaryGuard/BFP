@@ -60,7 +60,16 @@ G_HandleRDMissile
 static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP_PLASMAGUN would be that splitting ki ball, when pressing the attack key again, splits by the number of balls depending on the ki attack charge points had
 	vec3_t	dir, angles;
 	int		i;
-	int		projectiles_to_spawn = 0;
+	// BFP - TODO: Apply minCharge and maxCharge from bfp_weapon.cfg
+	int		minCharge = 2;
+	int		maxCharge = 6;
+	int		projectiles_to_spawn = 3;
+	// BFP - Adjust ki charge points to split
+	int		splitKiChargePoints = ent->kiChargePoints - minCharge;
+	if ( maxCharge > minCharge && ent->kiChargePoints >= maxCharge ) {
+		--splitKiChargePoints;
+	}
+
 	// BFP - NOTE: That makes us to understand how the projectile is being split by x projectiles
 	/* 
 	int		yawAdjustments[6] = {
@@ -97,18 +106,19 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - WP
 	*/
 
 	// determine the number of projectiles to spawn based on the ki attack charge points
-	switch( ent->kiChargePoints ) {
-	case 2:
+	switch( splitKiChargePoints ) {
+	case 0:
 		projectiles_to_spawn = 3;
 		break;
-	case 3:
+	case 1:
 		projectiles_to_spawn = 4;
 		break;
-	case 4:
+	case 2:
 		projectiles_to_spawn = 5;
 		break;
+	case 3:
+	case 4:
 	case 5:
-	case 6:
 		projectiles_to_spawn = 6;
 		break;
 	default:
@@ -1056,6 +1066,14 @@ void G_RunMissile( gentity_t *ent ) {
 		tr.fraction = 0;
 	}
 	else {
+		VectorCopy( tr.endpos, ent->r.currentOrigin );
+	}
+
+	// BFP - Ignore sinking corpses: their collision bbox lags behind their actual sinking position
+	if ( tr.fraction != 1 
+	&& g_entities[tr.entityNum].s.eType == ET_PLAYER 
+	&& g_entities[tr.entityNum].physicsObject ) {
+		trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, tr.entityNum, ent->clipmask );
 		VectorCopy( tr.endpos, ent->r.currentOrigin );
 	}
 
