@@ -129,7 +129,7 @@ void BotBFPResetState( bot_state_t *bs ) {
 	VectorClear( bs->bfpEvadeDir );
 
 	// ensure a valid weapon is selected even before any combat logic runs
-	if ( bs->weaponnum <= WP_NONE || bs->weaponnum >= WP_KI ) {
+	if ( bs->weaponnum <= WP_NONE ) {
 		bs->weaponnum = WP_GAUNTLET;
 	}
 }
@@ -231,7 +231,7 @@ static void BotBFPCompensateKiCharge( bot_state_t *bs ) {
 	}
 
 	maxKi = ps->stats[STAT_MAX_KI];
-	if ( ps->ammo[WP_KI] >= maxKi ) {
+	if ( ps->stats[STAT_KI] >= maxKi ) {
 		bs->bfpKiCompensate_time = now;
 		return;
 	}
@@ -251,9 +251,9 @@ static void BotBFPCompensateKiCharge( bot_state_t *bs ) {
 
 	kiChargeTotal = ( g_kiCharge.value * 0.01f ) + g_kiChargePct.value * ( maxKi * 0.0001f );
 	kiPerSecond = kiChargeTotal / HUMAN_CMD_INTERVAL;
-	ps->ammo[WP_KI] += (int)( kiPerSecond * elapsed );
-	if ( ps->ammo[WP_KI] > maxKi ) {
-		ps->ammo[WP_KI] = maxKi;
+	ps->stats[STAT_KI] += (int)( kiPerSecond * elapsed );
+	if ( ps->stats[STAT_KI] > maxKi ) {
+		ps->stats[STAT_KI] = maxKi;
 	}
 
 	bs->bfpKiCompensate_time = now;
@@ -271,7 +271,7 @@ static void BotBFPCheckKiRecharge( bot_state_t *bs, aas_entityinfo_t *entinfo ) 
 	qboolean	enemyDanger, justHit;
 
 	maxKi = bs->cur_ps.stats[STAT_MAX_KI];
-	curKi = bs->cur_ps.ammo[WP_KI];
+	curKi = bs->cur_ps.stats[STAT_KI];
 	health = bs->inventory[INVENTORY_HEALTH];
 
 	if ( maxKi <= 0 ) {
@@ -346,7 +346,7 @@ static void BotBFPCheckFlight( bot_state_t *bs, aas_entityinfo_t *entinfo, bot_g
 	vec3_t		dir;
 	qboolean	wantsFlight, alreadyFlying;
 
-	if ( bs->cur_ps.ammo[WP_KI] <= 0 ) {
+	if ( bs->cur_ps.stats[STAT_KI] <= 0 ) {
 		bs->bfpFlightDecision = qfalse;
 		return;
 	}
@@ -397,7 +397,7 @@ static void BotBFPCheckFlight( bot_state_t *bs, aas_entityinfo_t *entinfo, bot_g
 			bs->bfpFlightDecision = ( wantsFlight && random() < flightChance );
 		} else {
 			int	maxKi = bs->cur_ps.stats[STAT_MAX_KI];
-			int	curKi = bs->cur_ps.ammo[WP_KI];
+			int	curKi = bs->cur_ps.stats[STAT_KI];
 
 			stopChance = 0.6f - ( (float)skillIndex / 5.0f ) * 0.55f;
 			if ( stopChance < 0.05f ) {
@@ -435,7 +435,7 @@ BotBFPCheckKiBoost
 */
 static void BotBFPCheckKiBoost( bot_state_t *bs ) {
 	int		maxKi = bs->cur_ps.stats[STAT_MAX_KI];
-	int		curKi = bs->cur_ps.ammo[WP_KI];
+	int		curKi = bs->cur_ps.stats[STAT_KI];
 	float	skill = bs->settings.skill;
 
 	if ( maxKi <= 0 || curKi <= 0 ) {
@@ -483,7 +483,7 @@ static void BotBFPCheckWeaponSlot( bot_state_t *bs ) {
 		return;
 	}
 
-	if ( bs->weaponnum <= WP_NONE || bs->weaponnum >= WP_KI ) {
+	if ( bs->weaponnum <= WP_NONE ) {
 		bs->weaponnum = WP_GAUNTLET;
 		trap_EA_SelectWeapon( bs->client, bs->weaponnum );
 	}
@@ -732,7 +732,7 @@ static void BotBFPCheckZanzoken( bot_state_t *bs, aas_entityinfo_t *entinfo ) {
 		if ( bs->cur_ps.pm_flags & ( PMF_KI_CHARGE | PMF_ULTIMATE_TIER ) ) {
 			return;
 		}
-		if ( bs->cur_ps.ammo[WP_KI] <= ( bs->cur_ps.stats[STAT_MAX_KI] * 0.05f ) ) {
+		if ( bs->cur_ps.stats[STAT_KI] <= ( bs->cur_ps.stats[STAT_MAX_KI] * 0.05f ) ) {
 			return;
 		}
 

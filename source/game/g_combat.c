@@ -327,7 +327,7 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	attacker->s.frame = attacker->client->ps.persistant[PERS_POWERLEVEL];
 
 	// BFP - Add more maximum ki
-	currentKiPercentage = ( (float)attacker->client->ps.ammo[WP_KI] / (float)attacker->client->ps.stats[STAT_MAX_KI] );
+	currentKiPercentage = ( (float)attacker->client->ps.stats[STAT_KI] / (float)attacker->client->ps.stats[STAT_MAX_KI] );
 	// BFP - Monster gamemode, handle attacker ki monster calculation
 	if ( attacker->client->ps.eFlags & EF_MONSTER ) {
 		monsterKi = 2;
@@ -344,12 +344,12 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
 		if ( currentKiPercentage < 1.0f ) {
 			currentKiPercentage *= (float)attacker->client->ps.stats[STAT_MAX_KI];
-			attacker->client->ps.ammo[WP_KI] = currentKiPercentage;
+			attacker->client->ps.stats[STAT_KI] = currentKiPercentage;
 		} else {
-			attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+			attacker->client->ps.stats[STAT_KI] = attacker->client->ps.stats[STAT_MAX_KI];
 		}
-		if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
-			attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+		if ( attacker->client->ps.stats[STAT_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
+			attacker->client->ps.stats[STAT_KI] = attacker->client->ps.stats[STAT_MAX_KI];
 		}
 	}
 
@@ -373,14 +373,14 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 		}
 	}
 
-	if ( attacker->client->ps.ammo[WP_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
-		attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+	if ( attacker->client->ps.stats[STAT_KI] > attacker->client->ps.stats[STAT_MAX_KI] ) {
+		attacker->client->ps.stats[STAT_KI] = attacker->client->ps.stats[STAT_MAX_KI];
 	}
 
 	// BFP - When unlocking a tier, give the player maximum health and ki
 	if ( attacker->client->ps.eFlags & EF_AURA_TIER_UP ) {
 		attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_MAX_HEALTH];
-		attacker->client->ps.ammo[WP_KI] = attacker->client->ps.stats[STAT_MAX_KI];
+		attacker->client->ps.stats[STAT_KI] = attacker->client->ps.stats[STAT_MAX_KI];
 	}
 }
 
@@ -1248,6 +1248,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		}
 	}
 
+	// BFP - No battlesuit powerup
+#if 0
 	// battlesuit protects from all radius damage (but takes knockback)
 	// and protects 50% against all damage
 	if ( client && client->ps.powerups[PW_BATTLESUIT] ) {
@@ -1257,6 +1259,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		}
 		damage *= 0.5;
 	}
+#endif
 
 	// add to the attacker's hit counter (if the target isn't a general entity like a prox mine)
 	if ( attacker->client && targ != attacker && targ->health > 0

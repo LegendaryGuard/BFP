@@ -2926,10 +2926,10 @@ PM_KiConsumption
 ===========
 */
 static void PM_KiConsumption( int addTime, int kiConsume ) { // BFP - Ki consumption when using ki attacks
-	if ( pm->ps->ammo[WP_KI] >= 0 ) { // avoid consuming more ki than available
-		pm->ps->ammo[WP_KI] -= kiConsume;
-		if ( pm->ps->ammo[WP_KI] < 0 ) {
-			pm->ps->ammo[WP_KI] = 0;
+	if ( pm->ps->stats[STAT_KI] >= 0 ) { // avoid consuming more ki than available
+		pm->ps->stats[STAT_KI] -= kiConsume;
+		if ( pm->ps->stats[STAT_KI] < 0 ) {
+			pm->ps->stats[STAT_KI] = 0;
 		}
 		pm->ps->weaponTime += addTime;
 	} else { // not enough ki
@@ -3105,7 +3105,7 @@ static void PM_Weapon( void ) {
 				// BFP - sbeam attack type
 				if ( pm->attackType == ATK_SBEAM ) {
 					pm->ps->weaponTime += weaponTime;
-					pm->ps->ammo[WP_KI] -= kiCost;
+					pm->ps->stats[STAT_KI] -= kiCost;
 					pm->ps->weaponstate = WEAPON_ACTIVE;
 					// fire and make a sound
 					PM_AddEvent( EV_FIRE_WEAPON );
@@ -3294,7 +3294,7 @@ static void PM_Weapon( void ) {
 		// BFP - sbeam attack type
 		if ( pm->attackType == ATK_SBEAM ) {
 			if ( pm->ps->weaponTime <= 0 ) {
-				pm->ps->ammo[WP_KI] -= kiCost;
+				pm->ps->stats[STAT_KI] -= kiCost;
 				pm->ps->weaponTime += weaponTime;
 			}
 			if ( !( pm->cmd.buttons & BUTTON_ATTACK )

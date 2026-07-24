@@ -1090,10 +1090,13 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 
 	case EV_POWERUP_BATTLESUIT:		// 86
+	// BFP - No battlesuit powerup
+#if 0
 		if ( es->number == cg.snap->ps.clientNum ) {
 			cg.powerupActive = PW_BATTLESUIT;
 			cg.powerupTime = cg.time;
 		}
+#endif
 		trap_S_StartSound (NULL, es->number, CHAN_ITEM, cgs.media.protectSound );
 		break;
 	

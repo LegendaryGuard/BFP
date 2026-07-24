@@ -660,9 +660,9 @@ static void CG_DrawStatusBar( void ) {
 	trap_R_SetColor( hcolor );
 
 	// BFP - draw ki amount
-	if ( ps->ammo[WP_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
-		ps->ammo[WP_KI] = 0;
-	value = ps->ammo[WP_KI];
+	if ( ps->stats[STAT_KI] <= 0 ) // BFP - If ki is less than 0, adjust to 0
+		ps->stats[STAT_KI] = 0;
+	value = ps->stats[STAT_KI];
 	CG_DrawKiGauge( 154.5, -12 + SCREEN_HEIGHT - SMALLCHAR_HEIGHT, GAUGE_WIDTH, GAUGE_HEIGHT, value, ps->stats[STAT_MAX_KI] );
 
 	string = va( "%d", value );
@@ -2115,10 +2115,13 @@ static void CG_ScanForCrosshairEntity( void ) {
 		return;
 	}
 
+	// BFP - No invis powerup
+#if 0
 	// if the player is invisible, don't show it
 	if ( cg_entities[ trace.entityNum ].currentState.powerups & ( 1 << PW_INVIS ) ) {
 		return;
 	}
+#endif
 
 	// update the fade timer
 	cg.crosshairClientNum = trace.entityNum;
@@ -2341,9 +2344,9 @@ static void CG_DrawKiWarning( void ) {
 
 	// BFP - Low ki warning center notification
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
-	if ( cg.predictedPlayerState.ammo[WP_KI] < 50 ) {
+	if ( cg.predictedPlayerState.stats[STAT_KI] < 50 ) {
 		s = "LOW KI WARNING";
-	} else if ( cg.predictedPlayerState.ammo[WP_KI] < 0 ) {
+	} else if ( cg.predictedPlayerState.stats[STAT_KI] < 0 ) {
 		s = "OUT OF KI";
 	}
 

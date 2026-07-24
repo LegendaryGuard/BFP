@@ -97,10 +97,9 @@ Check for lava / slime contents and drowning
 =============
 */
 void P_WorldEffects( gentity_t *ent ) {
-	qboolean	envirosuit;
 	int			waterlevel;
-
-	envirosuit = ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
+	// BFP - No battlesuit powerup
+	//qboolean	envirosuit = ent->client->ps.powerups[PW_BATTLESUIT] > level.time;
 
 	waterlevel = ent->waterlevel;
 
@@ -160,9 +159,13 @@ void P_WorldEffects( gentity_t *ent ) {
 		if (ent->health > 0
 			&& ent->pain_debounce_time <= level.time	) {
 
+			// BFP - No battlesuit powerup
+#if 0
 			if ( envirosuit ) {
 				G_AddEvent( ent, EV_POWERUP_BATTLESUIT, 0 );
-			} else {
+			} else 
+#endif
+			{
 				if (ent->watertype & CONTENTS_LAVA) {
 					G_Damage (ent, NULL, NULL, NULL, NULL, 
 						30*waterlevel, 0, MOD_LAVA);
@@ -291,16 +294,18 @@ void	G_TouchTriggers( gentity_t *ent ) {
 		// use seperate code for determining if an item is picked up
 		// so you don't have to actually contact its bounding box
 		if ( hit->s.eType == ET_ITEM ) {
-			// BFP - Player monster can pick up items with its bounding box
-			if ( ( ent->client->ps.eFlags & EF_MONSTER ) 
-			&& ( mins[0] > hit->r.absmax[0] || maxs[0] < hit->r.absmin[0]
+			// BFP - Most players and player monster can pick up items with its bounding box
+			if ( mins[0] > hit->r.absmax[0] || maxs[0] < hit->r.absmin[0]
 			|| mins[1] > hit->r.absmax[1] || maxs[1] < hit->r.absmin[1]
-			|| mins[2] > hit->r.absmax[2] || maxs[2] < hit->r.absmin[2] ) ) {
+			|| mins[2] > hit->r.absmax[2] || maxs[2] < hit->r.absmin[2] ) {
 				continue;
 			}
+			// BFP - Disabled to make bounding box detection work
+#if 0
 			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
 				continue;
 			}
+#endif
 		} else {
 			if ( !trap_EntityContact( mins, maxs, hit ) ) {
 				continue;
@@ -419,7 +424,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 	// BFP - Ki boost consumption
 	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.eFlags & EF_KI_BOOST ) )
-	&& client->ps.ammo[WP_KI] > 0
+	&& client->ps.stats[STAT_KI] > 0
 	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
 	&& !( client->ps.pm_flags & PMF_BLOCK )
 	&& client->ps.weaponstate != WEAPON_STUN ) {
@@ -429,7 +434,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		client->kiResidual += boostCostTotal * msec;
 		if ( client->kiResidual >= 1.0f ) {
 			int drop = (int)client->kiResidual;
-			client->ps.ammo[WP_KI] -= drop;
+			client->ps.stats[STAT_KI] -= drop;
 			client->kiResidual -= drop;
 		}
 	}
@@ -437,14 +442,14 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	// BFP - Charge ki
 	if ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA )
 	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
-	&& client->ps.ammo[WP_KI] < client->ps.stats[STAT_MAX_KI] ) {
+	&& client->ps.stats[STAT_KI] < client->ps.stats[STAT_MAX_KI] ) {
 		float kiChargeTotal = ( g_kiCharge.value * 0.01 ) + g_kiChargePct.value * ( client->ps.stats[STAT_MAX_KI] * 0.0001 );
-		client->ps.ammo[WP_KI] += kiChargeTotal * rndKiCharge;
+		client->ps.stats[STAT_KI] += kiChargeTotal * rndKiCharge;
 	}
 
 	// BFP - Block ki consume
 	if ( ( client->ps.pm_flags & PMF_BLOCK )
-	&& client->ps.ammo[WP_KI] > 0
+	&& client->ps.stats[STAT_KI] > 0
 	&& client->blockKnockbackTime <= 0
 	&& random() < 0.75 ) { // a weird random thingy (¬_¬') tried to get the similar result
 		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
@@ -452,7 +457,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		if ( blockCostTotal < 1 ) {
 			blockCostTotal = 1;
 		}
-		client->ps.ammo[WP_KI] -= blockCostTotal;
+		client->ps.stats[STAT_KI] -= blockCostTotal;
 	}
 
 	while ( client->timeResidual >= 1000 ) {
@@ -486,12 +491,12 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 
 		// BFP - Decrease ki when flying
 		if ( ( client->ps.eFlags & EF_FLIGHT )
-		&& client->ps.ammo[WP_KI] > 0
+		&& client->ps.stats[STAT_KI] > 0
 		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) { // don't decrease when charging
 			if ( g_flightCostPct.value > 0 && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) { // reduce a bit if the percentage cost is more than 0 and has less powerlevel
 				--flightCostTotal;
 			}
-			client->ps.ammo[WP_KI] -= flightCostTotal;
+			client->ps.stats[STAT_KI] -= flightCostTotal;
 		}
 
 		// BFP - Regenerate ki
@@ -499,7 +504,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) ) // don't increase when charging
 		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) // don't increase when trying to charge when stunned
 		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) ) { // don't increase when trying to attack when stunned
-			client->ps.ammo[WP_KI] += g_kiRegen.value + ( g_kiRegenPct.value * client->ps.stats[STAT_MAX_KI] * 0.01 );
+			client->ps.stats[STAT_KI] += g_kiRegen.value + ( g_kiRegenPct.value * client->ps.stats[STAT_MAX_KI] * 0.01 );
 		}
 
 		// count down armor when over max
@@ -509,24 +514,24 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	}
 
 	// BFP - Set maximum ki
-	if ( client->ps.ammo[WP_KI] > client->ps.stats[STAT_MAX_KI] ) {
-		client->ps.ammo[WP_KI] = client->ps.stats[STAT_MAX_KI];
+	if ( client->ps.stats[STAT_KI] > client->ps.stats[STAT_MAX_KI] ) {
+		client->ps.stats[STAT_KI] = client->ps.stats[STAT_MAX_KI];
 	}
 
 	// BFP - If ki drops to 0, disable flight
-	if ( client->ps.ammo[WP_KI] <= 0 ) {
-		client->ps.ammo[WP_KI] = 0;
+	if ( client->ps.stats[STAT_KI] <= 0 ) {
+		client->ps.stats[STAT_KI] = 0;
 		client->ps.eFlags &= ~EF_FLIGHT;
 	}
 
 	// BFP - When the player doesn't have more ki, gets a hit stun
-	if ( ( client->ps.ammo[WP_KI] <= 0 )
-		|| ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 )
+	if ( ( client->ps.stats[STAT_KI] <= 0 )
+		|| ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.stats[STAT_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 )
 		|| ( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) ) {
-		if ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.ammo[WP_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 ) {
-			client->ps.ammo[WP_KI] /= flightCostTotal;
+		if ( ( client->ps.eFlags & EF_FLIGHT ) && client->ps.stats[STAT_KI] < flightCostTotal && client->ps.stats[STAT_HITSTUN_TIME] <= 0 ) {
+			client->ps.stats[STAT_KI] /= flightCostTotal;
 		}
-		if ( client->ps.ammo[WP_KI] <= 0 ) {
+		if ( client->ps.stats[STAT_KI] <= 0 ) {
 			client->ps.stats[STAT_HITSTUN_TIME] = 100; // handle time
 		} else {
 			client->ps.stats[STAT_HITSTUN_TIME] = 1000;
@@ -906,7 +911,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 		}
 	}
 
-	if ( client->ps.ammo[WP_KI] > ( client->ps.stats[STAT_MAX_KI] * 0.05 )
+	if ( client->ps.stats[STAT_KI] > ( client->ps.stats[STAT_MAX_KI] * 0.05 )
 	&& ucmd->rightmove && client->zanzokenNow ) {
 		int range = ( ucmd->rightmove > 0 ) ? 500 : -500;
 
@@ -934,7 +939,7 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 			}
 			client->ps.pm_flags &= ~PMF_BLOCK;
 			// consumes 5% of ki
-			client->ps.ammo[WP_KI] -= ( client->ps.stats[STAT_MAX_KI] * 0.05 );
+			client->ps.stats[STAT_KI] -= ( client->ps.stats[STAT_MAX_KI] * 0.05 );
 			client->zanzokenPressTime = 0;
 			client->zanzokenNow = qfalse;
 			client->zanzokenLeft = qfalse;

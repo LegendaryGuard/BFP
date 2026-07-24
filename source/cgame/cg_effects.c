@@ -848,7 +848,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 	float	scale = 1;
 
 	// BFP - TODO: Apply explosionShader from bfp attack config, ImpactBeamExplosionShader is just a test
-	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, sphereModel, cgs.media.ImpactBeamExplosionShader, 1000 );
+	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, sphereModel, cgs.media.ImpactBeamExplosionShader, 1200 );
 	if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
 		leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
 	}

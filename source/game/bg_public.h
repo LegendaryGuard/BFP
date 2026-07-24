@@ -263,7 +263,7 @@ typedef enum {
 
 	STAT_UNUSED_INDEX6,				// BFP - Powerlevel
 	STAT_UNUSED_INDEX7,				// BFP - Flight jump anim transition seconds, maximum is 21 sec and stops changing to 0, even when stop flying also reproduces this stat index like starting to fly (looks weird)
-	STAT_UNUSED_INDEX8,				// BFP - Ki, but we use WP_KI for ammo in that case, it doesn't make sense for STAT_ while that is keeping for original BFP netowrking
+	STAT_KI,						// BFP - Ki
 	STAT_MAX_KI,					// BFP - Maximum ki
 	STAT_UNUSED_INDEX10,			// BFP - Melee attack time
 	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
@@ -311,10 +311,11 @@ typedef enum {
 #define	EF_TELEPORT_BIT		0x00000004		// toggled every time the origin abruptly changes
 #define	EF_AWARD_EXCELLENT	0x00000008		// draw an excellent sprite
 #define EF_PLAYER_EVENT		0x00000010
-#define	EF_BOUNCE			0x00000010		// for missiles
+// BFP - Unused EF_BOUNCE and EF_BOUNCE_HALF
+//#define	EF_BOUNCE			0x00000010		// for missiles
 // BFP - This eFlag hack is used for client/player only:
 #define	EF_READY_KI_ATTACK	0x00000010		// BFP - Ready ki attack
-#define	EF_BOUNCE_HALF		0x00000020		// for missiles
+//#define	EF_BOUNCE_HALF		0x00000020		// for missiles
 // BFP - EF_AWARD_GAUNTLET flag is renamed	// draw a gauntlet sprite
 #define	EF_FLIGHT			0x00000040		// BFP - Used for flying status
 #define	EF_NODRAW			0x00000080		// may have an event, but no model (unspawned items)
@@ -362,9 +363,9 @@ typedef enum {
 	PW_REDFLAG, //PW_BATTLESUIT,
 	PW_BLUEFLAG, //PW_HASTE,
 
-	PW_INVIS,			// BFP - TODO: Hide the item and rename as PW_UNUSED_INDEX4
+	PW_UNUSED_INDEX4,	// BFP - Unused powerup index //PW_INVIS
 	PW_UNUSED_INDEX5,	// BFP - That would be PW_FLIGHT, used for flying
-	PW_BATTLESUIT,		// BFP - TODO: Hide the item and rename as PW_UNUSED_INDEX6	// BFP - Used for ki recharge
+	PW_UNUSED_INDEX6,	// BFP - Used for ki recharge
 	PW_UNUSED_INDEX7,	// BFP - Used for ki use/boost
 	PW_UNUSED_INDEX8,	// BFP - Used for blocking seconds (defend from melee, beams, explosions and impacts, and reflect ki attack projectiles)
 	PW_UNUSED_INDEX9,	// BFP - Used for melee toggle
@@ -404,7 +405,7 @@ typedef enum {
 	WP_GRAPPLING_HOOK,		// BFP - Original demo networking: Blind seconds, rename during the config implementation
 
 //	WP_UNUSED_INDEX11,		// BFP - Original demo networking: Rapid attacks like ki storm (alternates -1 and 1), rename during the config implementation
-	WP_KI,					// BFP - Ammo bit used for ki, that isn't from original BFP networking, but for optimization reasons is used. Unknown or unused index for original BFP networking
+//	WP_UNUSED_INDEX12,		// BFP - Original demo networking: Unknown or unused index
 //	WP_UNUSED_INDEX13,		// BFP - Original demo networking: Toggle to use Short-Range Teleport - Zanzoken, rename during the config implementation
 //	WP_UNUSED_INDEX14,		// BFP - Original demo networking: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken, rename during the config implementation
 //	WP_UNUSED_INDEX15,		// BFP - Original demo networking: Enables/disables beam struggle , rename during the config implementation

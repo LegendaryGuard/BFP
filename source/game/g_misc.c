@@ -313,7 +313,10 @@ static void InitShooter( gentity_t *ent, int weapon ) {
 	ent->use = Use_Shooter;
 	ent->s.weapon = weapon;
 
+	// BFP - No weapon items
+#if 0
 	RegisterItem( BG_FindItemForWeapon( weapon ) );
+#endif
 
 	G_SetMovedir( ent->s.angles, ent->movedir );
 

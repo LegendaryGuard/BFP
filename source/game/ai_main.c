@@ -1042,7 +1042,7 @@ int BotAI(int client, float thinktime) {
 	BotDeathmatchAI(bs, thinktime);
 	//set the weapon selection every AI frame
 	// BFP - Avoid "weapon number out of range" engine print error
-	if ( bs->weaponnum <= WP_NONE || bs->weaponnum >= WP_KI ) {
+	if ( bs->weaponnum <= WP_NONE ) {
 		bs->weaponnum = WP_GAUNTLET;
 	}
 	trap_EA_SelectWeapon(bs->client, bs->weaponnum);

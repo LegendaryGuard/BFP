@@ -236,7 +236,7 @@ int Pickup_Health (gentity_t *ent, gentity_t *other) {
 		}
 		other->client->ps.stats[STAT_HEALTH] = other->health;
 		// BFP - Give full ki too
-		other->client->ps.ammo[WP_KI] = other->client->ps.stats[STAT_MAX_KI];
+		other->client->ps.stats[STAT_KI] = other->client->ps.stats[STAT_MAX_KI];
 	}
 
 	if ( ent->item->quantity == 100 ) {		// mega health respawns slow
@@ -493,7 +493,8 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 	dropped->s.pos.trTime = level.time;
 	VectorCopy( velocity, dropped->s.pos.trDelta );
 
-	dropped->s.eFlags |= EF_BOUNCE_HALF;
+	// BFP - Replaced to bounces instead using EF_BOUNCE_HALF eFlag
+	dropped->bounces = qtrue;
 	if (g_gametype.integer == GT_CTF && item->giType == IT_TEAM) { // Special case for CTF flags
 		dropped->think = Team_DroppedFlagThink;
 		dropped->nextthink = level.time + 30000;
@@ -648,9 +649,12 @@ ClearRegisteredItems
 void ClearRegisteredItems( void ) {
 	memset( itemRegistered, 0, sizeof( itemRegistered ) );
 
+	// BFP - No weapon items
+#if 0
 	// players always start with the base weapon
 	RegisterItem( BG_FindItemForWeapon( WP_MACHINEGUN ) );
 	RegisterItem( BG_FindItemForWeapon( WP_GAUNTLET ) );
+#endif
 }
 
 /*

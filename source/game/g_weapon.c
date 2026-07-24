@@ -334,7 +334,7 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 		if ( g_meleeDamage.integer > 0 ) {
 			// consume 5% of ki when being defended and apply knockback
 			if ( ( traceTarget->client->ps.pm_flags & PMF_BLOCK ) && traceTarget->client->blockKnockbackTime <= 0 ) {
-				traceTarget->client->ps.ammo[WP_KI] -= traceTarget->client->ps.stats[STAT_MAX_KI] * 0.05;
+				traceTarget->client->ps.stats[STAT_KI] -= traceTarget->client->ps.stats[STAT_MAX_KI] * 0.05;
 				traceTarget->client->blockKnockbackTime = level.time + 250;
 			}
 			G_Damage ( traceTarget, attacker, attacker, direction, forward, 

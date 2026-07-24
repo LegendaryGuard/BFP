@@ -224,7 +224,8 @@ void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
 	dot = DotProduct( velocity, trace->plane.normal );
 	VectorMA( velocity, -2*dot, trace->plane.normal, ent->s.pos.trDelta );
 
-	if ( ent->s.eFlags & EF_BOUNCE_HALF ) {
+	// BFP - Replaced to bounces instead using EF_BOUNCE_HALF eFlag
+	if ( ent->bounces ) {
 		if ( ent && !ent->client ) {
 			VectorScale( ent->s.pos.trDelta, ent->bounceFriction, ent->s.pos.trDelta );
 		}
@@ -889,7 +890,8 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 
 	// check for bounce
 	if ( !other->takedamage &&
-		( ent->s.eFlags & ( EF_BOUNCE | EF_BOUNCE_HALF ) ) ) {
+	// BFP - Replaced to bounces instead using EF_BOUNCE and EF_BOUNCE_HALF eFlags
+		ent->bounces ) {
 		G_BounceMissile( ent, trace );
 		G_AddEvent( ent, EV_GRENADE_BOUNCE, 0 );
 		return;
@@ -914,7 +916,7 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 
 				// BFP - Consume 10% of ki when deflecting the projectile and apply knockback
 				if ( other->client->blockKnockbackTime <= 0 ) {
-					other->client->ps.ammo[WP_KI] -= other->client->ps.stats[STAT_MAX_KI] * 0.1;
+					other->client->ps.stats[STAT_KI] -= other->client->ps.stats[STAT_MAX_KI] * 0.1;
 					other->client->blockKnockbackTime = level.time + 250;
 				}
 
@@ -1287,9 +1289,6 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_GRENADE_LAUNCHER;
-	if ( bolt->bounces ) {
-		bolt->s.eFlags = EF_BOUNCE_HALF;
-	}
 	bolt->r.ownerNum = self->s.number;
 	bolt->parent = self;
 	bolt->damage = 8;

@@ -230,9 +230,12 @@ qboolean EntityIsInvisible(aas_entityinfo_t *entinfo) {
 	if (EntityCarriesFlag(entinfo)) {
 		return qfalse;
 	}
+	// BFP - No invis powerup
+#if 0
 	if (entinfo->powerups & (1 << PW_INVIS)) {
 		return qtrue;
 	}
+#endif
 	return qfalse;
 }
 
@@ -987,10 +990,12 @@ void BotUpdateInventory(bot_state_t *bs) {
 	bs->inventory[INVENTORY_TELEPORTER] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
 	bs->inventory[INVENTORY_MEDKIT] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_MEDKIT;
 	bs->inventory[INVENTORY_QUAD] = bs->cur_ps.powerups[PW_QUAD] != 0;
-	bs->inventory[INVENTORY_ENVIRONMENTSUIT] = bs->cur_ps.powerups[PW_BATTLESUIT] != 0;
+	// BFP - No battlesuit powerup
+	// bs->inventory[INVENTORY_ENVIRONMENTSUIT] = bs->cur_ps.powerups[PW_BATTLESUIT] != 0;
 	// BFP - No haste powerup
 	// bs->inventory[INVENTORY_HASTE] = bs->cur_ps.powerups[PW_HASTE] != 0;
-	bs->inventory[INVENTORY_INVISIBILITY] = bs->cur_ps.powerups[PW_INVIS] != 0;
+	// BFP - No invis powerup
+	// bs->inventory[INVENTORY_INVISIBILITY] = bs->cur_ps.powerups[PW_INVIS] != 0;
 	// BFP - No regen powerup
 	// bs->inventory[INVENTORY_REGEN] = bs->cur_ps.powerups[PW_REGEN] != 0;
 	// BFP - No flight powerup

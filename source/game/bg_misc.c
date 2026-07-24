@@ -558,7 +558,7 @@ gitem_t	bg_itemlist[] =
 /* pickup */	"Battle Suit",
 		30,
 		IT_POWERUP,
-		PW_BATTLESUIT,
+		0, //PW_BATTLESUIT,	// BFP - No battlesuit powerup
 /* precache */ "",
 /* sounds */ "sound/items/airout.wav sound/items/protect3.wav"
 	},

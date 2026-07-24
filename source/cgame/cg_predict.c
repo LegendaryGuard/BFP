@@ -356,8 +356,11 @@ void CG_AddFallDamage( int damage )
 {
 	int take, asave;
 
+	// BFP - No battlesuit powerup
+#if 0
 	if ( cg.predictedPlayerState.powerups[ PW_BATTLESUIT ] )
 		return;
+#endif
 
 	if ( cg.predictedPlayerState.clientNum != cg.snap->ps.clientNum || cg.snap->ps.pm_flags & PMF_FOLLOW ) {
 		return;

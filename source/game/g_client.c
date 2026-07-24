@@ -876,7 +876,7 @@ static void ClientBecomeMonster( gentity_t *ent ) { // BFP - Monster gamemode fu
 
 	// double ki and max ki
 	ent->client->ps.stats[STAT_MAX_KI] *= 2;
-	ent->client->ps.ammo[WP_KI] = ent->client->ps.stats[STAT_MAX_KI];
+	ent->client->ps.stats[STAT_KI] = ent->client->ps.stats[STAT_MAX_KI];
 
 	ent->client->ps.eFlags |= EF_MONSTER;
 
@@ -1383,13 +1383,13 @@ void ClientSpawn(gentity_t *ent) {
 	}
 
 	// BFP - Ki start
-	client->ps.ammo[WP_KI] = 999;
+	client->ps.stats[STAT_KI] = 999;
 	// BFP - NOTE: What the heck? Did BFP dev make this multiplying 9.00825 with powerlevel? Strange approximation...
-	client->ps.ammo[WP_KI] = client->ps.ammo[WP_KI] + ( 9.00825 * client->ps.persistant[PERS_POWERLEVEL] );
-	client->ps.stats[STAT_MAX_KI] = client->ps.ammo[WP_KI];
+	client->ps.stats[STAT_KI] = client->ps.stats[STAT_KI] + ( 9.00825 * client->ps.persistant[PERS_POWERLEVEL] );
+	client->ps.stats[STAT_MAX_KI] = client->ps.stats[STAT_KI];
 
 	if ( client->ps.stats[STAT_MAX_KI] > 10000 ) {
-		client->ps.stats[STAT_MAX_KI] = client->ps.ammo[WP_KI] = 10000;
+		client->ps.stats[STAT_MAX_KI] = client->ps.stats[STAT_KI] = 10000;
 	}
 
 	// BFP - Monster gamemode

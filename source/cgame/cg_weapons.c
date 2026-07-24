@@ -80,11 +80,6 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 			AxisClear( flashMissile.axis );
 		}
 
-		// convert direction of travel into axis
-		if ( VectorNormalize2( cent->currentState.pos.trDelta, flashMissile.axis[0] ) == 0 ) {
-			flashMissile.axis[0][2] = 1;
-		}
-
 		if ( isMissile ) {
 			qboolean	missileSpinHoriz = qfalse;
 			scale = flashMissileScaleFactor + missileScaleFactorChargeMult * totalCharge;
@@ -524,7 +519,8 @@ void CG_RegisterWeapon( int weaponNum ) {
 	if ( !item->classname ) {
 		CG_Error( "Couldn't find weapon %i", weaponNum );
 	}
-	CG_RegisterItemVisuals( item - bg_itemlist );
+	// BFP - Don't register item visuals again
+	// CG_RegisterItemVisuals( item - bg_itemlist );
 
 	// BFP - No weaponModel
 #if 0
@@ -1702,9 +1698,28 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 	// create the explosion
 	//
 	if ( weapon == WP_MACHINEGUN || weapon == WP_SHOTGUN ) { // BFP - TODO: Apply muzzle effects only to these weapon types (from default.cfg file from some character)
+		// BFP - Don't use this explosion, use explosion model instead
+#if 0
 		CG_MakeExplosion( origin, dir, 
 						mod, shader,
 						600, qfalse );
+#endif
+		const float		MAX_SCALE = 27, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
+		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
+		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
+		float	explosionScaleFactor = 3, explosionScaleFactorChargeMult = 0;
+		float	scale = 1;
+		localEntity_t	*leExp;
+
+		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
+		if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
+		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
+		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+
+		leExp = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, mod, shader, 1200 );
+		VectorScale( leExp->refEntity.axis[0], scale, leExp->refEntity.axis[0] );
+		VectorScale( leExp->refEntity.axis[1], scale, leExp->refEntity.axis[1] );
+		VectorScale( leExp->refEntity.axis[2], scale, leExp->refEntity.axis[2] );
 	} else if ( weapon == WP_LIGHTNING ) { // BFP - TODO: Just a test for lightning gun (eyebeam should have this behavior)
 		CG_SmokeExplosion( origin, dir ); // BFP - Explosion smoke
 	} else { // BFP - Explosion effects
@@ -1746,9 +1761,30 @@ void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum )
 			}
 		}
 		trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, sfx );
+		// BFP - Don't use this explosion, use explosion model instead
+#if 0
 		CG_MakeExplosion( origin, dir, 
 						cgs.media.bulletFlashModel, cgs.media.bulletExplosionShader,
 						600, qfalse );
+#endif
+	{
+		const float		MAX_SCALE = 27, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
+		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
+		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
+		float	explosionScaleFactor = 3, explosionScaleFactorChargeMult = 0;
+		float	scale = 1;
+		localEntity_t	*leExp;
+
+		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
+		if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
+		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
+		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+
+		leExp = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, cgs.media.bulletFlashModel, cgs.media.bulletExplosionShader, 1200 );
+		VectorScale( leExp->refEntity.axis[0], scale, leExp->refEntity.axis[0] );
+		VectorScale( leExp->refEntity.axis[1], scale, leExp->refEntity.axis[1] );
+		VectorScale( leExp->refEntity.axis[2], scale, leExp->refEntity.axis[2] );
+	}
 		break;
 	default:
 		CG_ExplosionSound( origin ); // BFP - Explosion sounds

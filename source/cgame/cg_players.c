@@ -2188,10 +2188,13 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 		return qfalse;
 	}
 
+	// BFP - No invis powerup
+#if 0
 	// no shadows when invisible
 	if ( cent->currentState.powerups & ( 1 << PW_INVIS ) ) {
 		return qfalse;
 	}
+#endif
 
 	// no shadow if too high
 	if ( trace.fraction == 1.0 || trace.startsolid || trace.allsolid ) {
@@ -2524,11 +2527,14 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
 	}
 
+	// BFP - No invis powerup
+#if 0
 	if ( state->powerups & ( 1 << PW_INVIS ) ) {
 		ent.customShader = cgs.media.invisShader;
 		trap_R_AddRefEntityToScene( &ent );
 		return;
 	}
+#endif
 
 	// render main model
 	trap_R_AddRefEntityToScene( &ent );
