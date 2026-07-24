@@ -2187,12 +2187,12 @@ static void PM_CheckDuck (void)
 
 	// BFP - Monster gamemode, player monster bounding box sizes
 	if ( pm->ps->eFlags & EF_MONSTER ) {
-		pm->mins[0] *= 2.5;
-		pm->mins[1] *= 2.5;
-		pm->mins[2] *= 5.625;
+		pm->mins[0] = -37.5; // -15 * 2.5
+		pm->mins[1] = -37.5; // -15 * 2.5
+		pm->mins[2] = -135;  // -24(MINS_Z) * 5.625
 
-		pm->maxs[0] *= 2.5;
-		pm->maxs[1] *= 2.5;
+		pm->maxs[0] = 37.5; // 15 * 2.5
+		pm->maxs[1] = 37.5; // 15 * 2.5
 		pm->maxs[2] *= 5.625;
 	}
 }

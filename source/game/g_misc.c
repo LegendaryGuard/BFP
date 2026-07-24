@@ -93,7 +93,13 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	trap_UnlinkEntity( player );
 
 	VectorCopy( origin, player->client->ps.origin );
-	player->client->ps.origin[2] += 1.0f;
+	// BFP - NOTE: Just to avoid player monster being stuck, but that doesn't work on most maps
+	// no matter if applying += 1.0f would make a difference, so that would work on a few maps
+	if ( player->client->ps.eFlags & EF_MONSTER ) {
+		player->client->ps.origin[2] += -player->r.mins[2] + 2.0f;
+	} else {
+		player->client->ps.origin[2] += 1.0f;
+	}
 
 	// spit the player out
 	if ( angles )

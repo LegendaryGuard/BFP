@@ -201,6 +201,8 @@ You'll notice some differences and things that the original Bid For Power didn't
   - the player monster has a large dynamic light when charging or using ki
   - the player monster's ki trails are larger than other players'
   - the player monster generates bigger bubbles, smoke, and antigrav rock particles when charging/using ki boost
+  - the player monster can pick up items on the floor or where its hitbox can touch
+  - the player monster can use teleporter without getting stuck on most maps, but that may not work 100% on all of them
   - player monster's first-person and first-person vis mode viewpoints work properly
   - player monster's third-person camera has improved focus in the code (similar to BFP's standard third-person view but scaled for giant characters), it can be enabled by setting `BFP_MONSTER_CAMERA_VIEWPOS` macro to `0` and recompile the code, although the traceable crosshair looks a bit jerky
   - `g_monster` cvar enables the monster/big monkey feature (that happened in the RC/beta versions)

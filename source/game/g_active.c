@@ -245,7 +245,8 @@ void	G_TouchTriggers( gentity_t *ent ) {
 	gentity_t	*hit;
 	trace_t		trace;
 	vec3_t		mins, maxs;
-	static vec3_t	range = { 40, 40, 52 };
+	// BFP - Disabled
+	//static vec3_t	range = { 40, 40, 52 };
 
 	if ( !ent->client ) {
 		return;
@@ -256,14 +257,16 @@ void	G_TouchTriggers( gentity_t *ent ) {
 		return;
 	}
 
-	VectorSubtract( ent->client->ps.origin, range, mins );
-	VectorAdd( ent->client->ps.origin, range, maxs );
-
-	num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
+	// BFP - Disabled, to touch correctly without a defined range 
+	// and num declaration moved down mins and maxs. 
+	// Player monster cannot touch and that causes troubles by stucking from there
+	//VectorSubtract( ent->client->ps.origin, range, mins );
+	//VectorAdd( ent->client->ps.origin, range, maxs );
 
 	// can't use ent->absmin, because that has a one unit pad
 	VectorAdd( ent->client->ps.origin, ent->r.mins, mins );
 	VectorAdd( ent->client->ps.origin, ent->r.maxs, maxs );
+	num = trap_EntitiesInBox( mins, maxs, touch, MAX_GENTITIES );
 
 	for ( i=0 ; i<num ; i++ ) {
 		hit = &g_entities[touch[i]];
@@ -288,6 +291,13 @@ void	G_TouchTriggers( gentity_t *ent ) {
 		// use seperate code for determining if an item is picked up
 		// so you don't have to actually contact its bounding box
 		if ( hit->s.eType == ET_ITEM ) {
+			// BFP - Player monster can pick up items with its bounding box
+			if ( ( ent->client->ps.eFlags & EF_MONSTER ) 
+			&& ( mins[0] > hit->r.absmax[0] || maxs[0] < hit->r.absmin[0]
+			|| mins[1] > hit->r.absmax[1] || maxs[1] < hit->r.absmin[1]
+			|| mins[2] > hit->r.absmax[2] || maxs[2] < hit->r.absmin[2] ) ) {
+				continue;
+			}
 			if ( !BG_PlayerTouchesItem( &ent->client->ps, &hit->s, level.time ) ) {
 				continue;
 			}
