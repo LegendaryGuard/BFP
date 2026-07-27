@@ -52,6 +52,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define FL_NO_HUMANS			0x00004000	// spawn point just for bots
 // BFP - No force gesture flag
 // #define FL_FORCE_GESTURE		0x00008000	// force gesture on client
+#define FL_HITSTUN_KI_EMPTY		0x00008000	// BFP - Hit stun ki empty status
 
 // movers are things like doors, plats, buttons, etc
 typedef enum {

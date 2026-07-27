@@ -422,23 +422,6 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	client = ent->client;
 	client->timeResidual += msec;
 
-	// BFP - Ki boost consumption
-	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.eFlags & EF_KI_BOOST ) )
-	&& client->ps.stats[STAT_KI] > 0
-	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
-	&& !( client->ps.pm_flags & PMF_BLOCK )
-	&& client->ps.weaponstate != WEAPON_STUN ) {
-		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
-		float boostCostTotal = ( g_boostCost.value * 0.001 ) + ( g_boostCostPct.value * 0.1 ) * client->ps.stats[STAT_MAX_KI] * 0.0001;
-		// use msec to adjust the consumption
-		client->kiResidual += boostCostTotal * msec;
-		if ( client->kiResidual >= 1.0f ) {
-			int drop = (int)client->kiResidual;
-			client->ps.stats[STAT_KI] -= drop;
-			client->kiResidual -= drop;
-		}
-	}
-
 	// BFP - Charge ki
 	if ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA )
 	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
@@ -500,11 +483,20 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		}
 
 		// BFP - Regenerate ki
-		if ( !( client->pers.cmd.buttons & BUTTON_KI_USE ) && !( client->ps.eFlags & EF_KI_BOOST )
+		if ( ( ent->flags & FL_HITSTUN_KI_EMPTY )
+		|| ( !( client->pers.cmd.buttons & BUTTON_KI_USE ) && !( client->ps.eFlags & EF_KI_BOOST )
 		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) ) // don't increase when charging
 		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) // don't increase when trying to charge when stunned
-		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) ) { // don't increase when trying to attack when stunned
+		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) ) ) { // don't increase when trying to attack when stunned
 			client->ps.stats[STAT_KI] += g_kiRegen.value + ( g_kiRegenPct.value * client->ps.stats[STAT_MAX_KI] * 0.01 );
+			if ( ent->flags & FL_HITSTUN_KI_EMPTY ) {
+				client->ps.stats[STAT_HITSTUN_TIME] = 0;
+				ent->flags &= ~FL_HITSTUN_KI_EMPTY;
+				if ( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_KI] <= 0 ) {
+					client->ps.stats[STAT_HITSTUN_TIME] = 1000;
+					ent->flags |= FL_HITSTUN_KI_EMPTY;
+				}
+			}
 		}
 
 		// count down armor when over max
@@ -532,9 +524,25 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 			client->ps.stats[STAT_KI] /= flightCostTotal;
 		}
 		if ( client->ps.stats[STAT_KI] <= 0 ) {
-			client->ps.stats[STAT_HITSTUN_TIME] = 100; // handle time
-		} else {
 			client->ps.stats[STAT_HITSTUN_TIME] = 1000;
+			ent->flags |= FL_HITSTUN_KI_EMPTY;
+		}
+	}
+
+	// BFP - Ki boost consumption
+	if ( ( ( client->pers.cmd.buttons & BUTTON_KI_USE ) || ( client->ps.eFlags & EF_KI_BOOST ) )
+	&& client->ps.stats[STAT_KI] > 0
+	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
+	&& !( client->ps.pm_flags & PMF_BLOCK )
+	&& client->ps.weaponstate != WEAPON_STUN ) {
+		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
+		float boostCostTotal = ( g_boostCost.value * 0.001 ) + ( g_boostCostPct.value * 0.1 ) * client->ps.stats[STAT_MAX_KI] * 0.0001;
+		// use msec to adjust the consumption
+		client->kiResidual += boostCostTotal * msec;
+		if ( client->kiResidual >= 1.0f ) {
+			int drop = (int)client->kiResidual;
+			client->ps.stats[STAT_KI] -= drop;
+			client->kiResidual -= drop;
 		}
 	}
 }

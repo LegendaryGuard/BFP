@@ -199,6 +199,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - the player monster has a larger floating sprite chat
   - the player monster has a larger shadow effect similar to regular players
   - the player monster has a large dynamic light when charging or using ki
+  - the player monster has a fitting muzzle flash
   - the player monster's ki trails are larger than other players'
   - the player monster generates bigger bubbles, smoke, and antigrav rock particles when charging/using ki boost
   - the player monster can pick up items on the floor or where its hitbox can touch

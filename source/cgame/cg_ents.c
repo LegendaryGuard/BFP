@@ -506,8 +506,11 @@ static void CG_Missile( centity_t *cent ) {
 		CG_ModelSize( &ent, scale );
 	}
 
+	trap_R_AddRefEntityToScene( &ent );
+
+	// BFP - Don't add glow to the projectile
 	// add to refresh list, possibly with quad glow
-	CG_AddRefEntityWithPowerups( ent, s1, TEAM_FREE );
+	// CG_AddRefEntityWithPowerups( ent, s1, TEAM_FREE );
 }
 
 // BFP - no hook

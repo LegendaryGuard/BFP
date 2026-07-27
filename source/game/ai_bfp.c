@@ -617,10 +617,10 @@ BotBFPCheckChase
 ==================
 */
 static void BotBFPCheckChase( bot_state_t *bs, aas_entityinfo_t *entinfo, qboolean forceMelee ) {
-	vec3_t		dir, forward, up = { 0, 0, 1 }, sideward;
-	float		dist;
-	qboolean	visible;
-	float		meleeStrafeRange = g_meleeDiveRange.value + 130;
+	vec3_t			dir, forward, up = { 0, 0, 1 }, sideward;
+	float			dist;
+	qboolean		visible;
+	const float		BFP_BOT_MELEE_STRAFE_RANGE = 220;
 
 	// evasion
 	if ( bs->bfpEvadeTime > FloatTime() ) {
@@ -635,7 +635,7 @@ static void BotBFPCheckChase( bot_state_t *bs, aas_entityinfo_t *entinfo, qboole
 
 	visible = BotEntityVisible( bs->entitynum, bs->eye, bs->viewangles, BFP_BOT_FIELD_OF_VIEW, bs->enemy );
 	
-	if ( visible && dist <= meleeStrafeRange ) {
+	if ( visible && dist <= BFP_BOT_MELEE_STRAFE_RANGE ) {
 		bs->bfpButtons |= BUTTON_MELEE;
 	}
 
@@ -654,7 +654,7 @@ static void BotBFPCheckChase( bot_state_t *bs, aas_entityinfo_t *entinfo, qboole
 		return;
 	}
 
-	if ( visible && dist < meleeStrafeRange && bs->attackchase_time <= FloatTime() ) {
+	if ( visible && dist < BFP_BOT_MELEE_STRAFE_RANGE && bs->attackchase_time <= FloatTime() ) {
 		VectorCopy( dir, forward );
 		VectorNormalize( forward );
 		CrossProduct( forward, up, sideward );

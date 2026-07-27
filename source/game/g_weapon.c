@@ -187,7 +187,13 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	vec3_t		end;
 	gentity_t	*traceTarget;
 	vec3_t		traceMins, traceMaxs;
-	float		diveRange = g_meleeDiveRange.integer;
+	// BFP - Melee dive range
+	float		diveRange = ( g_meleeRange.integer > g_meleeDiveRange.integer ) ? g_meleeRange.integer : g_meleeDiveRange.integer;
+	if ( diveRange < 0 ) {
+		diveRange = 0;
+	}
+	// it isn't known why, but it's the approximation
+	diveRange += 15;
 
 	// BFP - Monster gamemode, adjust dive range for player monster
 	if ( attacker->client->ps.eFlags & EF_MONSTER ) {
@@ -255,8 +261,13 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 		gentity_t	*target;
 		vec3_t		direction;
 		float		distance;
-		// BFP - Melee range, it isn't known why, but it's the approximation
-		float		rangeMultiplier = g_meleeRange.integer + 45;
+		// BFP - Melee range
+		float		rangeMultiplier = g_meleeRange.integer;
+		if ( rangeMultiplier < 0 ) {
+			rangeMultiplier = 0;
+		}
+		// it isn't known why, but it's the approximation
+		rangeMultiplier += 45;
 
 		// BFP - Monster gamemode, adjust range multiplier for player monster
 		if ( attacker->client->ps.eFlags & EF_MONSTER ) {

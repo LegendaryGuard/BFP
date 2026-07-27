@@ -275,7 +275,7 @@ static qboolean PM_IsInKiAttackState( void ) { // BFP - Ki attack state
 	case WEAPON_READY:
 		// Rapid-fire weapons set weaponstate back to READY immediately
 		// but weaponTime stays > 0 during cooldown. Keep ki attack anim running
-		return ( pm->ps->weaponTime > 0 ) ? qtrue : qfalse;
+		return ( pm->ps->weaponTime > 0 );
 	default:
 		return qfalse;
 	}
@@ -3102,10 +3102,10 @@ static void PM_Weapon( void ) {
 			pm->ps->generic1 = 0;
 		} else {
 			if ( pm->ps->weaponTime <= 0 ) {
+				pm->ps->stats[STAT_KI] -= kiCost;
 				// BFP - sbeam attack type
 				if ( pm->attackType == ATK_SBEAM ) {
 					pm->ps->weaponTime += weaponTime;
-					pm->ps->stats[STAT_KI] -= kiCost;
 					pm->ps->weaponstate = WEAPON_ACTIVE;
 					// fire and make a sound
 					PM_AddEvent( EV_FIRE_WEAPON );
@@ -3142,8 +3142,7 @@ static void PM_Weapon( void ) {
 				pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
 				// no fully charged, skip...
 				if ( pm->ps->generic1 < pm->minCharge ) {
-					pm->ps->weaponstate = WEAPON_READY;
-					pm->ps->weaponTime = 0;
+					pm->ps->weaponstate = WEAPON_RAISING;
 					break;
 				}
 
@@ -3284,8 +3283,7 @@ static void PM_Weapon( void ) {
 			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
 			|| ( pm->cmd.buttons & BUTTON_MELEE )
 			|| pm->ps->weapon != pm->cmd.weapon ) { // avoid when changing weapon
-				pm->ps->weaponstate = WEAPON_READY;
-				pm->ps->weaponTime = 0;
+				pm->ps->weaponstate = WEAPON_RAISING;
 			}
 			break;
 		}
