@@ -101,6 +101,11 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 			}
 		} else {
 			scale = flashMissileScaleFactor;
+			// BFP - Make muzzle flash fit better for player monster
+			if ( ( cent->currentState.eFlags & EF_MONSTER )
+			|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
+				scale *= 8;
+			}
 		}
 		CG_ModelSize( &flashMissile, scale );
 	} else {
@@ -112,6 +117,11 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 			flashMissile.rotation = missileRotation;
 		} else {
 			scale = flashMissileRadius;
+			// BFP - Make muzzle flash fit better for player monster
+			if ( ( cent->currentState.eFlags & EF_MONSTER )
+			|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
+				scale *= 8;
+			}
 		}
 		flashMissile.radius = scale;
 	}
