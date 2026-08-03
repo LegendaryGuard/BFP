@@ -336,6 +336,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\source\game\bg_weaponconfig.c"
+				>
+			</File>
+			<File
 				RelativePath="..\source\game\g_active.c"
 				>
 			</File>

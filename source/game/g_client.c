@@ -718,6 +718,9 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 	// BFP - Resolve player model when loading by prefix
 	G_ResolvePlayerModel( userinfo, model, model, sizeof( model ) );
 
+	// BFP - BFP WEAPON CONFIG: Recompute the 5 attack slots -> weaponNum cache for this model
+	BG_SetClientAttackWeaponNums( clientNum, model );
+
 	// BFP - Kick/force to spectate the player who uses an illegal model which isn't available in the server
 	Q_strncpyz( modelCheck, G_GetPlayerModelName( clientNum, userinfo ), sizeof( modelCheck ) );
 	if ( !G_PlayerModelExistsOnServer( modelCheck )
@@ -917,6 +920,51 @@ void ClientCheckMonsterGone( gentity_t *ent ) { // BFP - Monster gamemode functi
 		}
 	}
 }
+
+/*
+=============
+ClientSetAttack
+=============
+*/
+void ClientSetAttack( gclient_t *client, int slot, bfpWeaponDef_t *def ) { // BFP - Set attack
+	switch ( def->attackType ) {
+	case ATK_BEAM:
+		client->ps.ammo[ slot ] = AMMOF_ATK_BEAM;
+		break;
+	case ATK_SBEAM:
+		client->ps.ammo[ slot ] = AMMOF_ATK_SBEAM;
+		break;
+	case ATK_FORCEFIELD:
+		client->ps.ammo[ slot ] = AMMOF_ATK_FORCEFIELD;
+		break;
+	default:
+		client->ps.ammo[ slot ] = AMMOF_ACTIVE;
+		break;
+	}
+	if ( def->chargeAttack ) {
+		client->ps.ammo[ slot ] |= AMMOF_CHARGEATTACK;
+	}
+	if ( def->chargeAutoFire ) {
+		client->ps.ammo[ slot ] |= AMMOF_CHARGEAUTOFIRE;
+	}
+	if ( def->loopingAnim ) {
+		client->ps.ammo[ slot ] |= AMMOF_LOOPINGANIM;
+	}
+	if ( def->noAttackAnim ) {
+		client->ps.ammo[ slot ] |= AMMOF_NOATTACKANIM;
+	}
+	// BFP - Debug ammo states for weapons
+#if 0
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_ATK_BEAM: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_ATK_BEAM );
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_ATK_SBEAM: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_ATK_SBEAM );
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_ATK_FORCEFIELD: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_ATK_FORCEFIELD );
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_CHARGEATTACK: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_CHARGEATTACK );
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_CHARGEAUTOFIRE: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_CHARGEAUTOFIRE );
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_LOOPINGANIM: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_LOOPINGANIM );
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_NOATTACKANIM: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_NOATTACKANIM );
+#endif
+}
+
 
 /*
 ===========
@@ -1395,29 +1443,25 @@ void ClientSpawn(gentity_t *ent) {
 	// BFP - Monster gamemode
 	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
 	&& client->ps.clientNum == level.monsterClientNum ) {
-		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_GRAPPLING_HOOK );
-		client->ps.ammo[WP_GRAPPLING_HOOK] = 100;
+		bfpWeaponDef_t	*def = BG_SetMonsterDefaultWeaponDef();
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_NONE );
+		client->ps.ammo[WP_NONE] = 1;
+		if ( def ) {
+			ClientSetAttack( client, WP_NONE, def );
+		}
 	} else {
-		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_MACHINEGUN );
-		client->ps.ammo[WP_MACHINEGUN] = 100;
-	
-		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_ROCKET_LAUNCHER );
-		client->ps.ammo[WP_ROCKET_LAUNCHER] = 100;
-	
-		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_PLASMAGUN );
-		client->ps.ammo[WP_PLASMAGUN] = 100;
-		
-		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_RAILGUN );
-		client->ps.ammo[WP_RAILGUN] = 100;
-		
-		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_BFG );
-		client->ps.ammo[WP_BFG] = 100;
-	
-		//client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GAUNTLET );
-		//client->ps.ammo[WP_GAUNTLET] = -1;
-		//client->ps.ammo[WP_GRAPPLING_HOOK] = -1;
-		client->ps.stats[STAT_WEAPONS] |= ( 1 << WP_GRAPPLING_HOOK );
-		client->ps.ammo[WP_GRAPPLING_HOOK] = 100;
+		int	slot;
+
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_NONE ) | ( 1 << WP_GAUNTLET ) | ( 1 << WP_MACHINEGUN ) | ( 1 << WP_SHOTGUN ) | ( 1 << WP_GRENADE_LAUNCHER );
+		for ( slot = 0; slot < BFP_NUM_WEAPONS; slot++ ) {
+			bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( client->ps.clientNum, slot );
+			if ( !def ) {
+				def = BG_SetDefaultWeaponDef();
+			}
+			if ( def ) {
+				ClientSetAttack( client, slot, def );
+			}
+		}
 	}
 
 	// health will count down towards max_health
@@ -1474,13 +1518,16 @@ void ClientSpawn(gentity_t *ent) {
 
 		// select the highest weapon number available, after any
 		// spawn given items have fired
-		client->ps.weapon = 1;
-		for ( i = WP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
+		client->ps.weapon = WP_NONE;	// BFP - First attack to be selected freely
+		// BFP - Make the first attack selected instead
+#if 0
+		for ( i = BFP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
 			if ( client->ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
 				client->ps.weapon = i;
 				break;
 			}
 		}
+#endif
 	}
 
 	// run a client frame to drop exactly to the floor,

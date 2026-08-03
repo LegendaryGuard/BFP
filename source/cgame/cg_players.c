@@ -1095,6 +1095,9 @@ void CG_NewClientInfo( int clientNum ) {
 		Q_strncpyz( newInfo.headSkinName, "default", sizeof( newInfo.headSkinName ) );
 	}
 
+	// BFP - BFP WEAPON CONFIG: Recompute the 5 attack slots -> weaponNum cache for this model
+	BG_SetClientAttackWeaponNums( clientNum, newInfo.modelName );
+
 	// BFP - Change the model without impeding with defer
 	// BFP - TODO: Remove cg_deferPlayers cvar and its unnecessary code in the future
 #if 0

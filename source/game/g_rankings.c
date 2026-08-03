@@ -164,6 +164,8 @@ void G_RankRunFrame()
 	}
 }
 
+// BFP - No rank fire weapon
+#if 0
 /*
 ================
 G_RankFireWeapon
@@ -218,6 +220,7 @@ void G_RankFireWeapon( int self, int weapon )
 		break;
 	}
 }
+#endif
 
 /*
 ================
@@ -634,6 +637,8 @@ void G_RankPlayerDie( int self, int attacker, int means_of_death )
 	}
 }
 
+// BFP - No G_RankWeaponTime, G_RankPickupWeapon and G_RankPickupAmmo
+#if 0
 /*
 ================
 G_RankWeaponTime
@@ -803,6 +808,7 @@ void G_RankPickupAmmo( int self, int weapon, int quantity )
 		break;
 	}
 }
+#endif
 
 /*
 ================

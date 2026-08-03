@@ -161,13 +161,21 @@ const char *G_GetPlayerModelName( int clientNum, const char userinfo[MAX_INFO_ST
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 	}
 
-	// if only executes the prefix, e.g. "bfp1-", loads the first player model in the list for this prefix
+	// if only executes the prefix, e.g. "bfp1-", loads the configured defaultModel
+	// for this prefix from bfp_attacksets.cfg; falls back to the first player model
+	// in the list alphabetically for this prefix if there's no attackset entry for it
 	len = strlen( model );
-	if ( len > 0 && model[len - 1] == '-' ) {
-		for ( i = 0; i < serverModels.numModels; ++i ) {
-			if ( !Q_strncmp( serverModels.modelNames[i], model, len ) ) {
-				Q_strncpyz( model, serverModels.modelNames[i], sizeof( model ) );
-				break;
+	if ( len > 0 ) {
+		const char	*found = BG_FindAttacksetDefaultModel( model );
+
+		if ( found ) {
+			Q_strncpyz( model, found, sizeof( model ) );
+		} else {
+			for ( i = 0; i < serverModels.numModels; ++i ) {
+				if ( !Q_strncmp( serverModels.modelNames[i], model, len ) ) {
+					Q_strncpyz( model, serverModels.modelNames[i], sizeof( model ) );
+					break;
+				}
 			}
 		}
 	}
@@ -212,8 +220,9 @@ void G_InitPlayerModelList( void ) { // BFP - For Illegal player model handling
 				Q_strncpyz( tempName, filePtr, sizeof(tempName) );
 			}
 
-			// filter only by prefix
-			if ( strchr( tempName, '-' ) ) {
+			// filter only models covered by a modelPrefix from bfp_attacksets.cfg
+			// (prefixes don't always end in '-', e.g. "a17")
+			if ( BG_ModelMatchesAnyAttacksetPrefix( tempName ) ) {
 				Q_strncpyz( serverModels.modelNames[serverModels.numModels], tempName, MAX_QPATH );
 				++serverModels.numModels;
 			}
@@ -282,16 +291,26 @@ void G_ResolvePlayerModel( const char userinfo[MAX_INFO_STRING], const char *inp
 		Q_strncpyz( model, Info_ValueForKey (userinfo, "model"), sizeof( model ) );
 	}
 
-	// if only executes the prefix, e.g. "bfp1-", loads the first player model in the list for this prefix
+	// if only executes the prefix, e.g. "bfp1-", loads the configured defaultModel
+	// for this prefix from bfp_attacksets.cfg; if there's no attackset entry for it
+	// (or no defaultModel was set), fall back to the first player model in the list
+	// alphabetically for this prefix
 	len = strlen( model );
 	if ( len > 0 && model[len - 1] == '-' ) {
+		const char	*found = BG_FindAttacksetDefaultModel( model );
+
 		resolved[0] = '\0';
-		for ( i = 0; i < serverModels.numModels; i++ ) {
-			if ( !Q_strncmp( serverModels.modelNames[i], model, len ) ) {
-				Q_strncpyz( resolved, serverModels.modelNames[i], sizeof(resolved) );
-				break;
+		if ( found ) {
+			Q_strncpyz( resolved, found, sizeof( resolved ) );
+		} else {
+			for ( i = 0; i < serverModels.numModels; i++ ) {
+				if ( !Q_strncmp( serverModels.modelNames[i], model, len ) ) {
+					Q_strncpyz( resolved, serverModels.modelNames[i], sizeof(resolved) );
+					break;
+				}
 			}
 		}
+
 		// if found, use it; else keep the original one, it might not exist
 		if ( resolved[0] ) {
 			Q_strncpyz( output, resolved, outSize );

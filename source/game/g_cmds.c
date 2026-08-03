@@ -248,7 +248,6 @@ void Cmd_Give_f (gentity_t *ent)
 {
 	char		*name;
 	gitem_t		*it;
-	int			i;
 	qboolean	give_all;
 	gentity_t		*it_ent;
 	trace_t		trace;
@@ -271,6 +270,9 @@ void Cmd_Give_f (gentity_t *ent)
 			return;
 	}
 
+	// BFP - Don't give all weapons, that part is supposed to be removed in the future,
+	// or put the maximum powerlevel and setting the maximum health and ki? Maybe it's ok...
+#if 0
 	if (give_all || Q_stricmp(name, "weapons") == 0)
 	{
 		ent->client->ps.stats[STAT_WEAPONS] = (1 << WP_NUM_WEAPONS) - 1 - 
@@ -278,11 +280,13 @@ void Cmd_Give_f (gentity_t *ent)
 		if (!give_all)
 			return;
 	}
+#endif
 
 	if (give_all || Q_stricmp(name, "ammo") == 0)
 	{
-		// BFP - TODO: Don't give all ammo to all weapons, that part is supposed to be removed in the future
-#if 1
+		// BFP - Don't give all ammo to all weapons, that part is supposed to be removed in the future
+#if 0
+		int			i;
 		for ( i = 0 ; i < MAX_WEAPONS ; i++ ) {
 			ent->client->ps.ammo[i] = 999;
 		}

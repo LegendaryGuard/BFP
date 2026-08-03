@@ -200,26 +200,6 @@ typedef struct {
 	qboolean	noFlight;			// BFP - No flight
 	qboolean	meleeOnly;			// BFP - Melee only
 
-	// BFP - TODO: bfp_weapon.cfg
-	int			weaponTime;			// BFP - Weapon time
-	int			randomWeaponTime;	// BFP - Milliseconds of random extra fire delay
-	qboolean	kiCostAsPct;		// BFP - Enables ki cost percentage
-	float		kiPct;				// BFP - Ki cost percentage (0.0 - 1.0)
-	int			kiCost;				// BFP - Ki cost
-
-	qboolean	chargeAttack;		// BFP - Charge attack
-	qboolean	chargeAutoFire;		// BFP - Charge autofire
-	int			minCharge;			// BFP - Minimum charge points
-	int			maxCharge;			// BFP - Maximum charge points
-
-	qboolean	loopingAnim;		// BFP - Looping ki attack animation
-	qboolean	noAttackAnim;		// BFP - No prepare ki attack animation
-
-	qboolean	railTrail;			// BFP - Rail trail weapon check
-	int			attackType;			// BFP - Attack type check
-	
-	int			movementPenalty;	// BFP - Seconds of movement penalty
-
 	int			framecount;
 
 	// results (out)
@@ -412,6 +392,127 @@ typedef enum {
 
 	WP_NUM_WEAPONS
 } weapon_t;
+
+// BFP - BFP number of weapon slots to be selected
+#define	BFP_NUM_WEAPONS			( WP_GRENADE_LAUNCHER + 1 )
+
+// BFP - ps->ammo[WP_*] bit flags for ki attacks, used to handle pmove snapshots
+// NOTE: may not have more than 16
+#define	AMMOF_ACTIVE			1
+#define	AMMOF_ATK_BEAM			2
+#define	AMMOF_ATK_SBEAM			4
+#define	AMMOF_ATK_FORCEFIELD	8
+#define	AMMOF_CHARGEATTACK		16
+#define	AMMOF_CHARGEAUTOFIRE	32
+#define	AMMOF_LOOPINGANIM		64
+#define	AMMOF_NOATTACKANIM		128
+
+// BFP - BFP WEAPON CONFIG
+/*
+===================================================================================
+
+BFP WEAPON CONFIG
+
+===================================================================================
+*/
+
+#define	MAX_BFP_ATTACKSETS		3072
+#define	MAX_BFP_WEAPON_DEFS		9999
+
+typedef struct {
+	qboolean	inuse;						// slot occupied by a parsed (attack_name) block
+	char		attackName[MAX_QPATH];		// (attack_name) tag
+	int			weaponNum;					// weaponNum
+
+	int			attackType;					// attackType: ATK_MISSILE / ATK_RDMISSILE / ATK_BEAM / ATK_SBEAM / ATK_HITSCAN / ATK_FORCEFIELD
+
+	int			weaponTime;					// weapon time
+	int			randomWeaponTime;			// milliseconds of random extra fire delay
+
+	qboolean	kiCostAsPct;				// enables ki cost percentage
+	float		kiPct;						// ki cost percentage (0.0 - 1.0)
+	int			kiCost;						// ki cost
+
+	qboolean	chargeAttack;				// charge attack
+	qboolean	chargeAutoFire;				// charge autofire - whether this projectile/effect's attack definition has chargeAutoFire set (e.g. forcefield's continuous think)
+	int			minCharge;					// minimum charge points
+	int			maxCharge;					// maximum charge points
+
+	int			damage;						// attack damage
+	int			splashDamage;				// attack splash damage
+	int			chargeDamageMult;			// damage added per charge level
+	int			maxDamage;					// damage cap when charged
+
+	int			radius;						// collision radius
+	int			chargeRadiusMult;			// collision radius added per charge level
+	int			maxRadius;					// collision radius cap when charged
+	int			explosionRadius;			// explosion radius (splashRadius)
+	int			chargeExpRadiusMult;		// explosion radius added per charge level
+	int			maxExpRadius;				// explosion cap radius when charged
+
+	int			missileSpeed;				// missile speed
+	float		homing;						// homing
+	float		homingRange;				// homing range
+	float		homingAcceleration;			// homing acceleration
+	float		range;						// range (hitscan only)
+
+	qboolean	loopingAnim;				// looping ki attack animation
+	qboolean	noAttackAnim;				// no prepare ki attack animation
+
+	float		alternatingXOffset;			// alternating X offset
+	float		randYOffset;				// random Y offset
+	float		randXOffset;				// random X offset
+	int			coneOfFireX;				// cone of fire X
+	int			coneOfFireY;				// cone of fire Y
+
+	qboolean	piercing;					// pierces any solid entity, it can deal 4 hits
+	qboolean	reflective;					// reflects projectiles (hitscan only)
+	int			priority;					// projectile priority, higher priority can break the projectile with lower priority
+	qboolean	blinding;					// blinds opponents during 6 seconds
+
+	// BFP - NOTE: That weapon property is unused in original BFP, so it won't make any difference
+	// just use missileGravity
+	// qboolean	usesGravity;				// projectile uses gravity
+
+	int			missileGravity;				// missile gravity
+	float		missileAcceleration;		// missile acceleration
+	int			missileDuration;			// missile lifetime duration
+
+	int			multishot;					// multishot, number of shots for a weapon
+	qboolean	bounces;					// projectile can bounce
+	float		bounceFriction;				// adds bounce friction (only 'bounces' enabled)
+	qboolean	noZBounce;					// no Z bounce (bounces at the same height from the ground, only 'bounces' enabled)
+
+	int			extraKnockback;				// extra knockback
+	qboolean	railTrail;					// rail trail (hitscan only)
+	int			movementPenalty;			// seconds of movement penalty (forcefield only)
+
+	int			explosionSpawn;				// explosion spawn (rdmissile only): weaponNum of the split projectile into on detonation
+} bfpWeaponDef_t;
+
+void			BG_LoadBFPWeaponConfig( void );
+bfpWeaponDef_t	*BG_FindBFPWeaponDef( int weaponNum );
+bfpWeaponDef_t	*BG_SetDefaultWeaponDef( void );
+bfpWeaponDef_t	*BG_SetMonsterDefaultWeaponDef( void );
+
+// BFP - bfp_attacksets.cfg: maps a player model prefix group to 5 weaponNum entries,
+// one per attack slot (WP_ATTACK_0 ... WP_ATTACK_4)
+typedef struct {
+	qboolean	inuse;
+	int			attacksetId;								// attackset [int]
+	int			attack[BFP_NUM_WEAPONS];				// attack [0-4] [weaponNum]
+	char		modelPrefix[MAX_QPATH];						// modelPrefix [string]
+	char		defaultModel[MAX_QPATH];					// defaultModel [string]
+} bfpAttacksetGroup_t;
+
+void			BG_LoadBFPAttacksetsConfig( void );
+const char		*BG_FindAttacksetDefaultModel( const char *modelPrefix );
+int				BG_GetWeaponNumForSlot( const char *modelName, int attackSlot );
+qboolean		BG_ModelMatchesAnyAttacksetPrefix( const char *modelName );
+void			BG_SetClientAttackWeaponNums( int clientNum, const char *modelName );
+bfpWeaponDef_t	*BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot );
+
+// BFP - End of BFP WEAPON CONFIG
 
 
 // reward sounds (stored in ps->persistant[PERS_PLAYEREVENTS])

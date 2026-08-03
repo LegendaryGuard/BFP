@@ -180,61 +180,27 @@ struct gentity_s {
 
 	gitem_t		*item;			// for bonus items
 
+	qboolean	bounces;		// BFP - Bounces for items
+
 	// BFP - Ki charge points
 	int			kiChargePoints;
-
-	// BFP - Attack type
-	int			attackType;
 
 	float		deltaTime;		// BFP - For beam struggle
 	float		distance;		// BFP - For beam struggle
 
-	// BFP - Parts of weapon config logic
-	int			missileDuration;		// BFP - Missile duration
-	int			missileGravity;			// BFP - Missile gravity
-	float		missileAcceleration;	// BFP - Missile acceleration
+	// BFP - BFP WEAPON CONFIG
+	bfpWeaponDef_t	*weaponDef;
 
-	qboolean	splitKiBall;		// BFP - Projectile state for splitting ki ball
+	qboolean	splitKiBall;			// BFP - Projectile state for splitting ki ball
+	qboolean	alternatingOffsetSide;	// BFP - For alternatingXOffset
 
-	qboolean	blinding;			// BFP - Blinding
 	int			blindedTime;		// BFP - Blind time
 
-	// BFP - NOTE: That weapon property is unused in original BFP, so it won't make any difference
-	// just use missileGravity
-	// qboolean	usesGravity;		// BFP - Projectile uses gravity
-
-	int			multishot;			// BFP - Multishot
-
-	float		radius;					// BFP - Collision radius
-	float		maxRadius;				// BFP - Collision radius cap when charged
-	int			maxDamage;				// BFP - Damage cap when charged
-	float		maxExpRadius;			// BFP - Explosion radius cap when charged
-	float		chargeRadiusMult;		// BFP - Collision radius added per charge level
-	int			chargeDamageMult;		// BFP - Damage added per charge level
-	float		chargeExpRadiusMult;	// BFP - Explosion radius added per charge level
-
-	qboolean	bounces;			// BFP - Bounces
-	float		bounceFriction;		// BFP - Bounce friction
-	qboolean	noZBounce;			// BFP - No Z bounce
-
-	qboolean	piercing;			// BFP - Piercing
 	qboolean	piercingFade;		// BFP - Piercing enter fade
 	int			piercingTouch;		// BFP - Piercing touch detected
 	int			piercingTime;		// BFP - Piercing time
 	int			piercingHitTime;	// BFP - Piercing hit time
 	vec3_t		piercingOrigin;		// BFP - Piercing origin
-
-	float		homing;				// BFP - Homing heading correction intensity (0.0 - 1.0)
-	float		homingRange;		// BFP - Homing range
-	float		homingAcceleration;	// BFP - Homing acceleration
-
-	int			forcefieldTime;		// BFP - Forcefield time
-
-	qboolean	reflective;			// BFP - Reflective
-
-	int			priority;			// BFP - Priority
-
-	int			extraKnockback;		// BFP - Extra knockback
 };
 
 #define	SPAWN_HEIGHT	0.0f
@@ -409,9 +375,6 @@ struct gclient_s {
 	int			zanzokenNumberTimesAllowed;
 	int			zanzokenDelay;
 	int			zanzokenLastUsed;
-
-	// BFP - For alternatingXOffset
-	qboolean	alternatingOffsetSide;
 
 	char		*areabits;
 };
@@ -627,6 +590,10 @@ extern char		*modNames[MOD_MAX];
 //
 // g_missile.c
 //
+#define	MISSILE_PRESTEP_TIME	50
+void G_ChargeDamageScaling( gentity_t *ent, int minCharge ); // BFP - Charge damage scaling
+void G_ExplodeMissile( gentity_t *ent ); // BFP - Explode missile, for nextthink
+void G_DetonateMissile( gentity_t *ent );	// BFP - Detonate a missile, for nextthink
 void G_RunMissile( gentity_t *ent );
 
 gentity_t *fire_blaster (gentity_t *self, vec3_t start, vec3_t aimdir);
@@ -687,8 +654,13 @@ qboolean CheckMeleeAttack( gentity_t *ent ); // BFP - Melee
 void Weapon_HookFree (gentity_t *ent);
 void Weapon_HookThink (gentity_t *ent);
 
+// BFP - Fire BFP projectile weapon
+gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir, bfpWeaponDef_t *def );
+
+// BFP - Rail trail fire
+void Weapon_RailTrail_Fire( gentity_t *ent );
+
 // BFP - BFP Beam attack
-void Weapon_BFPBeam_Fire ( gentity_t *ent );
 void Weapon_BFPBeamFree ( gentity_t *ent );
 void Weapon_BFPBeamRun ( gentity_t *ent );
 

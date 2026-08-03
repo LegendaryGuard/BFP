@@ -17,13 +17,12 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 
 ### Pending:
 
-- [ ] Attacksets ([bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg))
 - [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs and cfgs about that: Custom plugin models - default.cfg for each player model)
-- [ ] Weapon Config File ([bfp_weapon.cfg](cfgs/bfp_weapon.cfg) & [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg))
 
 ### Done:
 
 - [x] Animations as listed on the old docs
+- [x] Attacksets ([bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg))
 - [x] Auras
 - [x] Balanced player physics movements (different from the original BFP, but balanced for gameplay)
 - [x] Beam trails
@@ -76,6 +75,7 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 - [x] Third person traceable crosshair
 - [x] Toggeable flight (bind key)
 - [x] Transformations (related to Power Tiers)
+- [x] Weapon Config File ([bfp_weapon.cfg](cfgs/bfp_weapon.cfg) & [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg))
 
 
 ## Table of contents
@@ -525,6 +525,7 @@ The information in the map file can be useful for debugging and performance anal
 - ai_bfp.h
 - bg_events.h
 - bg_meansofdeath.h
+- bg_weaponconfig.c
 - cg_cvar.h
 - cg_trails.c
 - g_cvar.h

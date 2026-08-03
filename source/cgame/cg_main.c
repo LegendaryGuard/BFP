@@ -1211,6 +1211,12 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	// BFP - Load bfp.cfg
 	CG_LoadBFPConfig();
 
+	// BFP - Load bfp_weapon.cfg
+	BG_LoadBFPWeaponConfig();
+
+	// BFP - Load bfp_attacksets.cfg
+	BG_LoadBFPAttacksetsConfig();
+
 	CG_ShaderStateChanged();
 
 	trap_S_ClearLoopingSounds( qtrue );

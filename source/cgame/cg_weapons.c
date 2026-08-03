@@ -509,9 +509,12 @@ void CG_RegisterWeapon( int weaponNum ) {
 
 	weaponInfo = &cg_weapons[weaponNum];
 
+	// BFP - Don't restrict that weapon, it's the first one to be selected
+#if 0
 	if ( weaponNum == 0 ) {
 		return;
 	}
+#endif
 
 	if ( weaponInfo->registered ) {
 		return;
@@ -1282,7 +1285,7 @@ void CG_DrawWeaponSelect( void ) { // BFP - Modified Q3 selectable weapon HUD
 	// BFP - TODO: Change that selection to 5 selectable ki attacks
 	int		i;
 	int		bits;
-	int		count;
+	//int		count;
 	int		x, y, w;
 	char	*name;
 	float	*color;
@@ -1302,20 +1305,22 @@ void CG_DrawWeaponSelect( void ) { // BFP - Modified Q3 selectable weapon HUD
 	cg.itemPickupTime = 0;
 
 	// count the number of weapons owned
-	i = 0;
 	bits = cg.snap->ps.stats[ STAT_WEAPONS ];
+	// BFP - NOTE: This looks a way to debug the count for weapons, maybe to be removed
+#if 0
 	count = 0;
 	while ( ++i < 16 ) {
 		if ( bits & ( 1 << i ) ) {
 			++count;
 		}
 	}
+#endif
 
 	x = 10;
 	y = 75;
 
-	i = 0;
-	while ( ++i < 16 ) {
+	i = -1; // BFP - -1 instead 0, because first weapon can be selected
+	while ( ++i < BFP_NUM_WEAPONS ) {
 		if ( !( bits & ( 1 << i ) ) ) {
 			continue;
 		}
@@ -1389,9 +1394,9 @@ void CG_NextWeapon_f( void ) {
 	cg.weaponSelectTime = cg.time;
 	original = cg.weaponSelect;
 
-	for ( i = 0 ; i < 16 ; i++ ) {
+	for ( i = 0 ; i < BFP_NUM_WEAPONS ; i++ ) {
 		cg.weaponSelect++;
-		if ( cg.weaponSelect == 16 ) {
+		if ( cg.weaponSelect == BFP_NUM_WEAPONS ) {
 			cg.weaponSelect = 0;
 		}
 		// BFP - Don't lock the scroll to this weapon index
@@ -1404,7 +1409,7 @@ void CG_NextWeapon_f( void ) {
 			break;
 		}
 	}
-	if ( i == 16 ) {
+	if ( i == BFP_NUM_WEAPONS ) {
 		cg.weaponSelect = original;
 	}
 }
@@ -1428,10 +1433,10 @@ void CG_PrevWeapon_f( void ) {
 	cg.weaponSelectTime = cg.time;
 	original = cg.weaponSelect;
 
-	for ( i = 0 ; i < 16 ; i++ ) {
+	for ( i = 0 ; i < BFP_NUM_WEAPONS ; i++ ) {
 		cg.weaponSelect--;
-		if ( cg.weaponSelect == -1 ) {
-			cg.weaponSelect = 15;
+		if ( cg.weaponSelect < 0 ) {
+			cg.weaponSelect = BFP_NUM_WEAPONS - 1;
 		}
 		// BFP - Don't lock the scroll to this weapon index
 #if 0
@@ -1443,7 +1448,7 @@ void CG_PrevWeapon_f( void ) {
 			break;
 		}
 	}
-	if ( i == 16 ) {
+	if ( i == BFP_NUM_WEAPONS ) {
 		cg.weaponSelect = original;
 	}
 }
@@ -1465,7 +1470,7 @@ void CG_Weapon_f( void ) {
 
 	num = atoi( CG_Argv( 1 ) );
 
-	if ( num < 1 || num > 15 ) {
+	if ( num < 0 || num >= BFP_NUM_WEAPONS ) { // BFP - Changed num < 1 to num < 0 and num > 15 to num >= BFP_NUM_WEAPONS
 		return;
 	}
 
@@ -1490,7 +1495,7 @@ void CG_OutOfAmmoChange( void ) {
 
 	cg.weaponSelectTime = cg.time;
 
-	for ( i = 15 ; i > 0 ; i-- ) {
+	for ( i = BFP_NUM_WEAPONS - 1 ; i >= 0 ; i-- ) { // BFP - Changed i = 15 to BFP_NUM_WEAPONS - 1, and i > 0 to i >= 0 to get the first selected weapon
 		if ( CG_WeaponSelectable( i ) ) {
 			cg.weaponSelect = i;
 			break;
