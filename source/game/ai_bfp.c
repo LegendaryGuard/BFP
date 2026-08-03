@@ -62,46 +62,6 @@ static const float	bfpFlightChanceBySkill[6] = {
 	0.74f	// skill 5
 };
 
-// BFP - TODO: Just a test, replace for bfp_weapon.cfg
-static const int	bfpAttackSlots[] = {
-	WP_MACHINEGUN,
-	WP_SHOTGUN,
-	WP_GRENADE_LAUNCHER,
-	WP_ROCKET_LAUNCHER,
-	WP_GRAPPLING_HOOK
-};
-#define	BFP_NUM_ATTACK_SLOTS	( sizeof(bfpAttackSlots) / sizeof(bfpAttackSlots[0]) )
-
-typedef struct {
-	int			weaponNum;
-	int			attackType;
-	qboolean	chargeAttack;
-	qboolean	chargeAutoFire;
-} bfpWeaponProfile_t;
-
-static const bfpWeaponProfile_t bfpWeaponProfiles[] = {
-	{ WP_MACHINEGUN,		ATK_HITSCAN,	qfalse,	qfalse },
-	{ WP_SHOTGUN,			ATK_FORCEFIELD,	qtrue,	qtrue },
-	{ WP_GRENADE_LAUNCHER,	ATK_MISSILE,	qfalse,	qfalse },
-	{ WP_ROCKET_LAUNCHER,	ATK_MISSILE,	qfalse,	qfalse },
-	{ WP_GRAPPLING_HOOK,	ATK_BEAM,		qtrue,	qfalse }
-};
-
-/*
-==================
-BotBFPGetWeaponProfile
-==================
-*/
-static const bfpWeaponProfile_t *BotBFPGetWeaponProfile( int weaponNum ) {
-	int	i;
-	for ( i = 0; i < (int)( sizeof(bfpWeaponProfiles) / sizeof(bfpWeaponProfiles[0]) ); i++ ) {
-		if ( bfpWeaponProfiles[i].weaponNum == weaponNum ) {
-			return &bfpWeaponProfiles[i];
-		}
-	}
-	return NULL;
-}
-
 /*
 ==================
 BotBFPResetState
@@ -109,6 +69,7 @@ BotBFPResetState
 */
 void BotBFPResetState( bot_state_t *bs ) {
 	bs->bfpButtons = 0;
+    bs->weaponnum = WP_NONE;
 	bs->bfpKiRecharging = qfalse;
 	bs->bfpKiRechargeInterrupted_time = 0;
 	bs->bfpLastHealth = -1;
@@ -127,11 +88,6 @@ void BotBFPResetState( bot_state_t *bs ) {
 	bs->bfpSixthSenseStep_time = 0;
 	bs->bfpEvadeTime = 0;
 	VectorClear( bs->bfpEvadeDir );
-
-	// ensure a valid weapon is selected even before any combat logic runs
-	if ( bs->weaponnum <= WP_NONE ) {
-		bs->weaponnum = WP_GAUNTLET;
-	}
 }
 
 /*
@@ -472,20 +428,27 @@ BotBFPCheckWeaponSlot
 ==================
 */
 static void BotBFPCheckWeaponSlot( bot_state_t *bs ) {
-	int		weaponBits;
-	int		available[BFP_NUM_ATTACK_SLOTS];
-	int		numAvailable;
-	int		i, w;
-	int		pick;
+	int	i, pick;
+	int	weaponBits = bs->cur_ps.stats[STAT_WEAPONS];
 
 	if ( bs->cur_ps.weaponstate == WEAPON_RAISING
 	|| bs->cur_ps.weaponstate == WEAPON_DROPPING ) {
 		return;
 	}
 
-	if ( bs->weaponnum <= WP_NONE ) {
-		bs->weaponnum = WP_GAUNTLET;
-		trap_EA_SelectWeapon( bs->client, bs->weaponnum );
+	if ( bs->weaponnum < 0 || bs->weaponnum >= BFP_NUM_WEAPONS ) {
+		bs->weaponnum = 0;
+	}
+
+	if ( !( weaponBits & ( 1 << bs->weaponnum ) ) ) {
+		for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+			if ( weaponBits & ( 1 << i ) ) {
+				bs->weaponnum = i;
+				trap_EA_SelectWeapon( bs->client, i );
+				return;
+			}
+		}
+		return;
 	}
 
 	if ( bs->cur_ps.weaponstate == WEAPON_FIRING
@@ -494,36 +457,18 @@ static void BotBFPCheckWeaponSlot( bot_state_t *bs ) {
 		return;
 	}
 
-	weaponBits = bs->cur_ps.stats[STAT_WEAPONS];
-
-	numAvailable = 0;
-	for ( i = 0; i < (int)BFP_NUM_ATTACK_SLOTS; i++ ) {
-		w = bfpAttackSlots[i];
-		if ( weaponBits & ( 1 << w ) ) {
-			available[numAvailable++] = w;
-		}
-	}
-
-	if ( numAvailable <= 1 ) {
-		if ( numAvailable == 1 && bs->weaponnum != available[0] ) {
-			bs->weaponnum = available[0];
-			trap_EA_SelectWeapon( bs->client, bs->weaponnum );
-		}
-		return;
-	}
-
 	if ( bs->weaponchange_time > FloatTime() - BFP_BOT_WEAPON_SWITCH_MINTIME ) {
 		return;
 	}
-	if ( bs->weaponchange_time > FloatTime() - BFP_BOT_WEAPON_SWITCH_MAXTIME
-	&& random() > 0.65f ) {
+	if ( bs->weaponchange_time > FloatTime() - BFP_BOT_WEAPON_SWITCH_MAXTIME &&
+			random() > 0.65f ) {
 		return;
 	}
 
-	pick = available[0];
-	for ( i = 0; i < numAvailable; i++ ) {
-		if ( available[i] == bs->weaponnum ) {
-			pick = available[ ( i + 1 ) % numAvailable ];
+	pick = bs->weaponnum;
+	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+		pick = ( pick + 1 ) % BFP_NUM_WEAPONS;
+		if ( weaponBits & ( 1 << pick ) ) {
 			break;
 		}
 	}
@@ -531,7 +476,7 @@ static void BotBFPCheckWeaponSlot( bot_state_t *bs ) {
 	if ( pick != bs->weaponnum ) {
 		bs->weaponnum = pick;
 		bs->weaponchange_time = FloatTime();
-		trap_EA_SelectWeapon( bs->client, bs->weaponnum );
+		trap_EA_SelectWeapon( bs->client, pick );
 	}
 }
 
@@ -541,18 +486,27 @@ BotBFPCheckChargedAttack
 ==================
 */
 static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo ) {
-	const bfpWeaponProfile_t	*profile;
+	bfpWeaponDef_t	*def;
 	qboolean		lineOfFireClear;
-	bsp_trace_t 	trace;
+	bsp_trace_t		trace;
 
 	bs->bfpForceAttackOff = qfalse;
 
-	profile = BotBFPGetWeaponProfile( bs->weaponnum );
-	if ( !profile ) {
+	def = BG_GetClientWeaponDefForSlot( bs->client, bs->weaponnum );
+	if ( !def ) {
+		def = BG_SetDefaultWeaponDef();
+	}
+
+	if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
+		def = BG_SetMonsterDefaultWeaponDef();
+	}
+
+	if ( !def ) {
 		return;
 	}
 
-	if ( profile->chargeAutoFire ) {
+	// chargeAutoFire
+	if ( def->chargeAutoFire ) {
 		if ( bs->cur_ps.weaponstate == WEAPON_FIRING || bs->cur_ps.weaponstate == WEAPON_ACTIVE ) {
 			if ( bs->bfpChargeAutoFireStartTime == 0 ) {
 				bs->bfpChargeAutoFireStartTime = FloatTime();
@@ -569,18 +523,17 @@ static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo
 		}
 	}
 
-	if ( bs->cur_ps.weaponstate == WEAPON_FIRING && profile->chargeAttack ) {
+	// chargeAttack
+	if ( bs->cur_ps.weaponstate == WEAPON_FIRING && def->chargeAttack ) {
 		if ( bs->bfpButtons & BUTTON_KI_CHARGE ) {
 			return;
 		}
-
 		bs->bfpButtons |= BUTTON_ATTACK;
 
 		if ( bs->cur_ps.eFlags & EF_READY_KI_ATTACK ) {
 			BotAI_Trace( &trace, bs->eye, NULL, NULL, bs->aimtarget, bs->client,
 					CONTENTS_SOLID | CONTENTS_PLAYERCLIP );
 			lineOfFireClear = ( trace.fraction >= 1.0f || trace.ent == bs->enemy );
-
 			if ( lineOfFireClear ) {
 				bs->bfpForceAttackOff = qtrue;
 			}
@@ -588,7 +541,8 @@ static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo
 		return;
 	}
 
-	if ( profile->attackType == ATK_SBEAM ) {
+	// sbeam
+	if ( def->attackType == ATK_SBEAM ) {
 		if ( bs->cur_ps.weaponstate == WEAPON_READY || bs->cur_ps.weaponstate == WEAPON_ACTIVE ) {
 			bs->bfpButtons |= BUTTON_ATTACK;
 			bs->bfpForceAttackOff = qfalse;
@@ -600,12 +554,12 @@ static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo
 		bs->bfpLastWeaponState = bs->cur_ps.weaponstate;
 	}
 
-	if ( bs->cur_ps.weaponstate == WEAPON_ACTIVE && profile->attackType == ATK_BEAM ) {
+	// beam
+	if ( bs->cur_ps.weaponstate == WEAPON_ACTIVE && def->attackType == ATK_BEAM ) {
 		bs->bfpForceAttackOff = qtrue;
 		return;
 	}
-
-	if ( bs->cur_ps.weaponstate == WEAPON_BEAMSTRUGGLE && profile->attackType == ATK_BEAM ) {
+	if ( bs->cur_ps.weaponstate == WEAPON_BEAMSTRUGGLE && def->attackType == ATK_BEAM ) {
 		bs->bfpForceAttackOff = qtrue;
 		return;
 	}

@@ -14,6 +14,8 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/game/bg_slidemove.c
 @if errorlevel 1 goto quit
+%cc%  %src%/game/bg_weaponconfig.c
+@if errorlevel 1 goto quit
 %cc% %src%/game/bg_lib.c
 @if errorlevel 1 goto quit
 %cc% %src%/game/q_math.c

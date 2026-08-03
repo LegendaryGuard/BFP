@@ -1089,27 +1089,18 @@ int AINode_Respawn(bot_state_t *bs) {
 BotSelectActivateWeapon
 ==================
 */
-int BotSelectActivateWeapon(bot_state_t *bs) {
-	//
-	if (bs->inventory[INVENTORY_MACHINEGUN] > 0 && bs->inventory[INVENTORY_BULLETS] > 0)
-		return WEAPONINDEX_MACHINEGUN;
-	else if (bs->inventory[INVENTORY_SHOTGUN] > 0 && bs->inventory[INVENTORY_SHELLS] > 0)
-		return WEAPONINDEX_SHOTGUN;
-	else if (bs->inventory[INVENTORY_PLASMAGUN] > 0 && bs->inventory[INVENTORY_CELLS] > 0)
-		return WEAPONINDEX_PLASMAGUN;
-	else if (bs->inventory[INVENTORY_LIGHTNING] > 0 && bs->inventory[INVENTORY_LIGHTNINGAMMO] > 0)
-		return WEAPONINDEX_LIGHTNING;
-	else if (bs->inventory[INVENTORY_GRENADELAUNCHER] > 0 && bs->inventory[INVENTORY_GRENADES] > 0)
-		return WEAPONINDEX_GRENADE_LAUNCHER;
-	else if (bs->inventory[INVENTORY_RAILGUN] > 0 && bs->inventory[INVENTORY_SLUGS] > 0)
-		return WEAPONINDEX_RAILGUN;
-	else if (bs->inventory[INVENTORY_ROCKETLAUNCHER] > 0 && bs->inventory[INVENTORY_ROCKETS] > 0)
-		return WEAPONINDEX_ROCKET_LAUNCHER;
-	else if (bs->inventory[INVENTORY_BFG10K] > 0 && bs->inventory[INVENTORY_BFGAMMO] > 0)
-		return WEAPONINDEX_BFG;
-	else {
-		return -1;
+int BotSelectActivateWeapon(bot_state_t *bs) { // BFP - HIGHLY MODIFIED: for BFP weapon config
+	int	i;
+	if ( bs->weaponnum >= 0 && bs->weaponnum < BFP_NUM_WEAPONS
+	&& ( bs->cur_ps.stats[STAT_WEAPONS] & ( 1 << bs->weaponnum ) ) ) {
+		return bs->weaponnum;
 	}
+	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+		if ( bs->cur_ps.stats[STAT_WEAPONS] & ( 1 << i ) ) {
+			return i;
+		}
+	}
+	return 0;
 }
 
 

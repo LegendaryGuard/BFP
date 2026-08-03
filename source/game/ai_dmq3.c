@@ -888,19 +888,36 @@ int BotSynonymContext(bot_state_t *bs) {
 BotChooseWeapon
 ==================
 */
-void BotChooseWeapon(bot_state_t *bs) {
-	int newweaponnum;
+void BotChooseWeapon(bot_state_t *bs) { // BFP - HIGHLY MODIFIED: for BFP weapon config
+	int	i, bestSlot = -1;
+	int	bestDamage = 0;
+	bfpWeaponDef_t	*def;
 
-	if (bs->cur_ps.weaponstate == WEAPON_RAISING ||
-			bs->cur_ps.weaponstate == WEAPON_DROPPING) {
-		trap_EA_SelectWeapon(bs->client, bs->weaponnum);
+	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+		if ( !( bs->cur_ps.stats[STAT_WEAPONS] & ( 1 << i ) ) ) {
+			continue;
+		}
+		def = BG_GetClientWeaponDefForSlot( bs->client, i );
+		if ( !def ) {
+			def = BG_SetDefaultWeaponDef();
+		}
+
+		if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
+			def = BG_SetMonsterDefaultWeaponDef();
+		}
+		if ( !def ) {
+			continue;
+		}
+		if ( def->damage > bestDamage ) {
+			bestDamage = def->damage;
+			bestSlot = i;
+		}
 	}
-	else {
-		newweaponnum = trap_BotChooseBestFightWeapon(bs->ws, bs->inventory);
-		if (bs->weaponnum != newweaponnum) bs->weaponchange_time = FloatTime();
-		bs->weaponnum = newweaponnum;
-		//BotAI_Print(PRT_MESSAGE, "bs->weaponnum = %d\n", bs->weaponnum);
-		trap_EA_SelectWeapon(bs->client, bs->weaponnum);
+
+	if ( bestSlot != -1 && bestSlot != bs->weaponnum ) {
+		bs->weaponnum = bestSlot;
+		bs->weaponchange_time = FloatTime();
+		trap_EA_SelectWeapon( bs->client, bestSlot );
 	}
 }
 
@@ -958,33 +975,12 @@ BotUpdateInventory
 ==================
 */
 void BotUpdateInventory(bot_state_t *bs) {
+	// BFP - HIGHLY MODIFIED
 	int oldinventory[MAX_ITEMS];
 
 	memcpy(oldinventory, bs->inventory, sizeof(oldinventory));
 	//armor
 	bs->inventory[INVENTORY_ARMOR] = bs->cur_ps.stats[STAT_ARMOR];
-	//weapons
-	// BFP - TODO: Just a test, bfp_weapon.cfg needs to be implemented and replace all stuff here
-	bs->inventory[INVENTORY_GAUNTLET] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GAUNTLET)) != 0;
-	bs->inventory[INVENTORY_MACHINEGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_MACHINEGUN)) != 0;
-	bs->inventory[INVENTORY_SHOTGUN] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_SHOTGUN)) != 0;
-	bs->inventory[INVENTORY_GRENADELAUNCHER] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRENADE_LAUNCHER)) != 0;
-	bs->inventory[INVENTORY_GRAPPLINGHOOK] = (bs->cur_ps.stats[STAT_WEAPONS] & (1 << WP_GRAPPLING_HOOK)) != 0;
-
-	bs->inventory[INVENTORY_ROCKETLAUNCHER] =
-	bs->inventory[INVENTORY_LIGHTNING] =
-	bs->inventory[INVENTORY_RAILGUN] =
-	bs->inventory[INVENTORY_PLASMAGUN] =
-	bs->inventory[INVENTORY_BFG10K] = 0;
-	//ammo
-	bs->inventory[INVENTORY_SHELLS] = 
-	bs->inventory[INVENTORY_BULLETS] = 
-	bs->inventory[INVENTORY_GRENADES] = 
-	bs->inventory[INVENTORY_CELLS] = 
-	bs->inventory[INVENTORY_LIGHTNINGAMMO] = 
-	bs->inventory[INVENTORY_ROCKETS] = 
-	bs->inventory[INVENTORY_SLUGS] = 
-	bs->inventory[INVENTORY_BFGAMMO] = 1;
 	//powerups
 	bs->inventory[INVENTORY_HEALTH] = bs->cur_ps.stats[STAT_HEALTH];
 	bs->inventory[INVENTORY_TELEPORTER] = bs->cur_ps.stats[STAT_HOLDABLE_ITEM] == MODELINDEX_TELEPORTER;
@@ -1197,15 +1193,15 @@ BotFeelingBad
 ==================
 */
 float BotFeelingBad(bot_state_t *bs) {
-	if (bs->weaponnum == WP_GAUNTLET) {
+	/*if (bs->weaponnum == WP_GAUNTLET) {
 		return 100;
-	}
+	}*/
 	if (bs->inventory[INVENTORY_HEALTH] < 40) {
 		return 100;
 	}
-	if (bs->weaponnum == WP_MACHINEGUN) {
+	/*if (bs->weaponnum == WP_MACHINEGUN) {
 		return 90;
-	}
+	}*/
 	if (bs->inventory[INVENTORY_HEALTH] < 60) {
 		return 80;
 	}
@@ -1577,14 +1573,14 @@ bot_moveresult_t BotAttackMove(bot_state_t *bs, int tfl) {
 			bs->attackjump_time = FloatTime() + 1;
 		}
 	}
-	if (bs->cur_ps.weapon == WP_GAUNTLET) {
+	/*if (bs->cur_ps.weapon == WP_GAUNTLET) {
 		attack_dist = 0;
 		attack_range = 0;
 	}
-	else {
+	else {*/
 		attack_dist = IDEAL_ATTACKDIST;
 		attack_range = 40;
-	}
+	//}
 	//if the bot is stupid
 	if (attack_skill <= 0.4) {
 		//just walk to or away from the enemy
@@ -2053,7 +2049,7 @@ BotAimAtEnemy
 */
 void BotAimAtEnemy(bot_state_t *bs) {
 	int i, enemyvisible;
-	float dist, f, aim_skill, aim_accuracy, speed, reactiontime;
+	float dist, aim_skill, aim_accuracy, speed, reactiontime;
 	vec3_t dir, bestorigin, end, start, groundtarget, cmdmove, enemyvelocity;
 	vec3_t mins = {-4,-4,-4}, maxs = {4, 4, 4};
 	weaponinfo_t wi;
@@ -2102,6 +2098,7 @@ void BotAimAtEnemy(bot_state_t *bs) {
 
 	//get the weapon information
 	trap_BotGetWeaponInfo(bs->ws, bs->weaponnum, &wi);
+	/*
 	//get the weapon specific aim accuracy and or aim skill
 	if (wi.number == WP_MACHINEGUN) {
 		aim_accuracy = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_AIM_ACCURACY_MACHINEGUN, 0, 1);
@@ -2131,6 +2128,7 @@ void BotAimAtEnemy(bot_state_t *bs) {
 		aim_accuracy = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_AIM_ACCURACY_BFG10K, 0, 1);
 		aim_skill = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_AIM_SKILL_BFG10K, 0, 1);
 	}
+	*/
 	//
 	if (aim_accuracy <= 0) aim_accuracy = 0.0001f;
 	//get the enemy entity information
@@ -2276,8 +2274,8 @@ void BotAimAtEnemy(bot_state_t *bs) {
 		if (aim_skill > 0.5) {
 			//do prediction shots around corners
 			if (wi.number == WP_BFG ||
-				wi.number == WP_ROCKET_LAUNCHER ||
-				wi.number == WP_GRENADE_LAUNCHER) {
+				wi.number == WP_ROCKET_LAUNCHER ) {
+				//|| wi.number == WP_GRENADE_LAUNCHER) {
 				//create the chase goal
 				goal.entitynum = bs->client;
 				goal.areanum = bs->areanum;
@@ -2307,6 +2305,7 @@ void BotAimAtEnemy(bot_state_t *bs) {
 	//get aim direction
 	VectorSubtract(bestorigin, bs->eye, dir);
 	//
+	/*
 	if (wi.number == WP_MACHINEGUN ||
 		wi.number == WP_SHOTGUN ||
 		wi.number == WP_LIGHTNING ||
@@ -2317,6 +2316,7 @@ void BotAimAtEnemy(bot_state_t *bs) {
 		f = 0.6 + dist / 150 * 0.4;
 		aim_accuracy *= f;
 	}
+	*/
 	//add some random stuff to the aim direction depending on the aim accuracy
 	if (aim_accuracy < 0.8) {
 		VectorNormalize(dir);
@@ -2400,11 +2400,11 @@ void BotCheckAttack(bot_state_t *bs) {
 	//
 	VectorSubtract(bs->aimtarget, bs->eye, dir);
 	//
-	if (bs->weaponnum == WP_GAUNTLET) {
+	/*if (bs->weaponnum == WP_GAUNTLET) {
 		if (VectorLengthSquared(dir) > Square(60)) {
 			return;
 		}
-	}
+	}*/
 	if (VectorLengthSquared(dir) < Square(100))
 		fov = 120;
 	else
@@ -3505,9 +3505,10 @@ BotCheckEvents
 ==================
 */
 void BotCheckForGrenades(bot_state_t *bs, entityState_t *state) {
+	// BFP - TODO: missileGravity
 	// if this is not a grenade
-	if (state->eType != ET_MISSILE || state->weapon != WP_GRENADE_LAUNCHER)
-		return;
+	//if (state->eType != ET_MISSILE || state->weapon != WP_GRENADE_LAUNCHER)
+	//	return;
 	// try to avoid the grenade
 	trap_BotAddAvoidSpot(bs->ms, state->pos.trBase, 160, AVOID_ALWAYS);
 }

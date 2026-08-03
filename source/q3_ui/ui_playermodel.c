@@ -74,8 +74,6 @@ static char* playermodel_artlist[] =
 #define ID_NEXTPAGE			101
 #define ID_BACK				102
 
-#define MAX_KIATTACKS		5	// BFP - Maximum of ki attacks
-
 #define MAX_NAMELENGTH		20	// BFP - Name textinput length
 
 typedef struct
@@ -83,7 +81,7 @@ typedef struct
 	menuframework_s	menu;
 	menubitmap_s	pics[MAX_MODELSPERPAGE];
 	menubitmap_s	picbuttons[MAX_MODELSPERPAGE];
-	menubitmap_s	kipics[MAX_KIATTACKS]; // BFP - Ki attack sets
+	menubitmap_s	kipics[BFP_NUM_WEAPONS]; // BFP - Ki attack sets
 	menubitmap_s	menubg; // BFP - Menu background
 	menubitmap_s	barlog; // BFP - barlog
 	menutext_s		banner;
@@ -106,6 +104,114 @@ typedef struct
 } playermodel_t;
 
 static playermodel_t s_playermodel;
+
+// BFP - modelPrefix values loaded from bfp_attacksets.cfg, used to filter
+// which models/players directories are valid selectable characters
+static char	s_attacksetPrefixes[MAX_BFP_ATTACKSETS][MAX_QPATH];
+static int	s_numAttacksetPrefixes;
+
+/*
+=================
+UI_LoadBFPAttacksetPrefixes
+
+Parses bfp_attacksets.cfg and caches every modelPrefix value found.
+Only the prefixes are kept (not attack/defaultModel data) since the
+UI only needs them to know which models/players directories are
+valid selectable characters.
+=================
+*/
+static void UI_LoadBFPAttacksetPrefixes( void ) // BFP - Load modelPrefix list from bfp_attacksets.cfg for model list filtering
+{
+	fileHandle_t	f;
+	int				len;
+	char			buf[BFP_CFG_BUFFER_SIZE];
+	char			*ptr;
+
+	s_numAttacksetPrefixes = 0;
+
+	len = trap_FS_FOpenFile( "bfp_attacksets.cfg", &f, FS_READ );
+	if ( !f ) {
+		return;
+	}
+
+	if ( len >= sizeof( buf ) ) {
+		trap_FS_FCloseFile( f );
+		return;
+	}
+
+	trap_FS_Read( buf, len, f );
+	buf[len] = 0;
+	trap_FS_FCloseFile( f );
+
+	ptr = buf;
+	while ( *ptr ) {
+		while ( *ptr && ( *ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n' ) ) {
+			ptr++;
+		}
+
+		if ( !*ptr ) {
+			break;
+		}
+
+		if ( !Q_strncmp( ptr, "end", 3 ) ) {
+			break;
+		}
+
+		if ( !Q_strncmp( ptr, "modelPrefix", 11 ) && ( ptr[11] == ' ' || ptr[11] == '\t' ) ) {
+			char	value[MAX_QPATH];
+			int		i;
+
+			ptr += 11;
+			while ( *ptr && ( *ptr == ' ' || *ptr == '\t' ) ) {
+				ptr++;
+			}
+
+			i = 0;
+			while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof( value ) - 1 ) {
+				value[i++] = *ptr++;
+			}
+			value[i] = 0;
+
+			if ( value[0] && s_numAttacksetPrefixes < MAX_BFP_ATTACKSETS ) {
+				Q_strncpyz( s_attacksetPrefixes[s_numAttacksetPrefixes], value, sizeof( s_attacksetPrefixes[0] ) );
+				s_numAttacksetPrefixes++;
+			}
+		} else {
+			while ( *ptr && *ptr != '\n' && *ptr != '\r' ) {
+				ptr++;
+			}
+		}
+
+		while ( *ptr && ( *ptr == '\n' || *ptr == '\r' ) ) {
+			ptr++;
+		}
+	}
+}
+
+/*
+=================
+UI_ModelMatchesAnyAttacksetPrefix
+
+Returns qtrue if "modelName" starts with (case-insensitive) one of
+the modelPrefix values cached by UI_LoadBFPAttacksetPrefixes.
+=================
+*/
+static qboolean UI_ModelMatchesAnyAttacksetPrefix( const char *modelName ) // BFP - Prefix membership check against bfp_attacksets.cfg
+{
+	int	i, prefixLen;
+
+	for ( i = 0; i < s_numAttacksetPrefixes; i++ ) {
+		prefixLen = strlen( s_attacksetPrefixes[i] );
+		if ( prefixLen == 0 ) {
+			continue;
+		}
+		if ( !Q_stricmpn( modelName, s_attacksetPrefixes[i], prefixLen ) ) {
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
 
 /*
 =================
@@ -617,6 +723,11 @@ static void PlayerModel_BuildList( void )
 	s_playermodel.modelpage = 0;
 	s_playermodel.nummodels = 0;
 
+	// BFP - load modelPrefix list from bfp_attacksets.cfg before filtering
+	// models/players directories, so prefixes that don't end in '-'
+	// (e.g. "a17") are recognized correctly
+	UI_LoadBFPAttacksetPrefixes();
+
 	// iterate directory of all player models
 	numdirs = trap_FS_GetFileList("models/players", "/", dirlist, 2048 );
 	dirptr  = dirlist;
@@ -633,8 +744,9 @@ static void PlayerModel_BuildList( void )
 		if ( !Q_stricmp( dirptr, MONSTER_NAME ) )
 			continue;
 
-		// BFP - Skip player models without prefix
-		if ( !strchr( dirptr, '-' ) )
+		// BFP - Skip player models not covered by any modelPrefix in bfp_attacksets.cfg
+		// (prefixes don't always end in '-', e.g. "a17")
+		if ( !UI_ModelMatchesAnyAttacksetPrefix( dirptr ) )
 			continue;
 
 		// iterate all skin files in directory
@@ -835,7 +947,7 @@ static void PlayerModel_MenuInit( void )
 
 	// BFP - Draw ki attacks of the selected player
 	y =	150;
-	for (i=0; i<MAX_KIATTACKS; i++)
+	for (i=0; i<BFP_NUM_WEAPONS; i++)
 	{
 		s_playermodel.kipics[i].generic.type	 = MTYPE_BITMAP;
 		s_playermodel.kipics[i].generic.flags	 = QMF_LEFT_JUSTIFY|QMF_INACTIVE;
@@ -932,7 +1044,7 @@ static void PlayerModel_MenuInit( void )
 	Menu_AddItem( &s_playermodel.menu,	&s_playermodel.back );
 
 #if 1
-	for (i=0; i<MAX_KIATTACKS; i++)
+	for (i=0; i<BFP_NUM_WEAPONS; i++)
 	{
 		Menu_AddItem( &s_playermodel.menu,	&s_playermodel.kipics[i] );
 	}

@@ -132,131 +132,6 @@ static void PM_ForceLegsAnim( int anim ) {
 	PM_StartLegsAnim( anim );
 }
 
-/*
-===============
-PM_SetupBFP_weaponCfg
-===============
-*/
-static void PM_SetupBFP_weaponCfg( void ) { // BFP - TODO: Set initialized bfp_weapon.cfg properties to every weapon
-	// BFP - Testing randomWeaponTime, loopingAnim, noAttackAnim, 
-	// chargeAttack, chargeAutoFire, movementPenalty
-	switch ( pm->ps->weapon ) {
-	case WP_GAUNTLET:
-		pm->attackType = ATK_HITSCAN;
-		pm->weaponTime = 100;
-		pm->kiCostAsPct = qtrue;
-		pm->kiPct = .010;
-		pm->kiCost = 0;
-		pm->chargeAttack = qfalse;
-		pm->chargeAutoFire = qfalse;
-		pm->loopingAnim = qtrue;
-		pm->noAttackAnim = qfalse;
-		pm->railTrail = qfalse;
-		return;
-	case WP_MACHINEGUN:
-		pm->attackType = ATK_HITSCAN;
-		pm->weaponTime = 50;
-		pm->randomWeaponTime = 100;
-		pm->kiCostAsPct = qtrue;
-		pm->kiPct = .010;
-		pm->kiCost = 0;
-		pm->chargeAttack = qfalse;
-		pm->chargeAutoFire = qfalse;
-		pm->loopingAnim = qtrue;
-		pm->noAttackAnim = qfalse;
-		pm->railTrail = qfalse;
-		return;
-	case WP_SHOTGUN:
-		pm->attackType = ATK_FORCEFIELD;
-		pm->weaponTime = 200;
-		pm->kiCostAsPct = qfalse;
-		pm->kiPct = 0;
-		pm->kiCost = 200;
-		pm->minCharge = 4;
-		pm->maxCharge = 0;
-		pm->chargeAttack = qtrue;
-		pm->chargeAutoFire = qtrue;
-		pm->loopingAnim = qfalse;
-		pm->noAttackAnim = qfalse;
-		pm->movementPenalty = 2 * 1000;
-		return;
-	case WP_GRENADE_LAUNCHER:
-	case WP_ROCKET_LAUNCHER:
-		pm->attackType = ATK_MISSILE;
-		pm->weaponTime = 1000;
-		pm->kiCostAsPct = qfalse;
-		pm->kiPct = 0;
-		pm->kiCost = 10;
-		pm->chargeAttack = qfalse;
-		pm->chargeAutoFire = qfalse;
-		pm->loopingAnim = qfalse;
-		pm->noAttackAnim = qfalse;
-		return;
-	case WP_BFG:
-		pm->attackType = ATK_MISSILE;
-		pm->weaponTime = 1000;
-		pm->kiCostAsPct = qfalse;
-		pm->kiPct = 0;
-		pm->kiCost = 250;
-		pm->minCharge = 2;
-		pm->maxCharge = 6;
-		pm->chargeAttack = qtrue;
-		pm->chargeAutoFire = qfalse;
-		pm->loopingAnim = qfalse;
-		pm->noAttackAnim = qfalse;
-		return;
-	case WP_RAILGUN:
-		pm->attackType = ATK_HITSCAN;
-		pm->weaponTime = 1500;
-		pm->kiCostAsPct = qfalse;
-		pm->kiPct = 0;
-		pm->kiCost = 500;
-		pm->chargeAttack = qfalse;
-		pm->chargeAutoFire = qfalse;
-		pm->loopingAnim = qfalse;
-		pm->noAttackAnim = qfalse;
-		pm->railTrail = qtrue;
-		return;
-	case WP_PLASMAGUN:
-		pm->attackType = ATK_RDMISSILE;
-		pm->weaponTime = 1250;
-		pm->kiCostAsPct = qfalse;
-		pm->kiPct = 0;
-		pm->kiCost = 200;
-		pm->chargeAttack = qtrue;
-		pm->chargeAutoFire = qfalse;
-		pm->minCharge = 2;
-		pm->maxCharge = 6;
-		pm->loopingAnim = qfalse;
-		pm->noAttackAnim = qfalse;
-		return;
-	case WP_LIGHTNING:
-		pm->attackType = ATK_HITSCAN;
-		pm->weaponTime = 50;
-		pm->kiCostAsPct = qtrue;
-		pm->kiPct = .015;
-		pm->kiCost = 0;
-		pm->chargeAttack = qfalse;
-		pm->chargeAutoFire = qfalse;
-		pm->loopingAnim = qfalse;
-		pm->noAttackAnim = qfalse;
-		pm->railTrail = qfalse;
-		return;
-	case WP_GRAPPLING_HOOK:
-		pm->attackType = ATK_BEAM;
-		pm->weaponTime = 500;
-		pm->kiCostAsPct = qfalse;
-		pm->kiPct = 0;
-		pm->kiCost = 250;
-		pm->chargeAttack = qtrue;
-		pm->chargeAutoFire = qfalse;
-		pm->minCharge = 2;
-		pm->maxCharge = 6;
-		pm->loopingAnim = qfalse;
-		pm->noAttackAnim = qfalse;
-	}
-}
-
 
 /*
 ================
@@ -289,8 +164,22 @@ Handles attack animations through noAttackAnim and loopingAnim
 ================
 */
 static void PM_AttackAnim( int anim, int prepareAnim ) { // BFP - Handles attack animations through noAttackAnim and loopingAnim
+	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR ) {
+		return;
+	}
+
+	// debug the selected weapon properties
+#if 0
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_ATK_BEAM: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_ATK_BEAM );
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_ATK_SBEAM: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_ATK_SBEAM );
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_ATK_FORCEFIELD: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_ATK_FORCEFIELD );
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_CHARGEATTACK: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_CHARGEATTACK );
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_CHARGEAUTOFIRE: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_CHARGEAUTOFIRE );
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_LOOPINGANIM: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_LOOPINGANIM );
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_NOATTACKANIM: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_NOATTACKANIM );
+#endif
 	// noAttackAnim
-	if ( pm->noAttackAnim ) {
+	if ( pm->ps->ammo[pm->ps->weapon] & AMMOF_NOATTACKANIM ) {
 		if ( !PM_IsInKiAttackState() && pm->ps->weaponstate != WEAPON_FIRING ) {
 			PM_ContinueTorsoAnim( prepareAnim );
 			return;
@@ -299,24 +188,46 @@ static void PM_AttackAnim( int anim, int prepareAnim ) { // BFP - Handles attack
 		return;
 	}
 
+	// chargeAutoFire animates this way
+	if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && pm->ps->generic1 < 3 ) {
+		if ( pm->ps->generic1 < 3 ) {
+			PM_ContinueTorsoAnim( prepareAnim );
+		} else {
+			PM_ContinueTorsoAnim( anim );
+		}
+		return;
+	}
+
 	// loopingAnim
-	if ( !pm->loopingAnim // chargeAutoFire animates this way
-	&& pm->chargeAutoFire && pm->ps->generic1 < 3 ) {
-		PM_ContinueTorsoAnim( prepareAnim );
+	if ( pm->ps->ammo[pm->ps->weapon] & AMMOF_LOOPINGANIM ) {
+		// chargeAttack animates this way
+		if ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) {
+			if ( !PM_IsInKiAttackState() || pm->ps->weaponstate == WEAPON_FIRING ) {
+				PM_ContinueTorsoAnim( prepareAnim );
+			} else {
+				PM_ContinueTorsoAnim( anim );
+			}
+		} else {
+			PM_ContinueTorsoAnim( anim );
+		}
 		return;
 	}
-	if ( !pm->loopingAnim // chargeAutoFire animates this way
-	&& pm->chargeAutoFire && pm->ps->generic1 >= 3 ) {
-		PM_ContinueTorsoAnim( anim );
-		return;
-	}
-	if ( !pm->loopingAnim
-	&& ( !PM_IsInKiAttackState() || pm->ps->weaponstate == WEAPON_FIRING ) ) {
-		PM_ContinueTorsoAnim( prepareAnim );
-		return;
-	}
-	if ( PM_IsInKiAttackState() || pm->loopingAnim ) {
-		PM_ContinueTorsoAnim( anim );
+
+	// chargeAttack animates this way
+	if ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) {
+		if ( !PM_IsInKiAttackState() || pm->ps->weaponstate == WEAPON_FIRING ) {
+			PM_ContinueTorsoAnim( prepareAnim );
+		} else {
+			PM_ContinueTorsoAnim( anim );
+		}
+	// normal attack animation, just play strike animation
+	} else {
+		if ( pm->ps->weaponTime <= 0 && ( pm->cmd.buttons & BUTTON_ATTACK ) ) {
+			pm->ps->torsoTimer = 0;
+			pm->ps->torsoAnim = ( ( pm->ps->torsoAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+		} else {
+			PM_ContinueTorsoAnim( anim );
+		}
 	}
 }
 
@@ -324,64 +235,26 @@ static void PM_AttackAnim( int anim, int prepareAnim ) { // BFP - Handles attack
 /*
 ==================
 PM_KiAttackTorsoAnim
-
-BFP - TODO: When implementing ki attacks, look up about the properties of the ki attacks from cfg and correct animation changes if required
-And tweak pmove_t struct, so we can handle that on g_active.c (like meleeHit), adding:
-attackType ("beam", "hitscan", "missile", "rdmissile", "sbeam" or "forcefield"), // type of attack
-randomWeaponTime (int, number of miliseconds), // random weapon time, maybe the max msec range of the random value
-chargeAttack (int / qboolean), // charging yes or no
-chargeAutoFire (int / qboolean), // even if it's charging the ki attack, fire
-minCharge (int [0-6]), // min charge points
-maxCharge (int [0-6]), // max charge points
-loopingAnim (int / qboolean), // Maybe it's: use PM_ContinueTorsoAnim, if not: PM_StartTorsoAnim
-noAttackAnim (int / qboolean), // no animation strike yes or no
-priority (int [0-32767]), // projectile's priority
-movementPenalty (int, number of seconds) // enters WEAPON_STUN when the ki attack was being used
------
-The following sample testing torso ki attack animations are used with:
-(ultimate_blast)	WP_GRAPPLING_HOOK would be		"beam", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 1, movementPenalty 0
-(finger_blast)		WP_MACHINEGUN would be			"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
-(ki_blast)			WP_ROCKET_LAUNCHER would be		"missile", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(super_homing)		WP_GRENADE_LAUNCHER would be	"missile", chargeAttack 1, chargeAutoFire 0, loopingAnim 1, noAttackAnim 0, priority 0, movementPenalty 0
-(finger_beam)		WP_RAILGUN would be				"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(eyebeam)			WP_LIGHTNING would be			"hitscan", chargeAttack 0, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(homing_special)	WP_PLASMAGUN would be			"rdmissile", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 0, priority 0, movementPenalty 0
-(aga)				WP_SHOTGUN would be				"forcefield", chargeAttack 1, chargeAutoFire 1, loopingAnim 1, noAttackAnim 0, priority 2, movementPenalty 2
-(blinding_flash)	would be						"forcefield", chargeAttack 1, chargeAutoFire 0, loopingAnim 0, noAttackAnim 1, priority 0, movementPenalty 0
-WP_BFG would be like super_homing, just throw the homing ki ball
-
-About "sbeam" attackType would be like a beam that, by holding down the attack key, 
-you direct it wherever you want by moving the cursor. 
-If you stop pressing the attack key, it explodes to the point where it arrived.
-This attackType was originally left unfinished, 
-so there's a bug: after colliding the beam into something solid and 
-keep holding down the attack key, keeps muzzling and 
-doesn't shoot anything while the ki is wasted out of control. 
 ==================
 */
 static void PM_KiAttackTorsoAnim( void ) { // BFP - Torso ki attack anims
 	if ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !PM_IsInKiAttackState() ) {
 		switch( pm->ps->weapon ) {
-		case WP_ROCKET_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
-		case WP_GRENADE_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
-		case WP_RAILGUN: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
-		case WP_PLASMAGUN: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
-		case WP_SHOTGUN:
-		case WP_BFG:
-		case WP_GRAPPLING_HOOK: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
+		case WP_NONE: { PM_AttackAnim( TORSO_ATTACK0_STRIKE, TORSO_ATTACK0_PREPARE ); break; }
+		case WP_GAUNTLET: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
+		case WP_MACHINEGUN: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
+		case WP_SHOTGUN: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
+		case WP_GRENADE_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
 		}
 	} else if ( PM_IsInKiAttackState() ) {
 		pm->cmd.buttons &= ~BUTTON_GESTURE;
 		switch( pm->ps->weapon ) {
 		default:
-		case WP_MACHINEGUN: { PM_AttackAnim( TORSO_ATTACK0_STRIKE, TORSO_ATTACK0_PREPARE ); break; }
-		case WP_ROCKET_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
-		case WP_GRENADE_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
-		case WP_PLASMAGUN:
-		case WP_RAILGUN: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
-		case WP_SHOTGUN:
-		case WP_BFG:
-		case WP_GRAPPLING_HOOK: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
+		case WP_NONE: { PM_AttackAnim( TORSO_ATTACK0_STRIKE, TORSO_ATTACK0_PREPARE ); break; }
+		case WP_GAUNTLET: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
+		case WP_MACHINEGUN: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
+		case WP_SHOTGUN: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
+		case WP_GRENADE_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
 		}
 	}
 }
@@ -617,7 +490,7 @@ PM_IsBeamFiring
 ================
 */
 static qboolean PM_IsBeamFiring( void ) {
-	return ( pm->attackType == ATK_BEAM || pm->attackType == ATK_SBEAM )
+	return ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_BEAM ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_SBEAM ) )
 		&& pm->ps->weaponstate == WEAPON_ACTIVE;
 }
 
@@ -1098,15 +971,14 @@ static void PM_WaterMove( void ) {
 	} else {
 		for (i=0 ; i<3 ; i++) {
 			wishvel[i] = scale * pml.forward[i]*pm->cmd.forwardmove + scale * pml.right[i]*pm->cmd.rightmove;
+		}
 
-			// BFP - Avoid going up, keep sinking
-			if ( i == 2
-			&& ( ( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE 
-				&& ( pm->ps->eFlags & EF_FIRING ) )
-			|| pm->ps->weaponstate == WEAPON_STUN 
-			|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) ) {
-				wishvel[2] = 0;
-			}
+		// BFP - Avoid going up, keep sinking
+		if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE 
+			&& ( pm->ps->eFlags & EF_FIRING ) )
+		|| pm->ps->weaponstate == WEAPON_STUN 
+		|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
+			wishvel[2] = 0;
 		}
 
 		wishvel[2] += scale * pm->cmd.upmove;
@@ -1120,7 +992,7 @@ static void PM_WaterMove( void ) {
 	}
 
 	// BFP - Sink on stunned status
-	if ( ( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
 		&& ( pm->ps->eFlags & EF_FIRING ) )
 	|| pm->ps->weaponstate == WEAPON_STUN 
 	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
@@ -1258,7 +1130,7 @@ static void PM_FlyMove( void ) {
 				vec3_t downPush;
 				int pushAmount = 100;
 
-				if ( ( pm->attackType == ATK_BEAM || pm->attackType == ATK_SBEAM ) && pm->ps->weaponstate == WEAPON_ACTIVE ) {
+				if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_BEAM ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_SBEAM ) ) && pm->ps->weaponstate == WEAPON_ACTIVE ) {
 					pushAmount = 80;
 				}
 
@@ -1548,7 +1420,7 @@ static void PM_WalkMove( void ) {
 	}
 
 	// BFP - Sink on stunned status
-	if ( ( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
 		&& ( pm->ps->eFlags & EF_FIRING ) )
 	|| pm->ps->weaponstate == WEAPON_STUN 
 	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
@@ -2216,9 +2088,14 @@ static void PM_Footsteps( void ) {
 	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
 		return;
 	}
+	/*
+	Com_Printf( "( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ): %d\n", ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) );
+	Com_Printf( "( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) ): %d\n", ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) ) );
+	Com_Printf( "( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ): %d\n", ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) );
+	*/
 
 	// BFP - Ki explosion wave state
-	if ( ( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
 	&& ( pm->ps->eFlags & EF_FIRING ) ) ) {
 		PM_ContinueLegsAnim( LEGS_IDLE );
 		return;
@@ -2450,7 +2327,7 @@ PM_BeginWeaponChange
 ===============
 */
 static void PM_BeginWeaponChange( int weapon ) {
-	if ( weapon <= WP_NONE || weapon >= WP_NUM_WEAPONS ) {
+	if ( weapon < WP_NONE || weapon >= BFP_NUM_WEAPONS ) {
 		return;
 	}
 
@@ -2463,7 +2340,9 @@ static void PM_BeginWeaponChange( int weapon ) {
 	}
 
 	PM_AddEvent( EV_CHANGE_WEAPON );
-	pm->ps->weaponstate = WEAPON_DROPPING;
+	if ( pm->ps->weaponTime <= 0 ) {
+		pm->ps->weaponstate = WEAPON_DROPPING;
+	}
 	// BFP - Don't add weaponTime when changing ki attack
 	// pm->ps->weaponTime += 200;
 	// BFP - Non-existant animation
@@ -2480,7 +2359,10 @@ static void PM_FinishWeaponChange( void ) {
 	int		weapon;
 
 	weapon = pm->cmd.weapon;
-	if ( weapon < WP_NONE || weapon >= WP_NUM_WEAPONS ) {
+	if ( weapon < WP_NONE ) {
+		weapon = BFP_NUM_WEAPONS - 1;
+	}
+	if ( weapon >= BFP_NUM_WEAPONS ) {
 		weapon = WP_NONE;
 	}
 
@@ -2696,7 +2578,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN ) 
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
 	&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
-	&& !( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE )
+	&& !( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE )
 	&& pm->ps->weaponstate != WEAPON_STUN ) {
 		pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
 		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
@@ -2882,7 +2764,7 @@ Handle ki explosion wave during and at the end of its use
 */
 static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 	// ki explosion wave state
-	if ( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
 	&& ( pm->ps->eFlags & EF_FIRING ) ) {
 		// don't move, also these keys cannot be used; blocking, ki charge and ki boost statuses are removed
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
@@ -2921,79 +2803,6 @@ static void PM_BeamStruggleStatus( void ) { // BFP - Beam struggle handling
 
 
 /*
-===========
-PM_KiConsumption
-===========
-*/
-static void PM_KiConsumption( int addTime, int kiConsume ) { // BFP - Ki consumption when using ki attacks
-	if ( pm->ps->stats[STAT_KI] >= 0 ) { // avoid consuming more ki than available
-		pm->ps->stats[STAT_KI] -= kiConsume;
-		if ( pm->ps->stats[STAT_KI] < 0 ) {
-			pm->ps->stats[STAT_KI] = 0;
-		}
-		pm->ps->weaponTime += addTime;
-	} else { // not enough ki
-		pm->ps->eFlags &= ~EF_FIRING;
-		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
-	}
-}
-
-
-/*
-===========
-PM_KiCost
-===========
-*/
-static float PM_KiCost( void ) { // BFP - kiCost, kiCostAsPct and kiPct
-	float	kiCost = ( pm->kiCost > 0 ) ? pm->kiCost : 0;
-	float	kiPct = ( pm->kiPct > 1 ) ? 1 : pm->kiPct;
-	if ( pm->kiCostAsPct && kiPct > 0 ) {
-		kiCost = pm->ps->stats[STAT_MAX_KI] * kiPct;
-	}
-	return kiCost;
-}
-
-
-/*
-============
-PM_ChargeKiAttackState
-============
-*/
-static void PM_ChargeKiAttackState( int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
-	const int	ATTACK_CHARGE_LIMIT = 6;
-
-	PM_KiConsumption( addTime, kiConsume );
-	if ( !pm->chargeAttack && !pm->chargeAutoFire ) {
-		return;
-	}
-	if ( ( pm->chargeAutoFire
-	|| maxCharge <= minCharge
-	|| ( maxCharge > 0 && pm->ps->generic1 < maxCharge ) )
-	&& pm->ps->generic1 < ATTACK_CHARGE_LIMIT ) {
-		++pm->ps->generic1;
-	}
-	if ( pm->ps->generic1 >= minCharge && !pm->chargeAutoFire ) {
-		pm->ps->eFlags |= EF_READY_KI_ATTACK;
-	}
-}
-
-/*
-============
-PM_RandomWeaponTime
-============
-*/
-static int PM_RandomWeaponTime( void ) { // BFP - randomWeaponTime calculation
-	int	weaponTime = pm->weaponTime;
-	int	randomWeaponTime = 0;
-	if ( pm->randomWeaponTime > 0 ) {
-		randomWeaponTime = random() * pm->randomWeaponTime;
-	}
-	weaponTime += randomWeaponTime;
-	return weaponTime;
-}
-
-
-/*
 ==============
 PM_Weapon
 
@@ -3002,10 +2811,6 @@ Generates weapon events and modifes the weapon counter
 */
 static void PM_Weapon( void ) {
 	// BFP - HIGHLY MODIFIED
-	// BFP - Ki cost
-	float		kiCost = PM_KiCost();
-	// BFP - Weapon time
-	int			weaponTime = PM_RandomWeaponTime();
 
 	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
 	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
@@ -3071,51 +2876,12 @@ static void PM_Weapon( void ) {
 		return;
 	}
 
-	// BFP - Melee, avoid shooting if the player is in this status
-	if ( ( pm->cmd.buttons & BUTTON_MELEE )
-	&& !( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE )
-	&& pm->ps->weaponstate != WEAPON_STUN ) {
-		// only use when there's no splitting ki ball until it has been splitted or collided, 
-		// unless if the player wanna change the weapon from this state
-		if ( pm->ps->weaponstate != WEAPON_ACTIVE ) {
-			pm->ps->weaponstate = WEAPON_READY;
-			pm->ps->generic1 = 0;
-		}
-		// Melee fight handling
-		if ( pm->meleeHit && pm->ps->weaponTime <= 0 ) {
-			int rndSnd = rand() % 6;
-			pm->ps->weaponTime += 300;
-			pm->ps->pm_flags |= PMF_MELEE;
-			// melee sound event is randomly executed
-			if ( rndSnd > 3 ) {
-				PM_AddEvent( EV_MELEE );
-			}
-		}
-		return;
-	}
-
 	// BFP - Weapon states, Q3 doesn't have this way
 	switch( pm->ps->weaponstate ) {
 	case WEAPON_READY:
 		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
 		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
 			pm->ps->generic1 = 0;
-		} else {
-			if ( pm->ps->weaponTime <= 0 ) {
-				pm->ps->stats[STAT_KI] -= kiCost;
-				// BFP - sbeam attack type
-				if ( pm->attackType == ATK_SBEAM ) {
-					pm->ps->weaponTime += weaponTime;
-					pm->ps->weaponstate = WEAPON_ACTIVE;
-					// fire and make a sound
-					PM_AddEvent( EV_FIRE_WEAPON );
-					break;
-				}
-				if ( pm->chargeAttack || pm->chargeAutoFire ) {
-					pm->ps->weaponTime += weaponTime;
-				}
-				pm->ps->weaponstate = WEAPON_FIRING;
-			}
 		}
 		break;
 	case WEAPON_DROPPING:
@@ -3133,94 +2899,6 @@ static void PM_Weapon( void ) {
 			pm->ps->weaponTime = 0;
 			break;
 		}
-
-		// BFP - There are charging states here
-		if ( pm->chargeAttack && !pm->chargeAutoFire ) {
-			if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
-				// BFP - When the ki attack is fully charged, enter beam firing state
-				// or enter splitting ki ball firing state if it's a splitting ki ball
-				pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
-				// no fully charged, skip...
-				if ( pm->ps->generic1 < pm->minCharge ) {
-					pm->ps->weaponstate = WEAPON_RAISING;
-					break;
-				}
-
-				// handle the animation for the start of beam or ball shoot
-				switch( pm->attackType ) {
-				case ATK_MISSILE:
-					pm->ps->weaponstate = WEAPON_READY;
-					pm->ps->weaponTime += weaponTime;
-					break;
-				case ATK_RDMISSILE:
-				case ATK_BEAM:
-					pm->ps->weaponstate = WEAPON_ACTIVE;
-					pm->ps->weaponTime += weaponTime;
-					break;
-				case ATK_FORCEFIELD:
-					pm->ps->eFlags |= EF_FIRING;
-					pm->ps->weaponstate = WEAPON_ACTIVE;
-					pm->ps->weaponTime += weaponTime;
-				}
-
-				// fire and make a sound
-				PM_AddEvent( EV_FIRE_WEAPON );
-			}
-		}
-
-		// chargeAutoFire: keep firing while attack key is holding
-		if ( pm->chargeAutoFire
-		&& pm->ps->weaponTime <= 0 ) {
-			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
-			|| ( pm->cmd.buttons & BUTTON_MELEE )
-			|| pm->ps->weapon != pm->cmd.weapon ) { // avoid when changing weapon
-				pm->ps->weaponstate = WEAPON_READY;
-				break;
-			}
-			if ( pm->cmd.buttons & BUTTON_ATTACK ) {
-				pm->ps->eFlags |= EF_FIRING;
-				PM_AddEvent( EV_FIRE_WEAPON );
-			}
-			if ( pm->attackType == ATK_BEAM
-			|| pm->attackType == ATK_FORCEFIELD
-			|| pm->attackType == ATK_RDMISSILE ) {
-				pm->ps->weaponstate = WEAPON_ACTIVE;
-			}
-		}
-
-		// check for fire
-		if ( pm->ps->weaponTime <= 0 && ( pm->cmd.buttons & BUTTON_ATTACK )
-		&& ( pm->chargeAttack || pm->chargeAutoFire ) ) {
-			PM_ChargeKiAttackState( pm->minCharge, pm->maxCharge, weaponTime, kiCost );
-		}
-
-		if ( !pm->chargeAttack && !pm->chargeAutoFire
-		&& pm->ps->weaponTime <= 0 ) {
-			if ( pm->attackType == ATK_HITSCAN ) {
-				if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
-					pm->ps->weaponstate = WEAPON_READY;
-					break;
-				}
-				if ( pm->cmd.buttons & BUTTON_ATTACK ) {
-					pm->ps->eFlags |= EF_FIRING;
-					PM_AddEvent( EV_FIRE_WEAPON );
-					PM_KiConsumption( weaponTime, kiCost );
-					pm->ps->weaponstate = WEAPON_READY;
-				}
-				break;
-			}
-
-			pm->ps->eFlags |= EF_FIRING;
-			PM_AddEvent( EV_FIRE_WEAPON );
-			PM_KiConsumption( weaponTime, kiCost );
-			if ( pm->attackType == ATK_BEAM ) {
-				pm->ps->weaponstate = WEAPON_ACTIVE;
-			}
-			if ( pm->attackType == ATK_MISSILE
-			|| pm->attackType == ATK_RDMISSILE ) {
-				pm->ps->weaponstate = WEAPON_READY;
-			}
-		}
 		break;
 	// BFP - NOTE: The beam is triggering until pressing the attack key again after holded, using ki charge or blocking
 	// Pressing attack key again or changing weapon, the beam is exploded before the impact
@@ -3229,86 +2907,17 @@ static void PM_Weapon( void ) {
 	case WEAPON_BEAMSTRUGGLE:
 		pm->ps->eFlags |= EF_FIRING; // keep playing firing sound
 
-		// chargeAutoFire: keep firing while attack key is holding
-		if ( pm->attackType == ATK_BEAM 
-		&& pm->chargeAutoFire ) {
-			if ( ( pm->cmd.buttons & BUTTON_ATTACK )
-			&& pm->ps->weaponTime <= 0 ) {
-				// PM_AddEvent( EV_FIRE_WEAPON );
-				PM_ChargeKiAttackState( pm->minCharge, pm->maxCharge, weaponTime, kiCost );
-			}
-			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
-			|| ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_AURA ) )
-			|| ( pm->ps->pm_flags & PMF_BLOCK ) ) {
-				pm->ps->weaponstate = WEAPON_READY;
-			}
-			break;
-		}
-
-		if ( ( pm->chargeAttack || pm->chargeAutoFire ) 
-		&& pm->attackType == ATK_FORCEFIELD ) {
-			if ( ( pm->cmd.buttons & BUTTON_ATTACK )
-			&& pm->ps->weaponTime <= 0 ) {
-				PM_AddEvent( EV_FIRE_WEAPON );
-				PM_ChargeKiAttackState( pm->minCharge, pm->maxCharge, weaponTime, kiCost );
-			}
+		if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) 
+		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) ) {
 			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
 
 			// fall even whether the player is flying
-			if ( pm->ps->eFlags & EF_FLIGHT ) {
+			if ( ( pm->ps->eFlags & EF_FLIGHT ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) {
 				pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
 			}
-
-			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
-			|| ( pm->cmd.buttons & BUTTON_MELEE )
-			|| pm->ps->weapon != pm->cmd.weapon ) { // avoid when changing weapon
-				pm->ps->weaponTime = pm->movementPenalty;
-				pm->ps->eFlags &= ~EF_FIRING;
-				if ( pm->movementPenalty > 0 ) {
-					pm->ps->weaponstate = WEAPON_STUN;
-				} else {
-					pm->ps->weaponstate = WEAPON_READY;
-				}
-			}
 			break;
 		}
-
-		if ( pm->attackType == ATK_RDMISSILE 
-		&& pm->chargeAutoFire ) {
-			if ( ( pm->cmd.buttons & BUTTON_ATTACK )
-			&& pm->ps->weaponTime <= 0 ) {
-				PM_AddEvent( EV_FIRE_WEAPON );
-				PM_ChargeKiAttackState( pm->minCharge, pm->maxCharge, weaponTime, kiCost );
-			}
-			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
-			|| ( pm->cmd.buttons & BUTTON_MELEE )
-			|| pm->ps->weapon != pm->cmd.weapon ) { // avoid when changing weapon
-				pm->ps->weaponstate = WEAPON_RAISING;
-			}
-			break;
-		}
-		pm->ps->generic1 = 0;
-
-		// BFP - sbeam attack type
-		if ( pm->attackType == ATK_SBEAM ) {
-			if ( pm->ps->weaponTime <= 0 ) {
-				pm->ps->stats[STAT_KI] -= kiCost;
-				pm->ps->weaponTime += weaponTime;
-			}
-			if ( !( pm->cmd.buttons & BUTTON_ATTACK )
-			|| ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_AURA ) )
-			|| ( pm->cmd.buttons & BUTTON_MELEE ) ) {
-				pm->ps->weaponstate = WEAPON_READY;
-			}
-			break;
-		}
-
-		if ( pm->attackType == ATK_BEAM 
-		&& ( ( pm->cmd.buttons & BUTTON_ATTACK )
-		|| ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && ( pm->ps->eFlags & EF_AURA ) )
-		|| ( pm->ps->pm_flags & PMF_BLOCK ) ) ) {
-			pm->ps->weaponstate = WEAPON_READY;
-		}
+		//pm->ps->generic1 = 0;
 		break;
 	case WEAPON_STUN:
 		if ( pm->ps->weaponTime <= 0 ) {
@@ -3470,7 +3079,7 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 	}
 
 	// BFP - Ki explosion wave and stun after using it, avoid charging also
-	if ( ( pm->attackType == ATK_FORCEFIELD && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
 	&& ( pm->ps->eFlags & EF_FIRING ) )
 	|| pm->ps->weaponstate == WEAPON_STUN ) {
 		return;
@@ -3539,9 +3148,6 @@ void PmoveSingle (pmove_t *pmove) {
 	pm->numtouch = 0;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
-
-	// BFP - Setup bfp_weapon.cfg
-	PM_SetupBFP_weaponCfg();
 
 	if ( pm->ps->stats[STAT_HEALTH] <= 0 ) {
 		pm->tracemask &= ~CONTENTS_BODY;	// corpses can fly through bodies

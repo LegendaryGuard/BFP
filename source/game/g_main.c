@@ -582,6 +582,12 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString();
 
+	// BFP - Load bfp_weapon.cfg
+	BG_LoadBFPWeaponConfig();
+
+	// BFP - Load bfp_attacksets.cfg
+	BG_LoadBFPAttacksetsConfig();
+
 	// BFP - Load bfp_server.cfg
 	G_LoadBFPServerConfig();
 

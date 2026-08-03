@@ -1145,8 +1145,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// BFP - Apply knockback multiplied with damage force
 	knockback = damage * damageForce;
 	// BFP - extraKnockback from weapon/projectile
-	if ( inflictor && inflictor->extraKnockback != 0 ) {
-		knockback += inflictor->extraKnockback;
+	if ( inflictor && inflictor->weaponDef && inflictor->weaponDef->extraKnockback != 0 ) {
+		knockback += inflictor->weaponDef->extraKnockback;
 	}
 
 	// BFP - Knockback can't be negative
@@ -1180,7 +1180,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 
 	// BFP - Blinds the opponent and it can be blinded again after 4 seconds (look inside cg_draw.c in CG_DrawBlindEffect for more details)
-	if ( inflictor->blinding
+	if ( inflictor && inflictor->weaponDef && inflictor->weaponDef->blinding
 	&& ( !targ->blindedTime || level.time - targ->blindedTime >= 2000 )
 	&& targ->client && targ->client->ps.pm_type != PM_DEAD ) {
 		targ->blindedTime = level.time;
@@ -1195,7 +1195,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		mass = 200;
 		// BFP - Using hitscan weapons, the mass is different
 		if ( targ->client != attacker->client
-		&& inflictor->attackType == ATK_HITSCAN ) {
+		&& inflictor && inflictor->weaponDef && inflictor->weaponDef->attackType == ATK_HITSCAN ) {
 			mass = 50;
 		}
 

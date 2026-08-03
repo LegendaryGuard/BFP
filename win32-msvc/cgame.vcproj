@@ -282,6 +282,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\source\game\bg_weaponconfig.c"
+				>
+			</File>
+			<File
 				RelativePath="..\source\cgame\cg_consolecmds.c"
 				>
 			</File>

@@ -287,6 +287,8 @@ static void Use_Shooter( gentity_t *ent, gentity_t *other, gentity_t *activator 
 
 	VectorNormalize( dir );
 
+	// BFP - TODO: Replace into another attacks
+#if 0
 	switch ( ent->s.weapon ) {
 	case WP_GRENADE_LAUNCHER:
 		fire_grenade( ent, ent->s.origin, dir );
@@ -300,6 +302,7 @@ static void Use_Shooter( gentity_t *ent, gentity_t *other, gentity_t *activator 
 	}
 
 	G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
+#endif
 }
 
 
@@ -353,5 +356,5 @@ Fires at either the target or the current direction.
 "random" is the number of degrees of deviance from the taget. (1.0 default)
 */
 void SP_shooter_grenade( gentity_t *ent ) {
-	InitShooter( ent, WP_GRENADE_LAUNCHER );
+//	InitShooter( ent, WP_GRENADE_LAUNCHER );
 }

@@ -398,6 +398,7 @@ CGOBJ_ = \
   $(B)/cgame/bg_misc.o \
   $(B)/cgame/bg_pmove.o \
   $(B)/cgame/bg_slidemove.o \
+  $(B)/cgame/bg_weaponconfig.o \
   $(B)/cgame/cg_consolecmds.o \
   $(B)/cgame/cg_draw.o \
   $(B)/cgame/cg_drawtools.o \
@@ -445,6 +446,7 @@ QAOBJ_ = \
   $(B)/game/bg_misc.o \
   $(B)/game/bg_pmove.o \
   $(B)/game/bg_slidemove.o \
+  $(B)/game/bg_weaponconfig.o \
   $(B)/game/g_active.o \
   $(B)/game/g_arenas.o \
   $(B)/game/g_bot.o \
