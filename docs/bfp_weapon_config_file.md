@@ -134,6 +134,11 @@ Homing projectile trajectory. If lesser, rotates less. Works if it's more than 0
 - ```homingRange [float]```<br/>
 Homing projectile range. The radius of the homing projectile to chase opponents.
 
+### homingAcceleration
+
+- ```homingAcceleration [float]```<br/>
+Homing projectile acceleration. The acceleration of the homing projectile to chase opponents.
+
 ### range
 
 - ```range [float]```<br/>
