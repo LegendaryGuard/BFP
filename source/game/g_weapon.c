@@ -180,6 +180,11 @@ qboolean CheckMeleeAttack( gentity_t *attacker ) { // BFP - Melee
 	vec3_t		traceMins, traceMaxs;
 	// BFP - Melee dive range
 	float		diveRange = ( g_meleeRange.integer > g_meleeDiveRange.integer ) ? g_meleeRange.integer : g_meleeDiveRange.integer;
+
+	if ( !attacker || !attacker->client ) {
+		return qfalse;
+	}
+
 	if ( diveRange < 0 ) {
 		diveRange = 0;
 	}
@@ -417,6 +422,10 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	gentity_t	*proj;
 	float		r = def->radius;
 
+	if ( !self || !self->client ) {
+		return NULL;
+	}
+
 	// if forcefield is still being used, skip
 	if ( def->attackType == ATK_FORCEFIELD ) {
 		if ( self->client->hook ) {
@@ -440,6 +449,7 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	proj->clipmask = MASK_SHOT;
 	proj->target_ent = NULL;
 	proj->s.weapon = self->s.weapon;
+	proj->s.clientNum = self->client->ps.clientNum;
 
 	proj->damage = def->damage;
 	proj->splashDamage = def->splashDamage;
@@ -451,6 +461,10 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	proj->kiChargePoints = self->client->ps.generic1;
 	proj->s.generic1 = self->client->ps.generic1;
 
+	// homing
+	proj->homing = def->homing;
+	proj->homingRange = def->homingRange;
+
 	// set!
 	proj->weaponDef = def;
 
@@ -460,7 +474,7 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	}
 
 	if ( def->chargeAttack || def->chargeAutoFire ) {
-		G_ChargeDamageScaling( proj, def->minCharge );
+		G_ChargeDamageScaling( proj, r );
 	}
 
 	proj->bounces = def->bounces;
@@ -493,22 +507,31 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	proj->distance = 0;
 
 	// think adjustments
-	proj->nextthink = level.time + 10000;
-	proj->think = G_ExplodeMissile;
-	if ( def->piercing ) {
-		proj->think = G_FreeEntity;
-	}
-	if ( def->attackType == ATK_FORCEFIELD ) {
+	switch ( def->attackType ) {
+	case ATK_BEAM:
+	case ATK_SBEAM:
+		proj->think = Weapon_BFPBeamFree;
+		proj->nextthink = level.time + 15000;
+		break;
+	case ATK_FORCEFIELD:
 		proj->think = Weapon_Forcefield_Think;
 		proj->nextthink = level.time + 200;
 		proj->s.pos.trType = TR_STATIONARY;
 		proj->s.pos.trTime = level.time;
 		VectorClear( proj->s.pos.trDelta );
 		self->client->hook = proj;
-	}
-	if ( def->attackType == ATK_BEAM || def->attackType == ATK_SBEAM ) {
-		proj->think = Weapon_BFPBeamFree;
-		proj->nextthink = level.time + 15000;
+		break;
+	case ATK_RDMISSILE:
+		proj->think = G_DetonateMissile;
+		proj->nextthink = level.time + 10000;
+		// explosionSpawn has a weaponNum of the projectile to be spawned after splitting
+		break;
+	default:
+		proj->think = G_ExplodeMissile;
+		proj->nextthink = level.time + 10000;
+		if ( def->piercing ) {
+			proj->think = G_FreeEntity;
+		}
 	}
 
 	if ( def->missileDuration > 0 ) {
@@ -517,10 +540,6 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 
 	// rdmissile split
 	proj->splitKiBall = qfalse;
-	if ( def->attackType == ATK_RDMISSILE ) {
-		proj->think = G_DetonateMissile;
-		// explosionSpawn has a weaponNum of the projectile to be spawned after splitting
-	}
 
 	trap_LinkEntity( proj );
 
@@ -534,7 +553,7 @@ Weapon_RailTrail_Fire
 =================
 */
 void Weapon_RailTrail_Fire( gentity_t *ent ) { // BFP - Rail trail fire
-	vec3_t		end;
+	vec3_t		end, mins = {0, 0, 0}, maxs = {0, 0, 0};
 	trace_t		trace;
 	gentity_t	*tent = NULL, *traceEnt = NULL;
 	int			hits;
@@ -545,12 +564,22 @@ void Weapon_RailTrail_Fire( gentity_t *ent ) { // BFP - Rail trail fire
 
 	// trace only against the solids, so the railgun will go through people
 	hits = 0;
-	trap_Trace( &trace, muzzle, NULL, NULL, end, ent->parent->s.number, MASK_SHOT );
+
+	// set radius to the hitscan bounding box
+	if ( ent->weaponDef->radius > 0 ) {
+		VectorSet( mins, -ent->weaponDef->radius, -ent->weaponDef->radius, -ent->weaponDef->radius );
+		VectorSet( maxs, ent->weaponDef->radius, ent->weaponDef->radius, ent->weaponDef->radius );
+	}
+
+	trap_Trace( &trace, muzzle, mins, maxs, end, ent->s.number, 
+			( ent->weaponDef->piercing ) ? CONTENTS_BODY : MASK_SHOT );
 	if ( trace.entityNum < ENTITYNUM_MAX_NORMAL ) {
 		traceEnt = &g_entities[ trace.entityNum ];
-		if ( traceEnt && traceEnt->takedamage ) {
-			// BFP - Railgun events are also treated as a missile
-			tent = G_TempEntity( trace.endpos, EV_MISSILE_HIT );
+		if ( traceEnt->takedamage ) {
+			if ( LogAccuracyHit( traceEnt, ent ) ) {
+				hits++;
+			}
+			G_Damage( traceEnt, ent, ent->parent, forward, trace.endpos, ent->weaponDef->damage, 0, MOD_KI_ATTACK );
 		}
 	}
 
@@ -564,16 +593,34 @@ void Weapon_RailTrail_Fire( gentity_t *ent ) { // BFP - Rail trail fire
 		// rail trail events are also treated as a missile
 		tent = G_TempEntity( trace.endpos, EV_MISSILE_MISS );
 		tent->s.eventParm = DirToByte( trace.plane.normal ); // sends dir vector variable to the event
+		tent->s.clientNum = ent->parent->client->ps.clientNum;
+		tent->s.generic1 = ent->s.generic1;
+		tent->s.weapon = ent->s.weapon;
 	}
+
+	// BFP - Reflective
+	// BFP - NOTE: Why isn't it applying? It should do it, maybe collision radius detection?
+	// In the original BFP, that doesn't apply at all, but it'd be cool to try
+	// G_Reflective( ent, qtrue, muzzle );
 
 	// send railgun beam effect
 	tent = G_TempEntity( trace.endpos, EV_RAILTRAIL );
 
 	// set player number for custom colors on the railtrail
-	tent->s.clientNum = ent->parent->s.clientNum;
+	tent->s.clientNum = ent->parent->client->ps.clientNum;
+
+	// set ki charge points
+	tent->s.generic1 = ent->s.generic1;
+
+	VectorCopy( muzzle, tent->s.origin2 );
+	// move origin a bit to come closer to the drawn gun muzzle
+	VectorMA( tent->s.origin2, 4, right, tent->s.origin2 );
+	VectorMA( tent->s.origin2, -1, up, tent->s.origin2 );
 
 	// splash damage
-	if ( G_RadiusDamage( ent, trace.endpos, ent, ent->weaponDef->splashDamage, splashRadius, 0, MOD_KI_ATTACK ) ) {
+	if ( ( !traceEnt || !traceEnt->takedamage )
+	&& splashRadius > 0 && ent->weaponDef->splashDamage > 0
+	&& G_RadiusDamage( ent, trace.endpos, ent->parent, ent->weaponDef->splashDamage, splashRadius, 0, MOD_KI_ATTACK ) ) {
 		hits++;
 	}
 
@@ -603,13 +650,20 @@ Hitscan firing
 static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // BFP - Fire BFP hitscan attack type weapon
 	trace_t		tr;
 	vec3_t		end;
+	vec3_t		mins = {0, 0, 0}, maxs = {0, 0, 0};
+	int			weaponTime;
 	gentity_t	*traceEnt;
 	gentity_t	*ent = G_Spawn();
+
+	if ( !self || !self->client ) {
+		return;
+	}
 
 	ent->classname = "bfpbeam";
 	ent->r.ownerNum = self->s.number;
 	ent->parent = self;
 	ent->s.weapon = self->s.weapon;
+	ent->s.clientNum = self->client->ps.clientNum;
 	ent->damage = def->damage;
 	ent->splashDamage = def->splashDamage;
 	ent->splashRadius = def->explosionRadius;
@@ -622,6 +676,9 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // 
 
 	// set!
 	ent->weaponDef = def;
+
+	// apply weaponTime calculation to handle event effects
+	weaponTime = def->weaponTime + def->randomWeaponTime;
 
 	// rail trail, behaves like a rail gun
 	if ( def->railTrail ) {
@@ -638,49 +695,105 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // 
 
 	VectorMA( muzzle, def->range, forward, end );
 
-	trap_Trace( &tr, muzzle, NULL, NULL, end, self->s.number, MASK_SHOT );
-	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
-		return;
+	// set radius to the hitscan bounding box
+	if ( def->radius > 0 ) {
+		VectorSet( mins, -def->radius, -def->radius, -def->radius );
+		VectorSet( maxs, def->radius, def->radius, def->radius );
 	}
 
 	// BFP - Reflective
 	G_Reflective( ent, qtrue, muzzle );
 
-	traceEnt = &g_entities[ tr.entityNum ];
+	trap_Trace( &tr, muzzle, mins, maxs, end, self->s.number, 
+			( def->piercing ) ? CONTENTS_BODY : MASK_SHOT );
+	if ( def->radius > 0 && ( tr.startsolid || tr.allsolid || tr.entityNum == ENTITYNUM_NONE ) ) {
+		vec3_t		boxMins, boxMaxs;
+		int			entityList[MAX_GENTITIES];
+		int			numEntities, i;
+		qboolean	hitAny = qfalse;
 
-	// explosion radius, behaves like a machine gun or lightning gun
-	if ( def->explosionRadius > 0 ) {
-		if ( traceEnt->takedamage && traceEnt->client ) {
-			gentity_t	*tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
-			tent->s.otherEntityNum = traceEnt->s.number;
-			tent->s.eventParm = DirToByte( tr.plane.normal );
-			tent->s.weapon = self->s.weapon;
-			if( LogAccuracyHit( traceEnt, self ) ) {
+		VectorAdd( muzzle, mins, boxMins );
+		VectorAdd( muzzle, maxs, boxMaxs );
+
+		numEntities = G_EntitiesInBox( boxMins, boxMaxs, entityList, MAX_GENTITIES );
+		for ( i = 0; i < numEntities; i++ ) {
+			gentity_t	*other = &g_entities[ entityList[i] ];
+			vec3_t		targetOrigin;
+			trace_t		visTrace;
+			if ( !other->client || other == self ) {
+				continue;
+			}
+			if ( !other->takedamage ) {
+				continue;
+			}
+			if ( other->client->ps.stats[STAT_HEALTH] <= 0 ) {
+				continue;
+			}
+			if ( OnSameTeam( other, self ) && !g_friendlyFire.integer ) {
+				continue;
+			}
+
+			VectorCopy( other->r.currentOrigin, targetOrigin );
+			targetOrigin[2] += ( other->r.mins[2] + other->r.maxs[2] ) * 0.5;
+
+			trap_Trace( &visTrace, muzzle, NULL, NULL, targetOrigin, self->s.number, MASK_SHOT );
+			if ( visTrace.fraction < 1.0 && visTrace.entityNum != other->s.number ) {
+				continue;
+			}
+
+			G_Damage( other, ent, self, forward, visTrace.endpos, def->damage, 0, MOD_KI_ATTACK );
+
+			if ( LogAccuracyHit( other, self ) ) {
 				self->client->accuracy_hits++;
+				hitAny = qtrue;
 			}
-			return;
 		}
 
-		// splash damage
-		if ( def->splashDamage > 0 && def->explosionRadius > 0 ) {
-			if ( G_RadiusDamage( ent, tr.endpos, ent, def->splashDamage, def->explosionRadius, 0, MOD_KI_ATTACK ) ) {
-				return;
-			}
+		if ( hitAny ) {
+			gentity_t	*tent = G_TempEntity( muzzle, EV_MISSILE_HIT );
+			tent->s.clientNum = self->client->ps.clientNum;
+			tent->s.generic1 = ent->s.generic1;
+			tent->s.otherEntityNum = self->s.number;
+			tent->s.eventParm = 0;
+			tent->s.weapon = self->s.weapon;
 		}
-	
-		// BFP - That random handles avoiding the particle spam with lightning gun type
-		if ( random() < 0.3 && !traceEnt->takedamage ) {
-			gentity_t	*tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
-			tent->s.eventParm = DirToByte( tr.plane.normal );
-			tent->s.weapon = self->s.weapon; // BFP - Sends weapon info to the event
-		}
+		return;
 	}
-
-	if ( !traceEnt->takedamage ) {
+	if ( tr.surfaceFlags & SURF_NOIMPACT ) {
 		return;
 	}
 
-	G_Damage( traceEnt, ent, ent, forward, tr.endpos, def->damage, 0, MOD_KI_ATTACK );
+	traceEnt = &g_entities[ tr.entityNum ];
+	if ( traceEnt && traceEnt->takedamage && traceEnt->client ) {
+		gentity_t	*tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
+		tent->s.clientNum = self->client->ps.clientNum;
+		tent->s.generic1 = ent->s.generic1;
+		tent->s.otherEntityNum = traceEnt->s.number;
+		tent->s.eventParm = DirToByte( tr.plane.normal );
+		tent->s.weapon = self->s.weapon;
+		if( LogAccuracyHit( traceEnt, self ) ) {
+			self->client->accuracy_hits++;
+		}
+	}
+
+	// BFP - That random handles avoiding the particle spam with lesser weaponTime
+	if ( ( weaponTime >= 100 || random() < 0.3 ) && !traceEnt->takedamage ) {
+		gentity_t	*tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
+		tent->s.clientNum = self->client->ps.clientNum;
+		tent->s.generic1 = ent->s.generic1;
+		tent->s.eventParm = DirToByte( tr.plane.normal );
+		tent->s.weapon = self->s.weapon; // BFP - Sends weapon info to the event
+	}
+
+	if ( traceEnt && traceEnt->takedamage ) {
+		G_Damage( traceEnt, ent, self, forward, tr.endpos, def->damage, 0, MOD_KI_ATTACK );
+		return;
+	}
+
+	// splash damage
+	if ( def->splashDamage > 0 && def->explosionRadius > 0 ) {
+		G_RadiusDamage( ent, tr.endpos, self, def->splashDamage, def->explosionRadius, 0, MOD_KI_ATTACK );
+	}
 }
 
 
@@ -817,14 +930,18 @@ void Forcefield_Fire ( gentity_t *ent ) { // BFP - Forcefield fire
 }
 
 static void Forcefield_Free( gentity_t *self ) { // BFP - Forcefield free
-	self->parent->client->hook = NULL;
-	G_FreeEntity( self );
+	if ( self && self->parent && self->parent->client ) {
+		self->parent->client->hook = NULL;
+		G_FreeEntity( self );
+	}
 }
 
 void Weapon_Forcefield_Think ( gentity_t *ent ) { // BFP - Forcefield
 	gentity_t	*rad = NULL;
 	int			damage = ( ent->splashDamage ) ? ent->splashDamage : ent->damage;
 	qboolean	chargeAutoFire = ent->weaponDef->chargeAutoFire;
+	// use weaponTime delay as attack time
+	int			weaponTime = ent->weaponDef->weaponTime + ent->weaponDef->randomWeaponTime;
 
 	if ( !ent->parent || !ent->parent->client || !ent->parent->client->hook
 	|| ent->parent->client->ps.pm_type == PM_DEAD
@@ -858,7 +975,7 @@ void Weapon_Forcefield_Think ( gentity_t *ent ) { // BFP - Forcefield
 		Forcefield_Free( ent );
 		return;
 	}
-	ent->nextthink = level.time + 200;
+	ent->nextthink = level.time + weaponTime;
 }
 
 	// BFP - No shotgun, grenade launcher, rocket, plasma gun and rail gun firing
@@ -1191,7 +1308,11 @@ static void Weapon_BFPBeam_SetDistance( gentity_t *beam, float distance, vec3_t 
 	vec3_t		newPos;
 	float		correctBeamDist;
 
-	if ( !beam->parent->client ) {
+	// avoid null exception
+	if ( !beam || !beam->parent || !beam->parent->client ) {
+		if ( beam ) {
+			Weapon_BFPBeamFree( beam );
+		}
 		return;
 	}
 
@@ -1220,6 +1341,11 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 	float		distTarget, powerEnt, powerTarget;
 	const float	BEAM_PUSH_STEP = 200.0f;
 	float		struggleRadius = ( ent->splashRadius > ent->weaponDef->radius ) ? ent->splashRadius : ent->weaponDef->radius;
+
+	// avoid null exception
+	if ( !ent || !ent->parent || !ent->parent->client ) {
+		return qfalse;
+	}
 
 	while ( ( rad = FindRadius(rad, ent->r.currentOrigin, struggleRadius) ) != NULL ) {
 		if ( rad && ( rad->r.ownerNum == ent->r.ownerNum 
@@ -1258,6 +1384,14 @@ static qboolean Weapon_BFPBeamStruggle( gentity_t *ent, vec3_t ownerViewPos, flo
 	}
 
 	if ( !target ) {
+		return qfalse;
+	}
+
+	// avoid null exception
+	if ( !target->parent || !target->parent->client ) {
+		if ( target ) {
+			Weapon_BFPBeamFree( target );
+		}
 		return qfalse;
 	}
 
@@ -1334,7 +1468,9 @@ void Weapon_BFPBeamRun ( gentity_t *ent ) // BFP - BFP Beam run
 	vec3_t		ownerViewPos, vel, dir;
 	float		distance, deltaTime;
 
-	if ( !ent->weaponDef || ent->weaponDef->attackType != ATK_BEAM ) {
+	// avoid null exception
+	if ( !ent || !ent->parent || !ent->parent->client
+	|| !ent->weaponDef || ent->weaponDef->attackType != ATK_BEAM ) {
 		return;
 	}
 
@@ -1392,7 +1528,7 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 	gentity_t	*rad = NULL;
 	float		radius = ( ent->splashRadius > ent->weaponDef->radius ) ? ent->splashRadius : ent->weaponDef->radius;
 
-	if ( !ent->parent || !ent->parent->client ) {
+	if ( !ent || !ent->parent || !ent->parent->client ) {
 		return qtrue;
 	}
 
@@ -1408,7 +1544,7 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 						ent->r.ownerNum, ent->clipmask );
 
 			// BFP - Priority (only for non-beam weapons)
-			if ( rad->weaponDef->attackType != ATK_SBEAM ) {
+			if ( rad->weaponDef && rad->weaponDef->attackType != ATK_SBEAM ) {
 				if ( ent->weaponDef->priority > rad->weaponDef->priority ) {
 					// BFP - If it's a splitting ki ball, break and split!
 					if ( !G_BreakRDMissile( rad ) ) {
@@ -1423,7 +1559,7 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 			}
 
 			// if one of them has more damage power, the other breaks
-			if ( rad->weaponDef->attackType == ATK_SBEAM ) {
+			if ( rad->weaponDef && rad->weaponDef->attackType == ATK_SBEAM ) {
 				if ( ent->damage > rad->damage ) {
 					G_MissileImpact( ent, &trace );
 					continue;
@@ -1443,6 +1579,10 @@ static qboolean Weapon_SBeamRadius( gentity_t *ent ) { // BFP - sbeam (Super Bea
 void Weapon_SBeam_Run ( gentity_t *ent ) // BFP - sbeam (Super Beam?) run
 {
 	vec3_t		ownerViewPos, vel;
+
+	if ( !ent || !ent->parent || !ent->parent->client ) {
+		return;
+	}
 
 	if ( !ent->weaponDef || ent->weaponDef->attackType != ATK_SBEAM ) {
 		return;
@@ -1597,8 +1737,14 @@ FireWeapon
 ===============
 */
 void FireWeapon( gentity_t *ent ) {
-	bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, ent->s.weapon );
+	bfpWeaponDef_t	*def;
 	int		i, shots;
+
+	if ( !ent || !ent->client ) {
+		return;
+	}
+
+	def = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, ent->s.weapon );
 	if ( !def ) {
 		def = BG_SetDefaultWeaponDef();
 	}

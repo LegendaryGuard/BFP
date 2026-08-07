@@ -201,6 +201,9 @@ struct gentity_s {
 	int			piercingTime;		// BFP - Piercing time
 	int			piercingHitTime;	// BFP - Piercing hit time
 	vec3_t		piercingOrigin;		// BFP - Piercing origin
+
+	float		homing;						// BFP - Homing
+	float		homingRange;				// BFP - Homing range
 };
 
 #define	SPAWN_HEIGHT	0.0f
@@ -591,7 +594,7 @@ extern char		*modNames[MOD_MAX];
 // g_missile.c
 //
 #define	MISSILE_PRESTEP_TIME	50
-void G_ChargeDamageScaling( gentity_t *ent, int minCharge ); // BFP - Charge damage scaling
+void G_ChargeDamageScaling( gentity_t *ent, float radius ); // BFP - Charge damage scaling
 void G_ExplodeMissile( gentity_t *ent ); // BFP - Explode missile, for nextthink
 void G_DetonateMissile( gentity_t *ent );	// BFP - Detonate a missile, for nextthink
 void G_RunMissile( gentity_t *ent );

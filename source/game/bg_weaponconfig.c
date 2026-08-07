@@ -333,14 +333,14 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 			ptr += 9;
 			BG_ReadConfigToken( &ptr, value, sizeof( value ) );
 			if ( cur ) {
-				cur->minCharge = atoi( value );
+				cur->minCharge = ( atoi( value ) > 0 ) ? atoi( value ) : 0;
 			}
 		} else if ( !Q_stricmpn( ptr, "maxCharge", 9 ) && ( ptr[9] == ' ' || ptr[9] == '\t' ) ) {
 			char	value[32];
 			ptr += 9;
 			BG_ReadConfigToken( &ptr, value, sizeof( value ) );
 			if ( cur ) {
-				cur->maxCharge = atoi( value );
+				cur->maxCharge = ( atoi( value ) > 0 ) ? atoi( value ) : 0;
 			}
 		} else if ( !Q_stricmpn( ptr, "chargeDamageMult", 16 ) && ( ptr[16] == ' ' || ptr[16] == '\t' ) ) {
 			char	value[32];
@@ -571,7 +571,7 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 			ptr += 9;
 			BG_ReadConfigToken( &ptr, value, sizeof( value ) );
 			if ( cur ) {
-				cur->noZBounce = atoi( value );
+				cur->noZBounce = ( atof( value ) > 0.0f );
 			}
 		} else if ( !Q_stricmpn( ptr, "extraKnockback", 14 ) && ( ptr[14] == ' ' || ptr[14] == '\t' ) ) {
 			char	value[32];
@@ -775,7 +775,7 @@ ATTACKSETS
 
 Maps each player model prefix group (e.g. "bfp1-") to 5 weaponNum entries,
 one per attack slot (WP_ATTACK_0..WP_ATTACK_4). Moved here (from g_utils.c)
-so bg_pmove.c can resolve pm->ps->weapon (a slot 0-4) straight into a
+so bg_pmove.c can resolve pm->ps->weapon (a slot) straight into a
 weaponNum via BG_GetWeaponNumForSlot(), without any extra playerState_t stat
 ===========================================================================
 */
@@ -842,7 +842,7 @@ const char *BG_FindAttacksetDefaultModel( const char *prefix ) {
 ==================
 BG_GetWeaponNumForSlot
 
-Resolves (player model name, attack slot 0-4) -> weaponNum, by finding
+Resolves (player model name, attack slot) -> weaponNum, by finding
 which attackset group's modelPrefix the model name starts with, then
 reading that group's attack[attackSlot] entry.
 
@@ -850,7 +850,7 @@ Returns -1 if no attackset group matches the model, or attackSlot is out
 of range; callers (BG_FindBFPWeaponDef via pm->ps->weapon) should treat
 that as "no attack definition available" rather than crash
 
-(playerModel, slot 0-4) -> weaponNum
+(playerModel, slot) -> weaponNum
 ==================
 */
 int BG_GetWeaponNumForSlot( const char *modelName, int attackSlot ) {

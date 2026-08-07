@@ -534,6 +534,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	&& client->ps.stats[STAT_KI] > 0
 	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
 	&& !( client->ps.pm_flags & PMF_BLOCK )
+	&& !( ( client->ps.ammo[client->ps.weapon] & AMMOF_ATK_FORCEFIELD ) && client->ps.weaponstate == WEAPON_ACTIVE )
 	&& client->ps.weaponstate != WEAPON_STUN ) {
 		// BFP - NOTE: On original BFP, this is handled into another way, so, the formula remains unknown, it tried the best
 		float boostCostTotal = ( g_boostCost.value * 0.001 ) + ( g_boostCostPct.value * 0.1 ) * client->ps.stats[STAT_MAX_KI] * 0.0001;
@@ -807,6 +808,10 @@ qboolean Zanzoken( gentity_t *ent, int range ) { // BFP - Short-Range Teleport (
 	vec3_t	right, up, start, direction;
 	int		startRightRange = ( range < 0 ) ? -10 : 10;
 
+	if ( !ent || !ent->client ) {
+		return qfalse;
+	}
+
 	// set diagonal direction, included the up vector for upward detection
 	AngleVectors( ent->client->ps.viewangles, NULL, right, up );
 
@@ -994,14 +999,12 @@ Client_ChargeKiAttackState
 ============
 */
 static void Client_ChargeKiAttackState( gclient_t *client, bfpWeaponDef_t *def, int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
-	const int	ATTACK_CHARGE_LIMIT = 6;
-
 	Client_KiConsumption( client, addTime, kiConsume );
 	if ( !def->chargeAttack && !def->chargeAutoFire ) {
 		return;
 	}
 	if ( ( def->chargeAutoFire
-	|| maxCharge <= minCharge
+	|| maxCharge < client->ps.generic1
 	|| ( maxCharge > 0 && client->ps.generic1 < maxCharge ) )
 	&& client->ps.generic1 < ATTACK_CHARGE_LIMIT ) {
 		++client->ps.generic1;
@@ -1017,8 +1020,8 @@ Client_RandomWeaponTime
 ============
 */
 static int Client_RandomWeaponTime( bfpWeaponDef_t *def ) { // BFP - randomWeaponTime calculation
-	int	weaponTime = def->weaponTime;
-	int	randomWeaponTime = 0;
+	int		weaponTime = def->weaponTime;
+	float	randomWeaponTime = 0;
 	if ( def->randomWeaponTime > 0 ) {
 		randomWeaponTime = random() * def->randomWeaponTime;
 	}
@@ -1059,9 +1062,12 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		return;
 	}
 
+	// BFP - Don't allow attack when recharging ki
+	if ( client->ps.pm_flags & PMF_KI_CHARGE ) {
+		return;
+	}
+
 	def = BG_GetClientWeaponDefForSlot( client->ps.clientNum, client->ps.weapon );
-	kiCost = Client_KiCost( client, def );
-	weaponTime = Client_RandomWeaponTime( def );
 
 	// BFP - Monster gamemode, player monster with g_monster 1 uses its own weapon
 	if ( ( client->ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
@@ -1076,12 +1082,20 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		return;
 	}
 
+	kiCost = Client_KiCost( client, def );
+	weaponTime = Client_RandomWeaponTime( def );
+
 	// BFP - Debug extracted weapon from bfp_weapon.cfg 
 #if 0
-	Com_Printf( "Client_Weapon - WEAPONDEF: client %d, slot %d -> (attackName %s, chargeAttack %d)\n",
+	Com_Printf( "Client_Weapon - WEAPONDEF: client %d, slot %d -> (attackName %s, chargeAttack %d, chargeAutoFire %d, kiCost %d, kiPct %f, weaponTime %d, randomWeaponTime %d)\n",
 		client->ps.clientNum, client->ps.weapon, 
 		def ? def->attackName : "NULL", 
-		def ? def->chargeAttack : -1 );
+		def->chargeAttack, 
+		def->chargeAutoFire, 
+		def->kiCost, 
+		def->kiPct, 
+		def->weaponTime, 
+		def->randomWeaponTime );
 #endif
 
 	// BFP - Melee, avoid shooting if the player is in this status
@@ -1112,10 +1126,12 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 	case WEAPON_READY:
 		client->ps.eFlags &= ~EF_READY_KI_ATTACK;
 		if ( !( ucmd->buttons & BUTTON_ATTACK ) ) {
-			//client->ps.generic1 = 0;
+			client->ps.generic1 = 0;
 		} else {
 			if ( client->ps.weaponTime <= 0 ) {
-				client->ps.stats[STAT_KI] -= kiCost;
+				if ( def->chargeAttack || def->chargeAutoFire ) {
+					client->ps.stats[STAT_KI] -= kiCost;
+				}
 				// BFP - sbeam attack type
 				if ( def->attackType == ATK_SBEAM ) {
 					client->ps.weaponTime += weaponTime;
@@ -1156,17 +1172,17 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				switch( def->attackType ) {
 				case ATK_MISSILE:
 					client->ps.weaponstate = WEAPON_READY;
-					client->ps.weaponTime += weaponTime;
+					client->ps.weaponTime = 800; // 0.8 sec to keep the strike animation
 					break;
 				case ATK_RDMISSILE:
 				case ATK_BEAM:
 					client->ps.weaponstate = WEAPON_ACTIVE;
-					client->ps.weaponTime += weaponTime;
+					client->ps.weaponTime = weaponTime;
 					break;
 				case ATK_FORCEFIELD:
 					client->ps.eFlags |= EF_FIRING;
 					client->ps.weaponstate = WEAPON_ACTIVE;
-					client->ps.weaponTime += weaponTime;
+					client->ps.weaponTime = weaponTime;
 				}
 
 				// fire and make a sound
@@ -1256,7 +1272,9 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
 				Client_ChargeKiAttackState( client, def, def->minCharge, def->maxCharge, weaponTime, kiCost );
 			}
-			client->ps.eFlags &= ~( EF_AURA | EF_KI_BOOST );
+			if ( def->chargeAutoFire ) {
+				client->ps.eFlags &= ~( EF_AURA | EF_KI_BOOST );
+			}
 
 			if ( !( ucmd->buttons & BUTTON_ATTACK )
 			|| ( ucmd->buttons & BUTTON_MELEE )
@@ -1267,7 +1285,8 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				client->ps.eFlags &= ~EF_FIRING;
 				if ( client->ps.weaponTime > 0 && def->movementPenalty > 0 ) {
 					client->ps.weaponstate = WEAPON_STUN;
-				} else {
+				} else { // no weaponTime delay with chargeAttack
+					client->ps.weaponTime = 0;
 					client->ps.weaponstate = WEAPON_READY;
 				}
 			}

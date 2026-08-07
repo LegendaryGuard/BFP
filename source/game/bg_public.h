@@ -155,6 +155,9 @@ typedef enum {
 #define	ATK_HITSCAN			4
 #define	ATK_FORCEFIELD		5
 
+// BFP - Charge limit
+#define	ATTACK_CHARGE_LIMIT	6
+
 // BFP - If you want to keep demo networking, change the way to use the PMF_ flags
 // pmove->pm_flags
 #define	PMF_DUCKED			1
@@ -500,7 +503,7 @@ bfpWeaponDef_t	*BG_SetMonsterDefaultWeaponDef( void );
 typedef struct {
 	qboolean	inuse;
 	int			attacksetId;								// attackset [int]
-	int			attack[BFP_NUM_WEAPONS];				// attack [0-4] [weaponNum]
+	int			attack[BFP_NUM_WEAPONS];				// attack [slot] [weaponNum]
 	char		modelPrefix[MAX_QPATH];						// modelPrefix [string]
 	char		defaultModel[MAX_QPATH];					// defaultModel [string]
 } bfpAttacksetGroup_t;

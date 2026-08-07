@@ -253,6 +253,12 @@ static void BotBFPCheckKiRecharge( bot_state_t *bs, aas_entityinfo_t *entinfo ) 
 		return;
 	}
 
+	if ( curKi < maxKi * BFP_BOT_KI_CRITICAL_PCT ) {
+		bs->bfpKiRecharging = qtrue;
+		bs->bfpButtons |= BUTTON_KI_CHARGE;
+		return;
+	}
+
 	if ( bs->bfpKiRechargeInterrupted_time > FloatTime() - 1.5 ) {
 		return;
 	}
@@ -304,6 +310,10 @@ static void BotBFPCheckFlight( bot_state_t *bs, aas_entityinfo_t *entinfo, bot_g
 
 	if ( bs->cur_ps.stats[STAT_KI] <= 0 ) {
 		bs->bfpFlightDecision = qfalse;
+		return;
+	}
+
+	if ( bs->cur_ps.stats[STAT_KI] < bs->cur_ps.stats[STAT_MAX_KI] * BFP_BOT_KI_CRITICAL_PCT ) {
 		return;
 	}
 
@@ -395,6 +405,10 @@ static void BotBFPCheckKiBoost( bot_state_t *bs ) {
 	float	skill = bs->settings.skill;
 
 	if ( maxKi <= 0 || curKi <= 0 ) {
+		return;
+	}
+
+	if ( bs->cur_ps.stats[STAT_KI] < bs->cur_ps.stats[STAT_MAX_KI] * BFP_BOT_KI_CRITICAL_PCT ) {
 		return;
 	}
 
