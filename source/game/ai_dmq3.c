@@ -48,6 +48,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ai_cmd.h"
 #include "ai_dmnet.h"
 #include "ai_team.h"
+#include "ai_bfp.h"				// BFP - BFP bot actions
 //
 #include "chars.h"				//characteristics
 #include "inv.h"				//indexes into the inventory
@@ -2368,6 +2369,11 @@ void BotCheckAttack(bot_state_t *bs) {
 
 	// BFP - Avoid the bot tries to attack with this status, otherwise keeps stunned while pressing attack key
 	if ( bs->cur_ps.stats[STAT_HITSTUN_TIME] > 0 ) {
+		return;
+	}
+
+	// BFP - Prevent firing weapon if ki is critically low
+	if ( bs->cur_ps.stats[STAT_KI] < bs->cur_ps.stats[STAT_MAX_KI] * BFP_BOT_KI_CRITICAL_PCT ) {
 		return;
 	}
 

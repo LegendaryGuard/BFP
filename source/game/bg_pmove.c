@@ -974,7 +974,8 @@ static void PM_WaterMove( void ) {
 		}
 
 		// BFP - Avoid going up, keep sinking
-		if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE 
+		if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE 
 			&& ( pm->ps->eFlags & EF_FIRING ) )
 		|| pm->ps->weaponstate == WEAPON_STUN 
 		|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
@@ -992,7 +993,8 @@ static void PM_WaterMove( void ) {
 	}
 
 	// BFP - Sink on stunned status
-	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
 		&& ( pm->ps->eFlags & EF_FIRING ) )
 	|| pm->ps->weaponstate == WEAPON_STUN 
 	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
@@ -1420,7 +1422,8 @@ static void PM_WalkMove( void ) {
 	}
 
 	// BFP - Sink on stunned status
-	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
 		&& ( pm->ps->eFlags & EF_FIRING ) )
 	|| pm->ps->weaponstate == WEAPON_STUN 
 	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
@@ -2088,14 +2091,10 @@ static void PM_Footsteps( void ) {
 	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
 		return;
 	}
-	/*
-	Com_Printf( "( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ): %d\n", ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) );
-	Com_Printf( "( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) ): %d\n", ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) ) );
-	Com_Printf( "( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ): %d\n", ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) );
-	*/
 
 	// BFP - Ki explosion wave state
-	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
 	&& ( pm->ps->eFlags & EF_FIRING ) ) ) {
 		PM_ContinueLegsAnim( LEGS_IDLE );
 		return;
@@ -2340,11 +2339,8 @@ static void PM_BeginWeaponChange( int weapon ) {
 	}
 
 	PM_AddEvent( EV_CHANGE_WEAPON );
-	if ( pm->ps->weaponTime <= 0 ) {
-		pm->ps->weaponstate = WEAPON_DROPPING;
-	}
-	// BFP - Don't add weaponTime when changing ki attack
-	// pm->ps->weaponTime += 200;
+	pm->ps->weaponstate = WEAPON_DROPPING;
+	pm->ps->weaponTime += 200;
 	// BFP - Non-existant animation
 	// PM_StartTorsoAnim( TORSO_DROP );
 }
@@ -2578,7 +2574,8 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN ) 
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
 	&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
-	&& !( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE )
+	&& !( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE )
 	&& pm->ps->weaponstate != WEAPON_STUN ) {
 		pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
 		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
@@ -2764,7 +2761,8 @@ Handle ki explosion wave during and at the end of its use
 */
 static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 	// ki explosion wave state
-	if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
 	&& ( pm->ps->eFlags & EF_FIRING ) ) {
 		// don't move, also these keys cannot be used; blocking, ki charge and ki boost statuses are removed
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
@@ -2836,6 +2834,11 @@ static void PM_Weapon( void ) {
 		return;
 	}
 
+	// BFP - Don't allow attack when recharging ki
+	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+		return;
+	}
+
 	// check for item using
 	if ( pm->cmd.buttons & BUTTON_USE_HOLDABLE ) {
 		if ( ! ( pm->ps->pm_flags & PMF_USE_ITEM_HELD ) ) {
@@ -2880,9 +2883,6 @@ static void PM_Weapon( void ) {
 	switch( pm->ps->weaponstate ) {
 	case WEAPON_READY:
 		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
-		if ( !( pm->cmd.buttons & BUTTON_ATTACK ) ) {
-			pm->ps->generic1 = 0;
-		}
 		break;
 	case WEAPON_DROPPING:
 	case WEAPON_RAISING:
@@ -2897,7 +2897,6 @@ static void PM_Weapon( void ) {
 		if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->weaponTime = 0;
-			break;
 		}
 		break;
 	// BFP - NOTE: The beam is triggering until pressing the attack key again after holded, using ki charge or blocking
@@ -2907,12 +2906,12 @@ static void PM_Weapon( void ) {
 	case WEAPON_BEAMSTRUGGLE:
 		pm->ps->eFlags |= EF_FIRING; // keep playing firing sound
 
-		if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) || ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) 
-		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) ) {
+		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD )
+		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) {
 			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
 
 			// fall even whether the player is flying
-			if ( ( pm->ps->eFlags & EF_FLIGHT ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) {
+			if ( pm->ps->eFlags & EF_FLIGHT ) {
 				pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
 			}
 			break;
@@ -3079,7 +3078,8 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 	}
 
 	// BFP - Ki explosion wave and stun after using it, avoid charging also
-	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && pm->ps->weaponstate == WEAPON_ACTIVE
+	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
 	&& ( pm->ps->eFlags & EF_FIRING ) )
 	|| pm->ps->weaponstate == WEAPON_STUN ) {
 		return;
@@ -3192,10 +3192,10 @@ void PmoveSingle (pmove_t *pmove) {
 	// set the firing flag for continuous beam weapons
 	if ( !(pm->ps->pm_flags & PMF_RESPAWNED) && pm->ps->pm_type != PM_INTERMISSION
 	&& ( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->ammo[ pm->ps->weapon ]
-	&& pm->ps->weapon != WP_SHOTGUN ) { // BFP - That would be with chargeAttack set
+	&& !( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) ) ) { // BFP - That would be with chargeAttack set
 		pm->ps->eFlags |= EF_FIRING;
 	} else {
-		if ( pm->ps->weapon != WP_SHOTGUN ) { // BFP - That would be with chargeAttack set
+		if ( !( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) ) ) { // BFP - That would be with chargeAttack set
 			pm->ps->eFlags &= ~EF_FIRING;
 			// BFP - Handle attack button when holding to prepare the attack at the start
 			pm->cmd.buttons &= ~BUTTON_ATTACK;
@@ -3378,11 +3378,12 @@ void PmoveSingle (pmove_t *pmove) {
 	PM_GroundTrace();
 	PM_SetWaterLevel();
 
-	// weapons
-	PM_Weapon();
-
+	// BFP - Torso animation before PM_Weapon, because after firing a normal attack, needs to play the animation again correctly
 	// torso animation
 	PM_TorsoAnimation();
+
+	// weapons
+	PM_Weapon();
 
 	// BFP - Flight animation
 	PM_FlightAnimation();

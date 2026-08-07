@@ -27,18 +27,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 G_SplitProjectile_Fire
 ================
 */
-static void G_SplitProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir ) { // BFP - rdmissile: split projectile now!
+static void G_SplitProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir, int explosionSpawn ) { // BFP - rdmissile: split projectile now!
 	gentity_t		*m;
 	// BFP - explosionSpawn sets to split the projectiles, then if that happens,
 	// goes to the weaponNum of this and fires there x number of splitted projectiles
 	// explosionSpawn is a weaponNum of the attack to set
 	bfpWeaponDef_t	*def;
-	
-	if ( !ent->weaponDef ) {
-		return;
-	}
 
-	def = BG_FindBFPWeaponDef( ent->weaponDef->explosionSpawn );
+	def = BG_FindBFPWeaponDef( explosionSpawn );
 	if ( !def ) {
 		def = BG_SetDefaultWeaponDef();
 	}
@@ -137,6 +133,7 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - rd
 		// only can be damaged by explosion
 		vec3_t		forward, right, up;
 		gentity_t *owner = NULL;
+		float		radius = ent->r.maxs[0];
 		if ( ent->r.ownerNum < MAX_CLIENTS && ent->r.ownerNum >= 0 ) {
 			owner = &g_entities[ent->r.ownerNum];
 		}
@@ -176,7 +173,7 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - rd
 				break;
 			case 4: // up
 				if ( tr.fraction < 1.0f && tr.entityNum != ENTITYNUM_NONE ) {
-					origin[2] = tr.endpos[2] + ent->weaponDef->radius + 1;
+					origin[2] = tr.endpos[2] + radius + 1;
 				}
 				VectorCopy( up, dir );
 				break;
@@ -184,7 +181,7 @@ static void G_HandleRDMissile( gentity_t *ent, gclient_t *client ) { // BFP - rd
 				VectorNegate( up, dir );
 			}
 			VectorNormalize( dir );
-			G_SplitProjectile_Fire( owner, origin, dir );
+			G_SplitProjectile_Fire( owner, origin, dir, ent->weaponDef->explosionSpawn );
 		}
 	}
 }
@@ -240,6 +237,9 @@ void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
 		// but... what the hell BFP dev was thinking for this behavior here? That isn't a float... 
 		if ( ent->weaponDef->noZBounce && trace->plane.normal[2] > 0.2 ) {
 			ent->s.pos.trDelta[2] = 325.0f;
+			if ( ent->weaponDef->missileGravity > 0 ) {
+				ent->s.pos.trDelta[2] = 1000;
+			}
 		}
 
 		// check for stop
@@ -274,6 +274,9 @@ void G_ExplodeMissile( gentity_t *ent ) {
 	dir[0] = dir[1] = 0;
 	dir[2] = 1;
 
+	// BFP - Put again to keep the ki charge points
+	ent->s.generic1 = ent->kiChargePoints;
+
 	ent->s.eType = ET_GENERAL;
 	G_AddEvent( ent, EV_MISSILE_MISS, DirToByte( dir ) );
 
@@ -301,13 +304,16 @@ Detonate a missile
 void G_DetonateMissile( gentity_t *ent ) {	// BFP - Detonate a missile, for nextthink
 	gentity_t *tempEnt = G_TempEntity( ent->r.currentOrigin, EV_MISSILE_DETONATE );
 	tempEnt->s.otherEntityNum  = ent->s.number;
+	tempEnt->s.generic1 = ent->kiChargePoints;
+	tempEnt->s.clientNum = ent->parent->client->ps.clientNum;
+	tempEnt->s.weapon = ent->s.weapon;
 
 	// BFP - That's for ki charge points, make it lesser than 0
 	ent->s.generic1 = 0;
 
 	// BFP - Splitting ki ball
 	if ( ent->parent && ent->parent->client
-	&& ent->weaponDef->attackType == ATK_RDMISSILE
+	&& ent->weaponDef && ent->weaponDef->attackType == ATK_RDMISSILE
 	&& ent->parent->client->ps.weapon == ent->s.weapon
 	&& ent->s.weapon == ent->parent->s.weapon && !ent->splitKiBall ) {
 		ent->parent->client->ps.weaponstate = WEAPON_READY;
@@ -349,6 +355,9 @@ static void G_CollideDetonationCheck( gentity_t *ent, trace_t *trace ) { // BFP 
 	if ( trace->contents & MASK_PLAYERSOLID ) {
 		gentity_t *te = G_TempEntity( impactPoint, EV_MISSILE_MISS );
 		te->s.eventParm = DirToByte( trace->plane.normal );
+		te->s.generic1 = ent->s.generic1;
+		te->s.clientNum = ent->s.clientNum;
+		te->s.weapon = ent->s.weapon;
 	} else {
 		G_AddEvent( ent, EV_MISSILE_DETONATE, DirToByte( trace->plane.normal ) );
 	}
@@ -364,10 +373,14 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 	vec3_t v;
 
 	nent = G_Spawn();
+	nent->s.clientNum = ent->s.clientNum;
+	ent->s.generic1 = ent->kiChargePoints;
+	nent->s.generic1 = ent->kiChargePoints;
+	nent->s.weapon = ent->s.weapon;
+	nent->s.generic1 = ent->kiChargePoints;
 	if ( other->takedamage && other->client ) {
-
-		G_AddEvent( nent, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
 		nent->s.otherEntityNum = other->s.number;
+		G_AddEvent( nent, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
 
 		ent->enemy = other;
 
@@ -409,7 +422,7 @@ G_Homing
 ================
 */
 static void G_Homing( gentity_t *ent ) { // BFP - Homing
-	if ( ent && ent->weaponDef && ent->weaponDef->homing > 0 && ent->weaponDef->homingRange > 0 ) {
+	if ( ent && ent->weaponDef && ent->homing > 0 && ent->homingRange > 0 ) {
 		gentity_t	*target = NULL, *rad = NULL;
 		vec3_t		dir, raddir;
 
@@ -454,8 +467,8 @@ static void G_PiercingDamage( gentity_t *ent, gentity_t *target, int damage ) { 
 	vec3_t	velocity;
 
 	// stops homing
-	ent->weaponDef->homing = 0;
-	ent->weaponDef->homingRange = 0;
+	ent->homing = 0;
+	ent->homingRange = 0;
 
 	BG_EvaluateTrajectoryDelta( &ent->s.pos, level.time, velocity );
 
@@ -484,8 +497,8 @@ static void G_PiercingFade( gentity_t *ent ) { // BFP - Piercing helper function
 	ent->piercingFade = qtrue;
 
 	// stops homing
-	ent->weaponDef->homing = 0;
-	ent->weaponDef->homingRange = 0;
+	ent->homing = 0;
+	ent->homingRange = 0;
 }
 
 
@@ -499,6 +512,7 @@ static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
 		gentity_t	*rad = NULL, *other = &g_entities[trace->entityNum];
 		int			damage = ( ent->splashDamage ) ? ent->splashDamage : ent->damage;
 		const int	MAX_PIERCING_HITS = 4;
+		float		radius = ent->r.maxs[0];
 
 		// corrects the projectile from colliding
 		BG_EvaluateTrajectory( &ent->s.pos, level.time, ent->r.currentOrigin );
@@ -532,7 +546,7 @@ static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
 			VectorCopy( ent->r.currentOrigin, ent->piercingOrigin );
 		}
 
-		while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->weaponDef->radius) ) != NULL ) {
+		while ( ( rad = FindRadius(rad, ent->r.currentOrigin, radius) ) != NULL ) {
 			// BFP - If it's a splitting ki ball, break and split!
 			if ( rad && rad->s.eType == ET_MISSILE
 			&& G_BreakRDMissile( rad ) ) {
@@ -585,7 +599,7 @@ static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
 
 		// piercing radius
 		rad = NULL;
-		while ( ( rad = FindRadius(rad, ent->piercingOrigin, ent->weaponDef->radius) ) != NULL ) {
+		while ( ( rad = FindRadius(rad, ent->piercingOrigin, radius) ) != NULL ) {
 			if ( ent->target_ent && rad == ent->target_ent
 			&& ent->piercingHitTime && level.time < ent->piercingHitTime ) {
 				continue;
@@ -707,8 +721,8 @@ void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start ) 
 		int			i;
 
 		// BFP - For hitscan weapons: reflect toward where the player aims
-		if ( useViewAngles ) {
-			AngleVectors( ent->client->ps.viewangles, forward, NULL, NULL );
+		if ( useViewAngles && ent->parent && ent->parent->client ) {
+			AngleVectors( ent->parent->client->ps.viewangles, forward, NULL, NULL );
 		}
 
 		for ( i = 0; i < level.num_entities; ++i ) {
@@ -722,10 +736,10 @@ void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start ) 
 			if ( rad->freeAfterEvent || rad->nextthink <= level.time ) {
 				continue;
 			}
-			if ( rad->weaponDef->attackType == ATK_BEAM || rad->weaponDef->attackType == ATK_SBEAM ) { // cannot defend from beam & sbeam attack types
+			if ( rad->weaponDef && ( rad->weaponDef->attackType == ATK_BEAM || rad->weaponDef->attackType == ATK_SBEAM ) ) { // cannot defend from beam & sbeam attack types
 				continue;
 			}
-			if ( rad->weaponDef->piercing ) { // cannot defend from piercing attacks
+			if ( rad->weaponDef && rad->weaponDef->piercing ) { // cannot defend from piercing attacks
 				continue;
 			}
 
@@ -740,15 +754,18 @@ void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start ) 
 				VectorNormalize2( rad->s.pos.trDelta, forward );
 			}
 
-			VectorScale( forward, rad->weaponDef->missileSpeed, rad->s.pos.trDelta );
+			if ( rad->weaponDef ) {
+				VectorScale( forward, rad->weaponDef->missileSpeed, rad->s.pos.trDelta );
+			}
 			VectorCopy( rad->r.currentOrigin, rad->s.pos.trBase );
 			rad->s.pos.trTime = level.time;
 
-			rad->r.ownerNum = ent->s.number;
-			rad->parent = ent;
+			rad->r.ownerNum = ent->parent->s.number;
+			rad->parent = ent->parent;
+			rad->s.clientNum = ent->parent->client->ps.clientNum;
 
-			rad->weaponDef->homingRange = 0;
-			rad->weaponDef->homing = 0;
+			rad->homingRange = 0;
+			rad->homing = 0;
 		}
 	}
 }
@@ -759,8 +776,8 @@ void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start ) 
 G_MissileGravity
 ================
 */
-static void G_MissileGravity( gentity_t *ent ) { // BFP - Missile gravity
-	if ( ent && ent->weaponDef && ent->weaponDef->missileGravity > 0 && !ent->weaponDef->noZBounce ) {
+static void G_MissileGravity( gentity_t *ent, trace_t *trace ) { // BFP - Missile gravity
+	if ( ent && ent->weaponDef && ent->weaponDef->missileGravity > 0 ) {
 		ent->s.pos.trDelta[2] -= ent->weaponDef->missileGravity;
 		VectorCopy( ent->r.currentOrigin, ent->s.pos.trBase );
 		ent->s.pos.trTime = level.time;
@@ -787,18 +804,18 @@ static void G_MissileAcceleration( gentity_t *ent ) { // BFP - Missile accelerat
 G_ChargeDamageScaling
 =====================
 */
-void G_ChargeDamageScaling( gentity_t *ent, int minCharge ) { // BFP - Charge damage scaling
-	int		chargeLevel = ent->kiChargePoints - minCharge;
+void G_ChargeDamageScaling( gentity_t *ent, float radius ) { // BFP - Charge damage scaling
+	int		chargeLevel = ent->kiChargePoints;
 	float	r, rdown, er;
 
 	if ( !ent->weaponDef ) {
 		return;
 	}
 
-	r = ent->weaponDef->radius + chargeLevel * ent->weaponDef->chargeRadiusMult;
+	r = radius + chargeLevel * ent->weaponDef->chargeRadiusMult;
 	er = ent->weaponDef->explosionRadius + chargeLevel * ent->weaponDef->chargeExpRadiusMult;
 
-	if ( ent->kiChargePoints <= 0 || ent->kiChargePoints < minCharge ) {
+	if ( ent->kiChargePoints <= 0 ) {
 		return;
 	}
 
@@ -808,11 +825,17 @@ void G_ChargeDamageScaling( gentity_t *ent, int minCharge ) { // BFP - Charge da
 		ent->damage = ent->weaponDef->maxDamage;
 	}
 
+	// splash damage
+	ent->splashDamage += chargeLevel * ent->weaponDef->chargeDamageMult;
+	if ( ent->weaponDef->maxDamage > 0 && ent->splashDamage > ent->weaponDef->maxDamage ) {
+		ent->splashDamage = ent->weaponDef->maxDamage;
+	}
+
 	// collision radius (hitbox)
 	if ( ent->weaponDef->maxRadius > 0 && r > ent->weaponDef->maxRadius ) {
 		r = ent->weaponDef->maxRadius;
 	}
-	ent->weaponDef->radius = r;
+	radius = r;
 	rdown = r;
 	if ( ent->weaponDef->attackType != ATK_BEAM && ent->weaponDef->attackType != ATK_SBEAM ) {
 		rdown = 10;
@@ -904,7 +927,21 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	if ( !other->takedamage &&
 	// BFP - Replaced to bounces instead using EF_BOUNCE and EF_BOUNCE_HALF eFlags
 		ent->bounces ) {
+		// BFP - When the projectile is stuck, just explode
+		vec3_t	oldOrigin;
+		trace_t	checkTrace;
+		VectorCopy( ent->r.currentOrigin, oldOrigin );
+
 		G_BounceMissile( ent, trace );
+
+		trap_Trace( &checkTrace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, ent->r.currentOrigin,
+				ent->r.ownerNum, ent->clipmask );
+
+		if ( checkTrace.startsolid || checkTrace.allsolid ) {
+			VectorCopy( oldOrigin, ent->r.currentOrigin );
+			G_ExplodeMissile( ent );
+			return;
+		}
 		G_AddEvent( ent, EV_GRENADE_BOUNCE, 0 );
 		return;
 	}
@@ -960,62 +997,16 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 	}
 
 	// BFP - Changed "hook" to "beam" classname
-	if ( ent->weaponDef->attackType == ATK_BEAM || ent->weaponDef->attackType == ATK_SBEAM ) {
+	if ( ent->weaponDef
+	&& ( ent->weaponDef->attackType == ATK_BEAM || ent->weaponDef->attackType == ATK_SBEAM ) ) {
 		G_BFPBeamImpact( ent, other, trace );
 		return;
 	}
 
-// BFP - no hook
-#if 0
-	if (!strcmp(ent->classname, "hook")) {
-		gentity_t *nent;
-		vec3_t v;
-
-		nent = G_Spawn();
-		if ( other->takedamage && other->client ) {
-
-			G_AddEvent( nent, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
-			nent->s.otherEntityNum = other->s.number;
-
-			ent->enemy = other;
-
-			v[0] = other->r.currentOrigin[0] + (other->r.mins[0] + other->r.maxs[0]) * 0.5;
-			v[1] = other->r.currentOrigin[1] + (other->r.mins[1] + other->r.maxs[1]) * 0.5;
-			v[2] = other->r.currentOrigin[2] + (other->r.mins[2] + other->r.maxs[2]) * 0.5;
-
-			SnapVectorTowards( v, ent->s.pos.trBase );	// save net bandwidth
-		} else {
-			VectorCopy(trace->endpos, v);
-			G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace->plane.normal ) );
-			ent->enemy = NULL;
-		}
-
-		SnapVectorTowards( v, ent->s.pos.trBase );	// save net bandwidth
-
-		nent->freeAfterEvent = qtrue;
-		// change over to a normal entity right at the point of impact
-		nent->s.eType = ET_GENERAL;
-		ent->s.eType = ET_GRAPPLE;
-
-		G_SetOrigin( ent, v );
-		G_SetOrigin( nent, v );
-
-		ent->think = Weapon_HookThink;
-		ent->nextthink = level.time + FRAMETIME;
-
-		ent->parent->client->ps.pm_flags |= PMF_GRAPPLE_PULL;
-		VectorCopy( ent->r.currentOrigin, ent->parent->client->ps.grapplePoint);
-
-		trap_LinkEntity( ent );
-		trap_LinkEntity( nent );
-
-		return;
-	}
-#endif
-
 	// is it cheaper in bandwidth to just remove this ent and create a new
 	// one, rather than changing the missile into the explosion?
 
+	ent->s.generic1 = ent->kiChargePoints;
 	if ( other->takedamage && other->client ) {
 		G_AddEvent( ent, EV_MISSILE_HIT, DirToByte( trace->plane.normal ) );
 		ent->s.otherEntityNum = other->s.number;
@@ -1093,19 +1084,38 @@ void G_RunMissile( gentity_t *ent ) {
 
 	trap_LinkEntity( ent );
 
-	// BFP - When the player stopped shooting the charged beam/projectile by pressing the attack key
-	// These are sample weapons used as examples for BFP: 
-
 	if ( !ent->weaponDef ) {
+		return;
+	}
+
+	// BFP - Forcefield
+	if ( ent->weaponDef->attackType == ATK_FORCEFIELD ) {
+		if ( ent->parent && ent->parent->client ) {
+			VectorCopy( ent->parent->r.currentOrigin, ent->r.currentOrigin );
+			VectorCopy( ent->parent->r.currentOrigin, ent->s.pos.trBase );
+			ent->s.pos.trTime = level.time;
+		}
+		G_RunThink( ent );
+		return;
+	}
+
+	// BFP - Hitscan
+	if ( ent->weaponDef->attackType == ATK_HITSCAN ) {
+		G_RunThink( ent );
 		return;
 	}
 
 	// rdmissile splitting ki ball, when pressing the attack key again, splits by the number of balls depending on the ki attack charge points had
 	if ( client 
 	&& client->ps.weaponstate != WEAPON_FIRING 
-	&& ent->weaponDef->attackType == ATK_RDMISSILE
+	&& ent->weaponDef && ent->weaponDef->attackType == ATK_RDMISSILE
 	&& ent->s.weapon == ent->parent->s.weapon && !ent->splitKiBall ) {
 		client->ps.weaponTime = 0;
+	}
+
+	// BFP - Avoid null weaponDef pointer exception
+	if ( !ent->weaponDef || ent->weaponDef == NULL ) {
+		return;
 	}
 
 	// BFP - Priority
@@ -1115,15 +1125,15 @@ void G_RunMissile( gentity_t *ent ) {
 	G_Reflective( ent, qfalse, ent->r.currentOrigin );
 
 	// BFP - Missile gravity
-	G_MissileGravity( ent );
+	G_MissileGravity( ent, &tr );
 
 	// BFP - Missile acceleration
 	G_MissileAcceleration( ent );
 
 	if ( client 
 	&& ( client->pers.cmd.buttons & BUTTON_ATTACK )
-	&& ent->weaponDef->attackType == ATK_RDMISSILE
-	&& ent->s.weapon == ent->parent->s.weapon && !ent->splitKiBall ) {
+	&& ent->weaponDef && ent->weaponDef->attackType == ATK_RDMISSILE
+	&& !ent->splitKiBall ) {
 		G_RDMissile( ent, client );
 		client->ps.weaponstate = WEAPON_READY;
 		return;
@@ -1137,7 +1147,7 @@ void G_RunMissile( gentity_t *ent ) {
 
 	// BFP - Beam handling
 	if ( client 
-	&& ( ent->weaponDef->attackType == ATK_BEAM || ent->weaponDef->attackType == ATK_SBEAM )
+	&& ent->weaponDef && ( ent->weaponDef->attackType == ATK_BEAM || ent->weaponDef->attackType == ATK_SBEAM )
 	&& ent->s.weapon == ent->parent->s.weapon ) {
 		if ( client->ps.weaponstate != WEAPON_ACTIVE
 		&& client->ps.weaponstate != WEAPON_BEAMSTRUGGLE ) {
@@ -1173,7 +1183,7 @@ void G_RunMissile( gentity_t *ent ) {
 
 		// BFP - Splitting ki ball
 		if ( client 
-		&& ent->weaponDef->attackType == ATK_RDMISSILE
+		&& ent->weaponDef && ent->weaponDef->attackType == ATK_RDMISSILE
 		&& ent->s.weapon == ent->parent->s.weapon
 		&& !ent->splitKiBall ) {
 			client->ps.weaponstate = WEAPON_READY;
@@ -1190,7 +1200,7 @@ void G_RunMissile( gentity_t *ent ) {
 #endif
 
 			// BFP - Don't disappear instantly on piercing weapons
-			if ( !ent->weaponDef->piercing ) {
+			if ( ent->weaponDef && !ent->weaponDef->piercing ) {
 				G_FreeEntity( ent );
 			}
 			return;
@@ -1198,14 +1208,13 @@ void G_RunMissile( gentity_t *ent ) {
 
 		// BFP - Splitting ki ball
 		if ( client 
-		&& ent->s.weapon == ent->parent->s.weapon
-		&& ent->weaponDef->attackType == ATK_RDMISSILE && !ent->splitKiBall ) {
+		&& ent->weaponDef && ent->weaponDef->attackType == ATK_RDMISSILE && !ent->splitKiBall ) {
 			G_RDMissile( ent, client );
 			return;
 		}
 
 		// BFP - Don't explode on piercing weapons
-		if ( !ent->weaponDef->piercing ) {	
+		if ( ent->weaponDef && !ent->weaponDef->piercing ) {	
 			G_MissileImpact( ent, &tr );
 		}
 		if ( ent->s.eType != ET_MISSILE ) {

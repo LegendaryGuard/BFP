@@ -1493,7 +1493,7 @@ void ClientSpawn(gentity_t *ent) {
 		trap_LinkEntity (ent);
 
 		// force the base weapon up
-		client->ps.weapon = WP_MACHINEGUN;
+		client->ps.weapon = WP_NONE;
 		client->ps.weaponstate = WEAPON_READY;
 
 	}
@@ -1576,6 +1576,11 @@ void ClientDisconnect( int clientNum ) {
 	if ( !ent->client ) {
 		return;
 	}
+
+	// BFP - Avoid null exception when firing a weapon like this
+	if ( ent->client->hook ) {
+        Weapon_BFPBeamFree( ent->client->hook );
+    }
 
 	// stop any following clients
 	for ( i = 0 ; i < level.maxclients ; i++ ) {

@@ -1054,7 +1054,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// BFP - Melee knockback
 	int			meleeKnockback = 0;
 	// BFP - Damage force for knockback
-	float		damageForce = (float)damage * 0.1;
+	float		damageForce = (float)damage;
 
 	// BFP - Ultimate tier status is invulnerable!
 	if ( targ && targ->client // BFP - NOTE: Avoid DLL/SO crashing when impacting a door or any map entity (ET_MOVER), this is important for implementations like that!
@@ -1114,9 +1114,13 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 	// reduce damage by the attacker's handicap value
 	// unless they are rocket jumping
-	if ( attacker->client && attacker != targ ) {
+	if ( attacker->client ) {
 		// BFP - Apply attacker powerlevel calculation, no maximum health calculation
 		max = attacker->client->ps.persistant[PERS_POWERLEVEL] + 1; // BFP - before Q3: max = attacker->client->ps.stats[STAT_MAX_HEALTH];
+		// charge damage calculates another way
+		if ( inflictor && inflictor->weaponDef && inflictor->weaponDef->chargeDamageMult > 0 ) {
+			max = 1 + damage * attacker->client->ps.persistant[PERS_POWERLEVEL] * 0.01;
+		}
 		damage = damage * max * 0.01; // BFP - before Q3: damage = damage * max / 100;
 	}
 
@@ -1143,10 +1147,19 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 
 	// BFP - Apply knockback multiplied with damage force
-	knockback = damage * damageForce;
+	if ( damageForce > 40 ) {
+		damageForce *= 1.5;
+	} else { // multiply 11 times to adjust knockback
+		damageForce *= 11;
+	}
+
+	if ( damageForce > 200 ) {
+		damageForce = 200;
+	}
+	knockback = (float)damageForce;
 	// BFP - extraKnockback from weapon/projectile
 	if ( inflictor && inflictor->weaponDef && inflictor->weaponDef->extraKnockback != 0 ) {
-		knockback += inflictor->weaponDef->extraKnockback;
+		knockback += (float)inflictor->weaponDef->extraKnockback;
 	}
 
 	// BFP - Knockback can't be negative
@@ -1154,10 +1167,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	 	knockback = 0;
 	}
 
-	// BFP - Before Q3:
-	// if ( knockback > 200 ) {
-	// 	knockback = 200;
-	// }
+	if ( knockback > 200 ) {
+		knockback = 200;
+	}
 
 	// BFP - Add enough knockback to push the targets while receiving explosion/projectile impacts
 	if ( mod != MOD_MELEE ) {
