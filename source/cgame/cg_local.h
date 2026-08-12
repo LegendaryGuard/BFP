@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../game/bg_public.h"
 #include "cg_public.h"
 
+// BFP - HIGHLY MODIFIED
 
 // The entire cgame module is unloaded and reloaded on each level change,
 // so there is NO persistant data between levels on the client side.
@@ -158,7 +159,7 @@ typedef struct {
 
 	int				forceFieldStartTime;	// BFP - Forcefield start time
 
-	// BFP - TODO: Handle chargeAttack and chargeAutoFire for forcefield attack
+	// BFP - Handle chargeAutoFire for forcefield attack
 	qboolean		chargeAutoFire;
 
 	qboolean		constantFireAtkPlayed;	// BFP - To play constantFireAttack fire sound once
@@ -315,6 +316,110 @@ typedef struct {
 // usually as a result of a userinfo (name, model, etc) change
 #define	MAX_CUSTOM_SOUNDS	32
 
+// BFP - Skin config file (models/players/<model>/[skinName].cfg)
+typedef struct {
+	// name and icon
+	char		attackName[MAX_QPATH];			// attack name
+	qhandle_t	attackIcon;						// attack icon
+
+	// positioning
+	char		attackTag[MAX_QPATH];			// attack tag: "tag_*"
+	char		attackTagPart[MAX_QPATH];		// attack tag part: "head", "torso", "legs"...
+
+	// behavior flags relevant to presentation
+	qboolean	constantFireAttack;				// enable constant fire attack (adds a dynamic light around)
+	qboolean	lightningBolt;					// show lightning bolt
+	qboolean	noExplosion;					// enable to avoid showing the explosion
+	qboolean	noExplosionSound;				// enable to avoid playing explosion sound
+
+	// voices
+	char		attackFireVoicePath[MAX_QPATH];	// attack fire voice sound while firing
+	sfxHandle_t	attackFireVoice;
+	char		attackChargeVoicePath[ATTACK_CHARGE_LIMIT][MAX_QPATH];	// attack charge voice sound while charging, only when reaching a certain charge point, indexed by charge count
+	sfxHandle_t	attackChargeVoice[ATTACK_CHARGE_LIMIT];
+
+	// sounds
+	char		missileSoundPath[MAX_QPATH];	// missile sound (looping, at missile origin)
+	sfxHandle_t	missileSound;
+	char		chargeSoundPath[MAX_QPATH];		// charge sound (looping, while charging)
+	sfxHandle_t	chargeSound;
+	char		flashSoundPath[MAX_QPATH];		// flash sound (one-shot, on fire)
+	sfxHandle_t	flashSound;
+	char		firingSoundPath[MAX_QPATH];		// firing sound (looping, while firing)
+	sfxHandle_t	firingSound;
+
+	// dynamic light
+	int			missileDlight;					// missile dynamic light
+	vec3_t		missileDlightColor;				// missile dynamic light color
+
+	// trail
+	int			missileTrailFunc;				// missile trail function: "beam" / "rocket" / "spiralbeam" / "none"
+	int			missileTrailTime;				// missile trail time (rocket trail only)
+	int			missileTrailRadius;				// missile trail radius (rocket trail only)
+
+	// beam
+	char		beamShaderName[MAX_QPATH];			// beam shader
+	qhandle_t	beamShader;
+	char		spiralBeamShaderName[MAX_QPATH];	// spiral beam shader
+	qhandle_t	spiralBeamShader;
+
+	// muzzle flash
+	char		flashModelName[MAX_QPATH];		// flash model
+	qhandle_t	flashModel;
+	char		flashShaderName[MAX_QPATH];		// flash shader
+	qhandle_t	flashShader;
+	int			flashRadius;					// flash radius (sprite flashes only)
+	float		flashScaleFactor;				// flash scale factor
+	int			firingFlashRadius;				// firing flash radius (beam attacks, while firing)
+	float		firingFlashScaleFactor;			// firing flash scale factor
+
+	// missile appearance
+	char		missileShaderName[MAX_QPATH];	// missile shader
+	qhandle_t	missileShader;
+	char		missileModelName[MAX_QPATH];	// missile model
+	qhandle_t	missileModel;
+	int			missileRotation;				// missile rotation
+	float		missileModelRotation;			// missile model rotation
+	qboolean	missileSpinHoriz;				// show missile horizontal spin, rotates like a disk depending the angle
+	float		missileRadius;					// missile radius (sprite missiles)
+	int			missileRadiusChargeMult;		// missile radius charge multiplier
+	float		missileScaleFactor;				// missile scale factor
+	float		missileScaleFactorChargeMult;	// missile scale factor charge multiplier
+
+	// explosion
+	char		explosionModelName[MAX_QPATH];			// explosion model
+	qhandle_t	explosionModel;
+	char		explosionShaderName[MAX_QPATH];			// explosion shader
+	qhandle_t	explosionShader;
+	qboolean	explosionRing;							// show explosion ring model
+	qboolean	explosionShell;							// show explosion shell model
+	int			explosionRocks;							// number of rocks
+	int			explosionSparks;						// number of sparks
+	int			explosionSmoke;							// number of smokes
+	int			explosionSmokeRadius;					// explosion smoke radius
+	int			explosionSmokeLife;						// explosion smoke duration
+	int			explosionSmokeSpeed;					// explosion smoke speed
+	float		explosionScaleFactor;					// explosion scale factor
+	float		explosionScaleFactorChargeMult;			// explosion scale factor charge multiplier
+	float		explosionRingScaleFactor;				// explosion ring scale factor
+	float		explosionRingScaleFactorChargeMult;		// explosion ring scale factor charge multiplier
+	float		explosionShellScaleFactor;				// explosion shell scale factor
+	float		explosionShellScaleFactorChargeMult;	// explosion shell scale factor charge multiplier
+} bfpAttackSkinConfig_t;
+
+// BFP - missileTrailFunc types
+// "none" can be any value, anyway it's nothing
+#define	MISSILE_TRAIL_FUNC_BEAM			1	// "beam"
+#define	MISSILE_TRAIL_FUNC_ROCKET		2	// "rocket"
+#define	MISSILE_TRAIL_FUNC_SPIRALBEAM	3	// "spiralbeam"
+
+typedef struct {
+	qboolean				loaded;				// to check if it has run for this clientInfo_t at least once
+	qboolean				monsterLoaded;
+	bfpAttackSkinConfig_t	attacks[BFP_NUM_WEAPONS];
+	bfpAttackSkinConfig_t	savedAttacks[BFP_NUM_WEAPONS];	// backup of real config before monster overwrite
+} bfpSkinConfig_t;
+
 typedef struct {
 	qboolean		infoValid;
 
@@ -383,9 +488,14 @@ typedef struct {
 	animation_t		animations[MAX_TOTALANIMATIONS];
 
 	sfxHandle_t		sounds[MAX_CUSTOM_SOUNDS];
+
+	// BFP - Skin config
+	bfpSkinConfig_t	skinConfig;
 } clientInfo_t;
 
-
+// BFP - A macro to enable weaponInfo_t resources
+#define	INCLUDE_WEAPONINFO	0
+#if INCLUDE_WEAPONINFO
 // each WP_* weapon enum has an associated weaponInfo_t
 // that contains media references necessary to present the
 // weapon and its effects
@@ -440,12 +550,7 @@ typedef struct weaponInfo_s {
 
 	sfxHandle_t		chargeSound;		// BFP - Charge sound
 } weaponInfo_t;
-
-// BFP - missileTrailFunc types
-#define	MISSILE_TRAIL_FUNC_BEAM			1	// "beam"
-#define	MISSILE_TRAIL_FUNC_ROCKET		2	// "rocket"
-#define	MISSILE_TRAIL_FUNC_SPIRALBEAM	3	// "spiralbeam"
-// "none" can be any value, anyway it's nothing
+#endif
 
 // each IT_* item has an associated itemInfo_t
 // that constains media references necessary to present the
@@ -890,6 +995,8 @@ typedef struct {
 	qhandle_t		monsterUltTierHeadSkin;
 	qhandle_t		monsterModelIcon;
 	animation_t		monsterAnimations[MAX_TOTALANIMATIONS];
+	bfpAttackSkinConfig_t	monsterAttack;
+	qboolean				monsterAttackLoaded;
 
 	// sounds
 	sfxHandle_t	quadSound;
@@ -1129,7 +1236,9 @@ typedef struct {
 extern	cgs_t			cgs;
 extern	cg_t			cg;
 extern	centity_t		cg_entities[MAX_GENTITIES];
+#if INCLUDE_WEAPONINFO
 extern	weaponInfo_t	cg_weapons[MAX_WEAPONS];
+#endif
 extern	itemInfo_t		cg_items[MAX_ITEMS];
 extern	markPoly_t		cg_markPolys[MAX_MARK_POLYS];
 
@@ -1285,6 +1394,15 @@ void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
 
 //
+// cg_skinconfig.c
+//
+void CG_SetMonsterSkinConfig( void ); // BFP - Sets player monster skin config
+void CG_SetDefaultSkinConfig( bfpSkinConfig_t *config ); // BFP - Sets default skin config
+bfpAttackSkinConfig_t *CG_GetAttackConfig( int clientNum, int weaponNum ); // BFP - Get saved skin attack config
+bfpWeaponDef_t *CG_GetWeaponDefForSlot( int clientNum, int slot ); // BFP - Get weapon config from bfp_weapon*.cfg
+void CG_LoadSkinConfig( clientInfo_t *ci ); // BFP - Load skin config file (models/players/<model>/[skinName].cfg)
+
+//
 // cg_predict.c
 //
 void CG_BuildSolidList( void );
@@ -1326,18 +1444,16 @@ void CG_NextWeapon_f( void );
 void CG_PrevWeapon_f( void );
 void CG_Weapon_f( void );
 
-void CG_RegisterWeapon( int weaponNum );
 void CG_RegisterItemVisuals( int itemNum );
 
 void CG_FireWeapon( centity_t *cent );
-void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType );
-void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum );
-void CG_ShotgunFire( entityState_t *es );
-void CG_Bullet( vec3_t origin, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum );
+void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType, bfpAttackSkinConfig_t *atkCfg, centity_t *cent );
+void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum, bfpAttackSkinConfig_t *atkCfg, centity_t *cent );
 
+void CG_RocketTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg );
 void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
-void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi );
-void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ); // BFP - BFP Beam trail handling
+void CG_BFPBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg ); // BFP - BFP Beam trail handling
+void CG_BFPSpiralBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg ); // BFP - BFP Spiral beam trail handling
 void CG_AddViewWeapon (playerState_t *ps);
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team, char *tagName );
 void CG_DrawWeaponSelect( void );
@@ -1390,19 +1506,19 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 // BFP - Explosion models
 localEntity_t *CG_SpawnExplosionModel( vec3_t origin, vec3_t dir, leType_t type, qhandle_t hModel, qhandle_t shader, float duration );
 // BFP - Debris particles explosion
-void CG_DebrisExplosion( vec3_t origin, vec3_t dir );
+void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg );
 // BFP - Spark particles explosion
-void CG_SparksExplosion( vec3_t origin, vec3_t dir );
+void CG_SparksExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg );
 // BFP - Beam struggle sparks
 void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir );
 // BFP - Explosion smoke
-void CG_SmokeExplosion( vec3_t origin, vec3_t dir );
+void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg );
 // BFP - Explosion sounds
-void CG_ExplosionSound( vec3_t origin );
+void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *atkCfg );
 // BFP - Explosion effects
-void CG_ExplosionEffect( vec3_t origin, vec3_t dir );
+void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg, centity_t *cent );
 // BFP - Forcefield effect
-void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, char *explosionShader );
+void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *atkCfg );
 
 // BFP - Trails
 //

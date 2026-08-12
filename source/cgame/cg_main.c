@@ -75,7 +75,9 @@ DLLEXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, 
 cg_t				cg;
 cgs_t				cgs;
 centity_t			cg_entities[MAX_GENTITIES];
+#if INCLUDE_WEAPONINFO
 weaponInfo_t		cg_weapons[MAX_WEAPONS];
+#endif
 itemInfo_t			cg_items[MAX_ITEMS];
 
 // BFP - single-line cvar declaration, from ec-/baseq3a (by Razor)
@@ -788,7 +790,9 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.SSBBeamShader = trap_R_RegisterShader( "SSBBeamShader" );
 
 	memset( cg_items, 0, sizeof( cg_items ) );
+#if INCLUDE_WEAPONINFO
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );
+#endif
 
 	// only register the items that the server says we need
 	strcpy( items, CG_ConfigString( CS_ITEMS) );
@@ -1119,7 +1123,9 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	memset( &cgs, 0, sizeof( cgs ) );
 	memset( &cg, 0, sizeof( cg ) );
 	memset( cg_entities, 0, sizeof(cg_entities) );
+#if INCLUDE_WEAPONINFO
 	memset( cg_weapons, 0, sizeof(cg_weapons) );
+#endif
 	memset( cg_items, 0, sizeof(cg_items) );
 
 	cg.clientNum = clientNum;
@@ -1136,6 +1142,9 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	// BFP - Initialize that shader for missile trails
 	cgs.media.railCoreShader = trap_R_RegisterShader( "railCore" );
+
+	// BFP - Initialize rail rings shader for rail trail attack
+	cgs.media.railRingsShader = trap_R_RegisterShader( "railDisc" );
 
 	CG_RegisterCvars();
 

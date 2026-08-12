@@ -414,6 +414,7 @@ CGOBJ_ = \
   $(B)/cgame/cg_predict.o \
   $(B)/cgame/cg_scoreboard.o \
   $(B)/cgame/cg_servercmds.o \
+  $(B)/cgame/cg_skinconfig.o \
   $(B)/cgame/cg_snapshot.o \
   $(B)/cgame/cg_trails.o \
   $(B)/cgame/cg_view.o \

@@ -436,6 +436,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	int				clientNum;
 	clientInfo_t	*ci;
 	centity_t		*ce;
+	bfpAttackSkinConfig_t	*atkCfg;
 
 	es = &cent->currentState;
 	event = es->event & ~EV_EVENT_BITS;
@@ -459,7 +460,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		clientNum = 0;
 	}
 	ci = &cgs.clientinfo[ clientNum ];
-
+	atkCfg = &ci->skinConfig.attacks[es->weapon];
 	// BFP - HIGHLY MODIFIED, every event is sorted for original BFP networking
 
 	switch ( event ) {
@@ -994,12 +995,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		}
 
 	case EV_BULLET_HIT_FLESH:		// 71
-		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qtrue, es->eventParm );
 		break;
 
 	case EV_BULLET_HIT_WALL:		// 72
-		ByteToDir( es->eventParm, dir );
-		CG_Bullet( es->pos.trBase, es->otherEntityNum, dir, qfalse, ENTITYNUM_WORLD );
 		break;
 
 	//
@@ -1007,29 +1005,27 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	//
 	case EV_MISSILE_HIT:			// 73
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum );
+		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum, atkCfg, cent );
 		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
 	case EV_MISSILE_MISS:			// 74
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_DEFAULT );
-		if ( es->weapon != WP_MACHINEGUN && es->weapon != WP_SHOTGUN ) { // BFP - Avoid exploding using finger blast type thingies
-			// BFP - Debris particles explosion
-			CG_DebrisExplosion( position, dir );
-			// BFP - Spark particles explosion
-			CG_SparksExplosion( position, dir );
-		}
+		CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dir, IMPACTSOUND_DEFAULT, atkCfg, cent );
+		// BFP - Debris particles explosion
+		CG_DebrisExplosion( position, dir, atkCfg );
+		// BFP - Spark particles explosion
+		CG_SparksExplosion( position, dir, atkCfg );
 		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
 	case EV_MISSILE_MISS_METAL:		// 75
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, 0, position, dir, IMPACTSOUND_METAL );
+		CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dir, IMPACTSOUND_METAL, atkCfg, cent );
 		// BFP - Debris particles explosion
-		CG_DebrisExplosion( position, dir );
+		CG_DebrisExplosion( position, dir, atkCfg );
 		// BFP - Spark particles explosion
-		CG_SparksExplosion( position, dir );
+		CG_SparksExplosion( position, dir, atkCfg );
 		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
@@ -1039,13 +1035,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	case EV_MISSILE_DETONATE:		// 76
 		{
 			vec3_t	dirDetonate = {0, 0, 1}; // place the explosion position and size correctly
-			CG_MissileHitWall( es->weapon, 0, position, dirDetonate, IMPACTSOUND_DEFAULT );
+			CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dirDetonate, IMPACTSOUND_DEFAULT, atkCfg, cent );
 			CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		}
 		break;
 
 	case EV_RAILTRAIL:				// 77
-		cent->currentState.weapon = WP_RAILGUN;
 		// if the end was on a nomark surface, don't make an explosion
 		CG_RailTrail( ci, es->origin2, es->pos.trBase );
 		ByteToDir( es->eventParm, dir );
