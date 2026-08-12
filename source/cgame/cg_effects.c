@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
+// BFP - HIGHLY MODIFIED
 
 /*
 ==================
@@ -587,19 +588,20 @@ void CG_BigExplode( vec3_t playerOrigin ) {
 CG_DebrisExplosion
 =================
 */
-void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles explosion
+void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Debris particles explosion
 	int				i;
 	vec3_t			sprOrg, sprVel;
-	int				numRocks = 26;
+	int				numRocks = 0;
 	vec3_t			right, up, forward;
+
+	// BFP - explosionRocks <weaponNum> <numRocks>
+	if ( atkCfg ) {
+		numRocks = atkCfg->explosionRocks;
+	}
 
 	VectorCopy( dir, forward );
 	PerpendicularVector( right, forward );
 	CrossProduct( forward, right, up );
-
-	// BFP - NOTE: Debris particles shouldn't be used for bullet and disk weapon types
-
-	// BFP - TODO: Apply number of rocks as indicated on default.cfg file of some character: explosionRocks <weaponNum> <numRocks>
 
 	for ( i = 0; i < numRocks; ++i ) {
 		// spawn randomly the shaders with the particles
@@ -666,21 +668,22 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir ) { // BFP - Debris particles
 CG_SparksExplosion
 =================
 */
-void CG_SparksExplosion( vec3_t origin, vec3_t dir ) { // BFP - Spark particles explosion
+void CG_SparksExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Spark particles explosion
 	int				i;
 	vec3_t			sparkOrg, sparkVel;
-	int				numSparks = 26;
+	int				numSparks = 0;
 	vec3_t			right, up, forward;
+
+	// BFP - explosionSparks <weaponNum> <numSparks>
+	if ( atkCfg ) {
+		numSparks = atkCfg->explosionSparks;
+	}
 
 	VectorCopy( dir, forward );
 	PerpendicularVector( right, forward );
 	CrossProduct( forward, right, up );
 
 	// BFP - NOTE: Spark particles shouldn't be used on bullet and disk weapon types
-
-	// BFP - TODO: Apply calling this function for finger blast and these rail gun weapon types when hitting a player
-
-	// BFP - TODO: Apply number of sparks as indicated on default.cfg file of some character: explosionSparks <weaponNum> <numSparks>
 
 	for ( i = 0; i < numSparks; ++i ) {
 		// spawn randomly the shaders with the particles
@@ -720,9 +723,9 @@ CG_BeamStruggleEffect
 void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir ) { // BFP - Beam struggle effect
 	int				i;
 	vec3_t			sparkOrg, sparkVel;
-	int				numSparks = 26;
+	const int		NUM_SPARKS = 20;
 
-	for ( i = 0; i < numSparks; ++i ) {
+	for ( i = 0; i < NUM_SPARKS; ++i ) {
 		// spawn randomly the shaders with the particles
 		int		shaderIndex = (rand() % 100) < 50 ? 0 : 1;
 		float	speed = 600.0f + (rand() % 800);
@@ -753,17 +756,17 @@ void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir ) { // BFP - Beam struggle
 CG_SmokeExplosion
 =================
 */
-void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
-	if ( cg_explosionSmoke.integer > 0 
+void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Explosion smoke
+	if ( cg_explosionSmoke.integer > 0 && atkCfg && atkCfg->explosionSmoke > 0
 	&& !( trap_CM_PointContents( origin, 0 ) & MASK_WATER ) ) { // don't spawn smoke under water, lava or any liquid
-		// BFP - TODO: Apply explosionSmoke as indicated on default.cfg file from some character: explosionSmoke <weaponNum> <numSmokes(int)>
-		int	i, numSmokes = 3;
-		// BFP - TODO: Apply explosionSmokeRadius as indicated on default.cfg file from some character: explosionSmokeRadius <weaponNum> <radius(int)>
-		int	explosionSmokeRadius = 200;
-		// BFP - TODO: Apply explosionSmokeLife as indicated on default.cfg file from some character: explosionSmokeLife <weaponNum> <lifetime(int)>
-		int	explosionSmokeLife = 1500;
-		// BFP - TODO: Apply explosionSmokeSpeed as indicated on default.cfg file from some character: explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
-		int	explosionSmokeSpeed = 10;
+		// BFP - explosionSmoke <weaponNum> <numSmokes(int)>
+		int	i, numSmokes = atkCfg->explosionSmoke;
+		// BFP - explosionSmokeRadius <weaponNum> <radius(int)>
+		int	explosionSmokeRadius = atkCfg->explosionSmokeRadius;
+		// BFP - explosionSmokeLife <weaponNum> <lifetime(int)>
+		int	explosionSmokeLife = atkCfg->explosionSmokeLife;
+		// BFP - explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
+		int	explosionSmokeSpeed = atkCfg->explosionSmokeSpeed;
 
 		// for spreading smoke
 		vec3_t up = {0, 0, 1};
@@ -820,17 +823,18 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir ) { // BFP - Explosion smoke
 CG_ExplosionSound
 =================
 */
-void CG_ExplosionSound( vec3_t origin ) { // BFP - Explosion sounds
-	// BFP - TODO: noExplosionSound from skin config
-	int	i = rand() % 6;
+void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Explosion sounds
+	if ( atkCfg && !atkCfg->noExplosionSound ) {
+		int	i = rand() % 6;
 
-	switch ( i ) {
-	case 0:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion1Sound ); break;
-	case 1:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion2Sound ); break;
-	case 2:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion3Sound ); break;
-	case 3:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion4Sound ); break;
-	case 4:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion5Sound ); break;
-	default: trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion6Sound ); break;
+		switch ( i ) {
+		case 0:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion1Sound ); break;
+		case 1:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion2Sound ); break;
+		case 2:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion3Sound ); break;
+		case 3:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion4Sound ); break;
+		case 4:  trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion5Sound ); break;
+		default: trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, cgs.media.explosion6Sound ); break;
+		}
 	}
 }
 
@@ -840,74 +844,170 @@ void CG_ExplosionSound( vec3_t origin ) { // BFP - Explosion sounds
 CG_ExplosionEffect
 =================
 */
-void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effects
-	// BFP - Low poly sphere
-	// BFP - TODO: Apply explosionModel from bfp attack config, highPolySphereModel is just a test
-	qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
-	localEntity_t *leSphere, *leRing = NULL, *leShell = NULL;
-	float	scale = 1;
-
-	// BFP - TODO: Apply explosionShader from bfp attack config, ImpactBeamExplosionShader is just a test
-	leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, sphereModel, cgs.media.ImpactBeamExplosionShader, 1200 );
-	if ( cg_explosionShell.integer > 0 ) { // BFP - Explosion shell
-		leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, sphereModel, cgs.media.explosionShellShader, 250 );
+void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg, centity_t *cent ) { // BFP - Explosion effects
+	// to debug the attack skin config set from this explosion
+#if 0
+{
+	int	i;
+	Com_Printf( "^3Slot %d:\n", cent->currentState.weapon );
+	Com_Printf( "  ^6name^7=^3'%s'^7, ^6icon^7=^3%d\n", atkCfg->attackName, atkCfg->attackIcon );
+	Com_Printf( "  ^6attackTag^7=^3'%s'^7, ^6attackTagPart^7=^3%s\n", atkCfg->attackTag, atkCfg->attackTagPart );
+	Com_Printf( "  ^6constantFireAttack^7=^3%d^7, ^6lightningBolt^7=^3%d^7, ^6noExplosion^7=^3%d^7, ^6noExplosionSound^7=^3%d\n",
+		atkCfg->constantFireAttack, atkCfg->lightningBolt, atkCfg->noExplosion, atkCfg->noExplosionSound );
+	Com_Printf( "  ^6attackFireVoicePath^7=^3'%s'^7 (sfx^7=^3%d^7)\n", atkCfg->attackFireVoicePath, atkCfg->attackFireVoice );
+	for ( i = 0; i < ATTACK_CHARGE_LIMIT - 1; i++ ) {
+		if ( atkCfg->attackChargeVoicePath[i][0] ) {
+			Com_Printf( "  ^6attackChargeVoicePath[%d]^7=^3'%s'^7 (sfx^7=^3%d^7)\n", i, atkCfg->attackChargeVoicePath[i], atkCfg->attackChargeVoice[i] );
+		}
 	}
-	if ( cg_explosionRing.integer > 0 ) { // BFP - Explosion ring
-		leRing = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
-	}
-	CG_SmokeExplosion( origin, dir ); // BFP - Explosion smoke
+	Com_Printf( "  ^6missileSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6chargeSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
+		atkCfg->missileSoundPath, atkCfg->missileSound, atkCfg->chargeSoundPath, atkCfg->chargeSound );
+	Com_Printf( "  ^6flashSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6firingSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
+		atkCfg->flashSoundPath, atkCfg->flashSound, atkCfg->firingSoundPath, atkCfg->firingSound );
+	Com_Printf( "  ^6missileDlight^7=^3%d^7, ^6color^7=(^3%f^7,^3%f^7,^3%f^7)\n",
+		atkCfg->missileDlight, atkCfg->missileDlightColor[0], atkCfg->missileDlightColor[1], atkCfg->missileDlightColor[2] );
+	Com_Printf( "  ^6missileTrailFunc^7=^3%d^7, ^6trailTime^7=^3%d^7, ^6trailRadius^7=^3%d\n",
+		atkCfg->missileTrailFunc, atkCfg->missileTrailTime, atkCfg->missileTrailRadius );
+	Com_Printf( "  ^6beamShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6spiralBeamShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
+		atkCfg->beamShaderName, atkCfg->beamShader, atkCfg->spiralBeamShaderName, atkCfg->spiralBeamShader );
+	Com_Printf( "  ^6flashModel^7=^3'%s'^7 (model^7=^3%d^7) ^6flashShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
+		atkCfg->flashModelName, atkCfg->flashModel, atkCfg->flashShaderName, atkCfg->flashShader );
+	Com_Printf( "  ^6flashRadius^7=^3%d^7, ^6flashScaleFactor^7=^3%f^7, ^6firingFlashRadius^7=^3%d^7, ^6firingFlashScaleFactor^7=^3%f\n",
+		atkCfg->flashRadius, atkCfg->flashScaleFactor, atkCfg->firingFlashRadius, atkCfg->firingFlashScaleFactor );
+	Com_Printf( "  ^6missileShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6missileModel^7=^3'%s'^7 (model^7=^3%d^7)\n",
+		atkCfg->missileShaderName, atkCfg->missileShader, atkCfg->missileModelName, atkCfg->missileModel );
+	Com_Printf( "  ^6missileRotation^7=^3%d^7, ^6missileModelRotation^7=^3%f^7, ^6missileSpinHoriz^7=^3%d\n",
+		atkCfg->missileRotation, atkCfg->missileModelRotation, atkCfg->missileSpinHoriz );
+	Com_Printf( "  ^6missileRadius^7=^3%f^7, ^6missileRadiusChargeMult^7=^3%d^7, ^6missileScaleFactor^7=^3%f^7, ^6missileScaleFactorChargeMult^7=^3%f\n",
+		atkCfg->missileRadius, atkCfg->missileRadiusChargeMult, atkCfg->missileScaleFactor, atkCfg->missileScaleFactorChargeMult );
+	Com_Printf( "  ^6explosionModel^7=^3'%s'^7 (model^7=^3%d^7) ^6explosionShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
+		atkCfg->explosionModelName, atkCfg->explosionModel, atkCfg->explosionShaderName, atkCfg->explosionShader );
+	Com_Printf( "  ^6explosionRing^7=^3%d^7, ^6explosionShell^7=^3%d^7, ^6explosionRocks^7=^3%d^7, ^6explosionSparks^7=^3%d\n",
+		atkCfg->explosionRing, atkCfg->explosionShell, atkCfg->explosionRocks, atkCfg->explosionSparks );
+	Com_Printf( "  ^6explosionSmoke^7=^3%d^7, ^6smokeRadius^7=^3%d^7, ^6smokeLife^7=^3%d^7, ^6smokeSpeed^7=^3%d\n",
+		atkCfg->explosionSmoke, atkCfg->explosionSmokeRadius, atkCfg->explosionSmokeLife, atkCfg->explosionSmokeSpeed );
+	Com_Printf( "  ^6explosionScaleFactor^7=^3%f^7, ^6explosionScaleFactorChargeMult^7=^3%f\n",
+		atkCfg->explosionScaleFactor, atkCfg->explosionScaleFactorChargeMult );
+	Com_Printf( "  ^6explosionRingScaleFactor^7=^3%f^7, ^6explosionRingScaleFactorChargeMult^7=^3%f\n",
+		atkCfg->explosionRingScaleFactor, atkCfg->explosionRingScaleFactorChargeMult );
+	Com_Printf( "  ^6explosionShellScaleFactor^7=^3%f^7, ^6explosionShellScaleFactorChargeMult^7=^3%f\n",
+		atkCfg->explosionShellScaleFactor, atkCfg->explosionShellScaleFactorChargeMult );
+	Com_Printf( "^2=== Explosion End skin config debug ===\n" );
+}
+#endif
+	if ( atkCfg && !atkCfg->noExplosion ) {
+		// BFP - Low poly sphere
+		qhandle_t	explosionModel = ( cg_lowpolysphere.integer > 0 && atkCfg->explosionModel == cgs.media.highPolySphereModel ) ? cgs.media.lowPolySphereModel : atkCfg->explosionModel;
+		qhandle_t	shellModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
+		localEntity_t *leSphere = NULL, *leRing = NULL, *leShell = NULL;
+		float		scale = 1;
+		bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
-	if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
-		const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
-		int		numPointsChargedOverMin = 1; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
-		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
-		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float	explosionScaleFactor = 0.95, explosionScaleFactorChargeMult = 0;
-		// BFP - TODO: Apply explosionRingScaleFactor from default.cfg file from some character: explosionRingScaleFactor <weaponNum> <scaleFactor>
-		// BFP - TODO: Apply explosionRingScaleFactorChargeMult from default.cfg file from some character: explosionRingScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float	explosionRingScaleFactor = 0.95, explosionRingScaleFactorChargeMult = 0;
-		// BFP - TODO: Apply explosionShellScaleFactor from default.cfg file from some character: explosionShellScaleFactor <weaponNum> <scaleFactor>
-		// BFP - TODO: Apply explosionShellScaleFactorChargeMult from default.cfg file from some character: explosionShellScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float	explosionShellScaleFactor = 0.95, explosionShellScaleFactorChargeMult = 0;
+#if 0
+		Com_Printf( " ^6(^3%s^6)", def->attackName );
+		// print all weapon properties
+		Com_Printf( "\n      ^2attackType: ^3%d ^7%s", def->attackType,
+			( def->attackType == ATK_MISSILE ) ? "missile" :
+			( def->attackType == ATK_RDMISSILE ) ? "rdmissile" :
+			( def->attackType == ATK_BEAM ) ? "beam" :
+			( def->attackType == ATK_SBEAM ) ? "sbeam" :
+			( def->attackType == ATK_HITSCAN ) ? "hitscan" :
+			( def->attackType == ATK_FORCEFIELD ) ? "forcefield" : "UNKNOWN" );
+		Com_Printf( "\n      ^2weaponTime: ^3%d  ^2randomWeaponTime: ^3%d", def->weaponTime, def->randomWeaponTime );
+		Com_Printf( "\n      ^2kiCostAsPct: ^3%d  ^2kiPct: ^3%f  ^2kiCost: ^3%d", def->kiCostAsPct, def->kiPct, def->kiCost );
+		Com_Printf( "\n      ^2chargeAttack: ^3%d  ^2chargeAutoFire: ^3%d  ^2minCharge: ^3%d  ^2maxCharge: ^3%d",
+			def->chargeAttack, def->chargeAutoFire, def->minCharge, def->maxCharge );
+		Com_Printf( "\n      ^2damage: ^3%d  ^2splashDamage: ^3%d  ^2chargeDamageMult: ^3%d  ^2maxDamage: ^3%d",
+			def->damage, def->splashDamage, def->chargeDamageMult, def->maxDamage );
+		Com_Printf( "\n      ^2radius: ^3%d  ^2explosionRadius: ^3%d  ^2chargeRadiusMult: ^3%d  ^2chargeExpRadiusMult: ^3%d",
+			def->radius, def->explosionRadius, def->chargeRadiusMult, def->chargeExpRadiusMult );
+		Com_Printf( "\n      ^2maxRadius: ^3%d  ^2maxExpRadius: ^3%d", def->maxRadius, def->maxExpRadius );
+		Com_Printf( "\n      ^2missileSpeed: ^3%d  ^2homing: ^3%f  ^2homingRange: ^3%f  ^2homingAcceleration: ^3%f",
+			def->missileSpeed, def->homing, def->homingRange, def->homingAcceleration );
+		Com_Printf( "\n      ^2range: ^3%f", def->range );
+		Com_Printf( "\n      ^2loopingAnim: ^3%d  ^2noAttackAnim: ^3%d", def->loopingAnim, def->noAttackAnim );
+		Com_Printf( "\n      ^2alternatingXOffset: ^3%f  ^2randYOffset: ^3%f  ^2randXOffset: ^3%f",
+			def->alternatingXOffset, def->randYOffset, def->randXOffset );
+		Com_Printf( "\n      ^2coneOfFireX: ^3%d  ^2coneOfFireY: ^3%d", def->coneOfFireX, def->coneOfFireY );
+		Com_Printf( "\n      ^2piercing: ^3%d  ^2reflective: ^3%d  ^2priority: ^3%d  ^2blinding: ^3%d",
+			def->piercing, def->reflective, def->priority, def->blinding );
+		Com_Printf( "\n      ^2missileGravity: ^3%d  ^2missileAcceleration: ^3%f  ^2missileDuration: ^3%d",
+			def->missileGravity, def->missileAcceleration, def->missileDuration );
+		Com_Printf( "\n      ^2multishot: ^3%d  ^2bounces: ^3%d  ^2bounceFriction: ^3%f  ^2noZBounce: ^3%d",
+			def->multishot, def->bounces, def->bounceFriction, def->noZBounce );
+		Com_Printf( "\n      ^2extraKnockback: ^3%d  ^2railTrail: ^3%d  ^2movementPenalty: ^3%d  ^2explosionSpawn: ^3%d\n",
+			def->extraKnockback, def->railTrail, def->movementPenalty, def->explosionSpawn );
+#endif
 
-		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
-		if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
-		scale = explosionScaleFactor + explosionScaleFactorChargeMult * numPointsChargedOverMin;
-		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-		VectorScale( leSphere->refEntity.axis[0], scale, leSphere->refEntity.axis[0] );
-		VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
-		VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
+		if ( explosionModel ) {
+			leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, explosionModel, atkCfg->explosionShader, 1200 );
+		}
+		if ( cg_explosionShell.integer > 0 && atkCfg->explosionShell && shellModel ) { // BFP - Explosion shell
+			leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, shellModel, cgs.media.explosionShellShader, 250 );
+		}
+		if ( cg_explosionRing.integer > 0 && atkCfg->explosionRing ) { // BFP - Explosion ring
+			leRing = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
+		}
+		CG_SmokeExplosion( origin, dir, atkCfg ); // BFP - Explosion smoke
 
-		if ( cg_explosionRing.integer > 0 ) {
-			if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
-			if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
-			scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
-			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-			if ( leRing ) {
+		if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
+			const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
+			int		minCharge = ( def && def->minCharge >= 0 ) ? def->minCharge : 0;
+			int		numPointsChargedOverMin = ( cent->currentState.generic1 > 0 ) ? ( cent->currentState.generic1 - minCharge ) : 0; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
+			float	explosionScaleFactor = atkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = atkCfg->explosionScaleFactorChargeMult;
+			float	explosionRingScaleFactor = atkCfg->explosionRingScaleFactor, explosionRingScaleFactorChargeMult = atkCfg->explosionRingScaleFactorChargeMult;
+			float	explosionShellScaleFactor = atkCfg->explosionShellScaleFactor, explosionShellScaleFactorChargeMult = atkCfg->explosionShellScaleFactorChargeMult;
+
+			if ( leSphere ) {
+				vec3_t	missileDlightColor;
+				if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
+				if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
+				scale = explosionScaleFactor + explosionScaleFactorChargeMult * numPointsChargedOverMin;
+				if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+				VectorScale( leSphere->refEntity.axis[0], scale, leSphere->refEntity.axis[0] );
+				VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
+				VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
+
+				VectorCopy( atkCfg->missileDlightColor, missileDlightColor );
+				if ( def && def->attackType == ATK_HITSCAN  
+				&& missileDlightColor[0] <= 0
+				&& missileDlightColor[1] <= 0
+				&& missileDlightColor[2] <= 0 ) {
+					missileDlightColor[0] = missileDlightColor[2] = 1;
+					if ( def->railTrail ) {
+						missileDlightColor[0] = 0.75;
+						missileDlightColor[1] = missileDlightColor[2] = 0;
+					}
+				}
+
+				// BFP - Apply dynamic explosion light values
+				leSphere->light = 500 * scale;
+				leSphere->lightColor[0] = missileDlightColor[0];
+				leSphere->lightColor[1] = missileDlightColor[1];
+				leSphere->lightColor[2] = missileDlightColor[2];
+			}
+	
+			if ( cg_explosionRing.integer > 0 && atkCfg->explosionRing && leRing ) {
+				if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
+				if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
+				scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
+				if ( scale > MAX_SCALE ) scale = MAX_SCALE;
 				VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
 				VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
 				VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
 			}
-		}
-
-		if ( cg_explosionShell.integer > 0 ) {
-			if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
-			if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
-			scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
-			if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-			if ( leShell ) {
+	
+			if ( cg_explosionShell.integer > 0 && atkCfg->explosionShell && leShell ) {
+				if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
+				if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
+				scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
+				if ( scale > MAX_SCALE ) scale = MAX_SCALE;
 				VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
 				VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
 				VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
 			}
 		}
 	}
-
-	// BFP - Apply dynamic explosion light values
-	leSphere->light = 400 * scale;
-	leSphere->lightColor[0] = 1;
-	leSphere->lightColor[1] = 0.75;
-	leSphere->lightColor[2] = 0.0;
 }
 
 
@@ -916,9 +1016,15 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir ) { // BFP - Explosion effect
 CG_ForceFieldEffect
 =================
 */
-void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, char *explosionShader ) { // BFP - Forcefield effect
-	if ( cent->currentState.weapon == WP_SHOTGUN
-	&& ( cent->currentState.eFlags & EF_FIRING ) ) {
+void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Forcefield effect
+	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+
+	if ( def && def->attackType != ATK_FORCEFIELD && !def->chargeAutoFire ) {
+		cent->pe.forceFieldStartTime = 0;
+		return;
+	}
+
+	if ( cent->currentState.eFlags & EF_FIRING ) {
 		if ( !cent->pe.forceFieldStartTime ) {
 			cent->pe.forceFieldStartTime = cg.time;
 		}
@@ -930,20 +1036,16 @@ void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, 
 		const float		MAX_SCALE = 20;
 		int				elapsed = cg.time - cent->pe.forceFieldStartTime;
 		float			scale;
-		// BFP - TODO: Apply explosionModel from bfp attack config
-		qhandle_t		explosionModelRef = trap_R_RegisterModel( explosionModel );
-		// BFP - TODO: Apply explosionShader from bfp attack config
-		qhandle_t		explosionShaderRef = trap_R_RegisterShader( explosionShader );
-		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
-		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float			explosionScaleFactor = 1, explosionScaleFactorChargeMult = 2;
+		// BFP - explosionScaleFactor <weaponNum> <scaleFactor>
+		// BFP - explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
+		float			explosionScaleFactor = atkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = atkCfg->explosionScaleFactorChargeMult;
 		refEntity_t		ff;
 
 		memset( &ff, 0, sizeof(ff) );
 
 		ff.reType = RT_MODEL;
-		ff.hModel = explosionModelRef;
-		ff.customShader = explosionShaderRef;
+		ff.hModel = atkCfg->explosionModel;
+		ff.customShader = atkCfg->explosionShader;
 		ff.renderfx = RF_LIGHTING_ORIGIN;
 
 		VectorCopy( origin, ff.origin );
@@ -997,6 +1099,6 @@ void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, char *explosionModel, 
 		trap_R_AddRefEntityToScene( &ff );
 
 		// add the dlight
-		trap_R_AddLightToScene( ff.origin, 600 * scale, 0.25, 0.15, 0.75 );
+		trap_R_AddLightToScene( ff.origin, 600 * scale, atkCfg->missileDlightColor[0], atkCfg->missileDlightColor[1], atkCfg->missileDlightColor[2] );
 	}
 }

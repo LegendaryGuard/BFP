@@ -13,71 +13,6 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 	<img src="https://github-production-user-asset-6210df.s3.amazonaws.com/49716252/267147041-b5a8fb8c-575b-4b48-b6fe-513000717559.png" alt="bfpq3logo" width=350 />
 </p>
 
-# TODO list
-
-### Pending:
-
-- [ ] Skin Config File (explosionModel, explosionShader, missileRotation, missileShader, ... look old docs and cfgs about that: Custom plugin models - default.cfg for each player model)
-
-### Done:
-
-- [x] Animations as listed on the old docs
-- [x] Attacksets ([bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg))
-- [x] Auras
-- [x] Balanced player physics movements (different from the original BFP, but balanced for gameplay)
-- [x] Beam trails
-- [x] BFP config file ([bfp.cfg](cfgs/bfp.cfg)) (a sample of how the game saves general binding and BFP cvar stuff in a cfg file)
-- [x] bg_ weapon properties: weaponTime, randomWeaponTime, kiCostAsPct, kiPct, kiCost, chargeAttack, chargeAutoFire, minCharge, maxCharge, loopingAnim, noAttackAnim and movementPenalty
-- [x] Bind key to recover ki energy
-- [x] Bind key to toggle speed (ki boost)
-- [x] Blinding Flash (blinds opponents during 6 seconds)
-- [x] Blocking (consumes ki energy, transfers all damage to ki instead of health, deflect missile attacks, more info on old docs)
-- [x] Breakable map entities ("func_breakable")
-- [x] Bots behavior
-- [x] Bounce features (bounces, bounceFriction, noZBounce)
-- [x] Cone of fire feature (coneOfFireX and coneOfFireY)
-- [x] Cvars
-- [x] Damage calculated by attacker powerlevel, modified knockback and melee knockback (pushing opponents after receiving impact/damage, also loses altitude while flying/underwater/on slopes)
-- [x] Charge multipliers and maximum damage for weapons (maxDamage, chargeRadiusMult, chargeDamageMult, chargeExpRadiusMult)
-- [x] Extraknockback for weapons (extraKnockback)
-- [x] Forcefield feature
-- [x] Gametype: Survival (`g_gametype 3`)
-- [x] Gametype: Monster (`g_gametype 4`)
-- [x] Gametype: Team Last Man Standing (`g_gametype 6`)
-- [x] Homing weapon feature
-- [x] Hit Stun (makes player can't use ki, melee, block and charge)
-- [x] Illegal player model server handling
-- [x] Instant character model changing
-- [x] Ki shockwave (or Tornado Blast) weapon (a shockwave to push opponents)
-- [x] Ki trails
-- [x] Load player models only by prefix
-- [x] Multishot feature
-- [x] Melee feature
-- [x] Offset features (randXOffset, randYOffset and alternatingXOffset)
-- [x] Particles
-- [x] Power Struggles (when two beam attacks collide)
-- [x] Powerlevel and Power Tiers indicated on old docs
-- [x] Playable third person mode and first person vis mode
-- [x] Priority for projectiles
-- [x] Missile properties (missileSpeed, missileDuration, missileGravity and missileAcceleration)
-- [x] railTrail weapon property
-- [x] Radius feature (radius, maxRadius, maxExpRadius)
-- [x] Razor disk weapon (fires a cutting disk which can pierce beating low health opponents)
-- [x] Reflective feature
-- [x] Remove some items like powerups and health pickups
-- [x] Remove weapon visuals (models and stuff)
-- [x] Replace ammo to ki energy stamina
-- [x] Rocket jumping (applicable if jumping is pressed at the same time)
-- [x] sbeam attack type feature
-- [x] Short-Range Teleport - Zanzoken (when pressing 2 times left or right)
-- [x] Spectator can stop following the last player
-- [x] Splitting ki ball (rdmissile attack type) feature
-- [x] Third person traceable crosshair
-- [x] Toggeable flight (bind key)
-- [x] Transformations (related to Power Tiers)
-- [x] Weapon Config File ([bfp_weapon.cfg](cfgs/bfp_weapon.cfg) & [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg))
-
-
 ## Table of contents
 > 1. [History](#history)
 > 2. [About the repository](#about-the-repository)
@@ -179,7 +114,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - piercing weapons, like Razor disk, emit spark particles when hitting a player
 - beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
 - new particles: charge smoke, which appears when charging ki near the ground
-- new cool missile trails (that replaces original Q3 missile smoke trails), includes rainbow option (it can be disabled by setting `cg_oldRocket 1`). These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
+- new cool missile trails (that replaces original Q3 missile smoke trails), includes rainbow option (it can be disabled by setting `cg_oldRocketTrail 1`). These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
 
 #### PMOVE:
 - balanced player pmove physics: 

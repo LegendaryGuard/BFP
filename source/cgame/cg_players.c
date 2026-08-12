@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cg_players.c -- handle the media and animation for player entities
 #include "cg_local.h"
 
+// BFP - HIGHLY MODIFIED
+
 char	*cg_customSoundNames[MAX_CUSTOM_SOUNDS] = {
 	"*death1.wav",
 	"*death2.wav",
@@ -790,6 +792,10 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	// reset any existing players and bodies, because they might be in bad
 	// frames for this new model
 	clientNum = ci - cgs.clientinfo;
+
+	// BFP - BFP WEAPON CONFIG: Recompute the 5 attack slots -> weaponNum cache for this model
+	BG_SetClientAttackWeaponNums( clientNum, ci->modelName );
+
 	for ( i = 0 ; i < MAX_GENTITIES ; i++ ) {
 		if ( cg_entities[i].currentState.clientNum == clientNum
 			&& cg_entities[i].currentState.eType == ET_PLAYER ) {
@@ -1095,8 +1101,8 @@ void CG_NewClientInfo( int clientNum ) {
 		Q_strncpyz( newInfo.headSkinName, "default", sizeof( newInfo.headSkinName ) );
 	}
 
-	// BFP - BFP WEAPON CONFIG: Recompute the 5 attack slots -> weaponNum cache for this model
-	BG_SetClientAttackWeaponNums( clientNum, newInfo.modelName );
+	// BFP - SKIN CONFIG: load skin config
+	CG_LoadSkinConfig( &newInfo );
 
 	// BFP - Change the model without impeding with defer
 	// BFP - TODO: Remove cg_deferPlayers cvar and its unnecessary code in the future
@@ -2928,8 +2934,8 @@ void CG_Player( centity_t *cent ) {
 	// BFP - Monster gamemode with g_monster enabled, temporarily swap animations
 	animation_t		backupAnimations[MAX_TOTALANIMATIONS];
 
-	// BFP - Weapon info to extract
-	weaponInfo_t	*weap = &cg_weapons[ cent->currentState.weapon ];
+	// BFP - Attack skin info to extract
+	bfpAttackSkinConfig_t	*atkCfg;
 
 	// BFP - That macro makes all body being transformed during tier up. 
 	// Enabled by default, originally on BFP only shows the head as transformation transition
@@ -2983,6 +2989,8 @@ void CG_Player( centity_t *cent ) {
 		}*/
 	}
 
+	// BFP - Get attack skin config and weapon config
+	atkCfg = &ci->skinConfig.attacks[cent->currentState.weapon];
 
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
@@ -2992,6 +3000,59 @@ void CG_Player( centity_t *cent ) {
 	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0
 	&& ( cent->currentState.eFlags & EF_MONSTER )
 	&& cgs.media.monsterAnimations[0].numFrames != 0 ) {
+#if 0
+		{
+			int	i, j;
+			Com_Printf( "^2=== MONSTER Skin config for model ^3'%s'^2, skin ^3'%s'^2 ===\n", ci->modelName, ci->skinName );
+			for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+				bfpAttackSkinConfig_t	*a = &ci->skinConfig.attacks[i];
+				Com_Printf( "^3Slot %d:\n", i );
+				Com_Printf( "  ^6name^7=^3'%s'^7, ^6icon^7=^3%d\n", a->attackName, a->attackIcon );
+				Com_Printf( "  ^6attackTag^7=^3'%s'^7, ^6attackTagPart^7=^3%s\n", a->attackTag, a->attackTagPart );
+				Com_Printf( "  ^6constantFireAttack^7=^3%d^7, ^6lightningBolt^7=^3%d^7, ^6noExplosion^7=^3%d^7, ^6noExplosionSound^7=^3%d\n",
+					a->constantFireAttack, a->lightningBolt, a->noExplosion, a->noExplosionSound );
+				Com_Printf( "  ^6attackFireVoicePath^7=^3'%s'^7 (sfx^7=^3%d^7)\n", a->attackFireVoicePath, a->attackFireVoice );
+				for ( j = 0; j < 5; j++ ) {
+					if ( a->attackChargeVoicePath[j][0] ) {
+						Com_Printf( "  ^6attackChargeVoicePath[%d]^7=^3'%s'^7 (sfx^7=^3%d^7)\n", j, a->attackChargeVoicePath[j], a->attackChargeVoice[j] );
+					}
+				}
+				Com_Printf( "  ^6missileSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6chargeSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
+					a->missileSoundPath, a->missileSound, a->chargeSoundPath, a->chargeSound );
+				Com_Printf( "  ^6flashSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6firingSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
+					a->flashSoundPath, a->flashSound, a->firingSoundPath, a->firingSound );
+				Com_Printf( "  ^6missileDlight^7=^3%d^7, ^6color^7=(^3%f^7,^3%f^7,^3%f^7)\n",
+					a->missileDlight, a->missileDlightColor[0], a->missileDlightColor[1], a->missileDlightColor[2] );
+				Com_Printf( "  ^6missileTrailFunc^7=^3%d^7, ^6trailTime^7=^3%d^7, ^6trailRadius^7=^3%d\n",
+					a->missileTrailFunc, a->missileTrailTime, a->missileTrailRadius );
+				Com_Printf( "  ^6beamShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6spiralBeamShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
+					a->beamShaderName, a->beamShader, a->spiralBeamShaderName, a->spiralBeamShader );
+				Com_Printf( "  ^6flashModel^7=^3'%s'^7 (model^7=^3%d^7) ^6flashShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
+					a->flashModelName, a->flashModel, a->flashShaderName, a->flashShader );
+				Com_Printf( "  ^6flashRadius^7=^3%d^7, ^6flashScaleFactor^7=^3%f^7, ^6firingFlashRadius^7=^3%d^7, ^6firingFlashScaleFactor^7=^3%f\n",
+					a->flashRadius, a->flashScaleFactor, a->firingFlashRadius, a->firingFlashScaleFactor );
+				Com_Printf( "  ^6missileShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6missileModel^7=^3'%s'^7 (model^7=^3%d^7)\n",
+					a->missileShaderName, a->missileShader, a->missileModelName, a->missileModel );
+				Com_Printf( "  ^6missileRotation^7=^3%d^7, ^6missileModelRotation^7=^3%f^7, ^6missileSpinHoriz^7=^3%d\n",
+					a->missileRotation, a->missileModelRotation, a->missileSpinHoriz );
+				Com_Printf( "  ^6missileRadius^7=^3%f^7, ^6missileRadiusChargeMult^7=^3%d^7, ^6missileScaleFactor^7=^3%f^7, ^6missileScaleFactorChargeMult^7=^3%f\n",
+					a->missileRadius, a->missileRadiusChargeMult, a->missileScaleFactor, a->missileScaleFactorChargeMult );
+				Com_Printf( "  ^6explosionModel^7=^3'%s'^7 (model^7=^3%d^7) ^6explosionShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
+					a->explosionModelName, a->explosionModel, a->explosionShaderName, a->explosionShader );
+				Com_Printf( "  ^6explosionRing^7=^3%d^7, ^6explosionShell^7=^3%d^7, ^6explosionRocks^7=^3%d^7, ^6explosionSparks^7=^3%d\n",
+					a->explosionRing, a->explosionShell, a->explosionRocks, a->explosionSparks );
+				Com_Printf( "  ^6explosionSmoke^7=^3%d^7, ^6smokeRadius^7=^3%d^7, ^6smokeLife^7=^3%d^7, ^6smokeSpeed^7=^3%d\n",
+					a->explosionSmoke, a->explosionSmokeRadius, a->explosionSmokeLife, a->explosionSmokeSpeed );
+				Com_Printf( "  ^6explosionScaleFactor^7=^3%f^7, ^6explosionScaleFactorChargeMult^7=^3%f\n",
+					a->explosionScaleFactor, a->explosionScaleFactorChargeMult );
+				Com_Printf( "  ^6explosionRingScaleFactor^7=^3%f^7, ^6explosionRingScaleFactorChargeMult^7=^3%f\n",
+					a->explosionRingScaleFactor, a->explosionRingScaleFactorChargeMult );
+				Com_Printf( "  ^6explosionShellScaleFactor^7=^3%f^7, ^6explosionShellScaleFactorChargeMult^7=^3%f\n",
+					a->explosionShellScaleFactor, a->explosionShellScaleFactorChargeMult );
+			}
+			Com_Printf( "^2=== MONSTER End skin config debug ===\n" );
+		}
+#endif
 		memcpy( backupAnimations, ci->animations, sizeof(ci->animations) );
 		memcpy( ci->animations, cgs.media.monsterAnimations, sizeof(ci->animations) );
 	}
@@ -3269,17 +3330,14 @@ void CG_Player( centity_t *cent ) {
 	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 && ( cent->currentState.eFlags & EF_MONSTER ) ) {
 		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "head", "tag_mouth" );
 	} else {
-		if ( cent->currentState.weapon == WP_BFG ) { // BFP - Testing disk muzzle
-			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "torso", "tag_right" );
-		} else {
-			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "torso", "tag_left" );
+		if ( atkCfg ) {
+			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, atkCfg->attackTagPart, atkCfg->attackTag );
 		}
 	}
 
 	// BFP - Forcefield test
-	if ( cent->currentState.weapon == WP_SHOTGUN
-	&& cent->pe.chargeAutoFire && weap->noExplosion ) {
-		CG_ForceFieldEffect( cent, torso.origin, "models/weaphits/sphere_hi.md3", "AGAAttackShader" );
+	if ( cent->pe.chargeAutoFire && atkCfg && atkCfg->noExplosion ) {
+		CG_ForceFieldEffect( cent, torso.origin, atkCfg );
 	}
 
 	// add powerups floating behind the player

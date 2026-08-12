@@ -350,6 +350,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\source\cgame\cg_skinconfig.c"
+				>
+			</File>
+			<File
 				RelativePath="..\source\cgame\cg_snapshot.c"
 				>
 			</File>

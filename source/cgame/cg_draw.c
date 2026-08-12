@@ -479,12 +479,12 @@ CG_DrawSelectedKiAttack
 ==================
 */
 static void CG_DrawSelectedKiAttack( void ) { // BFP - Show selected ki attack
-	// BFP - TODO: Replace weapons to ki attack configs
-	// cg.weaponSelect frozen at whatever it initialized to, so the icon
-	// never reflected the actual active attack slot, particularly
-	// noticeable when spectating another player using a different slot than expected. 
-	// cg.predictedPlayerState.weapon already tracks the correct player automatically
-	CG_DrawPic( 535, 383, 96, 37, cg_weapons[ cg.predictedPlayerState.weapon ].weaponIcon );
+	bfpAttackSkinConfig_t	*atkCfg = CG_GetAttackConfig( cg.snap->ps.clientNum, cg.predictedPlayerState.weapon );
+	if ( atkCfg ) {
+		CG_DrawPic( 535, 383, 96, 37, atkCfg->attackIcon );
+	} else { // display forbidden icon
+		CG_DrawPic( 535, 383, 96, 37, cgs.media.deferShader );
+	}
 }
 
 /*
@@ -637,22 +637,6 @@ static void CG_DrawStatusBar( void ) {
 	value = ( ps->stats[STAT_HEALTH] * 100 ) / ps->stats[STAT_MAX_HEALTH];
 	hvalue = ( value < 1 ) ? 1 : ( value > 100 ) ? 100 : value;
 	CG_DrawHealthGauge( 154.5, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), GAUGE_WIDTH, GAUGE_HEIGHT, hvalue, 100 );
-	// BFP - No drawing HP Q3 field
-#if 0
-	if ( value > 100 ) {
-		trap_R_SetColor( colors[3] );	// white
-	} else if (value > 25) {
-		trap_R_SetColor( colors[0] );	// green
-	} else if (value > 0) {
-		color = (cg.time >> 8) & 1;		// flash
-		trap_R_SetColor( colors[color] );
-	} else {
-		trap_R_SetColor( colors[1] );	// red
-	}
-
-	// stretch the health up when taking damage
-	CG_DrawField ( 185, 432, 3, value);
-#endif
 
 	string = va( "%d%%", hvalue ); // %% is a percentage sign
 	CG_DrawBigString( 107, -18 + SCREEN_HEIGHT - ( SMALLCHAR_HEIGHT * 2 ), string, 1.0f );
@@ -972,13 +956,14 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 			// draw weapon icon
 			xx += TINYCHAR_WIDTH * 3;
 
-			// BFP - TODO: Replace weapons to ki attack configs
-			if ( cg_weapons[ci->curWeapon].weaponIcon ) {
-				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
-					cg_weapons[ci->curWeapon].weaponIcon );
-			} else {
-				CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, 
-					cgs.media.deferShader );
+			// BFP - Replace weapons to skin attack config
+			{
+				bfpAttackSkinConfig_t	*atkCfg = CG_GetAttackConfig( sortedTeamPlayers[i], ci->curWeapon );
+				if ( atkCfg && atkCfg->attackIcon ) {
+					CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, atkCfg->attackIcon );
+				} else {
+					CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, cgs.media.deferShader );
+				}
 			}
 
 			// Draw powerup icons
@@ -1332,6 +1317,9 @@ static void CG_DrawLowerRight( void ) {
 	}
 
 	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) { // BFP - Don't draw if the player is dead or spectating
+		// BFP - Selected ki attack
+		CG_DrawSelectedKiAttack();
+
 		// BFP - HUD overlay
 		CG_DrawHUDOverlay();
 	}
@@ -1384,7 +1372,7 @@ static void CG_DrawKiAttackChargeUpPoints( void ) { // BFP - Ki attack charge up
 	if ( cg.predictedPlayerState.generic1 > 0
 	// don't draw unless the player is charging/exploding a ki wave
 	&& ( cg.predictedPlayerState.weaponstate == WEAPON_FIRING || cg.predictedPlayerState.weaponstate == WEAPON_ACTIVE ) ) {
-		while ( i <= 6 ) {
+		while ( i <= ATTACK_CHARGE_LIMIT ) {
 			if ( cg.predictedPlayerState.generic1 >= i ) {
 				CG_DrawPic( x, 412, BIGCHAR_WIDTH - 2, BIGCHAR_HEIGHT - 2, cgs.media.chargeupbuttgreen );
 			}
@@ -1406,9 +1394,6 @@ static void CG_DrawLowerLeft( void ) {
 	y = 480 - ICON_SIZE;
 
 	if ( cg.snap->ps.stats[STAT_HEALTH] > 0 && cg.snap->ps.persistant[PERS_TEAM] != TEAM_SPECTATOR ) { // BFP - Don't draw if the player is dead or spectating
-		// BFP - Selected ki attack
-		CG_DrawSelectedKiAttack();
-
 		// BFP - Place head in the corner
 		CG_DrawStatusBarHead( 0 ); // CG_DrawStatusBarHead( 185 + CHAR_WIDTH*3 + TEXT_ICON_SPACE );
 
@@ -1985,10 +1970,6 @@ static void CG_DrawCrosshair(void) {
 	t = trap_Milliseconds();
 	frameTime = t - previous;
 	previous = t;
-
-	// BFP - TODO: BFP doesn't use the crosshair as player view, 
-	// e.g. if the camera angle is 90º, the crosshair should look what's in this view,
-	// not what the player sees
 
 	ps = &cg.predictedPlayerState;
 

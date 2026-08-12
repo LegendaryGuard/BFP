@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // cg_weapons.c -- events and effects dealing with weapons
 #include "cg_local.h"
 
+// BFP - HIGHLY MODIFIED
+
 /*
 ===================
 CG_AddFlashMissile
@@ -30,12 +32,23 @@ CG_AddFlashMissile
 Adds muzzle flash or missile shader/model
 ===================
 */
-void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec3_t origin, refEntity_t *parent, char *tagName, char *flashMissileShader, char *flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
+void CG_AddFlashMissile( qboolean isMissile, qboolean isMissileMoving, centity_t *cent, int entityNum, bfpAttackSkinConfig_t *atkCfg, vec3_t origin, refEntity_t *parent, char *tagName, qhandle_t flashMissileShader, qhandle_t flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
 	refEntity_t	flashMissile;
-	float		missileRadiusChargeMult = 75, missileScaleFactorChargeMult = 1;
+	float		missileRadiusChargeMult = 0, missileScaleFactorChargeMult = 0;
 	float		scale = 0;
-	float		minCharge = 2;
-	float		totalCharge = cent->currentState.generic1 - minCharge;
+	float		minCharge = 0;
+	float		totalCharge = 0;
+	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+
+	minCharge = ( def && def->minCharge > 0 ) ? def->minCharge : 0;
+	totalCharge = (float)cent->currentState.generic1 - minCharge;
+
+	if ( !atkCfg ) {
+		return;
+	}
+
+	missileRadiusChargeMult = atkCfg->missileRadiusChargeMult;
+	missileScaleFactorChargeMult = atkCfg->missileScaleFactorChargeMult;
 
 	// don't show the muzzle flash to the player itself on first person camera, even on first person vis mode
 	if ( cg_thirdPerson.integer <= 0 && entityNum == cg.snap->ps.clientNum ) {
@@ -46,13 +59,17 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 		totalCharge = 0;
 	}
 
-	if ( flashMissileScaleFactor <= 0 ) {
-		flashMissileScaleFactor = 1;
+	if ( flashMissileRadius < 0 ) {
+		flashMissileRadius = 0;
+	}
+
+	if ( flashMissileScaleFactor < 0 ) {
+		flashMissileScaleFactor = 0;
 	}
 
 	memset( &flashMissile, 0, sizeof( flashMissile ) );
 
-	// BFP - TODO: These function parameters can be applied for the following cfg variable calls:
+	// BFP - These function parameters can be applied for the following cfg variable calls:
 	// - flashModel [attack index] ["name of model"]: The model used for the weapon flash. 
 	// If this is not set or set to 0 and flashShader is set, the flash shader will be treated as a sprite.
 	
@@ -70,9 +87,9 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 
 	VectorCopy( origin, flashMissile.origin );
 
-	if ( flashMissileModel && flashMissileModel[0] ) {
+	if ( flashMissileModel ) {
 		flashMissile.reType = RT_MODEL;
-		flashMissile.hModel = trap_R_RegisterModel( flashMissileModel );
+		flashMissile.hModel = flashMissileModel;
 
 		if ( parent ) {
 			AxisCopy( parent->axis, flashMissile.axis );
@@ -81,14 +98,16 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 		}
 
 		if ( isMissile ) {
-			qboolean	missileSpinHoriz = qfalse;
 			scale = flashMissileScaleFactor + missileScaleFactorChargeMult * totalCharge;
 
+			if ( isMissileMoving && VectorNormalize2( cent->currentState.pos.trDelta, flashMissile.axis[0] ) == 0 ) {
+				flashMissile.axis[0][2] = 1;
+			}
+
 			// spin as it moves
-			if ( !missileSpinHoriz ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
+			if ( !atkCfg->missileSpinHoriz ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
 				// BFP - missileModelRotation
-				float	missileModelRotation = 0.2;
-				RotateAroundDirection( flashMissile.axis, cg.time * missileModelRotation );
+				RotateAroundDirection( flashMissile.axis, cg.time * atkCfg->missileModelRotation );
 			} else {
 				// BFP - Rotate Z-axis like a wheel
 				vec3_t	temp;
@@ -104,7 +123,7 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 			// BFP - Make muzzle flash fit better for player monster
 			if ( ( cent->currentState.eFlags & EF_MONSTER )
 			|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-				scale *= 8;
+				scale *= 2;
 			}
 		}
 		CG_ModelSize( &flashMissile, scale );
@@ -112,22 +131,21 @@ void CG_AddFlashMissile( qboolean isMissile, centity_t *cent, int entityNum, vec
 		flashMissile.reType = RT_SPRITE;
 
 		if ( isMissile ) {
-			float	missileRotation = 15;
 			scale = flashMissileRadius + missileRadiusChargeMult * totalCharge;
-			flashMissile.rotation = missileRotation;
+			flashMissile.rotation = atkCfg->missileModelRotation;
 		} else {
 			scale = flashMissileRadius;
 			// BFP - Make muzzle flash fit better for player monster
 			if ( ( cent->currentState.eFlags & EF_MONSTER )
 			|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-				scale *= 8;
+				scale *= 2;
 			}
 		}
 		flashMissile.radius = scale;
 	}
 
-	if ( flashMissileShader && flashMissileShader[0] ) {
-		flashMissile.customShader = trap_R_RegisterShader( flashMissileShader );
+	if ( flashMissileShader ) {
+		flashMissile.customShader = flashMissileShader;
 	}
 
 	flashMissile.shaderRGBA[0] = 0xff;
@@ -223,12 +241,12 @@ void CG_RailTrail ( clientInfo_t *ci, vec3_t start, vec3_t end ) { // BFP - BFP 
 CG_RocketTrail
 ==========================
 */
-static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
+void CG_RocketTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg ) {
 	vec3_t	origin, lastPos;
 	int		lastContents, contents;
 	entityState_t	*es;
 
-	// BFP - NOTE: cg_oldRocket is for these who wanna to play Q3 rocket smoke trails
+	// BFP - NOTE: cg_oldRocketTrail is for these who wanna to play Q3 rocket smoke trails
 
 	int		step;
 	int		t;
@@ -236,6 +254,9 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	vec3_t	up;
 	localEntity_t	*smoke;
 	vec3_t	color = {1, 0.75, 0}; // BFP - Color for missile trail
+	color[0] = atkCfg->missileDlightColor[0];
+	color[1] = atkCfg->missileDlightColor[1];
+	color[2] = atkCfg->missileDlightColor[2];
 
 	up[0] = 0;
 	up[1] = 0;
@@ -265,7 +286,7 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	lastContents = CG_PointContents( lastPos, -1 );
 
 	// BFP - Missile trail
-	if ( cg_oldRocket.integer <= 0 ) {
+	if ( cg_oldRocketTrail.integer <= 0 ) {
 		CG_MissileTrail( ent->currentState.number, origin, cgs.media.railCoreShader, color, qfalse );
 	}
 
@@ -281,16 +302,16 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 		return;
 	}
 
-	if ( cg_oldRocket.integer > 0 ) {
+	if ( cg_oldRocketTrail.integer > 0 ) {
 		ent->trailTime = cg.time;
 
 		for ( ; t <= ent->trailTime ; t += step ) {
 			BG_EvaluateTrajectory( &es->pos, t, lastPos );
 
 			smoke = CG_SmokePuff( lastPos, up, 
-						wi->trailRadius, 
+						atkCfg->missileTrailRadius, 
 						1, 1, 1, 0.33f,
-						wi->wiTrailTime, 
+						atkCfg->missileTrailTime, 
 						t,
 						0,
 						0, 
@@ -301,147 +322,13 @@ static void CG_RocketTrail( centity_t *ent, const weaponInfo_t *wi ) {
 	}
 }
 
-// BFP - Unused CG_PlasmaTrail function
-#if 0
-/*
-==========================
-CG_PlasmaTrail
-==========================
-*/
-static void CG_PlasmaTrail( centity_t *cent, const weaponInfo_t *wi ) {
-	localEntity_t	*le;
-	refEntity_t		*re;
-	entityState_t	*es;
-	vec3_t			velocity, xvelocity, origin;
-	vec3_t			offset, xoffset;
-	vec3_t			v[3];
-	// BFP - Unused in Q3? What?
-	// int				t, startTime, step;
-
-	float	waterScale = 1.0f;
-
-	if ( cg_noProjectileTrail.integer ) {
-		return;
-	}
-
-	// step = 50;
-
-	es = &cent->currentState;
-	// startTime = cent->trailTime;
-	// t = step * ( (startTime + step) / step );
-
-	BG_EvaluateTrajectory( &es->pos, cg.time, origin );
-
-	le = CG_AllocLocalEntity();
-	re = &le->refEntity;
-
-	velocity[0] = 60 - 120 * crandom();
-	velocity[1] = 40 - 80 * crandom();
-	velocity[2] = 100 - 200 * crandom();
-
-	le->leType = LE_MOVE_SCALE_FADE;
-	le->leFlags = LEF_TUMBLE;
-	le->leBounceSoundType = LEBS_NONE;
-	le->leMarkType = LEMT_NONE;
-
-	le->startTime = cg.time;
-	le->endTime = le->startTime + 600;
-
-	le->pos.trType = TR_GRAVITY;
-	le->pos.trTime = cg.time;
-
-	AnglesToAxis( cent->lerpAngles, v );
-
-	offset[0] = 2;
-	offset[1] = 2;
-	offset[2] = 2;
-
-	xoffset[0] = offset[0] * v[0][0] + offset[1] * v[1][0] + offset[2] * v[2][0];
-	xoffset[1] = offset[0] * v[0][1] + offset[1] * v[1][1] + offset[2] * v[2][1];
-	xoffset[2] = offset[0] * v[0][2] + offset[1] * v[1][2] + offset[2] * v[2][2];
-
-	VectorAdd( origin, xoffset, re->origin );
-	VectorCopy( re->origin, le->pos.trBase );
-
-	if ( CG_PointContents( re->origin, -1 ) & CONTENTS_WATER ) {
-		waterScale = 0.10f;
-	}
-
-	xvelocity[0] = velocity[0] * v[0][0] + velocity[1] * v[1][0] + velocity[2] * v[2][0];
-	xvelocity[1] = velocity[0] * v[0][1] + velocity[1] * v[1][1] + velocity[2] * v[2][1];
-	xvelocity[2] = velocity[0] * v[0][2] + velocity[1] * v[1][2] + velocity[2] * v[2][2];
-	VectorScale( xvelocity, waterScale, le->pos.trDelta );
-
-	AxisCopy( axisDefault, re->axis );
-    re->shaderTime = cg.time / 1000.0f;
-    re->reType = RT_SPRITE;
-    re->radius = 0.25f;
-	re->customShader = cgs.media.railRingsShader;
-	le->bounceFactor = 0.3f;
-
-    re->shaderRGBA[0] = wi->flashDlightColor[0] * 63;
-    re->shaderRGBA[1] = wi->flashDlightColor[1] * 63;
-    re->shaderRGBA[2] = wi->flashDlightColor[2] * 63;
-    re->shaderRGBA[3] = 63;
-
-    le->color[0] = wi->flashDlightColor[0] * 0.2;
-    le->color[1] = wi->flashDlightColor[1] * 0.2;
-    le->color[2] = wi->flashDlightColor[2] * 0.2;
-    le->color[3] = 0.25f;
-
-	le->angles.trType = TR_LINEAR;
-	le->angles.trTime = cg.time;
-	le->angles.trBase[0] = rand()&31;
-	le->angles.trBase[1] = rand()&31;
-	le->angles.trBase[2] = rand()&31;
-	le->angles.trDelta[0] = 1;
-	le->angles.trDelta[1] = 0.5;
-	le->angles.trDelta[2] = 0;
-
-}
-#endif
-
-/*
-==========================
-CG_GrappleTrail
-==========================
-*/
-void CG_GrappleTrail( centity_t *ent, const weaponInfo_t *wi ) {
-	vec3_t	origin;
-	entityState_t	*es;
-	refEntity_t		beam;
-
-	es = &ent->currentState;
-
-	BG_EvaluateTrajectory( &es->pos, cg.time, origin );
-	ent->trailTime = cg.time;
-
-	memset( &beam, 0, sizeof( beam ) );
-
-	VectorCopy( cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, beam.origin );
-	VectorCopy( origin, beam.oldorigin );
-
-	if (Distance( beam.origin, beam.oldorigin ) < 64 )
-		return; // Don't draw if close
-
-	beam.reType = RT_LIGHTNING;
-	beam.customShader = cgs.media.lightningShader;
-
-	AxisClear( beam.axis );
-	beam.shaderRGBA[0] = 0xff;
-	beam.shaderRGBA[1] = 0xff;
-	beam.shaderRGBA[2] = 0xff;
-	beam.shaderRGBA[3] = 0xff;
-	trap_R_AddRefEntityToScene( &beam );
-}
-
 
 /*
 ==========================
 CG_BFPBeamTrail
 ==========================
 */
-void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Beam trail handling
+void CG_BFPBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg ) { // BFP - BFP Beam trail handling
 	vec3_t	origin;
 	entityState_t	*es;
 
@@ -451,13 +338,11 @@ void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Be
 	// ent->trailTime = cg.time;
 
 	// BFP - NOTE: That's where we apply the flash properties read from client cfg
-	CG_AddFlashMissile( qfalse, ent, es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, NULL, "", "ImpactBeamFlashShader", 0, 25, 1 );
+	CG_AddFlashMissile( qfalse, qfalse, ent, es->clientNum, atkCfg, cg_entities[ es->clientNum ].pe.muzzleOrigin, NULL, "", atkCfg->flashShader, atkCfg->flashModel, atkCfg->firingFlashRadius, atkCfg->firingFlashScaleFactor );
 
-	CG_AddFlashMissile( qtrue, ent, es->number, origin, NULL, "", "ImpactBeamFlashShader", 0, 50, 1 );
+	CG_AddFlashMissile( qtrue, qtrue, ent, es->number, atkCfg, origin, NULL, "", atkCfg->missileShader, atkCfg->missileModel, atkCfg->missileRadius, atkCfg->missileScaleFactor );
 
-	CG_BeamTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.PowerWaveBeamShader );
-	// to test corkscrew
-	// CG_CorkscrewTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.SSBBeamShader, cgs.media.SSBSpiralShader );
+	CG_BeamTrail( es->number, origin, cg_entities[ es->clientNum ].pe.muzzleOrigin, atkCfg->beamShader );
 }
 
 /*
@@ -465,7 +350,7 @@ void CG_BFPBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Be
 CG_BFPSpiralBeamTrail
 ==========================
 */
-void CG_BFPSpiralBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - BFP Spiral beam trail handling
+void CG_BFPSpiralBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg ) { // BFP - BFP Spiral beam trail handling
 	vec3_t	origin;
 	entityState_t	*es;
 
@@ -475,289 +360,11 @@ void CG_BFPSpiralBeamTrail( centity_t *ent, const weaponInfo_t *wi ) { // BFP - 
 	// ent->trailTime = cg.time;
 
 	// BFP - NOTE: That's where we apply the flash properties read from client cfg
-	CG_AddFlashMissile( qfalse, ent, es->otherEntityNum, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, NULL, "", "ImpactBeamFlashShader", 0, 25, 1 );
+	CG_AddFlashMissile( qfalse, qfalse, ent, es->clientNum, atkCfg, cg_entities[ es->clientNum ].pe.muzzleOrigin, NULL, "", atkCfg->flashShader, atkCfg->flashModel, atkCfg->firingFlashRadius, atkCfg->firingFlashScaleFactor );
 
-	CG_AddFlashMissile( qtrue, ent, es->number, origin, NULL, "", "ImpactBeamFlashShader", 0, 50, 1 );
+	CG_AddFlashMissile( qtrue, qtrue, ent, es->number, atkCfg, origin, NULL, "", atkCfg->missileShader, atkCfg->missileModel, atkCfg->missileRadius, atkCfg->missileScaleFactor );
 
-	CG_CorkscrewTrail( es->number, origin, cg_entities[ es->otherEntityNum ].pe.muzzleOrigin, cgs.media.SSBBeamShader, cgs.media.SSBSpiralShader );
-}
-
-/*
-==========================
-CG_GrenadeTrail
-==========================
-*/
-static void CG_GrenadeTrail( centity_t *ent, const weaponInfo_t *wi ) {
-	CG_RocketTrail( ent, wi );
-}
-
-
-/*
-=================
-CG_RegisterWeapon
-
-The server says this item is used on this level
-=================
-*/
-void CG_RegisterWeapon( int weaponNum ) {
-	weaponInfo_t	*weaponInfo;
-	gitem_t			*item, *ammo;
-	// BFP - Unused variables
-	//char			path[MAX_QPATH];
-	//vec3_t			mins, maxs;
-	//int				i;
-
-	weaponInfo = &cg_weapons[weaponNum];
-
-	// BFP - Don't restrict that weapon, it's the first one to be selected
-#if 0
-	if ( weaponNum == 0 ) {
-		return;
-	}
-#endif
-
-	if ( weaponInfo->registered ) {
-		return;
-	}
-
-	memset( weaponInfo, 0, sizeof( *weaponInfo ) );
-	weaponInfo->registered = qtrue;
-
-	for ( item = bg_itemlist + 1 ; item->classname ; item++ ) {
-		if ( item->giType == IT_WEAPON && item->giTag == weaponNum ) {
-			weaponInfo->item = item;
-			break;
-		}
-	}
-	if ( !item->classname ) {
-		CG_Error( "Couldn't find weapon %i", weaponNum );
-	}
-	// BFP - Don't register item visuals again
-	// CG_RegisterItemVisuals( item - bg_itemlist );
-
-	// BFP - No weaponModel
-#if 0
-	// load cmodel before model so filecache works
-	weaponInfo->weaponModel = trap_R_RegisterModel( item->world_model[0] );
-
-	// calc midpoint for rotation
-	trap_R_ModelBounds( weaponInfo->weaponModel, mins, maxs );
-	for ( i = 0 ; i < 3 ; i++ ) {
-		weaponInfo->weaponMidpoint[i] = mins[i] + 0.5 * ( maxs[i] - mins[i] );
-	}
-#endif
-
-	weaponInfo->weaponIcon = trap_R_RegisterShader( item->icon );
-	//weaponInfo->ammoIcon = trap_R_RegisterShader( item->icon ); // BFP - No ammoIcon
-
-	for ( ammo = bg_itemlist + 1 ; ammo->classname ; ammo++ ) {
-		if ( ammo->giType == IT_AMMO && ammo->giTag == weaponNum ) {
-			break;
-		}
-	}
-	if ( ammo->classname && ammo->world_model[0] ) {
-		weaponInfo->ammoModel = trap_R_RegisterModel( ammo->world_model[0] );
-	}
-
-	// BFP - No handsModel, weaponModel and barrelModel
-#if 0
-	COM_StripExtension( item->world_model[0], path, sizeof(path) );
-	Q_strcat( path, sizeof(path), "_flash.md3" );
-	weaponInfo->flashModel = trap_R_RegisterModel( path );
-
-	COM_StripExtension( item->world_model[0], path, sizeof(path) );
-	Q_strcat( path, sizeof(path), "_barrel.md3" );
-	weaponInfo->barrelModel = trap_R_RegisterModel( path );
-
-	COM_StripExtension( item->world_model[0], path, sizeof(path) );
-	Q_strcat( path, sizeof(path), "_hand.md3" );
-	weaponInfo->handsModel = trap_R_RegisterModel( path );
-
-	if ( !weaponInfo->handsModel ) {
-		weaponInfo->handsModel = trap_R_RegisterModel( "models/weapons2/shotgun/shotgun_hand.md3" );
-	}
-#endif
-
-	weaponInfo->loopFireSound = qfalse;
-
-	// BFP - missileTrailFunc
-	switch ( weaponInfo->missileTrailFuncType ) {
-	case MISSILE_TRAIL_FUNC_BEAM:		// "beam"
-		weaponInfo->missileTrailFunc = CG_BFPBeamTrail;
-		break;
-	case MISSILE_TRAIL_FUNC_ROCKET:		// "rocket"
-		weaponInfo->missileTrailFunc = CG_RocketTrail;
-		break;
-	case MISSILE_TRAIL_FUNC_SPIRALBEAM:	// "spiralbeam"
-		weaponInfo->missileTrailFunc = CG_BFPSpiralBeamTrail;
-	default:							// "none"
-		break;
-	}
-
-	switch ( weaponNum ) {
-	case WP_GAUNTLET:
-		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
-		// BFP - TODO: Maybe hitscan weapons use firingSound only, it has some firing sound at the beginning
-		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
-		// weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/melee/fstatck.wav", qfalse );
-
-		// BFP - constantFireAttack
-		weaponInfo->constantFireAttack = qtrue;
-		break;
-
-	case WP_LIGHTNING:
-		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
-		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum.wav", qfalse );
-		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/lightning/lg_hum.wav", qfalse );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/lightning/lg_fire.wav", qfalse );
-
-		// BFP - constantFireAttack
-		weaponInfo->constantFireAttack = qtrue;
-
-		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew");
-		cgs.media.lightningExplosionModel = trap_R_RegisterModel( "models/weaphits/crackle.md3" );
-		cgs.media.sfx_lghit1 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit.wav", qfalse );
-		cgs.media.sfx_lghit2 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit2.wav", qfalse );
-		cgs.media.sfx_lghit3 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit3.wav", qfalse );
-
-		break;
-
-	case WP_GRAPPLING_HOOK:
-		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
-		// BFP - No missile model
-		weaponInfo->missileModel = 0; // trap_R_RegisterModel( "models/ammo/rocket/rocket.md3" );
-		weaponInfo->missileTrailFunc = CG_BFPBeamTrail; // BFP - Use BFP Beam instead CG_GrappleTrail
-		weaponInfo->missileDlight = 200;
-		weaponInfo->wiTrailTime = 2000;
-		weaponInfo->trailRadius = 64;
-		MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
-		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew" );
-		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum.wav", qfalse );
-
-		// BFP - chargeSound
-		weaponInfo->chargeSound = cgs.media.defaultKiChargingSound;
-
-		// BFP - missileSound
-		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
-
-		// BFP - firingSound
-		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
-
-		// BFP - flashSound
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/bfp/beamflash1.wav", qfalse );
-		break;
-
-	case WP_MACHINEGUN:
-		MAKERGB( weaponInfo->flashDlightColor, 1, 1, 0 );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/machinegun/machgf1b.wav", qfalse );
-		weaponInfo->flashSound[1] = trap_S_RegisterSound( "sound/weapons/machinegun/machgf2b.wav", qfalse );
-		weaponInfo->flashSound[2] = trap_S_RegisterSound( "sound/weapons/machinegun/machgf3b.wav", qfalse );
-		weaponInfo->flashSound[3] = trap_S_RegisterSound( "sound/weapons/machinegun/machgf4b.wav", qfalse );
-		cgs.media.bulletExplosionShader = trap_R_RegisterShader( "bulletExplosion" );
-		break;
-
-	case WP_SHOTGUN:
-		// BFP - No flash light, just force field test
-		//MAKERGB( weaponInfo->flashDlightColor, 1, 1, 0 );
-		//weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/shotgun/sshotf1b.wav", qfalse );
-
-		// BFP - noExplosion test
-		weaponInfo->noExplosion = qtrue;
-
-		// BFP - firingSound
-		weaponInfo->firingSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
-		break;
-
-	case WP_ROCKET_LAUNCHER:
-		weaponInfo->missileModel = trap_R_RegisterModel( "models/ammo/rocket/rocket.md3" );
-		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
-		weaponInfo->missileTrailFunc = CG_RocketTrail;
-		weaponInfo->missileDlight = 200;
-		weaponInfo->wiTrailTime = 2000;
-		weaponInfo->trailRadius = 64;
-		
-		MAKERGB( weaponInfo->missileDlightColor, 1, 0.75f, 0 );
-		MAKERGB( weaponInfo->flashDlightColor, 1, 0.75f, 0 );
-
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/rocket/rocklf1a.wav", qfalse );
-		cgs.media.rocketExplosionShader = trap_R_RegisterShader( "rocketExplosion" );
-		break;
-
-	case WP_GRENADE_LAUNCHER:
-		weaponInfo->missileModel = trap_R_RegisterModel( "models/ammo/grenade1.md3" );
-		weaponInfo->missileTrailFunc = CG_GrenadeTrail;
-		weaponInfo->wiTrailTime = 700;
-		weaponInfo->trailRadius = 32;
-		MAKERGB( weaponInfo->flashDlightColor, 1, 0.70f, 0 );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/grenade/grenlf1a.wav", qfalse );
-		cgs.media.grenadeExplosionShader = trap_R_RegisterShader( "grenadeExplosion" );
-		break;
-
-	case WP_PLASMAGUN:
-//		weaponInfo->missileModel = cgs.media.invulnerabilityPowerupModel;
-		// BFP - No plasma trail (cg_oldPlasma > 0)
-		// weaponInfo->missileTrailFunc = CG_PlasmaTrail;
-		weaponInfo->missileSound = trap_S_RegisterSound( "sound/weapons/plasma/lasfly.wav", qfalse );
-
-		// plasmagun dlight
-		weaponInfo->missileDlight = 200;
-		MAKERGB( weaponInfo->missileDlightColor, 0.2f, 0.2f, 1.0f );
-
-		// BFP - missileRotation
-		weaponInfo->missileRotation = 15;
-
-		// BFP - chargeSound
-		weaponInfo->chargeSound = cgs.media.defaultKiChargingSound;
-
-		MAKERGB( weaponInfo->flashDlightColor, 0.6f, 0.6f, 1.0f );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/plasma/hyprbf1a.wav", qfalse );
-
-		// BFP - missileShader
-		weaponInfo->missileShader = cgs.media.plasmaBallShader;
-
-		cgs.media.plasmaExplosionShader = trap_R_RegisterShader( "plasmaExplosion" );
-		cgs.media.railRingsShader = trap_R_RegisterShader( "railDisc" );
-		break;
-
-	case WP_RAILGUN:
-		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/railgun/rg_hum.wav", qfalse );
-		MAKERGB( weaponInfo->flashDlightColor, 1, 0.5f, 0 );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/railgun/railgf1a.wav", qfalse );
-		cgs.media.railExplosionShader = trap_R_RegisterShader( "railExplosion" );
-		cgs.media.railRingsShader = trap_R_RegisterShader( "railDisc" );
-		cgs.media.railCoreShader = trap_R_RegisterShader( "railCore" );
-		break;
-
-	case WP_BFG:
-		weaponInfo->readySound = trap_S_RegisterSound( "sound/weapons/bfg/bfg_hum.wav", qfalse );
-
-		// BFP - TODO: From skin config use like:
-		//missileDlight 3 200
-		//missileDlightColor 3 0.75 0 1
-
-		// bfg dlight
-		weaponInfo->missileDlight = 200;
-		//MAKERGB( weaponInfo->missileDlightColor, 0.2f, 1.0f, 0.2f );
-		MAKERGB( weaponInfo->missileDlightColor, 0.75, 0, 1 );
-
-		MAKERGB( weaponInfo->flashDlightColor, 1.0f, 0.7f, 1.0f );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/bfg/bfg_fire.wav", qfalse );
-		cgs.media.bfgExplosionShader = trap_R_RegisterShader( "bfgExplosion" );
-
-		// BFP - Charge sound
-		weaponInfo->chargeSound = cgs.media.diskKiChargingSound;
-
-		// BFP - Modified for disk weapon testing
-		weaponInfo->missileModel = trap_R_RegisterModel( "models/weaphits/disk.md3" ); //trap_R_RegisterModel( "models/weaphits/bfg.md3" );
-		weaponInfo->missileShader = trap_R_RegisterShader( "purpleAttackShader" );
-		weaponInfo->missileSound = trap_S_RegisterSound( "sound/bfp/diskfly.wav", qfalse ); //trap_S_RegisterSound( "sound/weapons/rocket/rockfly.wav", qfalse );
-		break;
-
-	 default:
-		MAKERGB( weaponInfo->flashDlightColor, 1, 1, 1 );
-		weaponInfo->flashSound[0] = trap_S_RegisterSound( "sound/weapons/rocket/rocklf1a.wav", qfalse );
-		break;
-	}
+	CG_CorkscrewTrail( es->number, origin, cg_entities[ es->clientNum ].pe.muzzleOrigin, atkCfg->beamShader, atkCfg->spiralBeamShader );
 }
 
 /*
@@ -789,9 +396,10 @@ void CG_RegisterItemVisuals( int itemNum ) {
 
 	itemInfo->icon = trap_R_RegisterShader( item->icon );
 
-	if ( item->giType == IT_WEAPON ) {
-		CG_RegisterWeapon( item->giTag );
-	}
+	// BFP - CG_RegisterWeapon is removed
+	//if ( item->giType == IT_WEAPON ) {
+		//CG_RegisterWeapon( item->giTag );
+	//}
 
 	//
 	// powerups have an accompanying ring or sphere
@@ -913,67 +521,34 @@ so the endpoint will reflect the simulated strike (lagging the predicted
 angle)
 ===============
 */
-static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
-	trace_t  trace;
-	refEntity_t  beam;
-	vec3_t   forward;
-	vec3_t   muzzlePoint, endPoint;
-	// BFP - lightningBolt config property
-	qboolean	lightningBolt = qtrue;
+static void CG_LightningBolt( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *atkCfg ) {
+	trace_t		trace;
+	refEntity_t	beam;
+	vec3_t		forward;
+	vec3_t		muzzlePoint, endPoint;
+	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	float		range = def->range;
 
-	if ( !lightningBolt ) {
+	if ( !def ) {
+		range = 1;
+	}
+
+	if ( !atkCfg ) {
 		return;
 	}
 
-	if (cent->currentState.weapon != WP_LIGHTNING) {
+	if ( !atkCfg->lightningBolt ) {
 		return;
 	}
 
 	memset( &beam, 0, sizeof( beam ) );
 
-	// BFP - Unused true lightning logic effect, remove in the future
-#if 0
-	// CPMA  "true" lightning
-	if ((cent->currentState.number == cg.predictedPlayerState.clientNum) && (cg_trueLightning.value != 0)) {
-		vec3_t angle;
-		int i;
-
-		for (i = 0; i < 3; i++) {
-			float a = cent->lerpAngles[i] - cg.refdefViewAngles[i];
-			if (a > 180) {
-				a -= 360;
-			}
-			if (a < -180) {
-				a += 360;
-			}
-
-			angle[i] = cg.refdefViewAngles[i] + a * (1.0 - cg_trueLightning.value);
-			if (angle[i] < 0) {
-				angle[i] += 360;
-			}
-			if (angle[i] > 360) {
-				angle[i] -= 360;
-			}
-		}
-
-		AngleVectors(angle, forward, NULL, NULL );
-		VectorCopy(cent->lerpOrigin, muzzlePoint );
-//		VectorCopy(cg.refdef.vieworg, muzzlePoint );
-	} else 
-#endif
-	{
-		// !CPMA
-		AngleVectors( cent->lerpAngles, forward, NULL, NULL );
-		VectorCopy(cent->lerpOrigin, muzzlePoint );
-	}
-
-	// FIXME: crouch
-	muzzlePoint[2] += DEFAULT_VIEWHEIGHT;
-
-	VectorMA( muzzlePoint, 14, forward, muzzlePoint );
+	// !CPMA
+	AngleVectors( cent->lerpAngles, forward, NULL, NULL );
+	VectorCopy(cent->lerpOrigin, muzzlePoint );
 
 	// project forward by the lightning range
-	VectorMA( muzzlePoint, LIGHTNING_RANGE, forward, endPoint );
+	VectorMA( muzzlePoint, range, forward, endPoint );
 
 	// see if it hit a wall
 	CG_Trace( &trace, muzzlePoint, vec3_origin, vec3_origin, endPoint, 
@@ -987,9 +562,15 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 	VectorCopy( origin, beam.origin );
 
 	beam.reType = RT_LIGHTNING;
-	beam.customShader = cgs.media.lightningShader;
+	beam.customShader = atkCfg->beamShader;
+	beam.shaderRGBA[0] = 0xff;
+	beam.shaderRGBA[1] = 0xff;
+	beam.shaderRGBA[2] = 0xff;
+	beam.shaderRGBA[3] = 0xff;
 	trap_R_AddRefEntityToScene( &beam );
 
+	// BFP - No impact flare effect
+#if 0
 	// add the impact flare if it hit something
 	if ( trace.fraction < 1.0 ) {
 		vec3_t	angles;
@@ -1010,31 +591,36 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin ) {
 		AnglesToAxis( angles, beam.axis );
 		trap_R_AddRefEntityToScene( &beam );
 	}
+#endif
 }
 
 
 /*
-===============
-CG_SpawnRailTrail
-
-Origin will be the exact tag point, which is slightly
-different than the muzzle point used for determining hits.
-===============
+=============
+CG_ChargingTorsoAnim
+=============
 */
-static void CG_SpawnRailTrail( centity_t *cent, vec3_t origin ) {
-	clientInfo_t	*ci;
+static qboolean CG_ChargingTorsoAnim( centity_t *cent, bfpWeaponDef_t *def ) { // BFP - To handle torso charging animation
+	int	torsoAnim = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
 
-	if ( cent->currentState.weapon != WP_RAILGUN ) {
-		return;
+	if ( !def || def->chargeAutoFire ) {
+		return qfalse;
 	}
-	if ( !cent->pe.railgunFlash ) {
-		return;
+
+	if ( def->noAttackAnim ) {
+		return ( torsoAnim == TORSO_ATTACK0_STRIKE
+			|| torsoAnim == TORSO_ATTACK1_STRIKE
+			|| torsoAnim == TORSO_ATTACK2_STRIKE
+			|| torsoAnim == TORSO_ATTACK3_STRIKE
+			|| torsoAnim == TORSO_ATTACK4_STRIKE );
 	}
-	cent->pe.railgunFlash = qtrue;
-	ci = &cgs.clientinfo[ cent->currentState.clientNum ];
-	CG_RailTrail( ci, origin, cent->pe.railgunImpact );
+
+	return ( torsoAnim == TORSO_ATTACK0_PREPARE
+		|| torsoAnim == TORSO_ATTACK1_PREPARE
+		|| torsoAnim == TORSO_ATTACK2_PREPARE
+		|| torsoAnim == TORSO_ATTACK3_PREPARE
+		|| torsoAnim == TORSO_ATTACK4_PREPARE );
 }
-
 
 /*
 =============
@@ -1048,53 +634,42 @@ sound should only be done on the world model case.
 // BFP - CG_AddPlayerWeapon now has a new argument called tagName to attach the flash to a tag
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team, char *tagName ) {
 	weapon_t	weaponNum;
-	weaponInfo_t	*weapon;
 	centity_t	*nonPredictedCent;
+	refEntity_t	tagEnt;
+	bfpWeaponDef_t			*def;
+	bfpAttackSkinConfig_t	*atkCfg;
 
 	weaponNum = cent->currentState.weapon;
-
-	CG_RegisterWeapon( weaponNum );
-	weapon = &cg_weapons[weaponNum];
+	atkCfg = CG_GetAttackConfig( cent->currentState.clientNum, weaponNum );
+	def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	if ( !ps ) {
+		int			chargeId = cent->currentState.generic1 - 1;
+		qboolean	isCharging = CG_ChargingTorsoAnim( cent, def );
+
 		// BFP - With constantFireAttack, don't play and start the sound looply
 		if ( !( cent->currentState.eFlags & EF_FIRING ) ) {
 			cent->pe.constantFireAtkPlayed = qfalse;
 		}
 
 		// BFP - attackChargeVoice [attack index] [charge count] ["path of sound"]
-		weapon->attackChargeVoice = trap_S_RegisterSound( "sound/player/bfp1-kyah/attack4V1.wav", qtrue );
 		if ( cg_stfu.integer <= 0
-		&& weapon->attackChargeVoice
-        && !cent->pe.lastChargeVoiceLevel
-		&& cent->currentState.generic1 == 2 // BFP - TODO: [charge count] set here
-		&& ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK3_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK4_PREPARE ) ) {
-			trap_S_StartSound( cent->lerpOrigin, ENTITYNUM_WORLD, CHAN_VOICE, weapon->attackChargeVoice );
-        	cent->pe.lastChargeVoiceLevel = qtrue;
-		} else if ( !( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK3_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK4_PREPARE ) ) { // stopped charging ki attack, resets to the next cycle
+		&& atkCfg && chargeId >= 0 && atkCfg->attackChargeVoice[chargeId]
+		&& !cent->pe.lastChargeVoiceLevel
+		&& isCharging ) {
+			trap_S_StartSound( cent->lerpOrigin, cent->currentState.number, CHAN_VOICE, atkCfg->attackChargeVoice[chargeId] );
+			cent->pe.lastChargeVoiceLevel = qtrue;
+		} else if ( !isCharging ) { // stopped charging ki attack, resets to the next cycle
 			cent->pe.lastChargeVoiceLevel = qfalse;
 		}
 
 		// BFP - chargeSound
-		if ( weapon->chargeSound 
-		&& ( ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK0_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK1_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK2_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK3_PREPARE
-		|| ( cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT ) == TORSO_ATTACK4_PREPARE ) ) {
+		if ( atkCfg && atkCfg->chargeSound && isCharging ) {
 			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, 
-				vec3_origin, weapon->chargeSound );
-		} else if ( ( cent->currentState.eFlags & EF_FIRING ) && weapon->firingSound ) {
+				vec3_origin, atkCfg->chargeSound );
+		} else if ( ( cent->currentState.eFlags & EF_FIRING ) && atkCfg && atkCfg->firingSound ) {
 			// lightning gun and guantlet make a different sound when fire is held down
-			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, weapon->firingSound );
+			trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, atkCfg->firingSound );
 		}
 	}
 
@@ -1107,66 +682,51 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	if( ( nonPredictedCent - cg_entities ) != cent->currentState.clientNum ) {
 		nonPredictedCent = cent;
 	}
+	
+	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right, tag_eyes, ...)
+	memset( &tagEnt, 0, sizeof( tagEnt ) );
+	CG_PositionEntityOnTag( &tagEnt, parent, parent->hModel, tagName );
+	VectorCopy( tagEnt.origin, nonPredictedCent->pe.muzzleOrigin );
 
 	// add the flash
 	// BFP - constantFireAttack
-	if ( ( weapon->constantFireAttack || weaponNum == WP_GRAPPLING_HOOK )
+	if ( atkCfg && atkCfg->constantFireAttack
 		&& ( nonPredictedCent->currentState.eFlags & EF_FIRING ) ) 
 	{
 		// continuous flash
 	} else {
 		// impulse flash
 		if ( cg.time - cent->muzzleFlashTime > MUZZLE_FLASH_TIME && !cent->pe.railgunFlash
-		&& weaponNum != WP_GRAPPLING_HOOK
-		&& weaponNum != WP_PLASMAGUN
-		&& weaponNum != WP_BFG ) {
+		&& atkCfg && !atkCfg->constantFireAttack && !( nonPredictedCent->currentState.eFlags & EF_FIRING ) ) {
 			return;
 		}
 	}
 
-	// BFP - NOTE: Here's where the player gets the muzzle attached from some of the tags (apply that to client cfg side) (tag_left, tag_right, tag_eyes, ...)
-	{
-		refEntity_t	tagEnt;
-		memset( &tagEnt, 0, sizeof( tagEnt ) );
-		CG_PositionEntityOnTag( &tagEnt, parent, parent->hModel, tagName );
-		VectorCopy( tagEnt.origin, nonPredictedCent->pe.muzzleOrigin );
-
-		// BFP - Displaying the muzzle flash to the other player correctly
-		if ( nonPredictedCent->currentState.eFlags & EF_READY_KI_ATTACK ) {
-			// BFP - NOTE: That's where we apply the flash properties read from client cfg
-			if ( weaponNum == WP_GRAPPLING_HOOK ) {
-				CG_AddFlashMissile( qfalse, nonPredictedCent, -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "ImpactBeamFlashShader", 0, 15, 1 );
-			}
-			if ( weaponNum == WP_PLASMAGUN ) {
-				CG_AddFlashMissile( qfalse, nonPredictedCent, -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "plasmaExplosion", 0, 15, 1 );
-			}
-			if ( weaponNum == WP_BFG ) {
-				CG_AddFlashMissile( qfalse, nonPredictedCent, -1, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, "purpleAttackShader", "models/weaphits/disk.md3", 0, 0.8 );
-			}
+	// BFP - Displaying the muzzle flash to the other player correctly
+	if ( nonPredictedCent->currentState.eFlags & EF_READY_KI_ATTACK ) {
+		// BFP - NOTE: That's where we apply the flash properties read from skin config
+		if ( atkCfg ) {
+			CG_AddFlashMissile( qfalse, qfalse, nonPredictedCent, -1, atkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, atkCfg->flashShader, atkCfg->flashModel, atkCfg->flashRadius, atkCfg->flashScaleFactor );
 		}
 	}
 
-	if ( ps || cg.renderingThirdPerson ||
-		cent->currentState.number != cg.predictedPlayerState.clientNum ) {
+	if ( atkCfg && atkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) 
+	&& ( ps || cg.renderingThirdPerson || cent->currentState.number != cg.predictedPlayerState.clientNum ) ) {
 		
 		// BFP - NOTE: That avoids adding the muzzle light using the beam,
 		// it would be cool adding a light to the player while charging or firing their ki,
 		// but in a custom way
-		if ( weaponNum == WP_GRAPPLING_HOOK
-		|| weaponNum == WP_PLASMAGUN
-		|| weaponNum == WP_BFG ) {
-			return;
-		}
 
 		// add lightning bolt
-		CG_LightningBolt( nonPredictedCent, parent->origin );
+		CG_LightningBolt( nonPredictedCent, nonPredictedCent->pe.muzzleOrigin, atkCfg );
 
-		// add rail trail
-		CG_SpawnRailTrail( cent, parent->origin );
-
-		if ( weapon->flashDlightColor[0] || weapon->flashDlightColor[1] || weapon->flashDlightColor[2] ) {
-			trap_R_AddLightToScene( parent->origin, 300 + (rand()&31), weapon->flashDlightColor[0],
-				weapon->flashDlightColor[1], weapon->flashDlightColor[2] );
+		if ( atkCfg->missileDlightColor[0] > 0
+		|| atkCfg->missileDlightColor[1] > 0
+		|| atkCfg->missileDlightColor[1] > 0 ) {
+			trap_R_AddLightToScene( parent->origin, 300 + (rand()&31), atkCfg->missileDlightColor[0], 
+				atkCfg->missileDlightColor[1], atkCfg->missileDlightColor[2] );
+		} else {
+			trap_R_AddLightToScene( parent->origin, 300 + (rand()&31), 0.6f, 0.6f, 1.0f );
 		}
 	}
 }
@@ -1179,13 +739,7 @@ Add the weapon, and flash for the player's view
 ==============
 */
 void CG_AddViewWeapon( playerState_t *ps ) {
-	// BFP - Unused variables
-	//refEntity_t	hand;
-	//clientInfo_t	*ci;
-	//vec3_t		angles;
-	//weaponInfo_t	*weapon;
-	//centity_t	*cent;
-	//float		fovOffset;
+	bfpAttackSkinConfig_t	*atkCfg = CG_GetAttackConfig( ps->clientNum, ps->weapon );
 
 	if ( ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 		return;
@@ -1203,69 +757,17 @@ void CG_AddViewWeapon( playerState_t *ps ) {
 
 
 	// allow the gun to be completely removed
-	if ( !cg_drawGun.integer ) {
+	if ( atkCfg ) {
 		vec3_t		origin;
 
 		if ( cg.predictedPlayerState.eFlags & EF_FIRING ) {
 			// special hack for lightning gun...
 			VectorCopy( cg.refdef.vieworg, origin );
 			VectorMA( origin, -8, cg.refdef.viewaxis[2], origin );
-			CG_LightningBolt( &cg_entities[ps->clientNum], origin );
+			CG_LightningBolt( &cg_entities[ps->clientNum], origin, atkCfg );
 		}
 		return;
 	}
-
-	// don't draw if testing a gun model
-	if ( cg.testGun ) {
-		return;
-	}
-
-	// BFP - No fovOffset
-#if 0
-	// drop gun lower at higher fov
-	if ( cg_fov.integer > 90 ) {
-		fovOffset = -0.2 * ( cg_fov.integer - 90 );
-	} else {
-		fovOffset = 0;
-	}
-#endif
-
-	//cent = &cg.predictedPlayerEntity;	// &cg_entities[cg.snap->ps.clientNum];
-	CG_RegisterWeapon( ps->weapon );
-	// BFP - No draw hand and gun
-#if 0
-	weapon = &cg_weapons[ ps->weapon ];
-
-	memset (&hand, 0, sizeof(hand));
-
-	// set up gun position
-	CG_CalculateWeaponPosition( hand.origin, angles );
-
-	VectorMA( hand.origin, cg_gun_x.value, cg.refdef.viewaxis[0], hand.origin );
-	VectorMA( hand.origin, cg_gun_y.value, cg.refdef.viewaxis[1], hand.origin );
-	VectorMA( hand.origin, (cg_gun_z.value+fovOffset), cg.refdef.viewaxis[2], hand.origin );
-
-	AnglesToAxis( angles, hand.axis );
-
-	// map torso animations to weapon animations
-	if ( cg_gun_frame.integer ) {
-		// development tool
-		hand.frame = hand.oldframe = cg_gun_frame.integer;
-		hand.backlerp = 0;
-	} else {
-		// get clientinfo for animation map
-		ci = &cgs.clientinfo[ cent->currentState.clientNum ];
-		hand.frame = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.frame );
-		hand.oldframe = CG_MapTorsoToWeaponFrame( ci, cent->pe.torso.oldFrame );
-		hand.backlerp = cent->pe.torso.backlerp;
-	}
-
-	hand.hModel = weapon->handsModel;
-	hand.renderfx = RF_DEPTHHACK | RF_FIRST_PERSON | RF_MINLIGHT;
-
-	// add everything onto the hand
-	CG_AddPlayerWeapon( &hand, ps, &cg.predictedPlayerEntity, ps->persistant[PERS_TEAM], "" );
-#endif
 }
 
 /*
@@ -1282,13 +784,13 @@ CG_DrawWeaponSelect
 ===================
 */
 void CG_DrawWeaponSelect( void ) { // BFP - Modified Q3 selectable weapon HUD
-	// BFP - TODO: Change that selection to 5 selectable ki attacks
 	int		i;
 	int		bits;
 	//int		count;
 	int		x, y, w;
-	char	*name;
 	float	*color;
+	// BFP - To display selectable ki attacks
+	bfpAttackSkinConfig_t	*atkCfg;
 
 	// don't display if dead
 	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
@@ -1321,14 +823,15 @@ void CG_DrawWeaponSelect( void ) { // BFP - Modified Q3 selectable weapon HUD
 
 	i = -1; // BFP - -1 instead 0, because first weapon can be selected
 	while ( ++i < BFP_NUM_WEAPONS ) {
+		atkCfg = CG_GetAttackConfig( cg.snap->ps.clientNum, i );
 		if ( !( bits & ( 1 << i ) ) ) {
 			continue;
 		}
 
-		CG_RegisterWeapon( i );
-
 		// draw weapon icon
-		CG_DrawPic( x, y, 91, 46, cg_weapons[i].weaponIcon );
+		if ( atkCfg ) {
+			CG_DrawPic( x, y, 91, 46, atkCfg->attackIcon );
+		}
 
 		// draw selection marker
 		if ( i == cg.weaponSelect ) {
@@ -1346,13 +849,11 @@ void CG_DrawWeaponSelect( void ) { // BFP - Modified Q3 selectable weapon HUD
 	// BFP - attackName
 
 	// draw the selected name
-	if ( cg_weapons[ cg.weaponSelect ].item ) {
-		name = cg_weapons[ cg.weaponSelect ].item->pickup_name;
-		if ( name ) {
-			w = CG_DrawStrlen( name ) * BIGCHAR_WIDTH;
-			x = ( SCREEN_WIDTH - w ) / 2;
-			CG_DrawBigStringColor(x, 288, name, color);
-		}
+	atkCfg = CG_GetAttackConfig( cg.snap->ps.clientNum, cg.weaponSelect );
+	if ( atkCfg && atkCfg->attackName[0] ) {
+		w = CG_DrawStrlen( atkCfg->attackName ) * BIGCHAR_WIDTH;
+		x = ( SCREEN_WIDTH - w ) / 2;
+		CG_DrawBigStringColor(x, 288, atkCfg->attackName, color);
 	}
 
 	trap_R_SetColor( NULL );
@@ -1470,17 +971,18 @@ void CG_Weapon_f( void ) {
 
 	num = atoi( CG_Argv( 1 ) );
 
-	if ( num < 0 || num >= BFP_NUM_WEAPONS ) { // BFP - Changed num < 1 to num < 0 and num > 15 to num >= BFP_NUM_WEAPONS
+	if ( num < 1 || num > BFP_NUM_WEAPONS ) { // BFP - Changed num > 15 to num > BFP_NUM_WEAPONS
 		return;
 	}
 
 	cg.weaponSelectTime = cg.time;
 
-	if ( ! ( cg.snap->ps.stats[STAT_WEAPONS] & ( 1 << num ) ) ) {
+	// BFP - Adjust with - 1 because it's like an array
+	if ( ! ( cg.snap->ps.stats[STAT_WEAPONS] & ( 1 << (num - 1) ) ) ) {
 		return;		// don't have the weapon
 	}
 
-	cg.weaponSelect = num;
+	cg.weaponSelect = num - 1;
 }
 
 /*
@@ -1522,25 +1024,27 @@ Caused by an EV_FIRE_WEAPON event
 */
 void CG_FireWeapon( centity_t *cent ) {
 	entityState_t *ent;
-	int				c;
-	weaponInfo_t	*weap;
+	bfpAttackSkinConfig_t	*atkCfg;
+	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	ent = &cent->currentState;
-	if ( ent->weapon == WP_NONE ) {
+	atkCfg = CG_GetAttackConfig( ent->clientNum, ent->weapon );
+
+	if ( ent->weapon >= BFP_NUM_WEAPONS ) {
+		CG_Error( "CG_FireWeapon: ent->weapon >= BFP_NUM_WEAPONS(%d)", BFP_NUM_WEAPONS );
 		return;
 	}
-	if ( ent->weapon >= WP_NUM_WEAPONS ) {
-		CG_Error( "CG_FireWeapon: ent->weapon >= WP_NUM_WEAPONS" );
+
+	if ( !atkCfg ) {
 		return;
 	}
-	weap = &cg_weapons[ ent->weapon ];
 
 	// mark the entity as muzzle flashing, so when it is added it will
 	// append the flash to the weapon model
 	cent->muzzleFlashTime = cg.time;
 
 	// BFP - constantFireAttack
-	if ( weap->constantFireAttack ) {
+	if ( atkCfg->constantFireAttack ) {
 		if ( cent->pe.constantFireAtkPlayed ) {
 			goto _skipFlashSound;
 		}
@@ -1548,31 +1052,25 @@ void CG_FireWeapon( centity_t *cent ) {
 	}
 
 	// BFP - attackFireVoice
-	weap->attackFireVoice = trap_S_RegisterSound( "sound/player/bfp1-kyah/attack5F.wav", qtrue );
 	if ( cg_stfu.integer <= 0
-	&& weap->attackFireVoice && ( cent->currentState.eFlags & EF_FIRING )
-	&& ent->weapon != WP_SHOTGUN ) { // BFP - TODO: Handle forcefield
-		trap_S_StartSound( cent->lerpOrigin, ent->number, CHAN_VOICE, weap->attackFireVoice );
+	&& atkCfg->attackFireVoice && ( cent->currentState.eFlags & EF_FIRING ) ) { // BFP - TODO: Handle forcefield
+		trap_S_StartSound( cent->lerpOrigin, ent->number, CHAN_VOICE, atkCfg->attackFireVoice );
 	}
 
 	// BFP - Just testing, WP_SHOTGUN treated as ki explosion example
-	if ( ent->weapon == WP_SHOTGUN ) {
+	if ( def && def->attackType == ATK_FORCEFIELD && def->chargeAutoFire ) {
 		cent->pe.chargeAutoFire = qtrue;
 	}
-	if ( ent->weapon == WP_SHOTGUN && !cent->pe.chargeAutoFire
-	&& weap->noExplosion ) {
+	if ( def && def->attackType == ATK_FORCEFIELD && !def->chargeAutoFire && !cent->pe.chargeAutoFire
+	&& atkCfg->noExplosion ) {
 		// BFP - Use that as blinding_flash weapon, no chargeAutoFire set
 		// this is when noExplosion is set as weapon config dictates
 
 		// BFP - Low poly sphere
-		// BFP - TODO: Apply explosionModel from bfp attack config, highPolySphereModel is just a test
-		qhandle_t	sphereModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
-		qhandle_t	blindingShader = trap_R_RegisterShader( "BlindingFlashShader" );
+		qhandle_t		explosionModel = ( cg_lowpolysphere.integer > 0 && atkCfg->explosionModel == cgs.media.highPolySphereModel ) ? cgs.media.lowPolySphereModel : atkCfg->explosionModel;
 		localEntity_t	*leSphere;
 		const float		MAX_SCALE = 27, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
-		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
-		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float	explosionScaleFactor = 3, explosionScaleFactorChargeMult = 0;
+		float	explosionScaleFactor = atkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = atkCfg->explosionScaleFactorChargeMult;
 		float	scale = 1;
 
 		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
@@ -1580,13 +1078,10 @@ void CG_FireWeapon( centity_t *cent ) {
 		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
 		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
 
-		leSphere = CG_SpawnExplosionModel( cent->lerpOrigin, NULL, LE_EXPLOSION_SPHERE, sphereModel, blindingShader, 1000 );
+		leSphere = CG_SpawnExplosionModel( cent->lerpOrigin, NULL, LE_EXPLOSION_SPHERE, explosionModel, atkCfg->explosionShader, 1000 );
 		VectorScale( leSphere->refEntity.axis[0], scale, leSphere->refEntity.axis[0] );
 		VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
 		VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
-
-		CG_ExplosionSound( cent->lerpOrigin );
-		return;
 	}
 
 	// play quad sound if needed
@@ -1595,26 +1090,13 @@ void CG_FireWeapon( centity_t *cent ) {
 	}
 
 	// play a sound
-	for ( c = 0 ; c < 4 ; c++ ) {
-		if ( !weap->flashSound[c] ) {
-			break;
-		}
-	}
-	if ( c > 0 ) {
-		c = rand() % c;
-		if ( weap->flashSound[c] )
-		{
-			trap_S_StartSound( NULL, ent->number, CHAN_WEAPON, weap->flashSound[c] );
-		}
+	if ( atkCfg->flashSound ) {
+		trap_S_StartSound( NULL, ent->number, CHAN_WEAPON, atkCfg->flashSound );
 	}
 
 // BFP - constantFireAttack handling
 _skipFlashSound:
-
-	// do brass ejection
-	if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {
-		weap->ejectBrassFunc( cent );
-	}
+	return;
 }
 
 /*
@@ -1624,122 +1106,28 @@ CG_MissileHitWall
 Caused by an EV_MISSILE_MISS event, or directly by local bullet tracing
 =================
 */
-void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType ) {
-	qhandle_t		mod;
-	qhandle_t		shader;
-	sfxHandle_t		sfx;
-	float			radius;
-	int				r;
+void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType, bfpAttackSkinConfig_t *atkCfg, centity_t *cent ) {
+	float			radius = 64;
 
-	// BFP - NOTE: Crack mark shader replaces all other mark shaders, the radius is the same (64), there's no alpha fade
-
-	radius = 64;
-	sfx = 0;
-	mod = 0;
-	shader = 0;
-
-	switch ( weapon ) {
-	default:
-	case WP_LIGHTNING:
-		// no explosion at LG impact, it is added with the beam
-		r = rand() & 3;
-		if ( r < 2 ) {
-			sfx = cgs.media.sfx_lghit2;
-		} else if ( r == 2 ) {
-			sfx = cgs.media.sfx_lghit1;
-		} else {
-			sfx = cgs.media.sfx_lghit3;
-		}
-		break;
-	case WP_GRENADE_LAUNCHER:
-		mod = cgs.media.dishFlashModel;
-		shader = cgs.media.grenadeExplosionShader;
-		sfx = cgs.media.sfx_rockexp;
-		break;
-	case WP_ROCKET_LAUNCHER:
-		mod = cgs.media.dishFlashModel;
-		shader = cgs.media.rocketExplosionShader;
-		sfx = cgs.media.sfx_rockexp;
-		break;
-	case WP_RAILGUN:
-		mod = cgs.media.ringFlashModel;
-		shader = cgs.media.railExplosionShader;
-		sfx = cgs.media.sfx_plasmaexp;
-		break;
-	case WP_PLASMAGUN:
-		mod = cgs.media.ringFlashModel;
-		shader = cgs.media.plasmaExplosionShader;
-		sfx = cgs.media.sfx_plasmaexp;
-		break;
-	case WP_BFG:
-		mod = cgs.media.dishFlashModel;
-		shader = cgs.media.bfgExplosionShader;
-		sfx = cgs.media.sfx_rockexp;
-		break;
-	case WP_SHOTGUN:
-		mod = cgs.media.bulletFlashModel;
-		shader = cgs.media.bulletExplosionShader;
-		sfx = 0;
-		break;
-	case WP_MACHINEGUN:
-		mod = cgs.media.bulletFlashModel;
-		shader = cgs.media.bulletExplosionShader;
-
-		r = rand() & 3;
-		if ( r == 0 ) {
-			sfx = cgs.media.sfx_ric1;
-		} else if ( r == 1 ) {
-			sfx = cgs.media.sfx_ric2;
-		} else {
-			sfx = cgs.media.sfx_ric3;
-		}
-
-		break;
-	}
-
-	// BFP - Don't display for force field weapons
-	if ( weapon == WP_SHOTGUN ) {
+	if ( !atkCfg ) {
 		return;
 	}
 
-	if ( sfx 
-	&& ( weapon == WP_MACHINEGUN || weapon == WP_SHOTGUN || weapon == WP_LIGHTNING ) ) { // BFP - TODO: Apply these weapon types into this sound
-		trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, sfx );
-	} else { // BFP - Explosion sounds
-		CG_ExplosionSound( origin );
+	// BFP - NOTE: Crack mark shader replaces all other mark shaders, the radius is the same (64), there's no alpha fade
+
+	radius += atkCfg->missileRadius;
+	if ( radius < 64 ) {
+		radius = 64;
 	}
 
-	//
-	// create the explosion
-	//
-	if ( weapon == WP_MACHINEGUN || weapon == WP_SHOTGUN ) { // BFP - TODO: Apply muzzle effects only to these weapon types (from default.cfg file from some character)
-		// BFP - Don't use this explosion, use explosion model instead
-#if 0
-		CG_MakeExplosion( origin, dir, 
-						mod, shader,
-						600, qfalse );
-#endif
-		const float		MAX_SCALE = 27, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
-		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
-		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float	explosionScaleFactor = 3, explosionScaleFactorChargeMult = 0;
-		float	scale = 1;
-		localEntity_t	*leExp;
+	// BFP - Explosion sounds
+	CG_ExplosionSound( origin, atkCfg );
 
-		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
-		if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
-		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
-		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+	// BFP - Explosion smoke
+	CG_SmokeExplosion( origin, dir, atkCfg );
 
-		leExp = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, mod, shader, 1200 );
-		VectorScale( leExp->refEntity.axis[0], scale, leExp->refEntity.axis[0] );
-		VectorScale( leExp->refEntity.axis[1], scale, leExp->refEntity.axis[1] );
-		VectorScale( leExp->refEntity.axis[2], scale, leExp->refEntity.axis[2] );
-	} else if ( weapon == WP_LIGHTNING ) { // BFP - TODO: Just a test for lightning gun (eyebeam should have this behavior)
-		CG_SmokeExplosion( origin, dir ); // BFP - Explosion smoke
-	} else { // BFP - Explosion effects
-		CG_ExplosionEffect( origin, dir );
-	}
+	// BFP - Explosion effects
+	CG_ExplosionEffect( origin, dir, atkCfg, cent );
 
 	//
 	// impact mark
@@ -1753,180 +1141,21 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, im
 CG_MissileHitPlayer
 =================
 */
-void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum ) {
+void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum, bfpAttackSkinConfig_t *atkCfg, centity_t *cent ) {
 	// BFP - Seems like a small redo from CG_MissileHitWall to adjust the needed effects
-	sfxHandle_t	sfx = 0;
+	if ( !atkCfg ) {
+		return;
+	}
 
 	// BFP - NOTE: Originally on BFP, players don't bleed, that's a friendly mod :P
 	// CG_Bleed( origin, entityNum );
 
-	// some weapons will make an explosion with the blood, while
-	// others will just make the blood
-	switch ( weapon ) {
-	case WP_LIGHTNING:
-		break;
-	case WP_MACHINEGUN:
-	case WP_SHOTGUN: // BFP - TODO: Apply muzzle effects only to these weapon types (from default.cfg file from some character)
-		if ( weapon == WP_MACHINEGUN ) {
-			int r = rand() & 3;
-			switch ( r ) {
-			case 0:  sfx = cgs.media.sfx_ric1; break;
-			case 1:  sfx = cgs.media.sfx_ric2; break;
-			default: sfx = cgs.media.sfx_ric3; break;
-			}
-		}
-		trap_S_StartSound( origin, ENTITYNUM_WORLD, CHAN_AUTO, sfx );
-		// BFP - Don't use this explosion, use explosion model instead
-#if 0
-		CG_MakeExplosion( origin, dir, 
-						cgs.media.bulletFlashModel, cgs.media.bulletExplosionShader,
-						600, qfalse );
-#endif
-	{
-		const float		MAX_SCALE = 27, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
-		// BFP - TODO: Apply explosionScaleFactor as indicated on default.cfg file from some character: explosionScaleFactor <weaponNum> <scaleFactor>
-		// BFP - TODO: Apply explosionScaleFactorChargeMult as indicated on default.cfg file from some character: explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float	explosionScaleFactor = 3, explosionScaleFactorChargeMult = 0;
-		float	scale = 1;
-		localEntity_t	*leExp;
+	CG_ExplosionSound( origin, atkCfg ); // BFP - Explosion sounds
 
-		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
-		if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
-		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
-		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-
-		leExp = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, cgs.media.bulletFlashModel, cgs.media.bulletExplosionShader, 1200 );
-		VectorScale( leExp->refEntity.axis[0], scale, leExp->refEntity.axis[0] );
-		VectorScale( leExp->refEntity.axis[1], scale, leExp->refEntity.axis[1] );
-		VectorScale( leExp->refEntity.axis[2], scale, leExp->refEntity.axis[2] );
-	}
-		break;
-	default:
-		CG_ExplosionSound( origin ); // BFP - Explosion sounds
-		CG_SparksExplosion( origin, dir ); // BFP - Spark particles explosion
-		CG_ExplosionEffect( origin, dir ); // BFP - Explosion effects
-		break;
-	}
+	CG_SparksExplosion( origin, dir, atkCfg ); // BFP - Spark particles explosion
+	CG_ExplosionEffect( origin, dir, atkCfg, cent ); // BFP - Explosion effects
 }
 
-
-
-/*
-============================================================================
-
-SHOTGUN TRACING
-
-============================================================================
-*/
-
-/*
-================
-CG_ShotgunPellet
-================
-*/
-static void CG_ShotgunPellet( vec3_t start, vec3_t end, int skipNum ) {
-	trace_t		tr;
-	// BFP - Unused variables
-	// int sourceContentType, destContentType;
-
-	CG_Trace( &tr, start, NULL, NULL, end, skipNum, MASK_SHOT );
-
-	// BFP - Don't spawn bubble trail effect
-#if 0
-	sourceContentType = trap_CM_PointContents( start, 0 );
-	destContentType = trap_CM_PointContents( tr.endpos, 0 );
-
-	// FIXME: should probably move this cruft into CG_BubbleTrail
-	if ( sourceContentType == destContentType ) {
-		if ( sourceContentType & CONTENTS_WATER ) {
-			CG_BubbleTrail( start, tr.endpos, 32 );
-		}
-	} else if ( sourceContentType & CONTENTS_WATER ) {
-		trace_t trace;
-
-		trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
-		CG_BubbleTrail( start, trace.endpos, 32 );
-	} else if ( destContentType & CONTENTS_WATER ) {
-		trace_t trace;
-
-		trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
-		CG_BubbleTrail( tr.endpos, trace.endpos, 32 );
-	}
-#endif
-
-	if (  tr.surfaceFlags & SURF_NOIMPACT ) {
-		return;
-	}
-
-	if ( cg_entities[tr.entityNum].currentState.eType == ET_PLAYER ) {
-		CG_MissileHitPlayer( WP_SHOTGUN, tr.endpos, tr.plane.normal, tr.entityNum );
-	} else {
-		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
-			// SURF_NOIMPACT will not make a flame puff or a mark
-			return;
-		}
-		if ( tr.surfaceFlags & SURF_METALSTEPS ) {
-			CG_MissileHitWall( WP_SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND_METAL );
-		} else {
-			CG_MissileHitWall( WP_SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND_DEFAULT );
-		}
-	}
-}
-
-/*
-================
-CG_ShotgunPattern
-
-Perform the same traces the server did to locate the
-hit splashes
-================
-*/
-static void CG_ShotgunPattern( vec3_t origin, vec3_t origin2, int seed, int otherEntNum ) {
-	int			i;
-	float		r, u;
-	vec3_t		end;
-	vec3_t		forward, right, up;
-
-	// derive the right and up vectors from the forward vector, because
-	// the client won't have any other information
-	VectorNormalize2( origin2, forward );
-	PerpendicularVector( right, forward );
-	CrossProduct( forward, right, up );
-
-	// generate the "random" spread pattern
-	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
-		r = Q_crandom( &seed ) * DEFAULT_SHOTGUN_SPREAD * 16;
-		u = Q_crandom( &seed ) * DEFAULT_SHOTGUN_SPREAD * 16;
-		VectorMA( origin, 8192 * 16, forward, end);
-		VectorMA (end, r, right, end);
-		VectorMA (end, u, up, end);
-
-		CG_ShotgunPellet( origin, end, otherEntNum );
-	}
-}
-
-/*
-==============
-CG_ShotgunFire
-==============
-*/
-void CG_ShotgunFire( entityState_t *es ) {
-	vec3_t	v;
-	vec3_t	up;
-	int		contents;
-
-	VectorSubtract( es->origin2, es->pos.trBase, v );
-	VectorNormalize( v );
-	VectorScale( v, 32, v );
-	VectorAdd( es->pos.trBase, v, v );
-	
-	contents = trap_CM_PointContents( es->pos.trBase, 0 );
-	if ( !( contents & CONTENTS_WATER ) ) {
-		VectorSet( up, 0, 0, 8 );
-		CG_SmokePuff( v, up, 32, 1, 1, 1, 0.33f, 900, cg.time, 0, LEF_PUFF_DONT_SCALE, cgs.media.shotgunSmokePuffShader );
-	}
-	CG_ShotgunPattern( es->pos.trBase, es->origin2, es->eventParm, es->otherEntityNum );
-}
 
 /*
 ============================================================================
@@ -2042,50 +1271,3 @@ static qboolean	CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle ) {
 }
 #endif
 
-/*
-======================
-CG_Bullet
-
-Renders bullet effects.
-======================
-*/
-void CG_Bullet( vec3_t end, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum ) {
-	// BFP - No water particles in BFP by firing a kind of ki-type bullet
-#if 0
-	trace_t trace;
-	int sourceContentType, destContentType;
-	vec3_t		start;
-
-	// if the shooter is currently valid, calc a source point and possibly
-	// do trail effects
-	if ( sourceEntityNum >= 0 && cg_tracerChance.value > 0 ) {
-		if ( CG_CalcMuzzlePoint( sourceEntityNum, start ) ) {
-			sourceContentType = trap_CM_PointContents( start, 0 );
-			destContentType = trap_CM_PointContents( end, 0 );
-
-			// do a complete bubble trail if necessary
-			if ( ( sourceContentType == destContentType ) && ( sourceContentType & CONTENTS_WATER ) ) {
-				CG_BubbleTrail( start, end, 32 );
-			}
-			// bubble trail from water into air
-			else if ( ( sourceContentType & CONTENTS_WATER ) ) {
-				trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
-				CG_BubbleTrail( start, trace.endpos, 32 );
-			}
-			// bubble trail from air into water
-			else if ( ( destContentType & CONTENTS_WATER ) ) {
-				trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
-				CG_BubbleTrail( trace.endpos, end, 32 );
-			}
-
-			// draw a tracer
-			if ( random() < cg_tracerChance.value ) {
-				CG_Tracer( start, end );
-			}
-		}
-	}
-#endif
-
-	// impact splash and mark
-	CG_MissileHitWall( WP_MACHINEGUN, 0, end, normal, IMPACTSOUND_DEFAULT );
-}

@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cg_local.h"
 
+// BFP - HIGHLY MODIFIED
+
 
 /*
 ======================
@@ -230,7 +232,6 @@ static void CG_Item( centity_t *cent ) {
 	int				msec;
 	float			frac;
 	float			scale;
-	weaponInfo_t	*wi;
 
 	es = &cent->currentState;
 	if ( es->modelindex >= bg_numItems ) {
@@ -272,27 +273,31 @@ static void CG_Item( centity_t *cent ) {
 		AxisCopy( cg.autoAxis, ent.axis );
 	}
 
-	wi = NULL;
-	// the weapons have their origin where they attatch to player
-	// models, so we need to offset them or they will rotate
-	// eccentricly
-	if ( item->giType == IT_WEAPON ) {
-		wi = &cg_weapons[item->giTag];
-		cent->lerpOrigin[0] -= 
-			wi->weaponMidpoint[0] * ent.axis[0][0] +
-			wi->weaponMidpoint[1] * ent.axis[1][0] +
-			wi->weaponMidpoint[2] * ent.axis[2][0];
-		cent->lerpOrigin[1] -= 
-			wi->weaponMidpoint[0] * ent.axis[0][1] +
-			wi->weaponMidpoint[1] * ent.axis[1][1] +
-			wi->weaponMidpoint[2] * ent.axis[2][1];
-		cent->lerpOrigin[2] -= 
-			wi->weaponMidpoint[0] * ent.axis[0][2] +
-			wi->weaponMidpoint[1] * ent.axis[1][2] +
-			wi->weaponMidpoint[2] * ent.axis[2][2];
+#if INCLUDE_WEAPONINFO
+	{
+		weaponInfo_t	*wi = NULL;
+		// the weapons have their origin where they attatch to player
+		// models, so we need to offset them or they will rotate
+		// eccentricly
+		if ( item->giType == IT_WEAPON ) {
+			wi = &cg_weapons[item->giTag];
+			cent->lerpOrigin[0] -= 
+				wi->weaponMidpoint[0] * ent.axis[0][0] +
+				wi->weaponMidpoint[1] * ent.axis[1][0] +
+				wi->weaponMidpoint[2] * ent.axis[2][0];
+			cent->lerpOrigin[1] -= 
+				wi->weaponMidpoint[0] * ent.axis[0][1] +
+				wi->weaponMidpoint[1] * ent.axis[1][1] +
+				wi->weaponMidpoint[2] * ent.axis[2][1];
+			cent->lerpOrigin[2] -= 
+				wi->weaponMidpoint[0] * ent.axis[0][2] +
+				wi->weaponMidpoint[1] * ent.axis[1][2] +
+				wi->weaponMidpoint[2] * ent.axis[2][2];
 
-		cent->lerpOrigin[2] += 8;	// an extra height boost
+			cent->lerpOrigin[2] += 8;	// an extra height boost
+		}
 	}
+#endif
 
 	ent.hModel = cg_items[es->modelindex].models[0];
 
@@ -372,22 +377,39 @@ CG_Missile
 static void CG_Missile( centity_t *cent ) {
 	refEntity_t			ent;
 	entityState_t		*s1;
-	const weaponInfo_t		*weapon;
 //	int	col;
+	bfpAttackSkinConfig_t	*atkCfg;
+	bfpWeaponDef_t			*def;
 
 	s1 = &cent->currentState;
-	if ( s1->weapon > WP_NUM_WEAPONS ) {
+	if ( s1->weapon >= BFP_NUM_WEAPONS ) {
 		s1->weapon = 0;
 	}
-	weapon = &cg_weapons[s1->weapon];
 
 	// calculate the axis
 	VectorCopy( s1->angles, cent->lerpAngles);
 
+	atkCfg = CG_GetAttackConfig( s1->clientNum, s1->weapon );
+
+	if ( !atkCfg ) {
+		return;
+	}
+
 	// add trails
-	if ( weapon->missileTrailFunc ) 
-	{
-		weapon->missileTrailFunc( cent, weapon );
+	if ( atkCfg->missileTrailFunc ) {
+		switch ( atkCfg->missileTrailFunc ) {
+		case MISSILE_TRAIL_FUNC_BEAM:
+			CG_BFPBeamTrail( cent, atkCfg );
+			break;
+		case MISSILE_TRAIL_FUNC_ROCKET:
+			CG_RocketTrail( cent, atkCfg );
+			break;
+		case MISSILE_TRAIL_FUNC_SPIRALBEAM:
+			CG_BFPSpiralBeamTrail( cent, atkCfg );
+			break;
+		default:
+			break;
+		}
 	}
 /*
 	if ( cent->currentState.modelindex == TEAM_RED ) {
@@ -407,18 +429,16 @@ static void CG_Missile( centity_t *cent ) {
 	}
 */
 	// add dynamic light
-	if ( weapon->missileDlight ) {
-		trap_R_AddLightToScene(cent->lerpOrigin, weapon->missileDlight, 
-			weapon->missileDlightColor[0], weapon->missileDlightColor[1], weapon->missileDlightColor[2] );
+	if ( atkCfg->missileDlight ) {
+		trap_R_AddLightToScene(cent->lerpOrigin, atkCfg->missileDlight, 
+			atkCfg->missileDlightColor[0], atkCfg->missileDlightColor[1], atkCfg->missileDlightColor[2] );
 	}
 
 	// add missile sound
-	if ( weapon->missileSound ) {
+	if ( atkCfg->missileSound ) {
 		vec3_t	velocity;
-
 		BG_EvaluateTrajectoryDelta( &cent->currentState.pos, cg.time, velocity );
-
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, velocity, weapon->missileSound );
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, velocity, atkCfg->missileSound );
 	}
 
 	// create the render entity
@@ -427,30 +447,30 @@ static void CG_Missile( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
 	// BFP - missileShader
-	if ( weapon->missileShader ) {
-		ent.customShader = weapon->missileShader;
+	if ( atkCfg->missileShader ) {
+		ent.customShader = atkCfg->missileShader;
 	}
 
 	// BFP - missileRotation
-	if ( weapon->missileRotation > 0 ) {
-		ent.rotation = weapon->missileRotation;
+	if ( atkCfg->missileRotation > 0 ) {
+		ent.rotation = atkCfg->missileRotation;
 	}
 
+	def = CG_GetWeaponDefForSlot( s1->clientNum, s1->weapon );
+
 	// BFP - missileModel and missileShader
-	if ( !weapon->missileModel && weapon->missileShader ) {
+	if ( !atkCfg->missileModel && atkCfg->missileShader ) {
 		ent.reType = RT_SPRITE;
 
 		// BFP - missileRadius and missileRadiusChargeMult
 		if ( ent.reType == RT_SPRITE ) {
-			float	missileRadius = 50, missileRadiusChargeMult = 75;
-			float	minCharge = 2;
-			float	totalCharge = cent->currentState.generic1 - minCharge;
-			if ( totalCharge < 0 ) {
-				totalCharge = 0;
+			float	missileRadius = atkCfg->missileRadius, missileRadiusChargeMult = atkCfg->missileRadiusChargeMult;
+			float	minCharge = ( def && def->minCharge > 0 ) ? (float)def->minCharge : 0;
+			float	totalCharge = (float)cent->currentState.generic1 - minCharge;
+			if ( totalCharge <= 0 ) {
+				totalCharge = 1;
 			}
-			if ( missileRadius > 0 ) {
-				ent.radius = missileRadius + missileRadiusChargeMult * totalCharge;
-			}
+			ent.radius = missileRadius + missileRadiusChargeMult * totalCharge;
 		}
 
 		trap_R_AddRefEntityToScene( &ent );
@@ -459,24 +479,23 @@ static void CG_Missile( centity_t *cent ) {
 
 	// flicker between two skins
 	ent.skinNum = cg.clientFrame & 1;
-	ent.hModel = weapon->missileModel;
+	ent.hModel = atkCfg->missileModel;
 	// BFP - Skip rendering if no missile model
-	if ( !weapon->missileModel ) {
+	if ( !atkCfg->missileModel ) {
 		return;
 	}
-	ent.renderfx = weapon->missileRenderfx | RF_NOSHADOW;
+	ent.renderfx = RF_NOSHADOW;
 
 	// convert direction of travel into axis
 	if ( VectorNormalize2( s1->pos.trDelta, ent.axis[0] ) == 0 ) {
 		ent.axis[0][2] = 1;
 	}
 
+	// BFP - Is there a reason to keep s1->pos.trType != TR_STATIONARY conditional? It can't be fine enough
 	// spin as it moves
-	if ( s1->pos.trType != TR_STATIONARY
-	&& s1->weapon != WP_BFG ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
+	if ( !atkCfg->missileSpinHoriz ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
 		// BFP - missileModelRotation
-		float	missileModelRotation = 0.2;
-		RotateAroundDirection( ent.axis, cg.time * missileModelRotation );
+		RotateAroundDirection( ent.axis, cg.time * atkCfg->missileModelRotation );
 	} else {
 		{
 			// BFP - Rotate Z-axis like a wheel
@@ -491,18 +510,16 @@ static void CG_Missile( centity_t *cent ) {
 	}
 
 	// BFP - missileScaleFactor and missileScaleFactorChargeMult
-	// BFP - TODO: Handle saved ki charge points and calculate the total of number of points charged over the min
 	if ( ent.reType == RT_MODEL ) {
 		float	scale = 1;
-		float	missileScaleFactor = 3, missileScaleFactorChargeMult = 1;
-		float	minCharge = 2;
-		float	totalCharge = cent->currentState.generic1 - minCharge;
-		if ( totalCharge < 0 ) {
-			totalCharge = 0;
+		float	missileScaleFactor = atkCfg->missileScaleFactor, missileScaleFactorChargeMult = atkCfg->missileScaleFactorChargeMult;
+		float	minCharge = ( def && def->minCharge > 0 ) ? (float)def->minCharge : 0;
+		float	totalCharge = (float)cent->currentState.generic1 - minCharge;
+		if ( totalCharge <= 0 ) {
+			totalCharge = 1;
 		}
-		if ( missileScaleFactor > 0 ) {
-			scale = missileScaleFactor + missileScaleFactorChargeMult * totalCharge;
-		}
+
+		scale = missileScaleFactor + missileScaleFactorChargeMult * totalCharge;
 		CG_ModelSize( &ent, scale );
 	}
 
@@ -512,58 +529,6 @@ static void CG_Missile( centity_t *cent ) {
 	// add to refresh list, possibly with quad glow
 	// CG_AddRefEntityWithPowerups( ent, s1, TEAM_FREE );
 }
-
-// BFP - no hook
-#if 0
-/*
-===============
-CG_Grapple
-
-This is called when the grapple is sitting up against the wall
-===============
-*/
-static void CG_Grapple( centity_t *cent ) {
-	refEntity_t			ent;
-	entityState_t		*s1;
-	const weaponInfo_t		*weapon;
-
-	s1 = &cent->currentState;
-	if ( s1->weapon > WP_NUM_WEAPONS ) {
-		s1->weapon = 0;
-	}
-	weapon = &cg_weapons[s1->weapon];
-
-	// calculate the axis
-	VectorCopy( s1->angles, cent->lerpAngles);
-
-#if 0 // FIXME add grapple pull sound here..?
-	// add missile sound
-	if ( weapon->missileSound ) {
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, weapon->missileSound );
-	}
-#endif
-
-	// Will draw cable if needed
-	CG_GrappleTrail ( cent, weapon );
-
-	// create the render entity
-	memset (&ent, 0, sizeof(ent));
-	VectorCopy( cent->lerpOrigin, ent.origin);
-	VectorCopy( cent->lerpOrigin, ent.oldorigin);
-
-	// flicker between two skins
-	ent.skinNum = cg.clientFrame & 1;
-	ent.hModel = weapon->missileModel;
-	ent.renderfx = weapon->missileRenderfx | RF_NOSHADOW;
-
-	// convert direction of travel into axis
-	if ( VectorNormalize2( s1->pos.trDelta, ent.axis[0] ) == 0 ) {
-		ent.axis[0][2] = 1;
-	}
-
-	trap_R_AddRefEntityToScene( &ent );
-}
-#endif
 
 /*
 ===============
