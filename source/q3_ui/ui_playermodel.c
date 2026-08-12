@@ -107,33 +107,31 @@ static playermodel_t s_playermodel;
 
 // BFP - modelPrefix values loaded from bfp_attacksets.cfg, used to filter
 // which models/players directories are valid selectable characters
-static char	s_attacksetPrefixes[MAX_BFP_ATTACKSETS][MAX_QPATH];
-static int	s_numAttacksetPrefixes;
+typedef struct {
+	char	prefix[MAX_QPATH];
+	char	defaultModel[MAX_QPATH];
+} attacksetInfo_t;
+
+static attacksetInfo_t s_attacksetInfo[MAX_BFP_ATTACKSETS];
+static int s_numAttacksetInfo;
 
 /*
-=================
-UI_LoadBFPAttacksetPrefixes
-
-Parses bfp_attacksets.cfg and caches every modelPrefix value found.
-Only the prefixes are kept (not attack/defaultModel data) since the
-UI only needs them to know which models/players directories are
-valid selectable characters.
-=================
+====================
+UI_LoadBFPAttacksetInfo
+====================
 */
-static void UI_LoadBFPAttacksetPrefixes( void ) // BFP - Load modelPrefix list from bfp_attacksets.cfg for model list filtering
-{
+static void UI_LoadBFPAttacksetInfo( void ) {
 	fileHandle_t	f;
-	int				len;
+	int				i, len, currentAttackSet = -1;
 	char			buf[BFP_CFG_BUFFER_SIZE];
 	char			*ptr;
 
-	s_numAttacksetPrefixes = 0;
+	s_numAttacksetInfo = 0;
 
 	len = trap_FS_FOpenFile( "bfp_attacksets.cfg", &f, FS_READ );
 	if ( !f ) {
 		return;
 	}
-
 	if ( len >= sizeof( buf ) ) {
 		trap_FS_FCloseFile( f );
 		return;
@@ -148,42 +146,262 @@ static void UI_LoadBFPAttacksetPrefixes( void ) // BFP - Load modelPrefix list f
 		while ( *ptr && ( *ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n' ) ) {
 			ptr++;
 		}
-
 		if ( !*ptr ) {
 			break;
 		}
 
-		if ( !Q_strncmp( ptr, "end", 3 ) ) {
-			break;
+		if ( !Q_stricmpn( ptr, "attackset", 9 ) && ( ptr[9] == ' ' || ptr[9] == '\t' ) ) {
+			ptr += 9;
+			while ( *ptr && ( *ptr == ' ' || *ptr == '\t' ) ) {
+				ptr++;
+			}
+			if ( *ptr >= '0' && *ptr <= '9' ) {
+				i = atoi( ptr );
+				if ( i >= 1 && i <= MAX_BFP_ATTACKSETS ) {
+					currentAttackSet = i - 1;
+					if ( currentAttackSet >= s_numAttacksetInfo ) {
+						s_numAttacksetInfo = currentAttackSet + 1;
+					}
+					// initialize
+					s_attacksetInfo[currentAttackSet].prefix[0] = '\0';
+					s_attacksetInfo[currentAttackSet].defaultModel[0] = '\0';
+				}
+			}
+			// keep parsing
+			continue;
 		}
 
-		if ( !Q_strncmp( ptr, "modelPrefix", 11 ) && ( ptr[11] == ' ' || ptr[11] == '\t' ) ) {
-			char	value[MAX_QPATH];
-			int		i;
+		if ( currentAttackSet < 0 ) { // skip line if not in the attackset
+			while ( *ptr && *ptr != '\n' && *ptr != '\r' ) {
+				ptr++;
+			}
+			continue;
+		}
 
+		if ( !Q_stricmpn( ptr, "modelPrefix", 11 ) && ( ptr[11] == ' ' || ptr[11] == '\t' ) ) {
+			char	value[MAX_QPATH];
 			ptr += 11;
 			while ( *ptr && ( *ptr == ' ' || *ptr == '\t' ) ) {
 				ptr++;
 			}
-
 			i = 0;
-			while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof( value ) - 1 ) {
+			while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof(value) - 1 ) {
 				value[i++] = *ptr++;
 			}
-			value[i] = 0;
-
-			if ( value[0] && s_numAttacksetPrefixes < MAX_BFP_ATTACKSETS ) {
-				Q_strncpyz( s_attacksetPrefixes[s_numAttacksetPrefixes], value, sizeof( s_attacksetPrefixes[0] ) );
-				s_numAttacksetPrefixes++;
+			value[i] = '\0';
+			if ( value[0] ) {
+				Q_strncpyz( s_attacksetInfo[currentAttackSet].prefix, value, sizeof(s_attacksetInfo[0].prefix) );
 			}
-		} else {
+			continue;
+		}
+
+		if ( !Q_stricmpn( ptr, "defaultModel", 12 ) && ( ptr[12] == ' ' || ptr[12] == '\t' ) ) {
+			char	value[MAX_QPATH];
+			ptr += 12;
+			while ( *ptr && ( *ptr == ' ' || *ptr == '\t' ) ) {
+				ptr++;
+			}
+			i = 0;
+			while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof(value) - 1 ) {
+				value[i++] = *ptr++;
+			}
+			value[i] = '\0';
+			if ( value[0] ) {
+				Q_strncpyz( s_attacksetInfo[currentAttackSet].defaultModel, value, sizeof(s_attacksetInfo[0].defaultModel) );
+			}
+			continue;
+		}
+
+		if ( !Q_stricmpn( ptr, "end", 3 ) && ( ptr[3] == ' ' || ptr[3] == '\t' || ptr[3] == '\n' || ptr[3] == '\r' ) ) {
+			currentAttackSet = -1;
 			while ( *ptr && *ptr != '\n' && *ptr != '\r' ) {
 				ptr++;
 			}
+			continue;
 		}
 
-		while ( *ptr && ( *ptr == '\n' || *ptr == '\r' ) ) {
+		// skip line if there's no known directive
+		while ( *ptr && *ptr != '\n' && *ptr != '\r' ) {
 			ptr++;
+		}
+	}
+}
+
+/*
+====================
+UI_GetDirAndSkinFromPath
+====================
+*/
+static void UI_GetDirAndSkinFromPath( const char *path, char *dir, int dirSize, char *skin, int skinSize ) {
+	const char	*p = path;
+	const char	*icon;
+	int			i = 0;
+
+	// skip "models/players/"
+	if ( !Q_strncmp( p, "models/players/", 15 ) ) {
+		p += 15;
+	}
+
+	// copy until the next '/'
+	while ( *p && *p != '/' && i < dirSize - 1 ) {
+		dir[i++] = *p++;
+	}
+	dir[i] = '\0';
+
+	// now p points to '/' (or final)
+	if ( *p == '/' ) {
+		p++;
+	}
+
+	// search "icon_"
+	icon = strstr( p, "icon_" );
+	if ( icon ) {
+		icon += 5; // skip "icon_"
+		Q_strncpyz( skin, icon, skinSize );
+	} else {
+		skin[0] = '\0';
+	}
+}
+
+/*
+====================
+UI_ParseSkinConfigBuffer
+====================
+*/
+static void UI_ParseSkinConfigBuffer( char *buf, qhandle_t attackIcons[BFP_NUM_WEAPONS] ) {
+	char *ptr = buf;
+	char token[MAX_QPATH];
+	char value[MAX_QPATH];
+
+	while ( *ptr ) {
+		int	i = 0;
+		while ( *ptr && ( *ptr == ' ' || *ptr == '\t' || *ptr == '\r' || *ptr == '\n' ) ) {
+			ptr++;
+		}
+		if ( !*ptr ) {
+			break;
+		}
+		if ( !Q_strncmp( ptr, "end", 3 ) ) {
+			break;
+		}
+
+		// read directive
+		while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof(token) - 1 ) {
+			token[i++] = *ptr++;
+		}
+		token[i] = '\0';
+
+		if ( !Q_stricmp( token, "attackIcon" ) ) {
+			char	idxStr[8];
+			int		idx;
+			// read attack index
+			while ( *ptr && ( *ptr == ' ' || *ptr == '\t' ) ) {
+				ptr++;
+			}
+			i = 0;
+			while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof(idxStr) - 1 ) {
+				idxStr[i++] = *ptr++;
+			}
+			idxStr[i] = '\0';
+			idx = atoi( idxStr );
+
+			// read shader path
+			while ( *ptr && ( *ptr == ' ' || *ptr == '\t' ) ) {
+				ptr++;
+			}
+			if ( *ptr == '"' ) {
+				ptr++;
+				i = 0;
+				while ( *ptr && *ptr != '"' && *ptr != '\n' && *ptr != '\r' && i < sizeof(value) - 1 ) {
+					value[i++] = *ptr++;
+				}
+				value[i] = '\0';
+				if ( *ptr == '"' ) {
+					ptr++;
+				}
+			} else {
+				i = 0;
+				while ( *ptr && *ptr != ' ' && *ptr != '\t' && *ptr != '\n' && *ptr != '\r' && i < sizeof(value) - 1 ) {
+					value[i++] = *ptr++;
+				}
+				value[i] = '\0';
+			}
+
+			if ( idx >= 0 && idx < BFP_NUM_WEAPONS && value[0] ) {
+				attackIcons[idx] = trap_R_RegisterShaderNoMip( value );
+			}
+		}
+		// Si quisiéramos también attackName, se podría añadir aquí
+
+		// skip to the next line break
+		while ( *ptr && *ptr != '\n' && *ptr != '\r' ) {
+			ptr++;
+		}
+	}
+}
+
+/*
+====================
+UI_LoadSkinConfig
+====================
+*/
+static void UI_LoadSkinConfig( const char *modelDir, const char *skinName, qhandle_t attackIcons[BFP_NUM_WEAPONS] ) { // BFP - Loads skin config
+	char			filename[MAX_QPATH*2];
+	char			buf[BFP_CFG_BUFFER_SIZE];
+	fileHandle_t	f;
+	int				i, len;
+	const char		*defaultModel = NULL;
+
+	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+		attackIcons[i] = 0;
+	}
+
+	for ( i = 0; i < s_numAttacksetInfo; i++ ) {
+		if ( s_attacksetInfo[i].prefix[0] && !Q_stricmpn( modelDir, s_attacksetInfo[i].prefix, strlen(s_attacksetInfo[i].prefix) ) ) {
+			if ( s_attacksetInfo[i].defaultModel[0] ) {
+				defaultModel = s_attacksetInfo[i].defaultModel;
+			}
+			break;
+		}
+	}
+
+	// load models/players/<defaultModel>/default.cfg if exists
+	if ( defaultModel ) {
+		Com_sprintf( filename, sizeof(filename), "models/players/%s/default.cfg", defaultModel );
+		len = trap_FS_FOpenFile( filename, &f, FS_READ );
+		if ( f ) {
+			if ( len < sizeof(buf) ) {
+				trap_FS_Read( buf, len, f );
+				buf[len] = 0;
+				UI_ParseSkinConfigBuffer( buf, attackIcons );
+			}
+			trap_FS_FCloseFile( f );
+		}
+	}
+
+	// load models/players/<player model>/default.cfg
+	Com_sprintf( filename, sizeof(filename), "models/players/%s/default.cfg", modelDir );
+	len = trap_FS_FOpenFile( filename, &f, FS_READ );
+	if ( f ) {
+		if ( len < sizeof(buf) ) {
+			trap_FS_Read( buf, len, f );
+			buf[len] = 0;
+			UI_ParseSkinConfigBuffer( buf, attackIcons );
+		}
+		trap_FS_FCloseFile( f );
+	}
+
+	// load models/players/<player model>/[skinName].cfg
+	if ( skinName && skinName[0] && Q_stricmp( skinName, "default" ) ) {
+		Com_sprintf( filename, sizeof(filename), "models/players/%s/%s.cfg", modelDir, skinName );
+		len = trap_FS_FOpenFile( filename, &f, FS_READ );
+		if ( f ) {
+			if ( len < sizeof(buf) ) {
+				trap_FS_Read( buf, len, f );
+				buf[len] = 0;
+				UI_ParseSkinConfigBuffer( buf, attackIcons );
+			}
+			trap_FS_FCloseFile( f );
 		}
 	}
 }
@@ -193,19 +411,19 @@ static void UI_LoadBFPAttacksetPrefixes( void ) // BFP - Load modelPrefix list f
 UI_ModelMatchesAnyAttacksetPrefix
 
 Returns qtrue if "modelName" starts with (case-insensitive) one of
-the modelPrefix values cached by UI_LoadBFPAttacksetPrefixes.
+the modelPrefix values cached by UI_LoadBFPAttacksetInfo.
 =================
 */
 static qboolean UI_ModelMatchesAnyAttacksetPrefix( const char *modelName ) // BFP - Prefix membership check against bfp_attacksets.cfg
 {
 	int	i, prefixLen;
 
-	for ( i = 0; i < s_numAttacksetPrefixes; i++ ) {
-		prefixLen = strlen( s_attacksetPrefixes[i] );
+	for ( i = 0; i < s_numAttacksetInfo; i++ ) {
+		prefixLen = strlen( s_attacksetInfo[i].prefix );
 		if ( prefixLen == 0 ) {
 			continue;
 		}
-		if ( !Q_stricmpn( modelName, s_attacksetPrefixes[i], prefixLen ) ) {
+		if ( !Q_stricmpn( modelName, s_attacksetInfo[i].prefix, prefixLen ) ) {
 			return qtrue;
 		}
 	}
@@ -493,6 +711,11 @@ static sfxHandle_t PlayerModel_MenuKey( int key )
 }
 
 
+// BFP - Use the new list version in a macro to enable,
+// enabled: loads all ki attack icons by skin config.
+// disabled: loads icons by BFP number prefix
+#define	UI_NEW_KIATTACKS_LIST_VERSION	1
+#if !UI_NEW_KIATTACKS_LIST_VERSION
 /*
 =================
 extractDirectoryName
@@ -517,6 +740,7 @@ static void extractDirectoryName( const char *input, char *output, int maxOutput
 		output[i] = '\0'; // null-terminate the output
 	}
 }
+#endif
 
 
 /*
@@ -526,26 +750,30 @@ PlayerModel_SetKiAttacks
 */
 static void PlayerModel_SetKiAttacks( void ) // BFP - Set ki attack pics
 {
+#if UI_NEW_KIATTACKS_LIST_VERSION
+	char		modelDir[MAX_QPATH];
+	char		skinName[MAX_QPATH];
+	qhandle_t	attackIcons[BFP_NUM_WEAPONS];
+	const char	*modelPath = s_playermodel.modelnames[s_playermodel.selectedmodel];
+	int			i = 0;
+
+	UI_GetDirAndSkinFromPath( modelPath, modelDir, sizeof(modelDir), skinName, sizeof(skinName) );
+
+	// load icons from skin config files
+	UI_LoadSkinConfig( modelDir, skinName, attackIcons );
+
+	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+		if ( attackIcons[i] ) {
+			s_playermodel.kipics[i].shader = attackIcons[i];
+		} else { // set an unknown ki attack icon
+			s_playermodel.kipics[i].shader = trap_R_RegisterShaderNoMip( "menu/art/unknownmap" );
+		}
+	}
+#else
 	int		numdirs;
 	char	dirlist[2048], modelselected[2048];
 	char*	dirptr;
 	int		i, dirlen, bfpnumber;
-
-	// BFP - NOTE: BFP vanilla uses the static icons for every character from bfp1 to bfp6.
-	// It would be cool to parse bfp_attacksets.cfg file and set every character their own ki attacks. 
-	// These are the strings used in the code to parse that cfg file:
-	/*
-		// 1st parameter strings used in their conditionals when parsing the cfg file and setting their values in the 2nd parameter:
-		"defaultModel"
-		"modelPrefix"
-		"attack"
-		"attackset"
-		"end"
-		// printing messages when reading the cfg file:
-		"BFP weapon config file too long\n"
-		"unable to open weapon config file.\n"
-		"reading bfp_attacksets.cfg\n"
-	*/
 
 	// iterate directory of all player models
 	numdirs = trap_FS_GetFileList("models/players", "/", dirlist, 2048 );
@@ -572,36 +800,36 @@ static void PlayerModel_SetKiAttacks( void ) // BFP - Set ki attack pics
 
 		// setting ki attack pics
 		switch( bfpnumber ) {
-			case 2:
-				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/homingball" );
-				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/lstorm_icon" );
-				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/mantisblast" );
-				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/aga" );
-				break;
-			case 3:
-				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/tornadoblast" );
-				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/redattack_icon" );
-				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/earthseeker_icon" );
-				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/powerwaveblast" );
-				break;
-			case 4:
-				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/blindingflash" );
-				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/chaosorb_icon" );
-				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/homingspecial" );
-				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/razordisk" );
-				break;
-			case 5:
-				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/eyebeam" );
-				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/kistorm" );
-				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/superhoming" );
-				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/ssb" );
-				break;
-			default:
-				s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/largekiblast" );
-				s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/kistorm" );
-				s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/impactbeam" );
-				s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/ultimateblast" );
-				break;
+		case 2:
+			s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/homingball" );
+			s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/lstorm_icon" );
+			s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/mantisblast" );
+			s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/aga" );
+			break;
+		case 3:
+			s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/tornadoblast" );
+			s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/redattack_icon" );
+			s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/earthseeker_icon" );
+			s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/powerwaveblast" );
+			break;
+		case 4:
+			s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/blindingflash" );
+			s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/chaosorb_icon" );
+			s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/homingspecial" );
+			s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/razordisk" );
+			break;
+		case 5:
+			s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/eyebeam" );
+			s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/kistorm" );
+			s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/superhoming" );
+			s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/ssb" );
+			break;
+		default:
+			s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/largekiblast" );
+			s_playermodel.kipics[2].shader = trap_R_RegisterShaderNoMip( "icons/kistorm" );
+			s_playermodel.kipics[3].shader = trap_R_RegisterShaderNoMip( "icons/impactbeam" );
+			s_playermodel.kipics[4].shader = trap_R_RegisterShaderNoMip( "icons/ultimateblast" );
+			break;
 		}
 		if ( bfpnumber <= 1 ) {
 			s_playermodel.kipics[1].shader = trap_R_RegisterShaderNoMip( "icons/fingerblast" );
@@ -615,6 +843,7 @@ static void PlayerModel_SetKiAttacks( void ) // BFP - Set ki attack pics
 		// stop iterating if it's this player already
 		if (!Q_stricmp(dirptr, modelselected)) return;
 	}
+#endif
 }
 
 
@@ -726,7 +955,7 @@ static void PlayerModel_BuildList( void )
 	// BFP - load modelPrefix list from bfp_attacksets.cfg before filtering
 	// models/players directories, so prefixes that don't end in '-'
 	// (e.g. "a17") are recognized correctly
-	UI_LoadBFPAttacksetPrefixes();
+	UI_LoadBFPAttacksetInfo();
 
 	// iterate directory of all player models
 	numdirs = trap_FS_GetFileList("models/players", "/", dirlist, 2048 );
