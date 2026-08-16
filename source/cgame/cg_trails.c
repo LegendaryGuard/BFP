@@ -165,6 +165,9 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 			trap_R_AddPolyToScene( hShader, 4, verts );
 		}
 #else
+		// BFP - NOTE: If the segments don't use polys, it would also definitely be more expensive, 
+		// but if it's not the case, the bulk of the processing would be to actually make these 
+		// adjustments on the VM side
 		{ // I see... so, BFP originally used RT_RAIL_CORE, they didn't care the size, it was already set
 			refEntity_t	trail;
 			memset( &trail, 0, sizeof( trail ) );
@@ -193,17 +196,15 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 	trail_t *beamTrail = &cg_trails[entityNum][BEAM_TRAIL];
 
 	// beam bend tuning constants
-	// LATERAL_GAIN: how much of the impact point's frame-to-frame lateral movement gets converted into bend displacement
-	// BEND_DECAY_RATE: exponential decay rate per second (higher = straightens out faster)
-	// MAX_BEND_RADIUS: clamp so teleports / large snaps don't produce a huge whip
-	const float LATERAL_GAIN = 0.6f;
-	const float BEND_DECAY_RATE = 20.0f;
-	const float MAX_BEND_RADIUS = 250.0f;
+	const float	LATERAL_GAIN = 0.6f; // how much of the impact point's frame-to-frame lateral movement gets converted into bend displacement
+	const float	BEND_DECAY_RATE = 20.0f; // exponential decay rate per second (higher = straightens out faster)
+	const float	MAX_BEND_RADIUS = 250.0f; // clamp so teleports / large snaps don't produce a huge whip
+
 	// lateral displacement is captured as a fraction of beam length (an angle, effectively), 
 	// then re-scaled by this constant back into the world units LATERAL_GAIN/MAX_BEND_RADIUS 
 	// were tuned against, so beam length no longer changes how strongly 
 	// a given turn angle bends the beam
-	const float REFERENCE_BEND_LENGTH = 512.0f;
+	const float	REFERENCE_BEND_LENGTH = 512.0f;
 
 	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
 		return;
@@ -219,6 +220,11 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 	}
 
 	beamTrail->numSegments = nBeamSegments;
+
+	// avoid initial weird whip effect
+	if ( cg.time - beamTrail->lastUpdateTime > 200 ) {
+		beamTrail->bendInitialized = qfalse;
+	}
 
 	// update the bend offset from how much the impact point moved sideways
 	// since last frame, then let it decay so the beam whips and straightens out again
@@ -573,6 +579,7 @@ void CG_DrawMissileTrails( void ) {
 				vec3_t		forward, right, viewAxis;
 				polyVert_t	verts[4];
 				byte		r, g, b;
+				float		segLen, t; // textcoord scale
 
 				r = (byte)(trail->color[0] * alphaByte);
 				g = (byte)(trail->color[1] * alphaByte);
@@ -591,7 +598,12 @@ void CG_DrawMissileTrails( void ) {
 				}
 
 				VectorSubtract( end, start, forward );
-				VectorNormalize( forward );
+				segLen = VectorNormalize( forward );
+
+				// same texcoord scaling as RT_RAIL_CORE:
+				// s scales with real distance instead of always spanning 0 ... 1,
+				// so the shader repeats along the trail instead of stretching per-segment
+				t = segLen * 0.00390625; // segLen / 256
 				VectorSubtract( cg.refdef.vieworg, start, viewAxis );
 				CrossProduct( viewAxis, forward, right );
 				VectorNormalize( right );
@@ -601,11 +613,11 @@ void CG_DrawMissileTrails( void ) {
 				Byte4Set( verts[0].modulate, r, g, b, alphaByte );
 
 				VectorMA( end, width, right, verts[1].xyz );
-				Vector2Set( verts[1].st, 1, 0 );
+				Vector2Set( verts[1].st, t, 0 );
 				Byte4Set( verts[1].modulate, r, g, b, alphaByte );
 
 				VectorMA( end, -width, right, verts[2].xyz );
-				Vector2Set( verts[2].st, 1, 1 );
+				Vector2Set( verts[2].st, t, 1 );
 				Byte4Set( verts[2].modulate, r, g, b, alphaByte );
 
 				VectorMA( start, -width, right, verts[3].xyz );

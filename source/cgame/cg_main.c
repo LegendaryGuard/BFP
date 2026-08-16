@@ -344,8 +344,6 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.countPrepareSound = trap_S_RegisterSound( "sound/feedback/prepare.wav", qtrue );
 
 	if ( cgs.gametype >= GT_TEAM || cg_buildScript.integer ) {
-
-		cgs.media.captureAwardSound = trap_S_RegisterSound( "sound/teamplay/flagcapture_yourteam.wav", qtrue );
 		cgs.media.redLeadsSound = trap_S_RegisterSound( "sound/feedback/redleads.wav", qtrue );
 		cgs.media.blueLeadsSound = trap_S_RegisterSound( "sound/feedback/blueleads.wav", qtrue );
 		cgs.media.teamsTiedSound = trap_S_RegisterSound( "sound/feedback/teamstied.wav", qtrue );
@@ -388,8 +386,6 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.teleInSound = trap_S_RegisterSound( "sound/world/telein.wav", qfalse );
 	cgs.media.teleOutSound = trap_S_RegisterSound( "sound/world/teleout.wav", qfalse );
 	cgs.media.respawnSound = trap_S_RegisterSound( "sound/items/respawn1.wav", qfalse );
-
-	cgs.media.noAmmoSound = trap_S_RegisterSound( "sound/weapons/noammo.wav", qfalse );
 
 	cgs.media.talkSound = trap_S_RegisterSound( "sound/player/talk.wav", qfalse );
 	cgs.media.landSound = trap_S_RegisterSound( "sound/player/land1.wav", qfalse);
@@ -464,12 +460,6 @@ static void CG_RegisterSounds( void ) {
 	// cgs.media.flightSound = trap_S_RegisterSound( "sound/items/flight.wav", qfalse );
 	cgs.media.medkitSound = trap_S_RegisterSound ("sound/items/use_medkit.wav", qfalse);
 	cgs.media.quadSound = trap_S_RegisterSound("sound/items/damage3.wav", qfalse);
-	cgs.media.sfx_ric1 = trap_S_RegisterSound ("sound/weapons/machinegun/ric1.wav", qfalse);
-	cgs.media.sfx_ric2 = trap_S_RegisterSound ("sound/weapons/machinegun/ric2.wav", qfalse);
-	cgs.media.sfx_ric3 = trap_S_RegisterSound ("sound/weapons/machinegun/ric3.wav", qfalse);
-	cgs.media.sfx_railg = trap_S_RegisterSound ("sound/weapons/railgun/railgf1a.wav", qfalse);
-	cgs.media.sfx_rockexp = trap_S_RegisterSound ("sound/weapons/rocket/rocklx1a.wav", qfalse);
-	cgs.media.sfx_plasmaexp = trap_S_RegisterSound ("sound/weapons/plasma/plasmx1a.wav", qfalse);
 
 	// BFP - No regen and grenade bounce sound
 	// cgs.media.regenSound = trap_S_RegisterSound("sound/items/regen.wav", qfalse);
@@ -488,13 +478,13 @@ static void CG_RegisterSounds( void ) {
 
 	cgs.media.kiChargeSound = trap_S_RegisterSound("sound/bfp/kicharge1.wav", qfalse); // BFP - Ki charge sound
 	cgs.media.kiUseSound = trap_S_RegisterSound("sound/bfp/kiuse1.wav", qfalse); // BFP - Ki use sound
-	cgs.media.defaultKiChargingSound = trap_S_RegisterSound("sound/bfp/attackcharge1.wav", qfalse); // BFP - Default ki charging attack sound
-	cgs.media.diskKiChargingSound = trap_S_RegisterSound("sound/bfp/diskcharge1.wav", qfalse); // BFP - Disk ki charging attack sound
 	cgs.media.tierUpSound = trap_S_RegisterSound("sound/bfp/tierup.wav", qfalse); // BFP - Tier up sound
+	//cgs.media.defaultKiChargingSound = trap_S_RegisterSound("sound/bfp/attackcharge1.wav", qfalse); // BFP - Default ki charging attack sound
+	//cgs.media.diskKiChargingSound = trap_S_RegisterSound("sound/bfp/diskcharge1.wav", qfalse); // BFP - Disk ki charging attack sound
 
 	// BFP - NOTE: Sounds like that are reusing Q3 ones
-	cgs.media.defaultKiBeamExplosionWaveSound = trap_S_RegisterSound("sound/weapons/rocket/rockfly.wav", qfalse); // BFP - Default ki beam and ki explosion wave sound
-	cgs.media.defaultKiFiringAttackSound = trap_S_RegisterSound("sound/weapons/bfg/bfg_fire.wav", qfalse); // BFP - Default ki firing sound
+	//cgs.media.defaultKiBeamExplosionWaveSound = trap_S_RegisterSound("sound/weapons/rocket/rockfly.wav", qfalse); // BFP - Default ki beam and ki explosion wave sound
+	//cgs.media.defaultKiFiringAttackSound = trap_S_RegisterSound("sound/weapons/bfg/bfg_fire.wav", qfalse); // BFP - Default ki firing sound
 }
 
 
@@ -652,9 +642,6 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.scoreboardTime = trap_R_RegisterShaderNoMip( "menu/tab/time.tga" );
 
 	cgs.media.smokePuffShader = trap_R_RegisterShader( "smokePuff" );
-	cgs.media.smokePuffRageProShader = trap_R_RegisterShader( "smokePuffRagePro" );
-	cgs.media.shotgunSmokePuffShader = trap_R_RegisterShader( "shotgunSmokePuff" );
-	cgs.media.plasmaBallShader = trap_R_RegisterShader( "sprites/plasma1" );
 	cgs.media.bloodTrailShader = trap_R_RegisterShader( "bloodTrail" );
 	cgs.media.lagometerShader = trap_R_RegisterShader("lagometer" );
 	cgs.media.connectionShader = trap_R_RegisterShader( "disconnected" );
@@ -684,12 +671,8 @@ static void CG_RegisterGraphics( void ) {
 
 	// powerup shaders
 	cgs.media.quadShader = trap_R_RegisterShader("powerups/quad" );
-	cgs.media.quadWeaponShader = trap_R_RegisterShader("powerups/quadWeapon" );
-	cgs.media.battleSuitShader = trap_R_RegisterShader("powerups/battleSuit" );
-	cgs.media.battleWeaponShader = trap_R_RegisterShader("powerups/battleWeapon" );
 	cgs.media.invisShader = trap_R_RegisterShader("powerups/invisibility" );
 	cgs.media.regenShader = trap_R_RegisterShader("powerups/regen" );
-	cgs.media.hastePuffShader = trap_R_RegisterShader("hasteSmokePuff" );
 
 	if ( cgs.gametype == GT_CTF || cg_buildScript.integer ) {
 		cgs.media.redFlagModel = trap_R_RegisterModel( "models/flags/r_flag.md3" );
@@ -705,7 +688,6 @@ static void CG_RegisterGraphics( void ) {
 	if ( cgs.gametype >= GT_TEAM || cg_buildScript.integer
 	|| cgs.gametype == GT_SURVIVAL ) { // BFP - Survival gametype, needs to draw the line status too
 		cgs.media.friendShader = trap_R_RegisterShader( "sprites/foe" );
-		cgs.media.redQuadShader = trap_R_RegisterShader("powerups/blueflag" );
 		cgs.media.teamStatusBar = trap_R_RegisterShader( "gfx/2d/colorbar.tga" );
 	}
 
@@ -729,14 +711,12 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.bloodExplosionShader = trap_R_RegisterShader( "bloodExplosion" );
 
-	cgs.media.bulletFlashModel = trap_R_RegisterModel("models/weaphits/bullet.md3");
 	cgs.media.ringFlashModel = trap_R_RegisterModel("models/weaphits/ring02.md3");
-	cgs.media.dishFlashModel = trap_R_RegisterModel("models/weaphits/boom01.md3");
 	// BFP - Explosion, projectile and beam models
-	cgs.media.nukeModel = trap_R_RegisterModel( "models/weaphits/nuke.md3" );
+	//cgs.media.nukeModel = trap_R_RegisterModel( "models/weaphits/nuke.md3" );
 	cgs.media.lowPolySphereModel = trap_R_RegisterModel( "models/weaphits/sphere.md3" );
 	cgs.media.highPolySphereModel = trap_R_RegisterModel( "models/weaphits/sphere_hi.md3" );
-	cgs.media.beamModel = trap_R_RegisterModel( "models/weaphits/beam.md3" );
+	//cgs.media.beamModel = trap_R_RegisterModel( "models/weaphits/beam.md3" );	// BFP - NOTE: That beam model is like a beam trail used to display as model, what would this look like?
 
 	// BFP - Explosion shell shader
 	cgs.media.explosionShellShader = trap_R_RegisterShader( "explosionShellShader" );
@@ -744,7 +724,7 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.railExplosionShader = trap_R_RegisterShader( "railExplosion" );
 
 	// BFP - Explosion shader test
-	cgs.media.ImpactBeamExplosionShader = trap_R_RegisterShader( "ImpactBeamExplosionShader" );
+	//cgs.media.ImpactBeamExplosionShader = trap_R_RegisterShader( "ImpactBeamExplosionShader" );
 
 	cgs.media.teleportEffectModel = trap_R_RegisterModel( "models/misc/telep.md3" );
 	cgs.media.teleportEffectShader = trap_R_RegisterShader( "teleportEffect" );
@@ -779,15 +759,20 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.auraYellowUseShader = trap_R_RegisterShader( "powerups/yellowuse" );
 	cgs.media.ultimateAuraShader = trap_R_RegisterShader( "powerups/ultimateaura" );
 
+	// BFP - Sprite aura
+	cgs.media.spriteAura = trap_R_RegisterShader( "powerups/spriteaura" );
+	// BFP - Particle aura
+	cgs.media.particleAura = trap_R_RegisterShader( "powerups/particleaura" );
+
 	// BFP - Ki trail shaders
 	cgs.media.kiTrailBlueShader = trap_R_RegisterShader( "powerups/bluekitrail" );
 	cgs.media.kiTrailRedShader = trap_R_RegisterShader( "powerups/redkitrail" );
 	cgs.media.kiTrailYellowShader = trap_R_RegisterShader( "powerups/yellowkitrail" );
 
 	// BFP - Ki attack beam and projectile shaders (for testing purposes)
-	cgs.media.PowerWaveBeamShader = trap_R_RegisterShader( "PowerWaveBeamShader" );
-	cgs.media.SSBSpiralShader = trap_R_RegisterShader( "SSBSpiralShader" );
-	cgs.media.SSBBeamShader = trap_R_RegisterShader( "SSBBeamShader" );
+	//cgs.media.PowerWaveBeamShader = trap_R_RegisterShader( "PowerWaveBeamShader" );
+	//cgs.media.SSBSpiralShader = trap_R_RegisterShader( "SSBSpiralShader" );
+	//cgs.media.SSBBeamShader = trap_R_RegisterShader( "SSBBeamShader" );
 
 	memset( cg_items, 0, sizeof( cg_items ) );
 #if INCLUDE_WEAPONINFO

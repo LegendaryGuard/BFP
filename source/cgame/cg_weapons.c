@@ -119,8 +119,8 @@ void CG_AddFlashMissile( qboolean isMissile, qboolean isMissileMoving, qboolean 
 			}
 		} else {
 			scale = flashMissileScaleFactor;
-			if ( scale > 1 ) {
-				scale = 1;
+			if ( scale > 10 ) {
+				scale = 10;
 			}
 			// BFP - Make muzzle flash fit better for player monster
 			if ( ( cent->currentState.eFlags & EF_MONSTER )
@@ -742,15 +742,35 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	}
 
 	// BFP - Displaying the muzzle flash to the other player correctly
-	if ( ( skinAtkCfg
-	&& ( ( skinAtkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) )
-		|| ( !skinAtkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) && cg.time - cent->muzzleFlashTime <= MUZZLE_FLASH_TIME ) ) )
-	|| ( wpCfg && nonPredictedCent->currentState.generic1 >= wpCfg->minCharge && wpCfg->chargeAttack ) ) {
-		CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
+	if ( skinAtkCfg && skinAtkCfg->constantFireAttack ) {
+		// constant fire: show flash when firing or when charging, if chargeAttack is set
+		if ( wpCfg && ( ( nonPredictedCent->currentState.eFlags & EF_FIRING ) && !wpCfg->chargeAttack )
+		|| ( wpCfg->chargeAttack && !wpCfg->chargeAutoFire && nonPredictedCent->currentState.generic1 >= wpCfg->minCharge ) ) {
+			CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, 
+				&tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
+		}
+	} else {
+		// impulse or charge-based flash, non-constant
+		if ( ( nonPredictedCent->currentState.eFlags & EF_FIRING ) && cg.time - cent->muzzleFlashTime <= MUZZLE_FLASH_TIME ) {
+			CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, 
+				&tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
+		} else if ( wpCfg && nonPredictedCent->currentState.generic1 >= wpCfg->minCharge
+		&& wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
+			CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, 
+				&tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
+		}
+	}
+
+	// BFP - Play firing sound on constantFireAttack
+	if ( skinAtkCfg && skinAtkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING )
+	&& wpCfg && ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) ) {
+		if ( skinAtkCfg->firingSound ) {
+			trap_S_AddLoopingSound( nonPredictedCent->currentState.number, nonPredictedCent->lerpOrigin, vec3_origin, skinAtkCfg->firingSound );
+		}
 	}
 
 	if ( ( skinAtkCfg
-	&& ( ( skinAtkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) )
+	&& ( ( skinAtkCfg->constantFireAttack && wpCfg && !wpCfg->chargeAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) )
 		|| ( !skinAtkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) && cg.time - cent->muzzleFlashTime <= MUZZLE_FLASH_TIME ) ) )
 	&& ( ps || cg.renderingThirdPerson || cent->currentState.number != cg.predictedPlayerState.clientNum ) ) {
 		// BFP - NOTE: That avoids adding the muzzle light using the beam,
@@ -1083,8 +1103,9 @@ void CG_FireWeapon( centity_t *cent ) {
 	// append the flash to the weapon model
 	cent->muzzleFlashTime = cg.time;
 
-	// BFP - constantFireAttack
-	if ( skinAtkCfg->constantFireAttack ) {
+	// BFP - constantFireAttack and chargeAutoFire handling
+	if ( skinAtkCfg->constantFireAttack
+	|| ( wpCfg && wpCfg->chargeAutoFire ) ) {
 		if ( cent->pe.constantFireAtkPlayed ) {
 			goto _skipFlashSound;
 		}
