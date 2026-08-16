@@ -16,25 +16,24 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 ## Table of contents
 > 1. [History](#history)
 > 2. [About the repository](#about-the-repository)
-> 3. [References and clues to know how should be the game](#references-and-clues-to-know-how-should-be-the-game)
-> 4. [How to build](#how-to-build)
-> > 4.1. [Introduction](#introduction)<br/>
-> > 4.2. [Windows](#windows)
-> > > 4.2.1. [Building QVM (using .bat)](#building-qvm-using-bat)<br/>
-> > > 4.2.2. [Building QVM (mingw)](#building-qvm-mingw)<br/>
-> > > 4.2.3. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
-> > > 4.2.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)<br/>
-> > > 4.2.5. [MSVC (.dll))](#msvc-dll)
+> 3. [How to build](#how-to-build)
+> > 3.1. [Introduction](#introduction)<br/>
+> > 3.2. [Windows](#windows)
+> > > 3.2.1. [Building QVM (using .bat)](#building-qvm-using-bat)<br/>
+> > > 3.2.2. [Building QVM (mingw)](#building-qvm-mingw)<br/>
+> > > 3.2.3. [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)<br/>
+> > > 3.2.4. [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)<br/>
+> > > 3.2.5. [MSVC (.dll))](#msvc-dll)
 > >
-> > 4.3. [Linux](#linux)
-> > > 4.3.1. [Building QVM (make)](#building-qvm-make)<br/>
-> > > 4.3.2. [Building QVM (using .bat)](#building-qvm-using-bat-1)<br/>
-> > > 4.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
+> > 3.3. [Linux](#linux)
+> > > 3.3.1. [Building QVM (make)](#building-qvm-make)<br/>
+> > > 3.3.2. [Building QVM (using .bat)](#building-qvm-using-bat-1)<br/>
+> > > 3.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
 > >
-> > 4.4. [Optional](#optional)
-> 5. [Notes](#notes)
-> 6. [Legal](#legal)
-> 7. [Credits](#credits)
+> > 3.4. [Optional](#optional)
+> 4. [Notes](#notes)
+> 5. [Legal](#legal)
+> 6. [Credits](#credits)
 
 # History
 
@@ -52,61 +51,22 @@ More info can be found in [Quake 3 Arena changelog version history](https://disc
 
 The original source code appears to be lost, but the assets and some docs are available in various places. Nonetheless, not all sources are accessible.
 
-### Old dev journals (1998 - 2002)
-
-The original URLs can be slower to load, so it's recommended to use markdown edition ones.
-
-NOTE: Some URLs and images within these contents may be broken or partially recovered. The final parts of Chris and Yrgol dev journals were found here:<br/> 
-Chris: https://web.archive.org/web/20011202065630/http://bidforpower.com/ <br/>
-Yrgol: https://web.archive.org/web/20020520060044/http://www.planetquake.com/Bidforpower/ <br/>
-On markdown editions, the data log is complete.
-
-- Chris dev journal: https://web.archive.org/web/20020210145200/http://bidforpower.com/journals/chris.php
-
-    * [Chris dev journal (Markdown edition)](docs/old_dev_journals/chris_dev_journal.md)
-
-- Yrgol dev journal: https://web.archive.org/web/20020205150340/http://www.bidforpower.com/journals/yrgol.php
-
-    * [Yrgol dev journal (Markdown edition)](docs/old_dev_journals/yrgol_dev_journal.md)
-
-- Ansel dev journal: https://web.archive.org/web/20011203063814/http://bidforpower.com/journals/ansel.php
-
-    * [Ansel dev journal (Markdown edition)](docs/old_dev_journals/ansel_dev_journal.md)
-
-- Anthony dev journal: https://web.archive.org/web/20020210151755/http://bidforpower.com/journals/anthony.php
-
-    * [Anthony dev journal (Markdown edition)](docs/old_dev_journals/anthony_dev_journal.md)
-
-- Dash dev journal: https://web.archive.org/web/20020223210411/http://www.bidforpower.com/journals/dash.php
-
-    * [Dash dev journal (Markdown edition)](docs/old_dev_journals/dash_dev_journal.md)
-
-- Rodney Olmos dev journal: https://web.archive.org/web/20011218204129/http://bidforpower.com/journals/rodney.php
-
-    * [Rodney Olmos dev journal (Markdown edition)](docs/old_dev_journals/rodney_dev_journal.md)
-
-- PyroFragger dev journal: https://web.archive.org/web/20011218203246/http://bidforpower.com/journals/pyrofragger.php
-
-    * [PyroFragger dev journal (Markdown edition)](docs/old_dev_journals/pyrofragger_dev_journal.md)
-
-- Remisser dev journal: https://web.archive.org/web/20020210152114/http://bidforpower.com/journals/remisser.php
-
-    * [Remisser dev journal (Markdown edition)](docs/old_dev_journals/remisser_dev_journal.md)
-
-... And more dev journals can be found [here](https://web.archive.org/web/20011202135731/http://bidforpower.com/journals/).
-
 # About the repository
 
-We're making a replica of the lost source code. <br/>
-The highest priority goal is to copy and recreate the complete logical structure of the BFP game. It would be a game SDK that'll provide a structured and standardized way to modify the mod.<br/>
+This is the complete recreation of the mod's original logic structure, now available as a structured and standardized game SDK that allows for easier modification and extension of the mod.
+
+It contains the recreated and improved version of the code, incorporating known bug fixes, performance optimizations and new features. The goal was to preserve the essence of the original Bid For Power while addressing its technical limitations and adding improvements based on analysis of expected behavior.
+
+As for documents, you can see all that in this repository: https://github.com/LegendaryGuard/BFP-docs
+
 You'll notice some differences and things that the original Bid For Power didn't have/were forgotten, incomplete or poorly made such as:
 
 #### EFFECTS:
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
 - explosion dynamic lights are back (these were broken after RC/beta versions)
-- real impact crack mark, when projectiles/ki attacks impact something solid on ground, walls or slopes (on original BFP, that hasn't been fixed)
-- particle aura is almost implemented
-- beam trails are bendy, almost similar to original BFP though
+- there's code about real impact crack mark, when projectiles/ki attacks impact something solid on ground, walls or slopes
+- particle aura is implemented, "powerups/particleaura" shader can be used
+- sprite aura looks implemented, "powerups/spriteeaura" shader can be used
 - while charging ki near water, bubble particles appear
 - when player is still moving with/without friction and charging ki, antigrav rock particles appear
 - when antigrav rock and rock debris particles fall in a slope or inclined places, bounce and slide, that makes the movements more realistic
@@ -172,50 +132,6 @@ You'll notice some differences and things that the original Bid For Power didn't
 - configstrings in CS_PLAYERS like "c1" and "hc" are removed to be optimized, handicap is disabled logically because it isn't used at all
 - some Q3e patches are applied, like events and function stuff...
 - ...
-
-Any fixes, improvements and contributions are welcome. But we can't accept secondary things and other stuff that don't reach the goals.
-
-# References and clues to know how should be the game
-
-Documentations, references and extracted stuff will give us clues to reach the goals. <br/>
-
-- Old documentations and networking:
-
-    * [Guide](docs/Guide.md)
-    * [Creating custom plugin models](docs/Create_Custom_Models.md)
-    * [Networking](docs/bfp_networking.md)
-
-<br/>
-
-- Attackset and Weapon config files:
-
-    * [Attackset Config File](docs/bfp_attacksets_config_file.md)
-    * [Weapon Config File](docs/bfp_weapon_config_file.md)
-
-<br/>
-
-- **cfg files**:
-
-A sample inside `models/players/player_name/default.cfg`:
-
-   * [default.cfg](cfgs/default.cfg)
-
-Server config:
-
-   * [bfp_server.cfg](cfgs/bfp_server.cfg)
-
-Attacksets:
-
-   * [bfp_attacksets.cfg](cfgs/bfp_attacksets.cfg)
-
-Weapon settings:
-
-   * [bfp_weapon.cfg](cfgs/bfp_weapon.cfg)
-   * [bfp_weapon2.cfg](cfgs/bfp_weapon2.cfg)
-
-BFP config (a sample of how the game saves general binding and BFP cvar stuff in a cfg file):
-
-   * [bfp.cfg](cfgs/bfp.cfg)
 
 # How to build
 
@@ -461,6 +377,7 @@ The information in the map file can be useful for debugging and performance anal
 - bg_events.h
 - bg_meansofdeath.h
 - bg_weaponconfig.c
+- cg_skinconfig.c
 - cg_cvar.h
 - cg_trails.c
 - g_cvar.h
