@@ -242,6 +242,22 @@ static void SendTierEvent( const entity_event_t EVENT, gentity_t *ent ) { // BFP
 }
 
 /*
+==============
+UnlockAttackSlot
+==============
+*/
+static void UnlockAttackSlot( gentity_t *ent, int slot ) { // BFP - Unlock a new attack slot on tier up
+	bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, slot );
+	if ( !def ) {
+		def = BG_SetDefaultWeaponDef();
+	}
+	if ( def ) {
+		ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << slot );
+		ClientSetAttack( ent->client, slot, def );
+	}
+}
+
+/*
 ======================
 GainPowerlevelKiHealth
 ======================
@@ -274,19 +290,23 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	if ( !alreadyTier1 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
+		UnlockAttackSlot( attacker, WP_ATTACK_1 );
 		SendTierEvent( EV_TIER_1, attacker );
 	} else if ( !alreadyTier2 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
+		UnlockAttackSlot( attacker, WP_ATTACK_2 );
 		SendTierEvent( EV_TIER_2, attacker );
 	} else if ( !alreadyTier3 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->tierUnlockedTime = level.time + 2000;
+		UnlockAttackSlot( attacker, WP_ATTACK_3 );
 		SendTierEvent( EV_TIER_3, attacker );
 	} else if ( !alreadyTransformed && attacker->client->ps.persistant[PERS_POWERLEVEL] > 999 ) {
 		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
 		attacker->client->ps.pm_flags |= PMF_ULTIMATE_TIER;
 		attacker->client->tierUnlockedTime = level.time + 5000;
+		UnlockAttackSlot( attacker, WP_ATTACK_4 );
 		SendTierEvent( EV_TIER_4, attacker );
 	}
 	if ( attacker->client->ps.persistant[PERS_POWERLEVEL] > 1000 ) { // if higher, clamp to 1000

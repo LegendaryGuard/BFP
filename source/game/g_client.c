@@ -923,6 +923,27 @@ void ClientCheckMonsterGone( gentity_t *ent ) { // BFP - Monster gamemode functi
 
 /*
 =============
+ClientGetUnlockedAttackSlots
+=============
+*/
+int ClientGetUnlockedAttackSlots( int powerlevel ) { // BFP - Tier, unlocked attack slot count
+	if ( powerlevel >= 1000 ) {
+		return BFP_NUM_WEAPONS;			// Ultimate tier, all of them
+	}
+	if ( powerlevel >= 500 ) {
+		return 4;						// Tier 4
+	}
+	if ( powerlevel >= 250 ) {
+		return 3;						// Tier 3
+	}
+	if ( powerlevel >= 100 ) {
+		return 2;						// Tier 2
+	}
+	return 1;							// Tier 1
+}
+
+/*
+=============
 ClientSetAttack
 =============
 */
@@ -1454,17 +1475,28 @@ void ClientSpawn(gentity_t *ent) {
 			ClientSetAttack( client, WP_ATTACK_0, def );
 		}
 	} else {
+		// BFP - Tier system
 		int	slot;
+		int	unlockedSlots = ClientGetUnlockedAttackSlots( client->ps.persistant[PERS_POWERLEVEL] );
 
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_ATTACK_0 ) | ( 1 << WP_ATTACK_1 ) | ( 1 << WP_ATTACK_2 ) | ( 1 << WP_ATTACK_3 ) | ( 1 << WP_ATTACK_4 );
-		for ( slot = 0; slot < BFP_NUM_WEAPONS; slot++ ) {
+		for ( slot = 0; slot < unlockedSlots; slot++ ) {
 			bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( client->ps.clientNum, slot );
 			if ( !def ) {
 				def = BG_SetDefaultWeaponDef();
 			}
 			if ( def ) {
+				client->ps.stats[STAT_WEAPONS] |= ( 1 << slot );
 				ClientSetAttack( client, slot, def );
 			}
+		}
+	}
+
+	// BFP - Melee only, players can't use weapons
+	if ( g_meleeOnly.integer > 0 ) {
+		int	slot;
+		for ( slot = 0; slot < BFP_NUM_WEAPONS; slot++ ) {
+			client->ps.ammo[ slot ] = 0;
 		}
 	}
 
