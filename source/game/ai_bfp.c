@@ -176,7 +176,7 @@ static void BotBFPCompensateKiCharge( bot_state_t *bs ) {
 	ps = &botent->client->ps;
 	now = FloatTime();
 
-	if ( !( ( ps->pm_flags & PMF_KI_CHARGE ) && ( ps->eFlags & EF_AURA ) ) ) {
+	if ( !( botent->client->kiCharging && ( ps->eFlags & EF_AURA ) ) ) {
 		bs->bfpKiCompensate_time = now;
 		return;
 	}
@@ -321,7 +321,7 @@ static void BotBFPCheckFlight( bot_state_t *bs, aas_entityinfo_t *entinfo, bot_g
 		return;
 	}
 
-	if ( bs->cur_ps.pm_flags & PMF_KI_CHARGE ) {
+	if ( g_entities[bs->client].client->kiCharging ) {
 		return;
 	}
 
@@ -504,27 +504,27 @@ BotBFPCheckChargedAttack
 ==================
 */
 static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo ) {
-	bfpWeaponDef_t	*def;
+	bfpWeaponCfgDef_t	*wpCfg;
 	qboolean		lineOfFireClear;
 	bsp_trace_t		trace;
 
 	bs->bfpForceAttackOff = qfalse;
 
-	def = BG_GetClientWeaponDefForSlot( bs->client, bs->weaponnum );
-	if ( !def ) {
-		def = BG_SetDefaultWeaponDef();
+	wpCfg = BG_GetClientWeaponDefForSlot( bs->client, bs->weaponnum );
+	if ( !wpCfg ) {
+		wpCfg = BG_SetDefaultWeaponDef();
 	}
 
 	if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-		def = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultWeaponDef();
 	}
 
-	if ( !def ) {
+	if ( !wpCfg ) {
 		return;
 	}
 
 	// chargeAutoFire
-	if ( def->chargeAutoFire ) {
+	if ( wpCfg->chargeAutoFire ) {
 		if ( bs->cur_ps.weaponstate == WEAPON_FIRING || bs->cur_ps.weaponstate == WEAPON_ACTIVE ) {
 			if ( bs->bfpChargeAutoFireStartTime == 0 ) {
 				bs->bfpChargeAutoFireStartTime = FloatTime();
@@ -542,13 +542,13 @@ static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo
 	}
 
 	// chargeAttack
-	if ( bs->cur_ps.weaponstate == WEAPON_FIRING && def->chargeAttack ) {
+	if ( bs->cur_ps.weaponstate == WEAPON_FIRING && wpCfg->chargeAttack ) {
 		if ( bs->bfpButtons & BUTTON_KI_CHARGE ) {
 			return;
 		}
 		bs->bfpButtons |= BUTTON_ATTACK;
 
-		if ( bs->cur_ps.eFlags & EF_READY_KI_ATTACK ) {
+		if ( bs->cur_ps.generic1 >= wpCfg->minCharge && wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
 			BotAI_Trace( &trace, bs->eye, NULL, NULL, bs->aimtarget, bs->client,
 					CONTENTS_SOLID | CONTENTS_PLAYERCLIP );
 			lineOfFireClear = ( trace.fraction >= 1.0f || trace.ent == bs->enemy );
@@ -560,7 +560,7 @@ static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo
 	}
 
 	// sbeam
-	if ( def->attackType == ATK_SBEAM ) {
+	if ( wpCfg->attackType == ATK_SBEAM ) {
 		if ( bs->cur_ps.weaponstate == WEAPON_READY || bs->cur_ps.weaponstate == WEAPON_ACTIVE ) {
 			bs->bfpButtons |= BUTTON_ATTACK;
 			bs->bfpForceAttackOff = qfalse;
@@ -573,11 +573,11 @@ static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo
 	}
 
 	// beam
-	if ( bs->cur_ps.weaponstate == WEAPON_ACTIVE && def->attackType == ATK_BEAM ) {
+	if ( bs->cur_ps.weaponstate == WEAPON_ACTIVE && wpCfg->attackType == ATK_BEAM ) {
 		bs->bfpForceAttackOff = qtrue;
 		return;
 	}
-	if ( bs->cur_ps.weaponstate == WEAPON_BEAMSTRUGGLE && def->attackType == ATK_BEAM ) {
+	if ( bs->cur_ps.weaponstate == WEAPON_BEAMSTRUGGLE && wpCfg->attackType == ATK_BEAM ) {
 		bs->bfpForceAttackOff = qtrue;
 		return;
 	}
@@ -701,7 +701,8 @@ static void BotBFPCheckZanzoken( bot_state_t *bs, aas_entityinfo_t *entinfo ) {
 		|| bs->cur_ps.weaponstate == WEAPON_STUN ) {
 			return;
 		}
-		if ( bs->cur_ps.pm_flags & ( PMF_KI_CHARGE | PMF_ULTIMATE_TIER ) ) {
+		if ( g_entities[bs->client].client->kiCharging
+		|| ( level.time < g_entities[bs->client].client->ultimateTierUnlockedTime ) ) {
 			return;
 		}
 		if ( bs->cur_ps.stats[STAT_KI] <= ( bs->cur_ps.stats[STAT_MAX_KI] * 0.05f ) ) {

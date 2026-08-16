@@ -289,11 +289,11 @@ static void Use_Shooter( gentity_t *ent, gentity_t *other, gentity_t *activator 
 
 	// BFP - Replaced into a regular ki attack
 	{
-		bfpWeaponDef_t	*def = BG_SetDefaultWeaponDef();
-		if ( !def ) {
+		bfpWeaponCfgDef_t	*wpCfg = BG_SetDefaultWeaponDef();
+		if ( !wpCfg ) {
 			return;
 		}
-		G_BFPFireProjectileWeapon( ent, ent->s.origin, dir, def );
+		G_BFPFireProjectileWeapon( ent, ent->s.origin, dir, wpCfg );
 		G_AddEvent( ent, EV_FIRE_WEAPON, 0 );
 	}
 }

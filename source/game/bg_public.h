@@ -168,7 +168,7 @@ typedef enum {
 // BFP - PMF_TIME_LAND is unused
 //#define PMF_TIME_LAND			32	// pm_time is time before rejump
 #define	PMF_TIME_KNOCKBACK	64		// pm_time is an air-accelerate only time
-#define PMF_KI_CHARGE		128		// BFP - Ki charge
+//#define PMF_UNUSED_FLAG6		128		// BFP - Some unused pm_flag
 // BFP - PMF_TIME_WATERJUMP is renamed	// pm_time is waterjump
 #define	PMF_AIR_GRAVITY		256		// BFP - Air gravity check
 #define	PMF_RESPAWNED		512		// clear after attack and jump buttons come up
@@ -176,10 +176,10 @@ typedef enum {
 // BFP - PMF_GRAPPLE_PULL is unused
 //#define	PMF_GRAPPLE_PULL	2048	// pull towards grapple location
 #define PMF_FOLLOW			4096	// spectate following another player
-// BFP - PMF_SCOREBOARD is renamed	// spectate as a scoreboard
-#define PMF_ULTIMATE_TIER	8192	// BFP - Ultimate tier status
+// BFP - PMF_SCOREBOARD is unused	// spectate as a scoreboard
+//#define PMF_SCOREBOARD	8192
 #define	PMF_FLIGHT_LATCH	16384	// BFP - Flight latch toggling
-// #define	PMF_UNUSED_FLAG		32768	// BFP - Some unused pm_flag
+// #define	PMF_UNUSED_FLAG14		32768	// BFP - Some unused pm_flag
 // BFP - Last pm_flag after 32768. That's the limit of pm_flags, it can't reach more
 // #define PMF_SOMEFLAG		65536	// some pm_flag
 
@@ -200,6 +200,12 @@ typedef struct {
 
 	qboolean	noFlight;			// BFP - No flight
 	qboolean	meleeOnly;			// BFP - Melee only
+
+	// BFP - Ultimate tier unlocked timer
+	int			ultimateTierUnlockedTime;
+
+	// BFP - Ki charge state
+	qboolean	kiCharging;
 
 	int			framecount;
 
@@ -285,7 +291,11 @@ typedef enum {
 	PERS_UNUSED_INDEX15				// BFP - ??? (Original BFP networking says it appears when spawning at the first time of all in-game)
 } persEnum_t;
 
-// BFP - If you want to keep demo networking, change the way to use the EF_ flags 
+// BFP - NOTE: eFlag can be used for client/player not just for projectile.
+// Imagine, you want to recycle an eFlag to set in the projectile from an eFlag that already is 
+// being used in the client/player but not in the projectile, in that case: EF_DEAD
+// That hack practice works and can save up some networking bits
+
 // entityState_t->eFlags
 #define	EF_DEAD				0x00000001		// don't draw a foe marker over players with EF_DEAD
 #define EF_AURA				0x00000002		// BFP - Aura, used to display players' aura
@@ -294,8 +304,6 @@ typedef enum {
 #define EF_PLAYER_EVENT		0x00000010
 // BFP - Unused EF_BOUNCE and EF_BOUNCE_HALF
 //#define	EF_BOUNCE			0x00000010		// for missiles
-// BFP - This eFlag hack is used for client/player only:
-#define	EF_READY_KI_ATTACK	0x00000010		// BFP - Ready ki attack
 //#define	EF_BOUNCE_HALF		0x00000020		// for missiles
 // BFP - EF_AWARD_GAUNTLET flag is renamed	// draw a gauntlet sprite
 #define	EF_FLIGHT			0x00000040		// BFP - Used for flying status
@@ -303,8 +311,6 @@ typedef enum {
 #define	EF_FIRING			0x00000100		// for lightning gun
 #define	EF_KI_BOOST			0x00000200		// BFP - Used for ki boost status
 #define	EF_MOVER_STOP		0x00000400		// will push otherwise
-// BFP - This eFlag hack is used for client/player only:
-#define EF_AURA_TIER_UP		0x00000400		// BFP - Aura tier up effect when transforms or passes to the next tier
 // BFP - EF_AWARD_CAP is unused
 //#define	EF_AWARD_CAP		0x00000800		// draw the capture sprite
 #define	EF_TALK				0x00001000		// draw a talk balloon
@@ -490,12 +496,12 @@ typedef struct {
 	int			movementPenalty;			// seconds of movement penalty (forcefield only)
 
 	int			explosionSpawn;				// explosion spawn (rdmissile only): weaponNum of the split projectile into on detonation
-} bfpWeaponDef_t;
+} bfpWeaponCfgDef_t;
 
 void			BG_LoadBFPWeaponConfig( void );
-bfpWeaponDef_t	*BG_FindBFPWeaponDef( int weaponNum );
-bfpWeaponDef_t	*BG_SetDefaultWeaponDef( void );
-bfpWeaponDef_t	*BG_SetMonsterDefaultWeaponDef( void );
+bfpWeaponCfgDef_t	*BG_FindBFPWeaponDef( int weaponNum );
+bfpWeaponCfgDef_t	*BG_SetDefaultWeaponDef( void );
+bfpWeaponCfgDef_t	*BG_SetMonsterDefaultWeaponDef( void );
 
 // BFP - bfp_attacksets.cfg: maps a player model prefix group to 5 weaponNum entries,
 // one per attack slot (WP_ATTACK_0 ... WP_ATTACK_4)
@@ -513,7 +519,7 @@ const char		*BG_FindAttacksetDefaultModelForModel( const char *modelName );
 int				BG_GetWeaponNumForSlot( const char *modelName, int attackSlot );
 qboolean		BG_ModelMatchesAnyAttacksetPrefix( const char *modelName );
 void			BG_SetClientAttackWeaponNums( int clientNum, const char *modelName );
-bfpWeaponDef_t	*BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot );
+bfpWeaponCfgDef_t	*BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot );
 
 // BFP - End of BFP WEAPON CONFIG
 

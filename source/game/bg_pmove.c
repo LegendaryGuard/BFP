@@ -135,6 +135,15 @@ static void PM_ForceLegsAnim( int anim ) {
 
 /*
 ================
+PM_IsInUltimateTier
+================
+*/
+static qboolean PM_IsInUltimateTier( void ) { // BFP - Ultimate tier state
+	return ( pm->ultimateTierUnlockedTime > pm->cmd.serverTime );
+}
+
+/*
+================
 PM_IsInKiAttackState
 
 Returns qtrue when the player is actively attacking
@@ -268,7 +277,7 @@ PM_TorsoStatusAnim
 */
 static void PM_TorsoStatusAnim( int anim ) { // BFP - Torso status handling
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 	if ( pm->ps->pm_flags & PMF_BLOCK ) PM_ContinueTorsoAnim( TORSO_BLOCK );
@@ -307,13 +316,13 @@ PM_ContinueMeleeStrikeLegsAnim
 */
 static void PM_ContinueMeleeStrikeLegsAnim( qboolean condition ) { // BFP - Melee strike legs anim handling
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 	// keep moving the legs when the player is attacking to the target through melee 
 	// if the condition variable isn't used leave using this value: 1 or qtrue
 	if ( ( condition ) && ( pm->ps->pm_flags & PMF_MELEE )
-	&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) { PM_ContinueLegsAnim( LEGS_MELEE_STRIKE ); }
+	&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 && !pm->kiCharging ) { PM_ContinueLegsAnim( LEGS_MELEE_STRIKE ); }
 }
 
 /*
@@ -323,7 +332,7 @@ PM_SlopesNeargroundAnim
 */
 static void PM_SlopesNeargroundAnim( qboolean is_slope ) { // BFP - Animation handling on the slopes and when being near to the ground
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 
@@ -643,7 +652,7 @@ static qboolean PM_CheckJump( void ) {
 
 	// BFP - With ki charge, the player can't jump. With hit stun, avoids jittering movements
 	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0
-	|| ( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
+	|| pm->kiCharging ) {
 		return qfalse;
 	}
 
@@ -917,7 +926,7 @@ static void PM_WaterMove( void ) {
 	}
 
 	// BFP - With ki charge, the player can't move, even up or down
-	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+	if ( pm->kiCharging ) {
 		pm->cmd.upmove = 0;
 	}
 
@@ -931,7 +940,7 @@ static void PM_WaterMove( void ) {
 		PM_ContinueFlyAnim();
 		// keep charging animation, otherwise looks jerky
 		if ( ( pm->cmd.buttons & BUTTON_KI_CHARGE )
-		&& !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+		&& !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
 			PM_ContinueTorsoAnim( TORSO_CHARGE );
 			PM_ContinueLegsAnim( LEGS_CHARGE );
 		}
@@ -959,7 +968,7 @@ static void PM_WaterMove( void ) {
 	scale = PM_CmdScale( &pm->cmd );
 
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		scale = 0;
 	}
 
@@ -991,7 +1000,7 @@ static void PM_WaterMove( void ) {
 	}
 
 	// BFP - Reduces speed when charging ki
-	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
+	if ( ( pm->kiCharging || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
 	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 		wishvel[2] *= 0.15;
@@ -1106,12 +1115,12 @@ static void PM_FlyMove( void ) {
 	PM_Friction ();
 
 	// BFP - With ki charge, the player can't move, even up or down
-	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+	if ( pm->kiCharging ) {
 		pm->cmd.upmove = 0;
 	}
 
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 
@@ -1248,7 +1257,7 @@ static void PM_AirMove( void ) {
 	PM_TorsoStatusAnim( TORSO_STAND );
 
 	// BFP - Reduces speed when charging ki
-	if ( ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
+	if ( ( pm->kiCharging || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) )
 	&& ( !( pm->ps->eFlags & EF_KI_BOOST ) && !( pm->cmd.buttons & BUTTON_KI_USE ) )
 	&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 		if ( pm->ps->velocity[2] > -10 ) {
@@ -1326,7 +1335,7 @@ static void PM_WalkMove( void ) {
 	float		vel;
 
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 
@@ -2099,7 +2108,7 @@ static void PM_Footsteps( void ) {
 	qboolean	footstep;
 
 	// BFP - Hit stun and ultimate tier
-	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( PM_IsInUltimateTier() ) ) {
 		return;
 	}
 
@@ -2120,7 +2129,7 @@ static void PM_Footsteps( void ) {
 	}
 
 	// BFP - Avoid when charging
-	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+	if ( pm->kiCharging ) {
 		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		return;
 	}
@@ -2173,7 +2182,7 @@ static void PM_Footsteps( void ) {
 			pm->ps->bobCycle = 0;	// start at beginning of cycle again
 			if ( pm->ps->pm_flags & PMF_DUCKED ) {
 				PM_ContinueLegsAnim( LEGS_IDLECR );
-			} else if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
+			} else if ( !pm->kiCharging ) {
 				PM_ContinueLegsAnim( LEGS_IDLE );
 			}
 		} else { // BFP - Handle the legs while it isn't doing nothing
@@ -2308,9 +2317,9 @@ static void PM_WaterEvents( void ) {		// FIXME?
 		}
 		if ( !( pm->ps->eFlags & EF_FLIGHT )
 		&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
-		&& !( pm->ps->pm_flags & PMF_KI_CHARGE )
+		&& !pm->kiCharging
 		&& !( pm->ps->pm_flags & PMF_MELEE )
-		&& !( pm->ps->pm_flags & PMF_ULTIMATE_TIER )
+		&& !( PM_IsInUltimateTier() )
 		&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 			PM_ForceJumpAnim(); // BFP - Keep legs animation
 		}
@@ -2404,7 +2413,7 @@ static void PM_TorsoAnimation( void ) {
 	float		vel, maxSpeed = 400 + ( pm->ps->persistant[PERS_POWERLEVEL] * 0.25 );
 
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 
@@ -2525,7 +2534,7 @@ static void PM_CheckFlightState( pmove_t *pm ) { // BFP - Checks if the flight i
 	if ( ( pm->cmd.buttons & BUTTON_ENABLEFLIGHT ) && !pm->noFlight ) {
 		if ( !( pm->ps->pm_flags & PMF_FLIGHT_LATCH ) ) {
 			// do not play the sound in the charging status
-			if ( !( pm->ps->eFlags & EF_FLIGHT ) && !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
+			if ( !( pm->ps->eFlags & EF_FLIGHT ) && !pm->kiCharging ) {
 				BG_AddPredictableEventToPlayerstate( EV_ENABLE_FLIGHT, 0, pm->ps, -1 ); // play the sound
 			}
 			// change state and lock until release
@@ -2558,12 +2567,12 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 	}
 
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 
 	// BFP - Avoid entering jump flying status after recharging ki
-	if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE )
+	if ( !pm->kiCharging && !( pm->cmd.buttons & BUTTON_KI_CHARGE )
 	&& pm->ps->pm_time > 0 ) {
 		return;
 	}
@@ -2595,7 +2604,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
 
 		// don't play the animation when being transformed
-		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
+		if ( !( PM_IsInUltimateTier() ) ) {
 			if ( !PM_IsInKiAttackState()
 			&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
 				if ( pm->cmd.forwardmove > 0 ) {
@@ -2619,7 +2628,7 @@ PM_FlightAnimation
 static void PM_FlightAnimation( void ) { // BFP - Flight
 
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 
@@ -2665,8 +2674,8 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->cmd.buttons &= ~BUTTON_KI_CHARGE;
 	}
 
-	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && ( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
-		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
+	if ( ( pm->cmd.buttons & BUTTON_KI_USE ) && pm->kiCharging ) {
+		pm->kiCharging = qfalse;
 		pm->ps->pm_time = 0;
 		// do jump animation if it's falling
 		if ( !( pml.groundTrace.contents & MASK_PLAYERSOLID )
@@ -2674,18 +2683,18 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 			&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
 				|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
 			&& pm->waterlevel <= 1 // Don't force inside the water
-			&& !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+			&& !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
 				PM_ForceJumpAnim();
 				PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 		return;
 	}
 
-	if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+	if ( pm->kiCharging && !( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 		pm->ps->pm_time = 200; // Make sure to avoid entering jump flying status after recharging ki
 		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
-		pm->ps->pm_flags &= ~PMF_KI_CHARGE;
-		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+		pm->kiCharging = qfalse;
+		if ( !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
 			PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
 		}
 		// do jump animation if it's falling
@@ -2694,20 +2703,20 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 			&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
 				|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
 			&& pm->waterlevel <= 1 // don't force inside the water
-			&& ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) ) { // avoid forcing animations on transformation phase
+			&& ( !( PM_IsInUltimateTier() ) ) ) { // avoid forcing animations on transformation phase
 			PM_ForceJumpAnim();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
 	}
 
 	if ( pm->cmd.buttons & BUTTON_KI_CHARGE ) {
-		if ( !( pm->ps->pm_flags & PMF_KI_CHARGE ) ) {
+		if ( !pm->kiCharging ) {
 			pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the visual charging effect continues without handling correctly
 		}
 		pm->ps->eFlags &= ~EF_KI_BOOST;
 		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
-		pm->ps->pm_flags |= PMF_KI_CHARGE;
-		if ( !( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) { // avoid forcing animations on transformation phase
+		pm->kiCharging = qtrue;
+		if ( !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
 			PM_ContinueTorsoAnim( TORSO_CHARGE );
 			PM_ContinueLegsAnim( LEGS_CHARGE );
 		}
@@ -2725,7 +2734,7 @@ PM_UltimateTierTransformAnimation
 ==============
 */
 static void PM_UltimateTierTransformAnimation( void ) { // BFP - Ultimate Tier transform animation
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		pm->ps->pm_flags &= ~( PMF_BLOCK | PMF_MELEE );
 		pm->ps->eFlags &= ~EF_FIRING;
 		pm->ps->weaponstate = WEAPON_READY;
@@ -2761,7 +2770,6 @@ static void PM_Melee( void ) { // BFP - Melee
 	if ( ( pm->ps->pm_flags & PMF_MELEE ) 
 	|| ( pm->cmd.buttons & BUTTON_MELEE ) ) {
 		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
-		pm->ps->eFlags &= ~EF_READY_KI_ATTACK; // leave ready ki attack
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_BLOCK );
 	}
 }
@@ -2781,7 +2789,8 @@ static void PM_MovementPenalty( void ) { // BFP - Movement penalty/weapon stun h
 		// don't move, also these keys cannot be used; blocking, ki charge and ki boost statuses are removed
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 		pm->cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK );
-		pm->ps->pm_flags &= ~( PMF_KI_CHARGE | PMF_BLOCK );
+		pm->ps->pm_flags &= ~PMF_BLOCK;
+		pm->kiCharging = qfalse;
 		pm->ps->pm_flags |= PMF_JUMP_HELD; // avoid pressing jump key
 		pm->ps->eFlags &= ~EF_KI_BOOST;
 		return;
@@ -2792,7 +2801,8 @@ static void PM_MovementPenalty( void ) { // BFP - Movement penalty/weapon stun h
 		// don't move, also these keys cannot be used; melee, attacking, blocking, ki charge and ki boost statuses are removed
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 		pm->cmd.buttons &= ~( BUTTON_ATTACK | BUTTON_KI_CHARGE | BUTTON_KI_USE | BUTTON_BLOCK | BUTTON_MELEE );
-		pm->ps->pm_flags &= ~( PMF_KI_CHARGE | PMF_BLOCK | PMF_MELEE );
+		pm->ps->pm_flags &= ~( PMF_BLOCK | PMF_MELEE );
+		pm->kiCharging = qfalse;
 		pm->ps->pm_flags |= PMF_JUMP_HELD; // avoid pressing jump key
 		pm->ps->eFlags &= ~EF_KI_BOOST;
 		return;
@@ -2825,8 +2835,7 @@ static void PM_Weapon( void ) {
 	// BFP - HIGHLY MODIFIED
 
 	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
-	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) ) {
-		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( PM_IsInUltimateTier() ) ) {
 		pm->ps->generic1 = 0;
 		pm->ps->weaponTime = 0;
 		return;
@@ -2849,7 +2858,7 @@ static void PM_Weapon( void ) {
 	}
 
 	// BFP - Don't allow attack when recharging ki
-	if ( pm->ps->pm_flags & PMF_KI_CHARGE ) {
+	if ( pm->kiCharging ) {
 		return;
 	}
 
@@ -2896,7 +2905,6 @@ static void PM_Weapon( void ) {
 	// BFP - Weapon states, Q3 doesn't have this way
 	switch( pm->ps->weaponstate ) {
 	case WEAPON_READY:
-		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
 		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
 		&& ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) 
 		&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) ) 
@@ -2920,7 +2928,7 @@ static void PM_Weapon( void ) {
 		break;
 	case WEAPON_FIRING:
 		// don't allow ki charging while charging the attack
-		if ( ( pm->ps->pm_flags & PMF_KI_CHARGE ) || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+		if ( pm->kiCharging || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->weaponTime = 0;
 		}
@@ -2994,7 +3002,7 @@ PM_Animate
 static void PM_Animate( void ) {
 
 	// BFP - Ultimate tier
-	if ( pm->ps->pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( PM_IsInUltimateTier() ) {
 		return;
 	}
 

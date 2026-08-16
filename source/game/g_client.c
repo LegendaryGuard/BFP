@@ -947,8 +947,8 @@ int ClientGetUnlockedAttackSlots( int powerlevel ) { // BFP - Tier, unlocked att
 ClientSetAttack
 =============
 */
-void ClientSetAttack( gclient_t *client, int slot, bfpWeaponDef_t *def ) { // BFP - Set attack
-	switch ( def->attackType ) {
+void ClientSetAttack( gclient_t *client, int slot, bfpWeaponCfgDef_t *wpCfg ) { // BFP - Set attack
+	switch ( wpCfg->attackType ) {
 	case ATK_BEAM:
 		client->ps.ammo[ slot ] = AMMOF_ATK_BEAM;
 		break;
@@ -962,19 +962,19 @@ void ClientSetAttack( gclient_t *client, int slot, bfpWeaponDef_t *def ) { // BF
 		client->ps.ammo[ slot ] = AMMOF_ACTIVE;
 		break;
 	}
-	if ( def->chargeAttack ) {
+	if ( wpCfg->chargeAttack ) {
 		client->ps.ammo[ slot ] |= AMMOF_CHARGEATTACK;
 	}
-	if ( def->chargeAutoFire ) {
+	if ( wpCfg->chargeAutoFire ) {
 		client->ps.ammo[ slot ] |= AMMOF_CHARGEAUTOFIRE;
 	}
-	if ( def->loopingAnim ) {
+	if ( wpCfg->loopingAnim ) {
 		client->ps.ammo[ slot ] |= AMMOF_LOOPINGANIM;
 	}
-	if ( def->noAttackAnim ) {
+	if ( wpCfg->noAttackAnim ) {
 		client->ps.ammo[ slot ] |= AMMOF_NOATTACKANIM;
 	}
-	if ( def->movementPenalty > 0 ) {
+	if ( wpCfg->movementPenalty > 0 ) {
 		client->ps.ammo[ slot ] |= AMMOF_MOVEMENTPENALTY;
 	}
 	// BFP - Debug ammo states for weapons
@@ -1468,11 +1468,11 @@ void ClientSpawn(gentity_t *ent) {
 	// BFP - Monster gamemode
 	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
 	&& client->ps.clientNum == level.monsterClientNum ) {
-		bfpWeaponDef_t	*def = BG_SetMonsterDefaultWeaponDef();
+		bfpWeaponCfgDef_t	*wpCfg = BG_SetMonsterDefaultWeaponDef();
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_ATTACK_0 );
 		client->ps.ammo[WP_ATTACK_0] = 1;
-		if ( def ) {
-			ClientSetAttack( client, WP_ATTACK_0, def );
+		if ( wpCfg ) {
+			ClientSetAttack( client, WP_ATTACK_0, wpCfg );
 		}
 	} else {
 		// BFP - Tier system
@@ -1481,13 +1481,13 @@ void ClientSpawn(gentity_t *ent) {
 
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_ATTACK_0 ) | ( 1 << WP_ATTACK_1 ) | ( 1 << WP_ATTACK_2 ) | ( 1 << WP_ATTACK_3 ) | ( 1 << WP_ATTACK_4 );
 		for ( slot = 0; slot < unlockedSlots; slot++ ) {
-			bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( client->ps.clientNum, slot );
-			if ( !def ) {
-				def = BG_SetDefaultWeaponDef();
+			bfpWeaponCfgDef_t	*wpCfg = BG_GetClientWeaponDefForSlot( client->ps.clientNum, slot );
+			if ( !wpCfg ) {
+				wpCfg = BG_SetDefaultWeaponDef();
 			}
-			if ( def ) {
+			if ( wpCfg ) {
 				client->ps.stats[STAT_WEAPONS] |= ( 1 << slot );
-				ClientSetAttack( client, slot, def );
+				ClientSetAttack( client, slot, wpCfg );
 			}
 		}
 	}

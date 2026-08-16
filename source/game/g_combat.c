@@ -247,13 +247,13 @@ UnlockAttackSlot
 ==============
 */
 static void UnlockAttackSlot( gentity_t *ent, int slot ) { // BFP - Unlock a new attack slot on tier up
-	bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, slot );
-	if ( !def ) {
-		def = BG_SetDefaultWeaponDef();
+	bfpWeaponCfgDef_t	*wpCfg = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, slot );
+	if ( !wpCfg ) {
+		wpCfg = BG_SetDefaultWeaponDef();
 	}
-	if ( def ) {
+	if ( wpCfg ) {
 		ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << slot );
-		ClientSetAttack( ent->client, slot, def );
+		ClientSetAttack( ent->client, slot, wpCfg );
 	}
 }
 
@@ -268,6 +268,7 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	qboolean alreadyTier2 = qfalse;
 	qboolean alreadyTier3 = qfalse;
 	qboolean alreadyTransformed = qfalse;
+	qboolean tierUp = qfalse;
 	// BFP - Monster gamemode handling the maximum ki calculation
 	int monsterKi = 1;
 
@@ -288,24 +289,24 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	// Formula: attackerPowerlevel += 1 + ( opponentPowerlevel * g_plKillBonusPct.value )
 	attacker->client->ps.persistant[PERS_POWERLEVEL] += 1 + ( self->client->ps.persistant[PERS_POWERLEVEL] * g_plKillBonusPct.value );
 	if ( !alreadyTier1 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 99 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 250 ) {
-		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
+		tierUp = qtrue;
 		attacker->client->tierUnlockedTime = level.time + 2000;
 		UnlockAttackSlot( attacker, WP_ATTACK_1 );
 		SendTierEvent( EV_TIER_1, attacker );
 	} else if ( !alreadyTier2 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 249 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 500 ) {
-		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
+		tierUp = qtrue;
 		attacker->client->tierUnlockedTime = level.time + 2000;
 		UnlockAttackSlot( attacker, WP_ATTACK_2 );
 		SendTierEvent( EV_TIER_2, attacker );
 	} else if ( !alreadyTier3 && attacker->client->ps.persistant[PERS_POWERLEVEL] > 499 && attacker->client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
-		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
+		tierUp = qtrue;
 		attacker->client->tierUnlockedTime = level.time + 2000;
 		UnlockAttackSlot( attacker, WP_ATTACK_3 );
 		SendTierEvent( EV_TIER_3, attacker );
 	} else if ( !alreadyTransformed && attacker->client->ps.persistant[PERS_POWERLEVEL] > 999 ) {
-		attacker->client->ps.eFlags |= EF_AURA_TIER_UP;
-		attacker->client->ps.pm_flags |= PMF_ULTIMATE_TIER;
+		tierUp = qtrue;
 		attacker->client->tierUnlockedTime = level.time + 5000;
+		attacker->client->ultimateTierUnlockedTime = level.time + 5000;
 		UnlockAttackSlot( attacker, WP_ATTACK_4 );
 		SendTierEvent( EV_TIER_4, attacker );
 	}
@@ -368,7 +369,7 @@ static void GainPowerlevelKiHealth( gentity_t *self, gentity_t *attacker ) { // 
 	}
 
 	// BFP - When unlocking a tier, give the player maximum health and ki
-	if ( attacker->client->ps.eFlags & EF_AURA_TIER_UP ) {
+	if ( tierUp ) {
 		attacker->health = attacker->client->ps.stats[STAT_HEALTH] = attacker->client->ps.stats[STAT_MAX_HEALTH];
 		attacker->client->ps.stats[STAT_KI] = attacker->client->ps.stats[STAT_MAX_KI];
 	}
@@ -1048,7 +1049,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 
 	// BFP - Ultimate tier status is invulnerable!
 	if ( targ && targ->client // BFP - NOTE: Avoid DLL/SO crashing when impacting a door or any map entity (ET_MOVER), this is important for implementations like that!
-	&& ( targ->client->ps.pm_flags & PMF_ULTIMATE_TIER ) ) {
+	&& ( level.time < targ->client->ultimateTierUnlockedTime ) ) {
 		return;
 	}
 

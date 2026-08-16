@@ -521,8 +521,17 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	case EV_TIER_3:					// 17
 	case EV_TIER_4:					// 18
 		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
-		if ( event == EV_TIER_4 && es->otherEntityNum == cg.snap->ps.clientNum ) {
-			trap_SendConsoleCommand( "transformorbit\n" );
+		cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 2000;
+		if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
+			cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 2000;
+		}
+		if ( event == EV_TIER_4 ) {
+			cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 4200;
+			if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
+				cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 4200;
+				cg.ultimateTierUnlockedTime = cg.time + 5000;
+				trap_SendConsoleCommand( "transformorbit\n" );
+			}
 		}
 		break;
 

@@ -1187,9 +1187,9 @@ void CG_AntigravRockHandling (centity_t *cent)
 
 		if ( p->entityNum == cent->currentState.clientNum
 		&& !( cent->currentState.eFlags & EF_DEAD )
-		&& ( ( !( cent->currentState.eFlags & EF_AURA ) && !( cent->currentState.eFlags & EF_AURA_TIER_UP ) )
+		&& ( ( !( cent->currentState.eFlags & EF_AURA ) && !( cg.time < cent->pe.tierAuraTime ) )
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-			|| ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE && !( cent->currentState.eFlags & EF_AURA ) && !( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) )
+			|| ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE && !( cent->currentState.eFlags & EF_AURA ) && !( cg.time < cent->pe.tierAuraTime ) ) )
 		&& !p->stopped ) { // BFP - Make each particle fall when they aren't on ki charging status
 			p->endtime = timenonscaled + 1650;
 			p->stopped = qtrue;

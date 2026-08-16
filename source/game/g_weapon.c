@@ -330,16 +330,16 @@ G_BFPFireProjectileWeapon
 Fires missile, rdmissile, beam, sbeam or forcefield attack
 ================
 */
-gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir, bfpWeaponDef_t *def ) { // BFP - Fire BFP weapon
+gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir, bfpWeaponCfgDef_t *wpCfg ) { // BFP - Fire BFP weapon
 	gentity_t	*proj;
-	float		r = def->radius;
+	float		r = wpCfg->radius;
 
 	if ( !self || !self->client ) {
 		return NULL;
 	}
 
 	// if forcefield is still being used, skip
-	if ( def->attackType == ATK_FORCEFIELD ) {
+	if ( wpCfg->attackType == ATK_FORCEFIELD ) {
 		if ( self->client->hook ) {
 			if ( !self->client->hook->inuse ) {
 				self->client->hook = NULL;
@@ -363,9 +363,9 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	proj->s.weapon = self->s.weapon;
 	proj->s.clientNum = self->client->ps.clientNum;
 
-	proj->damage = def->damage;
-	proj->splashDamage = def->splashDamage;
-	proj->splashRadius = def->explosionRadius;
+	proj->damage = wpCfg->damage;
+	proj->splashDamage = wpCfg->splashDamage;
+	proj->splashRadius = wpCfg->explosionRadius;
 	proj->methodOfDeath = MOD_KI_ATTACK;
 	proj->splashMethodOfDeath = MOD_KI_ATTACK;
 
@@ -374,45 +374,45 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	proj->s.generic1 = self->client->ps.generic1;
 
 	// homing
-	proj->homing = def->homing;
-	proj->homingRange = def->homingRange;
+	proj->homing = wpCfg->homing;
+	proj->homingRange = wpCfg->homingRange;
 
 	// set!
-	proj->weaponDef = def;
+	proj->weaponDef = wpCfg;
 
-	if ( def->attackType == ATK_MISSILE || def->attackType == ATK_RDMISSILE ) {
-		ApplyMuzzleOffsets( proj, def->randXOffset, def->randYOffset, def->alternatingXOffset );
-		ApplyConeOfFire( def->coneOfFireX, def->coneOfFireY );
+	if ( wpCfg->attackType == ATK_MISSILE || wpCfg->attackType == ATK_RDMISSILE ) {
+		ApplyMuzzleOffsets( proj, wpCfg->randXOffset, wpCfg->randYOffset, wpCfg->alternatingXOffset );
+		ApplyConeOfFire( wpCfg->coneOfFireX, wpCfg->coneOfFireY );
 	}
 
-	if ( def->chargeAttack || def->chargeAutoFire ) {
+	if ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) {
 		G_ChargeDamageScaling( proj, r );
 	}
 
-	proj->bounces = def->bounces;
+	proj->bounces = wpCfg->bounces;
 
 	// trajectory
-	if ( def->missileGravity > 0 ) {
+	if ( wpCfg->missileGravity > 0 ) {
 		proj->s.pos.trType = TR_GRAVITY;
 	} else {
 		proj->s.pos.trType = TR_LINEAR;
 	}
 	proj->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;
-	if ( def->missileAcceleration > 0 ) { // start from the very first frame if there's acceleration
+	if ( wpCfg->missileAcceleration > 0 ) { // start from the very first frame if there's acceleration
 		proj->s.pos.trTime = level.time;
 	}
 	VectorCopy( start, proj->s.pos.trBase );
-	VectorScale( dir, def->missileSpeed, proj->s.pos.trDelta );
+	VectorScale( dir, wpCfg->missileSpeed, proj->s.pos.trDelta );
 	SnapVector( proj->s.pos.trDelta );
 	VectorCopy( start, proj->r.currentOrigin );
 
 	// collision radius
 	VectorSet( proj->r.mins, -r, -r, -r );
-	if ( def->attackType == ATK_MISSILE || def->attackType == ATK_RDMISSILE ) {
+	if ( wpCfg->attackType == ATK_MISSILE || wpCfg->attackType == ATK_RDMISSILE ) {
 		// set the upward minimum at that height, so the projectile can move through that gap
 		VectorSet( proj->r.mins, -r, -r, -10 );
 	}
-	if ( def->attackType == ATK_SBEAM ) {
+	if ( wpCfg->attackType == ATK_SBEAM ) {
 		// put a bit above
 		VectorSet( proj->r.mins, -r, -r, -r + 5 );
 	}
@@ -423,7 +423,7 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	proj->distance = 0;
 
 	// think adjustments
-	switch ( def->attackType ) {
+	switch ( wpCfg->attackType ) {
 	case ATK_BEAM:
 	case ATK_SBEAM:
 		proj->think = Weapon_BFPBeamFree;
@@ -445,13 +445,13 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 	default:
 		proj->think = G_ExplodeMissile;
 		proj->nextthink = level.time + 10000;
-		if ( def->piercing ) {
+		if ( wpCfg->piercing ) {
 			proj->think = G_FreeEntity;
 		}
 	}
 
-	if ( def->missileDuration > 0 ) {
-		proj->nextthink = level.time + def->missileDuration;
+	if ( wpCfg->missileDuration > 0 ) {
+		proj->nextthink = level.time + wpCfg->missileDuration;
 	}
 
 	// rdmissile split
@@ -563,7 +563,7 @@ G_BFPFireHitscanWeapon
 Hitscan firing
 ================
 */
-static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // BFP - Fire BFP hitscan attack type weapon
+static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponCfgDef_t *wpCfg ) { // BFP - Fire BFP hitscan attack type weapon
 	trace_t		tr;
 	vec3_t		end;
 	vec3_t		mins = {0, 0, 0}, maxs = {0, 0, 0};
@@ -580,9 +580,9 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // 
 	ent->parent = self;
 	ent->s.weapon = self->s.weapon;
 	ent->s.clientNum = self->client->ps.clientNum;
-	ent->damage = def->damage;
-	ent->splashDamage = def->splashDamage;
-	ent->splashRadius = def->explosionRadius;
+	ent->damage = wpCfg->damage;
+	ent->splashDamage = wpCfg->splashDamage;
+	ent->splashRadius = wpCfg->explosionRadius;
 	ent->methodOfDeath = MOD_KI_ATTACK;
 	ent->splashMethodOfDeath = MOD_KI_ATTACK;
 
@@ -591,13 +591,13 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // 
 	ent->s.generic1 = self->client->ps.generic1;
 
 	// set!
-	ent->weaponDef = def;
+	ent->weaponDef = wpCfg;
 
 	// apply weaponTime calculation to handle event effects
-	weaponTime = def->weaponTime + def->randomWeaponTime;
+	weaponTime = wpCfg->weaponTime + wpCfg->randomWeaponTime;
 
 	// rail trail, behaves like a rail gun
-	if ( def->railTrail ) {
+	if ( wpCfg->railTrail ) {
 		Weapon_RailTrail_Fire( ent );
 		return;
 	}
@@ -606,23 +606,23 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // 
 	AngleVectors( self->client->ps.viewangles, forward, right, up );
 	CalcMuzzlePoint( self, forward, right, up, muzzle );
 
-	ApplyMuzzleOffsets( ent, def->randXOffset, def->randYOffset, def->alternatingXOffset );
-	ApplyConeOfFire( def->coneOfFireX, def->coneOfFireY );
+	ApplyMuzzleOffsets( ent, wpCfg->randXOffset, wpCfg->randYOffset, wpCfg->alternatingXOffset );
+	ApplyConeOfFire( wpCfg->coneOfFireX, wpCfg->coneOfFireY );
 
-	VectorMA( muzzle, def->range, forward, end );
+	VectorMA( muzzle, wpCfg->range, forward, end );
 
 	// set radius to the hitscan bounding box
-	if ( def->radius > 0 ) {
-		VectorSet( mins, -def->radius, -def->radius, -def->radius );
-		VectorSet( maxs, def->radius, def->radius, def->radius );
+	if ( wpCfg->radius > 0 ) {
+		VectorSet( mins, -wpCfg->radius, -wpCfg->radius, -wpCfg->radius );
+		VectorSet( maxs, wpCfg->radius, wpCfg->radius, wpCfg->radius );
 	}
 
 	// BFP - Reflective
 	G_Reflective( ent, qtrue, muzzle );
 
 	trap_Trace( &tr, muzzle, mins, maxs, end, self->s.number, 
-			( def->piercing ) ? CONTENTS_BODY : MASK_SHOT );
-	if ( def->radius > 0 && ( tr.startsolid || tr.allsolid || tr.entityNum == ENTITYNUM_NONE ) ) {
+			( wpCfg->piercing ) ? CONTENTS_BODY : MASK_SHOT );
+	if ( wpCfg->radius > 0 && ( tr.startsolid || tr.allsolid || tr.entityNum == ENTITYNUM_NONE ) ) {
 		vec3_t		boxMins, boxMaxs;
 		int			entityList[MAX_GENTITIES];
 		int			numEntities, i;
@@ -657,7 +657,7 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // 
 				continue;
 			}
 
-			G_Damage( other, ent, self, forward, visTrace.endpos, def->damage, 0, MOD_KI_ATTACK );
+			G_Damage( other, ent, self, forward, visTrace.endpos, wpCfg->damage, 0, MOD_KI_ATTACK );
 
 			if ( LogAccuracyHit( other, self ) ) {
 				self->client->accuracy_hits++;
@@ -702,13 +702,13 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeaponDef_t *def ) { // 
 	}
 
 	if ( traceEnt && traceEnt->takedamage ) {
-		G_Damage( traceEnt, ent, self, forward, tr.endpos, def->damage, 0, MOD_KI_ATTACK );
+		G_Damage( traceEnt, ent, self, forward, tr.endpos, wpCfg->damage, 0, MOD_KI_ATTACK );
 		return;
 	}
 
 	// splash damage
-	if ( def->splashDamage > 0 && def->explosionRadius > 0 ) {
-		G_RadiusDamage( ent, tr.endpos, self, def->splashDamage, def->explosionRadius, 0, MOD_KI_ATTACK );
+	if ( wpCfg->splashDamage > 0 && wpCfg->explosionRadius > 0 ) {
+		G_RadiusDamage( ent, tr.endpos, self, wpCfg->splashDamage, wpCfg->explosionRadius, 0, MOD_KI_ATTACK );
 	}
 }
 
@@ -1204,26 +1204,26 @@ FireWeapon
 ===============
 */
 void FireWeapon( gentity_t *ent ) {
-	bfpWeaponDef_t	*def;
+	bfpWeaponCfgDef_t	*wpCfg;
 	int		i, shots;
 
 	if ( !ent || !ent->client ) {
 		return;
 	}
 
-	def = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, ent->s.weapon );
-	if ( !def ) {
-		def = BG_SetDefaultWeaponDef();
+	wpCfg = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, ent->s.weapon );
+	if ( !wpCfg ) {
+		wpCfg = BG_SetDefaultWeaponDef();
 	}
 	// BFP - Monster gamemode, player monster with g_monster 1 uses its own weapon
 	if ( ( ent->client->ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-		def = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultWeaponDef();
 	}
 
-	if ( !def ) {
+	if ( !wpCfg ) {
 		return;
 	}
-	shots = ( def->multishot > 0 ) ? def->multishot : 1;
+	shots = ( wpCfg->multishot > 0 ) ? wpCfg->multishot : 1;
 
 	// BFP - No quad powerup damage calculation
 #if 0
@@ -1236,8 +1236,8 @@ void FireWeapon( gentity_t *ent ) {
 	}
 
 	// track shots taken for accuracy tracking.  Grapple is not a weapon and gauntet is just not tracked
-	if ( ( def->attackType != ATK_BEAM && def->attackType != ATK_SBEAM && def->attackType != ATK_HITSCAN )
-	|| ( def->attackType == ATK_HITSCAN && def->railTrail ) ) {
+	if ( ( wpCfg->attackType != ATK_BEAM && wpCfg->attackType != ATK_SBEAM && wpCfg->attackType != ATK_HITSCAN )
+	|| ( wpCfg->attackType == ATK_HITSCAN && wpCfg->railTrail ) ) {
 		ent->client->accuracy_shots++;
 	}
 
@@ -1245,20 +1245,20 @@ void FireWeapon( gentity_t *ent ) {
 	AngleVectors (ent->client->ps.viewangles, forward, right, up);
 	CalcMuzzlePointOrigin ( ent, ent->client->oldOrigin, forward, right, up, muzzle );
 
-	switch ( def->attackType ) {
+	switch ( wpCfg->attackType ) {
 	case ATK_MISSILE:
 	case ATK_RDMISSILE:
 		for ( i = 0; i < shots; i++ ) {
-			G_BFPFireProjectileWeapon( ent, muzzle, forward, def );
+			G_BFPFireProjectileWeapon( ent, muzzle, forward, wpCfg );
 		}
 		break;
 	case ATK_BEAM:
 	case ATK_SBEAM:
 	case ATK_FORCEFIELD:
-		G_BFPFireProjectileWeapon( ent, muzzle, forward, def );
+		G_BFPFireProjectileWeapon( ent, muzzle, forward, wpCfg );
 		break;
 	case ATK_HITSCAN:
-		G_BFPFireHitscanWeapon( ent, def );
+		G_BFPFireHitscanWeapon( ent, wpCfg );
 		break;
 	default:
 		break;
