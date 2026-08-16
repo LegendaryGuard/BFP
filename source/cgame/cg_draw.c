@@ -2408,12 +2408,14 @@ CG_DrawReadyKiAttack
 static void CG_DrawReadyKiAttack( void ) { // BFP - Ready message in the bottom centerprint when charging attacks
 	const char	*s;
 	int			w;
+	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cg.predictedPlayerState.clientNum, cg.predictedPlayerState.weapon );
 
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
 	if ( cg_chargeupAlert.integer <= 0 ) { // if disabled, don't show it
 		return;
 	}
-	if ( cg.predictedPlayerState.eFlags & EF_READY_KI_ATTACK ) {
+	if ( wpCfg && cg.predictedPlayerState.generic1 >= wpCfg->minCharge 
+	&& wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
 		s = "Ready";
 	}
 	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;

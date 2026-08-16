@@ -37,9 +37,9 @@ void CG_AddFlashMissile( qboolean isMissile, qboolean isMissileMoving, qboolean 
 	float		missileRadiusChargeMult = 0, missileScaleFactorChargeMult = 0;
 	float		scale = 0;
 	int			minCharge = 0, totalCharge = 0;
-	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
-	minCharge = ( def && def->minCharge > 0 ) ? def->minCharge : 0;
+	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? wpCfg->minCharge : 0;
 	totalCharge = cent->currentState.generic1 - minCharge;
 
 	if ( !skinAtkCfg ) {
@@ -348,11 +348,11 @@ CG_BFPBeamTrail
 void CG_BFPBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - BFP Beam trail handling
 	vec3_t	origin, muzzleOrigin;
 	entityState_t	*es;
-	bfpWeaponDef_t	*def;
+	bfpWeaponCfgDef_t	*wpCfg;
 
 	es = &ent->currentState;
-	def = CG_GetWeaponDefForSlot( es->clientNum, es->weapon );
-	if ( def && ( def->attackType == ATK_MISSILE || def->attackType == ATK_RDMISSILE )
+	wpCfg = CG_GetWeaponDefForSlot( es->clientNum, es->weapon );
+	if ( wpCfg && ( wpCfg->attackType == ATK_MISSILE || wpCfg->attackType == ATK_RDMISSILE )
 	// BFP - Monster gamemode, avoid detaching the muzzle origin from its mouth
 	&& !( cgs.gametype == GT_MONSTER && cgs.monster > 0 
 		&& ( cg_entities[ es->clientNum ].currentState.eFlags & EF_MONSTER ) ) ) {
@@ -380,11 +380,11 @@ CG_BFPSpiralBeamTrail
 void CG_BFPSpiralBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - BFP Spiral beam trail handling
 	vec3_t	origin, muzzleOrigin;
 	entityState_t	*es;
-	bfpWeaponDef_t	*def;
+	bfpWeaponCfgDef_t	*wpCfg;
 
 	es = &ent->currentState;
-	def = CG_GetWeaponDefForSlot( es->clientNum, es->weapon );
-	if ( def && ( def->attackType == ATK_MISSILE || def->attackType == ATK_RDMISSILE ) ) {
+	wpCfg = CG_GetWeaponDefForSlot( es->clientNum, es->weapon );
+	if ( wpCfg && ( wpCfg->attackType == ATK_MISSILE || wpCfg->attackType == ATK_RDMISSILE ) ) {
 		VectorCopy( ent->pe.muzzleOrigin, muzzleOrigin );
 	} else {
 		VectorCopy( cg_entities[ es->clientNum ].pe.muzzleOrigin, muzzleOrigin );
@@ -560,10 +560,10 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin, bfpAttackSkinConfi
 	refEntity_t	beam;
 	vec3_t		forward;
 	vec3_t		muzzlePoint, endPoint;
-	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
-	float		range = def->range;
+	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	float		range = wpCfg->range;
 
-	if ( !def ) {
+	if ( !wpCfg ) {
 		range = 1;
 	}
 
@@ -634,14 +634,14 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin, bfpAttackSkinConfi
 CG_ChargingTorsoAnim
 =============
 */
-static qboolean CG_ChargingTorsoAnim( centity_t *cent, bfpWeaponDef_t *def ) { // BFP - To handle torso charging animation
+static qboolean CG_ChargingTorsoAnim( centity_t *cent, bfpWeaponCfgDef_t *wpCfg ) { // BFP - To handle torso charging animation
 	int	torsoAnim = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
 
-	if ( !def || def->chargeAutoFire ) {
+	if ( !wpCfg || wpCfg->chargeAutoFire ) {
 		return qfalse;
 	}
 
-	if ( def->noAttackAnim ) {
+	if ( wpCfg->noAttackAnim ) {
 		return ( torsoAnim == TORSO_ATTACK0_STRIKE
 			|| torsoAnim == TORSO_ATTACK1_STRIKE
 			|| torsoAnim == TORSO_ATTACK2_STRIKE
@@ -670,16 +670,16 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	weapon_t	weaponNum;
 	centity_t	*nonPredictedCent;
 	refEntity_t	tagEnt;
-	bfpWeaponDef_t			*def;
+	bfpWeaponCfgDef_t			*wpCfg;
 	bfpAttackSkinConfig_t	*skinAtkCfg;
 
 	weaponNum = cent->currentState.weapon;
 	skinAtkCfg = CG_GetAttackConfig( cent->currentState.clientNum, weaponNum );
-	def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	if ( !ps ) {
 		int			chargeId = cent->currentState.generic1 - 1;
-		qboolean	isCharging = CG_ChargingTorsoAnim( cent, def );
+		qboolean	isCharging = CG_ChargingTorsoAnim( cent, wpCfg );
 
 		// BFP - With constantFireAttack, don't play and start the sound looply
 		if ( !( cent->currentState.eFlags & EF_FIRING ) ) {
@@ -745,7 +745,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	if ( ( skinAtkCfg
 	&& ( ( skinAtkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) )
 		|| ( !skinAtkCfg->constantFireAttack && ( nonPredictedCent->currentState.eFlags & EF_FIRING ) && cg.time - cent->muzzleFlashTime <= MUZZLE_FLASH_TIME ) ) )
-	|| ( nonPredictedCent->currentState.eFlags & EF_READY_KI_ATTACK ) ) {
+	|| ( wpCfg && nonPredictedCent->currentState.generic1 >= wpCfg->minCharge && wpCfg->chargeAttack ) ) {
 		CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
 	}
 
@@ -1065,7 +1065,7 @@ Caused by an EV_FIRE_WEAPON event
 void CG_FireWeapon( centity_t *cent ) {
 	entityState_t *ent;
 	bfpAttackSkinConfig_t	*skinAtkCfg;
-	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	ent = &cent->currentState;
 	skinAtkCfg = CG_GetAttackConfig( ent->clientNum, ent->weapon );
@@ -1101,10 +1101,10 @@ void CG_FireWeapon( centity_t *cent ) {
 	}
 
 	// BFP - Forcefield with chargeAutoFire
-	if ( def && def->attackType == ATK_FORCEFIELD && def->chargeAutoFire ) {
+	if ( wpCfg && wpCfg->attackType == ATK_FORCEFIELD && wpCfg->chargeAutoFire ) {
 		cent->pe.chargeAutoFire = qtrue;
 	}
-	if ( def && def->attackType == ATK_FORCEFIELD && !def->chargeAutoFire && !cent->pe.chargeAutoFire
+	if ( wpCfg && wpCfg->attackType == ATK_FORCEFIELD && !wpCfg->chargeAutoFire && !cent->pe.chargeAutoFire
 	&& skinAtkCfg->noExplosion ) {
 		// BFP - Use that as blinding_flash weapon, no chargeAutoFire set
 		// this is when noExplosion is set as weapon config dictates

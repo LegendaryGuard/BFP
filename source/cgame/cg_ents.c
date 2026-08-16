@@ -379,7 +379,7 @@ static void CG_Missile( centity_t *cent ) {
 	entityState_t		*s1;
 //	int	col;
 	bfpAttackSkinConfig_t	*skinAtkCfg;
-	bfpWeaponDef_t			*def;
+	bfpWeaponCfgDef_t			*wpCfg;
 
 	s1 = &cent->currentState;
 	if ( s1->weapon >= BFP_NUM_WEAPONS ) {
@@ -459,14 +459,14 @@ static void CG_Missile( centity_t *cent ) {
 		ent.rotation = skinAtkCfg->missileRotation;
 	}
 
-	def = CG_GetWeaponDefForSlot( s1->clientNum, s1->weapon );
+	wpCfg = CG_GetWeaponDefForSlot( s1->clientNum, s1->weapon );
 
 	// BFP - missileModel and missileShader
 	if ( !skinAtkCfg->missileModel && skinAtkCfg->missileShader ) {
 		// BFP - missileRadius and missileRadiusChargeMult
 		float	radius;
 		float	missileRadius = skinAtkCfg->missileRadius, missileRadiusChargeMult = skinAtkCfg->missileRadiusChargeMult;
-		float	minCharge = ( def && def->minCharge > 0 ) ? (float)def->minCharge : 0;
+		float	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? (float)wpCfg->minCharge : 0;
 		float	totalCharge = (float)cent->currentState.generic1 - minCharge;
 		if ( totalCharge <= 0 ) {
 			totalCharge = 1;
@@ -520,7 +520,7 @@ static void CG_Missile( centity_t *cent ) {
 	if ( ent.reType == RT_MODEL ) {
 		float	scale;
 		float	missileScaleFactor = skinAtkCfg->missileScaleFactor, missileScaleFactorChargeMult = skinAtkCfg->missileScaleFactorChargeMult;
-		float	minCharge = ( def && def->minCharge > 0 ) ? (float)def->minCharge : 0;
+		float	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? (float)wpCfg->minCharge : 0;
 		float	totalCharge = (float)cent->currentState.generic1 - minCharge;
 		if ( totalCharge <= 0 ) {
 			totalCharge = 1;

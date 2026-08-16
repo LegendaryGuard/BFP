@@ -144,6 +144,7 @@ typedef struct {
 	int				kiTrailTime;	// BFP - Ki trail time
 	int				chargeSmokeTime;	// BFP - Charge smoke time
 	int				ultTierTransformTime;	// BFP - Ultimate tier transformation time
+	int				tierAuraTime;	// BFP - Tier aura time
 
 	vec3_t			muzzleOrigin;	// BFP - Muzzle origin
 
@@ -153,7 +154,6 @@ typedef struct {
 	qboolean		chargeAutoFire;
 
 	qboolean		constantFireAtkPlayed;	// BFP - To play constantFireAttack fire sound once
-
 	int				lastChargeVoiceLevel;	// BFP - To play charge voice in one charge count once
 } playerEntity_t;
 
@@ -759,6 +759,12 @@ typedef struct {
 	qboolean	blind;
 	int			blindStartTime;			// when the current blind effect started
 	int			blindLastAttackTime;	// last time the player was 'blind attacked'
+
+	// BFP - Ultimate tier unlocked timer
+	int			ultimateTierUnlockedTime;
+
+	// BFP - Ki charge state
+	qboolean	predictedKiCharging;
 
 	// development tool
 	refEntity_t		testModelEntity;
@@ -1389,7 +1395,7 @@ sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
 void CG_SetMonsterSkinConfig( void ); // BFP - Sets player monster skin config
 void CG_SetDefaultSkinConfig( bfpSkinConfig_t *config ); // BFP - Sets default skin config
 bfpAttackSkinConfig_t *CG_GetAttackConfig( int clientNum, int weaponNum ); // BFP - Get saved skin attack config
-bfpWeaponDef_t *CG_GetWeaponDefForSlot( int clientNum, int slot ); // BFP - Get weapon config from bfp_weapon*.cfg
+bfpWeaponCfgDef_t *CG_GetWeaponDefForSlot( int clientNum, int slot ); // BFP - Get weapon config from bfp_weapon*.cfg
 void CG_LoadSkinConfig( clientInfo_t *ci ); // BFP - Load skin config file (models/players/<model>/[skinName].cfg)
 
 //

@@ -15,7 +15,7 @@ void	trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void	trap_FS_FCloseFile( fileHandle_t f );
 
 typedef struct {
-	bfpWeaponDef_t	defs[MAX_BFP_WEAPON_DEFS];
+	bfpWeaponCfgDef_t	defs[MAX_BFP_WEAPON_DEFS];
 	int				numDefs;
 } bfpWeaponList_t;
 
@@ -44,10 +44,10 @@ BG_FindBFPWeaponDef
 Looks up a parsed attack definition by weaponNum. Returns NULL if not found
 (caller should fall back to safe defaults rather than crash)
 
-weaponNum -> bfpWeaponDef_t lookup
+weaponNum -> bfpWeaponCfgDef_t lookup
 ================
 */
-bfpWeaponDef_t *BG_FindBFPWeaponDef( int weaponNum ) {
+bfpWeaponCfgDef_t *BG_FindBFPWeaponDef( int weaponNum ) {
 	int	i;
 
 	for ( i = 0; i < bfpWeapons.numDefs; i++ ) {
@@ -66,61 +66,61 @@ BG_SetDefaultWeaponDef
 Sets default weapon properties. A regular missile attack type
 ================
 */
-bfpWeaponDef_t *BG_SetDefaultWeaponDef( void ) {
-	static bfpWeaponDef_t	def;
+bfpWeaponCfgDef_t *BG_SetDefaultWeaponDef( void ) {
+	static bfpWeaponCfgDef_t	wpCfg;
 
-	def.inuse = qtrue;
-	Q_strncpyz( def.attackName, "ki_blast", sizeof(def.attackName) );
-	def.weaponNum = 21;
-	def.attackType = ATK_MISSILE;
-	def.weaponTime = 1000;
-	def.randomWeaponTime = 0;
-	def.kiCostAsPct = qfalse;
-	def.kiPct = 0;
-	def.kiCost = 10;
-	def.chargeAttack = qfalse;
-	def.chargeAutoFire = qfalse;
-	def.minCharge = 0;
-	def.maxCharge = 0;
-	def.damage = 20;
-	def.splashDamage = 20;
-	def.chargeDamageMult = 0;
-	def.maxDamage = 0;
-	def.radius = 20;
-	def.explosionRadius = 125;
-	def.chargeRadiusMult = 0;
-	def.chargeExpRadiusMult = 0;
-	def.maxRadius = 0;
-	def.maxExpRadius = 0;
-	def.missileSpeed = 5000;
-	def.homing = 0;
-	def.homingRange = 0;
-	def.homingAcceleration = 0;
-	def.range = 0;
-	def.loopingAnim = qfalse;
-	def.noAttackAnim = qfalse;
-	def.alternatingXOffset = 0;
-	def.randYOffset = 0;
-	def.randXOffset = 0;
-	def.coneOfFireX = 0;
-	def.coneOfFireY = 0;
-	def.piercing = qfalse;
-	def.reflective = qfalse;
-	def.priority = 0;
-	def.blinding = qfalse;
-	def.extraKnockback = 0;
-	def.railTrail = qfalse;
-	def.movementPenalty = 0;
-	def.missileGravity = 0;
-	def.missileAcceleration = 0;
-	def.multishot = 0;
-	def.bounces = qfalse;
-	def.noZBounce = qfalse;
-	def.bounceFriction = 0;
-	def.missileDuration = 0;
-	def.explosionSpawn = 0;
+	wpCfg.inuse = qtrue;
+	Q_strncpyz( wpCfg.attackName, "ki_blast", sizeof(wpCfg.attackName) );
+	wpCfg.weaponNum = 21;
+	wpCfg.attackType = ATK_MISSILE;
+	wpCfg.weaponTime = 1000;
+	wpCfg.randomWeaponTime = 0;
+	wpCfg.kiCostAsPct = qfalse;
+	wpCfg.kiPct = 0;
+	wpCfg.kiCost = 10;
+	wpCfg.chargeAttack = qfalse;
+	wpCfg.chargeAutoFire = qfalse;
+	wpCfg.minCharge = 0;
+	wpCfg.maxCharge = 0;
+	wpCfg.damage = 20;
+	wpCfg.splashDamage = 20;
+	wpCfg.chargeDamageMult = 0;
+	wpCfg.maxDamage = 0;
+	wpCfg.radius = 20;
+	wpCfg.explosionRadius = 125;
+	wpCfg.chargeRadiusMult = 0;
+	wpCfg.chargeExpRadiusMult = 0;
+	wpCfg.maxRadius = 0;
+	wpCfg.maxExpRadius = 0;
+	wpCfg.missileSpeed = 5000;
+	wpCfg.homing = 0;
+	wpCfg.homingRange = 0;
+	wpCfg.homingAcceleration = 0;
+	wpCfg.range = 0;
+	wpCfg.loopingAnim = qfalse;
+	wpCfg.noAttackAnim = qfalse;
+	wpCfg.alternatingXOffset = 0;
+	wpCfg.randYOffset = 0;
+	wpCfg.randXOffset = 0;
+	wpCfg.coneOfFireX = 0;
+	wpCfg.coneOfFireY = 0;
+	wpCfg.piercing = qfalse;
+	wpCfg.reflective = qfalse;
+	wpCfg.priority = 0;
+	wpCfg.blinding = qfalse;
+	wpCfg.extraKnockback = 0;
+	wpCfg.railTrail = qfalse;
+	wpCfg.movementPenalty = 0;
+	wpCfg.missileGravity = 0;
+	wpCfg.missileAcceleration = 0;
+	wpCfg.multishot = 0;
+	wpCfg.bounces = qfalse;
+	wpCfg.noZBounce = qfalse;
+	wpCfg.bounceFriction = 0;
+	wpCfg.missileDuration = 0;
+	wpCfg.explosionSpawn = 0;
 
-	return &def;
+	return &wpCfg;
 }
 
 /*
@@ -130,61 +130,61 @@ BG_SetMonsterDefaultWeaponDef
 Sets default monster weapon properties. A sbeam attack type
 ================
 */
-bfpWeaponDef_t *BG_SetMonsterDefaultWeaponDef( void ) {
-	static bfpWeaponDef_t	def;
+bfpWeaponCfgDef_t *BG_SetMonsterDefaultWeaponDef( void ) {
+	static bfpWeaponCfgDef_t	wpCfg;
 
-	def.inuse = qtrue;
-	Q_strncpyz( def.attackName, "mouthbeam", sizeof(def.attackName) );
-	def.weaponNum = 29;
-	def.attackType = ATK_SBEAM;
-	def.weaponTime = 250;
-	def.randomWeaponTime = 0;
-	def.kiCostAsPct = qfalse;
-	def.kiPct = 0;
-	def.kiCost = 250;
-	def.chargeAttack = qfalse;
-	def.chargeAutoFire = qfalse;
-	def.minCharge = 0;
-	def.maxCharge = 0;
-	def.damage = 15;
-	def.splashDamage = 15;
-	def.chargeDamageMult = 0;
-	def.maxDamage = 15;
-	def.radius = 50;
-	def.explosionRadius = 200;
-	def.chargeRadiusMult = 0;
-	def.chargeExpRadiusMult = 0;
-	def.maxRadius = 0;
-	def.maxExpRadius = 0;
-	def.missileSpeed = 1000;
-	def.homing = 0;
-	def.homingRange = 0;
-	def.homingAcceleration = 0;
-	def.range = 0;
-	def.loopingAnim = qfalse;
-	def.noAttackAnim = qfalse;
-	def.alternatingXOffset = 0;
-	def.randYOffset = 0;
-	def.randXOffset = 0;
-	def.coneOfFireX = 0;
-	def.coneOfFireY = 0;
-	def.piercing = qfalse;
-	def.reflective = qfalse;
-	def.priority = 1;
-	def.blinding = qfalse;
-	def.extraKnockback = 0;
-	def.railTrail = qfalse;
-	def.movementPenalty = 0;
-	def.missileGravity = 0;
-	def.missileAcceleration = 0;
-	def.multishot = 0;
-	def.bounces = qfalse;
-	def.noZBounce = qfalse;
-	def.bounceFriction = 0;
-	def.missileDuration = 10000;
-	def.explosionSpawn = 0;
+	wpCfg.inuse = qtrue;
+	Q_strncpyz( wpCfg.attackName, "mouthbeam", sizeof(wpCfg.attackName) );
+	wpCfg.weaponNum = 29;
+	wpCfg.attackType = ATK_SBEAM;
+	wpCfg.weaponTime = 250;
+	wpCfg.randomWeaponTime = 0;
+	wpCfg.kiCostAsPct = qfalse;
+	wpCfg.kiPct = 0;
+	wpCfg.kiCost = 250;
+	wpCfg.chargeAttack = qfalse;
+	wpCfg.chargeAutoFire = qfalse;
+	wpCfg.minCharge = 0;
+	wpCfg.maxCharge = 0;
+	wpCfg.damage = 15;
+	wpCfg.splashDamage = 15;
+	wpCfg.chargeDamageMult = 0;
+	wpCfg.maxDamage = 15;
+	wpCfg.radius = 50;
+	wpCfg.explosionRadius = 200;
+	wpCfg.chargeRadiusMult = 0;
+	wpCfg.chargeExpRadiusMult = 0;
+	wpCfg.maxRadius = 0;
+	wpCfg.maxExpRadius = 0;
+	wpCfg.missileSpeed = 1000;
+	wpCfg.homing = 0;
+	wpCfg.homingRange = 0;
+	wpCfg.homingAcceleration = 0;
+	wpCfg.range = 0;
+	wpCfg.loopingAnim = qfalse;
+	wpCfg.noAttackAnim = qfalse;
+	wpCfg.alternatingXOffset = 0;
+	wpCfg.randYOffset = 0;
+	wpCfg.randXOffset = 0;
+	wpCfg.coneOfFireX = 0;
+	wpCfg.coneOfFireY = 0;
+	wpCfg.piercing = qfalse;
+	wpCfg.reflective = qfalse;
+	wpCfg.priority = 1;
+	wpCfg.blinding = qfalse;
+	wpCfg.extraKnockback = 0;
+	wpCfg.railTrail = qfalse;
+	wpCfg.movementPenalty = 0;
+	wpCfg.missileGravity = 0;
+	wpCfg.missileAcceleration = 0;
+	wpCfg.multishot = 0;
+	wpCfg.bounces = qfalse;
+	wpCfg.noZBounce = qfalse;
+	wpCfg.bounceFriction = 0;
+	wpCfg.missileDuration = 10000;
+	wpCfg.explosionSpawn = 0;
 
-	return &def;
+	return &wpCfg;
 }
 
 /*
@@ -243,7 +243,7 @@ chain bfp_weapon.cfg then bfp_weapon2.cfg into the same table)
 */
 static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 	char			*ptr;
-	bfpWeaponDef_t	*cur;
+	bfpWeaponCfgDef_t	*cur;
 
 	cur = NULL;
 	ptr = buf;
@@ -653,7 +653,7 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 
 			if ( value[0] && bfpWeapons.numDefs < MAX_BFP_WEAPON_DEFS ) {
 				cur = &bfpWeapons.defs[bfpWeapons.numDefs];
-				memset( cur, 0, sizeof( bfpWeaponDef_t ) );
+				memset( cur, 0, sizeof( bfpWeaponCfgDef_t ) );
 				cur->inuse = qtrue;
 				cur->attackType = ATK_MISSILE; // default attackType
 				Q_strncpyz( cur->attackName, value, sizeof( cur->attackName ) );
@@ -725,7 +725,7 @@ void BG_LoadBFPWeaponConfig( void ) {
 {
 	int	i;
 	for ( i = 0; i < bfpWeapons.numDefs; i++ ) {
-		const bfpWeaponDef_t *d = &bfpWeapons.defs[i];
+		const bfpWeaponCfgDef_t *d = &bfpWeapons.defs[i];
 		Com_Printf( "^6[%d] ^3%s ^6(weaponNum=^3%d^6)^7\n", i, d->attackName, d->weaponNum );
 		Com_Printf( "  ^2attackType: ^3%d ^7(%s)\n", d->attackType,
 			( d->attackType == ATK_MISSILE ) ? "missile" :
@@ -906,7 +906,7 @@ int BG_GetWeaponNumForSlot( const char *modelName, int attackSlot ) {
 Per-client attack slot -> weaponNum cache
 =========================================
 */
-static bfpWeaponDef_t *bfpClientAttackWeaponDefs[MAX_CLIENTS][BFP_NUM_WEAPONS];
+static bfpWeaponCfgDef_t *bfpClientAttackWeaponDefs[MAX_CLIENTS][BFP_NUM_WEAPONS];
 static qboolean bfpClientAttackWeaponDefsSet[MAX_CLIENTS];
 
 /*
@@ -940,7 +940,7 @@ Reads back a value cached by BG_SetClientAttackWeaponNums: which weaponNum
 this client's current model has assigned to the given attack slot
 ==================
 */
-bfpWeaponDef_t *BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot ) {
+bfpWeaponCfgDef_t *BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot ) {
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
 		return NULL;
 	}
@@ -1121,41 +1121,41 @@ void BG_LoadBFPAttacksetsConfig( void ) {
 	// to debug with weapon defs
 #if 0
 			if ( wn != 0 ) {
-				bfpWeaponDef_t	*def = BG_FindBFPWeaponDef( wn );
-				if ( def ) {
-					Com_Printf( " ^6(^3%s^6)", def->attackName );
+				bfpWeaponCfgDef_t	*wpCfg = BG_FindBFPWeaponDef( wn );
+				if ( wpCfg ) {
+					Com_Printf( " ^6(^3%s^6)", wpCfg->attackName );
 					// print all weapon properties
-					Com_Printf( "\n      ^2attackType: ^3%d ^7%s", def->attackType,
-						( def->attackType == ATK_MISSILE ) ? "missile" :
-						( def->attackType == ATK_RDMISSILE ) ? "rdmissile" :
-						( def->attackType == ATK_BEAM ) ? "beam" :
-						( def->attackType == ATK_SBEAM ) ? "sbeam" :
-						( def->attackType == ATK_HITSCAN ) ? "hitscan" :
-						( def->attackType == ATK_FORCEFIELD ) ? "forcefield" : "UNKNOWN" );
-					Com_Printf( "\n      ^2weaponTime: ^3%d  ^2randomWeaponTime: ^3%d", def->weaponTime, def->randomWeaponTime );
-					Com_Printf( "\n      ^2kiCostAsPct: ^3%d  ^2kiPct: ^3%f  ^2kiCost: ^3%d", def->kiCostAsPct, def->kiPct, def->kiCost );
+					Com_Printf( "\n      ^2attackType: ^3%d ^7%s", wpCfg->attackType,
+						( wpCfg->attackType == ATK_MISSILE ) ? "missile" :
+						( wpCfg->attackType == ATK_RDMISSILE ) ? "rdmissile" :
+						( wpCfg->attackType == ATK_BEAM ) ? "beam" :
+						( wpCfg->attackType == ATK_SBEAM ) ? "sbeam" :
+						( wpCfg->attackType == ATK_HITSCAN ) ? "hitscan" :
+						( wpCfg->attackType == ATK_FORCEFIELD ) ? "forcefield" : "UNKNOWN" );
+					Com_Printf( "\n      ^2weaponTime: ^3%d  ^2randomWeaponTime: ^3%d", wpCfg->weaponTime, wpCfg->randomWeaponTime );
+					Com_Printf( "\n      ^2kiCostAsPct: ^3%d  ^2kiPct: ^3%f  ^2kiCost: ^3%d", wpCfg->kiCostAsPct, wpCfg->kiPct, wpCfg->kiCost );
 					Com_Printf( "\n      ^2chargeAttack: ^3%d  ^2chargeAutoFire: ^3%d  ^2minCharge: ^3%d  ^2maxCharge: ^3%d",
-						def->chargeAttack, def->chargeAutoFire, def->minCharge, def->maxCharge );
+						wpCfg->chargeAttack, wpCfg->chargeAutoFire, wpCfg->minCharge, wpCfg->maxCharge );
 					Com_Printf( "\n      ^2damage: ^3%d  ^2splashDamage: ^3%d  ^2chargeDamageMult: ^3%d  ^2maxDamage: ^3%d",
-						def->damage, def->splashDamage, def->chargeDamageMult, def->maxDamage );
+						wpCfg->damage, wpCfg->splashDamage, wpCfg->chargeDamageMult, wpCfg->maxDamage );
 					Com_Printf( "\n      ^2radius: ^3%d  ^2explosionRadius: ^3%d  ^2chargeRadiusMult: ^3%d  ^2chargeExpRadiusMult: ^3%d",
-						def->radius, def->explosionRadius, def->chargeRadiusMult, def->chargeExpRadiusMult );
-					Com_Printf( "\n      ^2maxRadius: ^3%d  ^2maxExpRadius: ^3%d", def->maxRadius, def->maxExpRadius );
+						wpCfg->radius, wpCfg->explosionRadius, wpCfg->chargeRadiusMult, wpCfg->chargeExpRadiusMult );
+					Com_Printf( "\n      ^2maxRadius: ^3%d  ^2maxExpRadius: ^3%d", wpCfg->maxRadius, wpCfg->maxExpRadius );
 					Com_Printf( "\n      ^2missileSpeed: ^3%d  ^2homing: ^3%f  ^2homingRange: ^3%f  ^2homingAcceleration: ^3%f",
-						def->missileSpeed, def->homing, def->homingRange, def->homingAcceleration );
-					Com_Printf( "\n      ^2range: ^3%f", def->range );
-					Com_Printf( "\n      ^2loopingAnim: ^3%d  ^2noAttackAnim: ^3%d", def->loopingAnim, def->noAttackAnim );
+						wpCfg->missileSpeed, wpCfg->homing, wpCfg->homingRange, wpCfg->homingAcceleration );
+					Com_Printf( "\n      ^2range: ^3%f", wpCfg->range );
+					Com_Printf( "\n      ^2loopingAnim: ^3%d  ^2noAttackAnim: ^3%d", wpCfg->loopingAnim, wpCfg->noAttackAnim );
 					Com_Printf( "\n      ^2alternatingXOffset: ^3%f  ^2randYOffset: ^3%f  ^2randXOffset: ^3%f",
-						def->alternatingXOffset, def->randYOffset, def->randXOffset );
-					Com_Printf( "\n      ^2coneOfFireX: ^3%d  ^2coneOfFireY: ^3%d", def->coneOfFireX, def->coneOfFireY );
+						wpCfg->alternatingXOffset, wpCfg->randYOffset, wpCfg->randXOffset );
+					Com_Printf( "\n      ^2coneOfFireX: ^3%d  ^2coneOfFireY: ^3%d", wpCfg->coneOfFireX, wpCfg->coneOfFireY );
 					Com_Printf( "\n      ^2piercing: ^3%d  ^2reflective: ^3%d  ^2priority: ^3%d  ^2blinding: ^3%d",
-						def->piercing, def->reflective, def->priority, def->blinding );
+						wpCfg->piercing, wpCfg->reflective, wpCfg->priority, wpCfg->blinding );
 					Com_Printf( "\n      ^2missileGravity: ^3%d  ^2missileAcceleration: ^3%f  ^2missileDuration: ^3%d",
-						def->missileGravity, def->missileAcceleration, def->missileDuration );
+						wpCfg->missileGravity, wpCfg->missileAcceleration, wpCfg->missileDuration );
 					Com_Printf( "\n      ^2multishot: ^3%d  ^2bounces: ^3%d  ^2bounceFriction: ^3%f  ^2noZBounce: ^3%d",
-						def->multishot, def->bounces, def->bounceFriction, def->noZBounce );
+						wpCfg->multishot, wpCfg->bounces, wpCfg->bounceFriction, wpCfg->noZBounce );
 					Com_Printf( "\n      ^2extraKnockback: ^3%d  ^2railTrail: ^3%d  ^2movementPenalty: ^3%d  ^2explosionSpawn: ^3%d",
-						def->extraKnockback, def->railTrail, def->movementPenalty, def->explosionSpawn );
+						wpCfg->extraKnockback, wpCfg->railTrail, wpCfg->movementPenalty, wpCfg->explosionSpawn );
 				} else {
 					Com_Printf( " ^1(WARNING: weaponNum %d not found in weapon definitions!)", wn );
 				}

@@ -1910,7 +1910,7 @@ static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane ) {
 
 	// BFP - Dash smoke and bubble particles when using ki boost on the ground or above the water
 	contents = CG_PointContents( trace.endpos, -1 );
-	if ( ( cent->currentState.eFlags & EF_AURA ) || ( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
+	if ( ( cent->currentState.eFlags & EF_AURA ) || cg.time < cent->pe.tierAuraTime ) {
 		if ( ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN
 		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_BACK
 		|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
@@ -2161,7 +2161,8 @@ aura color is determined by the tier.
 - Ultimate Tier:	1 mil PL				Yellow aura
 ==========================
 */
-static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
+static qhandle_t CG_AuraPowerlevelSetShaderColor( centity_t *cent ) {
+	entityState_t	*state = &cent->currentState;
 	qhandle_t	auraShader = cgs.media.auraRedTinyShader;
 	int			powerlevel = state->frame;
 
@@ -2176,7 +2177,7 @@ static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 	&& cg_particleAura.integer <= 0 ) {
 		auraShader = cgs.media.auraRedChargeShader;
 		if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-		&& !( state->eFlags & EF_AURA_TIER_UP ) ) {
+		&& !( cg.time < cent->pe.tierAuraTime ) ) {
 			auraShader = cgs.media.auraRedUseShader;
 		}
 	}
@@ -2191,7 +2192,7 @@ static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 		&& cg_particleAura.integer <= 0 ) {
 			auraShader = cgs.media.auraBlueChargeShader;
 			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-			&& !( state->eFlags & EF_AURA_TIER_UP ) ) {
+			&& !( cg.time < cent->pe.tierAuraTime ) ) {
 				auraShader = cgs.media.auraBlueUseShader;
 			}
 		}
@@ -2207,7 +2208,7 @@ static qhandle_t CG_AuraPowerlevelSetShaderColor( entityState_t *state ) {
 		&& cg_particleAura.integer <= 0 ) {
 			auraShader = cgs.media.auraYellowChargeShader;
 			if ( ( state->legsAnim & ~ANIM_TOGGLEBIT ) != LEGS_CHARGE
-			&& !( state->eFlags & EF_AURA_TIER_UP ) ) {
+			&& !( cg.time < cent->pe.tierAuraTime ) ) {
 				auraShader = cgs.media.auraYellowUseShader;
 			}
 		}
@@ -2269,7 +2270,7 @@ static void CG_DynamicAuraLight( centity_t *cent, int clientNum, float r, float 
 		if ( clientNum == cg.snap->ps.clientNum && cg_smallOwnAura.integer > 0 ) {
 			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize, r, g, b );
 			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize, r, g, b );
-			if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) {
+			if ( !cg.predictedKiCharging ) {
 				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
 				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
 				trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
@@ -2300,7 +2301,7 @@ static void CG_DynamicAuraLight( centity_t *cent, int clientNum, float r, float 
 			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&firstRndDlight), r, g, b );
 			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
 			trap_R_AddLightToScene( cent->lerpOrigin, dLightSize + (rand()&rndDLight), r, g, b );
-			if ( !( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE ) ) {
+			if ( !cg.predictedKiCharging ) {
 				dLightSize = 100;
 				// BFP - Monster gamemode, player monster dynamic light size
 				if ( cent->currentState.eFlags & EF_MONSTER ) {
@@ -2340,6 +2341,7 @@ Also called by CG_Missile for quad rockets, but nobody can tell...
 void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int team ) {
 	// BFP - Powerlevel
 	int powerlevel = state->frame;
+	centity_t	*cent = &cg_entities[ state->clientNum ];
 
 	if ( state->clientNum == cg.snap->ps.clientNum ) { // fixes a weird bug when trying to see the powerlevel of itself
 		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
@@ -2365,11 +2367,11 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 			trap_R_AddRefEntityToScene( &ent );
 		}
 	}
-	ent.customShader = CG_AuraPowerlevelSetShaderColor( state );
+	ent.customShader = CG_AuraPowerlevelSetShaderColor( cent );
 
-	if ( ( state->eFlags & EF_AURA ) || ( state->eFlags & EF_AURA_TIER_UP ) ) {
+	if ( ( state->eFlags & EF_AURA ) || cg.time < cent->pe.tierAuraTime ) {
 		// BFP - Transformation aura
-		if ( ( state->eFlags & EF_AURA_TIER_UP ) && cg_transformationAura.integer <= 0 ) {
+		if ( cg.time < cent->pe.tierAuraTime && cg_transformationAura.integer <= 0 ) {
 			return;
 		}
 		// BFP - If the player is using lightweight auras or their own small aura
@@ -2382,7 +2384,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 		}
 
 		// BFP - Resize shader aura when tier is up
-		if ( state->eFlags & EF_AURA_TIER_UP ) {
+		if ( cg.time < cent->pe.tierAuraTime ) {
 			CG_ModelSize( &ent, 1.4f );
 		}
 
@@ -2396,7 +2398,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t ent, entityState_t *state, int tea
 				trap_R_AddRefEntityToScene( &ent );
 				return;
 			}
-			ent.customShader = CG_AuraPowerlevelSetShaderColor( state );
+			ent.customShader = CG_AuraPowerlevelSetShaderColor( cent );
 			trap_R_AddRefEntityToScene( &ent );
 		}
 	}
@@ -2466,7 +2468,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 	VectorCopy( cent->lerpOrigin, kiTrailOrigin );
 	kiTrailOrigin[2] += KI_TRAIL_ZPOS;
 
-	if ( ( cent->currentState.eFlags & EF_AURA ) || ( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
+	if ( ( cent->currentState.eFlags & EF_AURA ) || cg.time < cent->pe.tierAuraTime ) {
 		// trace for bubble particles only when moving in the water and charging
 		int destContentType = CG_PointContents( legs.origin, -1 );
 
@@ -2543,7 +2545,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		VectorCopy( legs.lightingOrigin, aura2.lightingOrigin );
 
 		// apply light blinking
-		aura.customShader = aura2.customShader = CG_AuraPowerlevelSetShaderColor( &cent->currentState );
+		aura.customShader = aura2.customShader = CG_AuraPowerlevelSetShaderColor( cent );
 		// blue
 		if ( powerlevel < 100 
 		|| ( cgs.gametype >= GT_TEAM && ci->team == TEAM_BLUE ) ) {
@@ -2565,7 +2567,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		VectorCopy( aura2.origin, aura2.oldorigin );	// don't positionally lerp at all
 
 		// ki boost and ki charge sounds
-		if ( !( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
+		if ( !( cg.time < cent->pe.tierAuraTime ) ) {
 			if ( !( cent->currentState.eFlags & EF_KI_BOOST )
 			&& ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				trap_S_AddLoopingSound( cent->currentState.clientNum, cent->lerpOrigin, 
@@ -2577,7 +2579,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		}
 
 		// aura tier
-		if ( cent->currentState.eFlags & EF_AURA_TIER_UP ) {
+		if ( cg.time < cent->pe.tierAuraTime ) {
 			// resize the aura
 			CG_ModelSize( &aura, 1.3f );
 			CG_ModelSize( &aura2, 1.5f );
@@ -2622,7 +2624,7 @@ static void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int rende
 		// BFP - Small own aura only can be shown to the one who enables it for themself, not everyone
 		if ( clientNum != cg.snap->ps.clientNum || cg_smallOwnAura.integer <= 0 ) {
 			// BFP - Transformation aura
-			if ( ( cent->currentState.eFlags & EF_AURA_TIER_UP ) && cg_transformationAura.integer <= 0 ) {
+			if ( cg.time < cent->pe.tierAuraTime && cg_transformationAura.integer <= 0 ) {
 				return;
 			}
 
@@ -3059,11 +3061,11 @@ void CG_Player( centity_t *cent ) {
 	}
 
 	// BFP - Make a model changing effect when aura tier is up
-	if ( ( cent->currentState.eFlags & EF_AURA_TIER_UP )
+	if ( cg.time < cent->pe.tierAuraTime
 	&& cg.time > cent->pe.ultTierTransformTime ) {
 		cent->pe.ultTierTransformTime = cg.time + 1100;
 	}
-	if ( !( cent->currentState.eFlags & EF_AURA_TIER_UP ) ) {
+	if ( !( cg.time < cent->pe.tierAuraTime ) ) {
 		cent->pe.ultTierTransformTime = 0;
 	}
 	

@@ -901,42 +901,42 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 		qhandle_t	shellModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
 		localEntity_t *leSphere = NULL, *leRing = NULL, *leShell = NULL;
 		float		scale = 1;
-		bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+		bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 #if 0
-		Com_Printf( " ^6(^3%s^6)", def->attackName );
+		Com_Printf( " ^6(^3%s^6)", wpCfg->attackName );
 		// print all weapon properties
-		Com_Printf( "\n      ^2attackType: ^3%d ^7%s", def->attackType,
-			( def->attackType == ATK_MISSILE ) ? "missile" :
-			( def->attackType == ATK_RDMISSILE ) ? "rdmissile" :
-			( def->attackType == ATK_BEAM ) ? "beam" :
-			( def->attackType == ATK_SBEAM ) ? "sbeam" :
-			( def->attackType == ATK_HITSCAN ) ? "hitscan" :
-			( def->attackType == ATK_FORCEFIELD ) ? "forcefield" : "UNKNOWN" );
-		Com_Printf( "\n      ^2weaponTime: ^3%d  ^2randomWeaponTime: ^3%d", def->weaponTime, def->randomWeaponTime );
-		Com_Printf( "\n      ^2kiCostAsPct: ^3%d  ^2kiPct: ^3%f  ^2kiCost: ^3%d", def->kiCostAsPct, def->kiPct, def->kiCost );
+		Com_Printf( "\n      ^2attackType: ^3%d ^7%s", wpCfg->attackType,
+			( wpCfg->attackType == ATK_MISSILE ) ? "missile" :
+			( wpCfg->attackType == ATK_RDMISSILE ) ? "rdmissile" :
+			( wpCfg->attackType == ATK_BEAM ) ? "beam" :
+			( wpCfg->attackType == ATK_SBEAM ) ? "sbeam" :
+			( wpCfg->attackType == ATK_HITSCAN ) ? "hitscan" :
+			( wpCfg->attackType == ATK_FORCEFIELD ) ? "forcefield" : "UNKNOWN" );
+		Com_Printf( "\n      ^2weaponTime: ^3%d  ^2randomWeaponTime: ^3%d", wpCfg->weaponTime, wpCfg->randomWeaponTime );
+		Com_Printf( "\n      ^2kiCostAsPct: ^3%d  ^2kiPct: ^3%f  ^2kiCost: ^3%d", wpCfg->kiCostAsPct, wpCfg->kiPct, wpCfg->kiCost );
 		Com_Printf( "\n      ^2chargeAttack: ^3%d  ^2chargeAutoFire: ^3%d  ^2minCharge: ^3%d  ^2maxCharge: ^3%d",
-			def->chargeAttack, def->chargeAutoFire, def->minCharge, def->maxCharge );
+			wpCfg->chargeAttack, wpCfg->chargeAutoFire, wpCfg->minCharge, wpCfg->maxCharge );
 		Com_Printf( "\n      ^2damage: ^3%d  ^2splashDamage: ^3%d  ^2chargeDamageMult: ^3%d  ^2maxDamage: ^3%d",
-			def->damage, def->splashDamage, def->chargeDamageMult, def->maxDamage );
+			wpCfg->damage, wpCfg->splashDamage, wpCfg->chargeDamageMult, wpCfg->maxDamage );
 		Com_Printf( "\n      ^2radius: ^3%d  ^2explosionRadius: ^3%d  ^2chargeRadiusMult: ^3%d  ^2chargeExpRadiusMult: ^3%d",
-			def->radius, def->explosionRadius, def->chargeRadiusMult, def->chargeExpRadiusMult );
-		Com_Printf( "\n      ^2maxRadius: ^3%d  ^2maxExpRadius: ^3%d", def->maxRadius, def->maxExpRadius );
+			wpCfg->radius, wpCfg->explosionRadius, wpCfg->chargeRadiusMult, wpCfg->chargeExpRadiusMult );
+		Com_Printf( "\n      ^2maxRadius: ^3%d  ^2maxExpRadius: ^3%d", wpCfg->maxRadius, wpCfg->maxExpRadius );
 		Com_Printf( "\n      ^2missileSpeed: ^3%d  ^2homing: ^3%f  ^2homingRange: ^3%f  ^2homingAcceleration: ^3%f",
-			def->missileSpeed, def->homing, def->homingRange, def->homingAcceleration );
-		Com_Printf( "\n      ^2range: ^3%f", def->range );
-		Com_Printf( "\n      ^2loopingAnim: ^3%d  ^2noAttackAnim: ^3%d", def->loopingAnim, def->noAttackAnim );
+			wpCfg->missileSpeed, wpCfg->homing, wpCfg->homingRange, wpCfg->homingAcceleration );
+		Com_Printf( "\n      ^2range: ^3%f", wpCfg->range );
+		Com_Printf( "\n      ^2loopingAnim: ^3%d  ^2noAttackAnim: ^3%d", wpCfg->loopingAnim, wpCfg->noAttackAnim );
 		Com_Printf( "\n      ^2alternatingXOffset: ^3%f  ^2randYOffset: ^3%f  ^2randXOffset: ^3%f",
-			def->alternatingXOffset, def->randYOffset, def->randXOffset );
-		Com_Printf( "\n      ^2coneOfFireX: ^3%d  ^2coneOfFireY: ^3%d", def->coneOfFireX, def->coneOfFireY );
+			wpCfg->alternatingXOffset, wpCfg->randYOffset, wpCfg->randXOffset );
+		Com_Printf( "\n      ^2coneOfFireX: ^3%d  ^2coneOfFireY: ^3%d", wpCfg->coneOfFireX, wpCfg->coneOfFireY );
 		Com_Printf( "\n      ^2piercing: ^3%d  ^2reflective: ^3%d  ^2priority: ^3%d  ^2blinding: ^3%d",
-			def->piercing, def->reflective, def->priority, def->blinding );
+			wpCfg->piercing, wpCfg->reflective, wpCfg->priority, wpCfg->blinding );
 		Com_Printf( "\n      ^2missileGravity: ^3%d  ^2missileAcceleration: ^3%f  ^2missileDuration: ^3%d",
-			def->missileGravity, def->missileAcceleration, def->missileDuration );
+			wpCfg->missileGravity, wpCfg->missileAcceleration, wpCfg->missileDuration );
 		Com_Printf( "\n      ^2multishot: ^3%d  ^2bounces: ^3%d  ^2bounceFriction: ^3%f  ^2noZBounce: ^3%d",
-			def->multishot, def->bounces, def->bounceFriction, def->noZBounce );
+			wpCfg->multishot, wpCfg->bounces, wpCfg->bounceFriction, wpCfg->noZBounce );
 		Com_Printf( "\n      ^2extraKnockback: ^3%d  ^2railTrail: ^3%d  ^2movementPenalty: ^3%d  ^2explosionSpawn: ^3%d\n",
-			def->extraKnockback, def->railTrail, def->movementPenalty, def->explosionSpawn );
+			wpCfg->extraKnockback, wpCfg->railTrail, wpCfg->movementPenalty, wpCfg->explosionSpawn );
 #endif
 
 		if ( explosionModel ) {
@@ -952,7 +952,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 
 		{
 			const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
-			int		minCharge = ( def && def->minCharge >= 0 ) ? def->minCharge : 0;
+			int		minCharge = ( wpCfg && wpCfg->minCharge >= 0 ) ? wpCfg->minCharge : 0;
 			int		numPointsChargedOverMin = ( cent->currentState.generic1 > 0 ) ? ( cent->currentState.generic1 - minCharge ) : 0; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
 			float	explosionScaleFactor = skinAtkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = skinAtkCfg->explosionScaleFactorChargeMult;
 			float	explosionRingScaleFactor = skinAtkCfg->explosionRingScaleFactor, explosionRingScaleFactorChargeMult = skinAtkCfg->explosionRingScaleFactorChargeMult;
@@ -971,12 +971,12 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 				}
 
 				VectorCopy( skinAtkCfg->missileDlightColor, missileDlightColor );
-				if ( def && def->attackType == ATK_HITSCAN  
+				if ( wpCfg && wpCfg->attackType == ATK_HITSCAN  
 				&& missileDlightColor[0] <= 0
 				&& missileDlightColor[1] <= 0
 				&& missileDlightColor[2] <= 0 ) {
 					missileDlightColor[0] = missileDlightColor[2] = 1;
-					if ( def->railTrail ) {
+					if ( wpCfg->railTrail ) {
 						missileDlightColor[0] = 0.75;
 						missileDlightColor[1] = missileDlightColor[2] = 0;
 					}
@@ -1021,7 +1021,7 @@ CG_ForceFieldEffect
 =================
 */
 void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Forcefield effect
-	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	if ( cent->currentState.eFlags & EF_FIRING ) {
 		if ( !cent->pe.forceFieldStartTime ) {
@@ -1031,7 +1031,7 @@ void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t 
 		cent->pe.forceFieldStartTime = 0;
 	}
 
-	if ( def && def->attackType != ATK_FORCEFIELD && !def->chargeAutoFire ) {
+	if ( wpCfg && wpCfg->attackType != ATK_FORCEFIELD && !wpCfg->chargeAutoFire ) {
 		cent->pe.forceFieldStartTime = 0;
 		return;
 	}

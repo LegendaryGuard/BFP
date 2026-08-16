@@ -423,7 +423,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 	client->timeResidual += msec;
 
 	// BFP - Charge ki
-	if ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA )
+	if ( client->kiCharging && ( client->ps.eFlags & EF_AURA )
 	&& client->ps.stats[STAT_HITSTUN_TIME] <= 0
 	&& client->ps.stats[STAT_KI] < client->ps.stats[STAT_MAX_KI] ) {
 		float kiChargeTotal = ( g_kiCharge.value * 0.01 ) + g_kiChargePct.value * ( client->ps.stats[STAT_MAX_KI] * 0.0001 );
@@ -475,7 +475,7 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		// BFP - Decrease ki when flying
 		if ( ( client->ps.eFlags & EF_FLIGHT )
 		&& client->ps.stats[STAT_KI] > 0
-		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) { // don't decrease when charging
+		&& !client->kiCharging ) { // don't decrease when charging
 			if ( g_flightCostPct.value > 0 && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) { // reduce a bit if the percentage cost is more than 0 and has less powerlevel
 				--flightCostTotal;
 			}
@@ -485,8 +485,8 @@ void ClientTimerActions( gentity_t *ent, int msec ) {
 		// BFP - Regenerate ki
 		if ( ( ent->flags & FL_HITSTUN_KI_EMPTY )
 		|| ( !( client->pers.cmd.buttons & BUTTON_KI_USE ) && !( client->ps.eFlags & EF_KI_BOOST )
-		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) ) // don't increase when charging
-		&& !( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) // don't increase when trying to charge when stunned
+		&& !( client->kiCharging && ( client->ps.eFlags & EF_AURA ) ) // don't increase when charging
+		&& !( client->kiCharging && ( client->ps.eFlags & EF_AURA ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) // don't increase when trying to charge when stunned
 		&& !( ( client->pers.cmd.buttons & BUTTON_ATTACK ) && client->ps.stats[STAT_HITSTUN_TIME] > 0 ) ) ) { // don't increase when trying to attack when stunned
 			client->ps.stats[STAT_KI] += g_kiRegen.value + ( g_kiRegenPct.value * client->ps.stats[STAT_MAX_KI] * 0.01 );
 			if ( ent->flags & FL_HITSTUN_KI_EMPTY ) {
@@ -712,7 +712,7 @@ static void BlockHandling( gclient_t *client, usercmd_t *ucmd ) { // BFP - Block
 	// if the block length duration hasn't been expired yet and 
 	// pressing ki charge (if the aura is lighting) or attack buttons, then stop blocking and start the delay
 	if ( ( client->ps.pm_flags & PMF_BLOCK ) 
-	&& ( ( client->ps.pm_flags & PMF_KI_CHARGE )
+	&& ( client->kiCharging
 	|| ( ucmd->buttons & BUTTON_KI_CHARGE )
 	|| ( ucmd->buttons & BUTTON_ATTACK )
 	|| ( ucmd->buttons & BUTTON_MELEE ) ) ) {
@@ -792,7 +792,7 @@ static void MeleeHandling( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 	}
 
 	if ( !( ucmd->buttons & BUTTON_TALK ) && ( ucmd->buttons & BUTTON_MELEE )
-	&& !( client->ps.pm_flags & PMF_KI_CHARGE )
+	&& !client->kiCharging
 	&& client->ps.weaponTime <= 0 ) {
 		pm->meleeHit = CheckMeleeAttack( ent );
 	}
@@ -868,12 +868,12 @@ static void ZanzokenHandling( gentity_t *ent, usercmd_t *ucmd ) { // BFP - Handl
 		return;
 	}
 
-	if ( client->ps.pm_flags & PMF_ULTIMATE_TIER ) {
+	if ( level.time < client->ultimateTierUnlockedTime ) {
 		return;
 	}
 
 	// zanzoken cannot be used with ki charging status
-	if ( client->ps.pm_flags & PMF_KI_CHARGE ) {
+	if ( client->kiCharging ) {
 		return;
 	}
 
@@ -973,7 +973,6 @@ static void Client_KiConsumption( gclient_t *client, int addTime, int kiConsume 
 		client->ps.weaponTime += addTime;
 	} else { // not enough ki
 		client->ps.eFlags &= ~EF_FIRING;
-		client->ps.eFlags &= ~EF_READY_KI_ATTACK;
 	}
 }
 
@@ -983,10 +982,10 @@ static void Client_KiConsumption( gclient_t *client, int addTime, int kiConsume 
 Client_KiCost
 ===========
 */
-static float Client_KiCost( gclient_t *client, bfpWeaponDef_t *def ) { // BFP - kiCost, kiCostAsPct and kiPct
-	float	kiCost = ( def->kiCost > 0 ) ? def->kiCost : 0;
-	float	kiPct = ( def->kiPct > 1 ) ? 1 : def->kiPct;
-	if ( def->kiCostAsPct && kiPct > 0 ) {
+static float Client_KiCost( gclient_t *client, bfpWeaponCfgDef_t *wpCfg ) { // BFP - kiCost, kiCostAsPct and kiPct
+	float	kiCost = ( wpCfg->kiCost > 0 ) ? wpCfg->kiCost : 0;
+	float	kiPct = ( wpCfg->kiPct > 1 ) ? 1 : wpCfg->kiPct;
+	if ( wpCfg->kiCostAsPct && kiPct > 0 ) {
 		kiCost = client->ps.stats[STAT_MAX_KI] * kiPct;
 	}
 	return kiCost;
@@ -998,22 +997,19 @@ static float Client_KiCost( gclient_t *client, bfpWeaponDef_t *def ) { // BFP - 
 Client_ChargeKiAttackState
 ============
 */
-static void Client_ChargeKiAttackState( gclient_t *client, bfpWeaponDef_t *def, int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
+static void Client_ChargeKiAttackState( gclient_t *client, bfpWeaponCfgDef_t *wpCfg, int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
 	Client_KiConsumption( client, addTime, kiConsume );
 	if ( client->ps.stats[STAT_KI] < kiConsume ) {
 		return;
 	}
-	if ( !def->chargeAttack && !def->chargeAutoFire ) {
+	if ( !wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
 		return;
 	}
-	if ( ( def->chargeAutoFire
+	if ( ( wpCfg->chargeAutoFire
 	|| maxCharge < client->ps.generic1
 	|| ( maxCharge > 0 && client->ps.generic1 < maxCharge ) )
 	&& client->ps.generic1 < ATTACK_CHARGE_LIMIT ) {
 		++client->ps.generic1;
-	}
-	if ( client->ps.generic1 >= minCharge && !def->chargeAutoFire ) {
-		client->ps.eFlags |= EF_READY_KI_ATTACK;
 	}
 }
 
@@ -1022,11 +1018,11 @@ static void Client_ChargeKiAttackState( gclient_t *client, bfpWeaponDef_t *def, 
 Client_RandomWeaponTime
 ============
 */
-static int Client_RandomWeaponTime( bfpWeaponDef_t *def ) { // BFP - randomWeaponTime calculation
-	int		weaponTime = def->weaponTime;
+static int Client_RandomWeaponTime( bfpWeaponCfgDef_t *wpCfg ) { // BFP - randomWeaponTime calculation
+	int		weaponTime = wpCfg->weaponTime;
 	float	randomWeaponTime = 0;
-	if ( def->randomWeaponTime > 0 ) {
-		randomWeaponTime = random() * def->randomWeaponTime;
+	if ( wpCfg->randomWeaponTime > 0 ) {
+		randomWeaponTime = random() * wpCfg->randomWeaponTime;
 	}
 	weaponTime += randomWeaponTime;
 	return weaponTime;
@@ -1037,8 +1033,8 @@ static int Client_RandomWeaponTime( bfpWeaponDef_t *def ) { // BFP - randomWeapo
 Client_MovementPenaltyStun
 =============
 */
-static qboolean Client_MovementPenaltyStun( gclient_t *client, bfpWeaponDef_t *def, usercmd_t *ucmd ) { // BFP - movementPenalty stun
-	if ( def->movementPenalty <= 0 ) {
+static qboolean Client_MovementPenaltyStun( gclient_t *client, bfpWeaponCfgDef_t *wpCfg, usercmd_t *ucmd ) { // BFP - movementPenalty stun
+	if ( wpCfg->movementPenalty <= 0 ) {
 		return qfalse;
 	}
 
@@ -1048,7 +1044,7 @@ static qboolean Client_MovementPenaltyStun( gclient_t *client, bfpWeaponDef_t *d
 	if ( !( ucmd->buttons & BUTTON_ATTACK )
 	|| ( ucmd->buttons & BUTTON_MELEE )
 	|| client->ps.weapon != ucmd->weapon ) { // avoid when changing weapon
-		client->ps.weaponTime = def->movementPenalty;
+		client->ps.weaponTime = wpCfg->movementPenalty;
 		client->ps.eFlags &= ~EF_FIRING;
 		client->ps.weaponstate = WEAPON_STUN;
 		return qtrue;
@@ -1063,14 +1059,14 @@ Client_Weapon
 */
 static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // BFP - Client weapon handling
 	gclient_t		*client = ent->client;
-	bfpWeaponDef_t	*def;
+	bfpWeaponCfgDef_t	*wpCfg;
 	// BFP - Ki cost
 	float		kiCost;
 	// BFP - Weapon time
 	int			weaponTime;
 
 	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
-	if ( client->ps.stats[STAT_HITSTUN_TIME] > 0 || ( client->ps.pm_flags & PMF_ULTIMATE_TIER ) ) {
+	if ( client->ps.stats[STAT_HITSTUN_TIME] > 0 || ( level.time < client->ultimateTierUnlockedTime ) ) {
 		return;
 	}
 
@@ -1090,7 +1086,7 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 	}
 
 	// BFP - Don't allow attack when recharging ki
-	if ( client->ps.pm_flags & PMF_KI_CHARGE ) {
+	if ( client->kiCharging ) {
 		return;
 	}
 
@@ -1099,40 +1095,40 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		return;
 	}
 
-	def = BG_GetClientWeaponDefForSlot( client->ps.clientNum, client->ps.weapon );
+	wpCfg = BG_GetClientWeaponDefForSlot( client->ps.clientNum, client->ps.weapon );
 
 	// BFP - Monster gamemode, player monster with g_monster 1 uses its own weapon
 	if ( ( client->ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-		def = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultWeaponDef();
 	}
 
-	if ( !def ) { // safe fallback
-		def = BG_SetDefaultWeaponDef();
+	if ( !wpCfg ) { // safe fallback
+		wpCfg = BG_SetDefaultWeaponDef();
 	}
 
-	if ( !def ) { // don't continue
+	if ( !wpCfg ) { // don't continue
 		return;
 	}
 
-	kiCost = Client_KiCost( client, def );
-	weaponTime = Client_RandomWeaponTime( def );
+	kiCost = Client_KiCost( client, wpCfg );
+	weaponTime = Client_RandomWeaponTime( wpCfg );
 
 	// BFP - Debug extracted weapon from bfp_weapon.cfg 
 #if 0
 	Com_Printf( "Client_Weapon - WEAPONDEF: client %d, slot %d -> (attackName %s, chargeAttack %d, chargeAutoFire %d, kiCost %d, kiPct %f, weaponTime %d, randomWeaponTime %d)\n",
 		client->ps.clientNum, client->ps.weapon, 
-		def ? def->attackName : "NULL", 
-		def->chargeAttack, 
-		def->chargeAutoFire, 
-		def->kiCost, 
-		def->kiPct, 
-		def->weaponTime, 
-		def->randomWeaponTime );
+		wpCfg ? wpCfg->attackName : "NULL", 
+		wpCfg->chargeAttack, 
+		wpCfg->chargeAutoFire, 
+		wpCfg->kiCost, 
+		wpCfg->kiPct, 
+		wpCfg->weaponTime, 
+		wpCfg->randomWeaponTime );
 #endif
 
 	// BFP - Melee, avoid shooting if the player is in this status
 	if ( ( ucmd->buttons & BUTTON_MELEE )
-	&& !( def->attackType == ATK_FORCEFIELD && client->ps.weaponstate == WEAPON_ACTIVE )
+	&& !( wpCfg->attackType == ATK_FORCEFIELD && client->ps.weaponstate == WEAPON_ACTIVE )
 	&& client->ps.weaponstate != WEAPON_STUN ) {
 		// only use when there's no splitting ki ball until it has been splitted or collided, 
 		// unless if the player wanna change the weapon from this state
@@ -1156,18 +1152,17 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 	// BFP - Weapon states, Q3 doesn't have this way
 	switch( client->ps.weaponstate ) {
 	case WEAPON_READY:
-		client->ps.eFlags &= ~EF_READY_KI_ATTACK;
 		if ( !( ucmd->buttons & BUTTON_ATTACK ) ) {
 			// movementPenalty
-			if ( !def->chargeAttack && !def->chargeAutoFire && def->movementPenalty > 0
+			if ( !wpCfg->chargeAttack && !wpCfg->chargeAutoFire && wpCfg->movementPenalty > 0
 			&& ( client->ps.eFlags & EF_FIRING ) ) {
 				if ( !( ucmd->buttons & BUTTON_ATTACK )
 				|| ( ucmd->buttons & BUTTON_MELEE )
 				|| client->ps.weapon != ucmd->weapon ) {
-					if ( def->movementPenalty > client->ps.weaponTime ) {
-						client->ps.weaponTime = def->movementPenalty - client->ps.weaponTime;
+					if ( wpCfg->movementPenalty > client->ps.weaponTime ) {
+						client->ps.weaponTime = wpCfg->movementPenalty - client->ps.weaponTime;
 					} else {
-						client->ps.weaponTime = def->movementPenalty;
+						client->ps.weaponTime = wpCfg->movementPenalty;
 					}
 					client->ps.weaponstate = WEAPON_STUN;
 				}
@@ -1176,11 +1171,11 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 			client->ps.generic1 = 0;
 		} else {
 			if ( client->ps.weaponTime <= 0 ) {
-				if ( def->chargeAttack || def->chargeAutoFire ) {
+				if ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) {
 					client->ps.stats[STAT_KI] -= kiCost;
 				}
 				// BFP - sbeam attack type
-				if ( def->attackType == ATK_SBEAM ) {
+				if ( wpCfg->attackType == ATK_SBEAM ) {
 					client->ps.stats[STAT_KI] -= kiCost;
 					client->ps.weaponTime += weaponTime;
 					client->ps.weaponstate = WEAPON_ACTIVE;
@@ -1188,7 +1183,7 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 					BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
 					break;
 				}
-				if ( def->chargeAttack || def->chargeAutoFire ) {
+				if ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) {
 					client->ps.weaponTime += weaponTime;
 				}
 				client->ps.weaponstate = WEAPON_FIRING;
@@ -1200,37 +1195,37 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		break;
 	case WEAPON_FIRING:
 		// don't allow ki charging while charging the attack
-		if ( ( client->ps.pm_flags & PMF_KI_CHARGE ) || ( ucmd->buttons & BUTTON_KI_CHARGE ) ) {
+		if ( client->kiCharging || ( ucmd->buttons & BUTTON_KI_CHARGE ) ) {
 			break;
 		}
 
 		// BFP - There are charging states here
-		if ( def->chargeAttack && !def->chargeAutoFire ) {
+		if ( wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
 			if ( !( ucmd->buttons & BUTTON_ATTACK ) ) {
 				// BFP - When the ki attack is fully charged, enter beam firing state
 				// or enter splitting ki ball firing state if it's a splitting ki ball
-				client->ps.eFlags &= ~EF_READY_KI_ATTACK;
+
 				// no fully charged, skip...
-				if ( client->ps.generic1 < def->minCharge ) {
+				if ( client->ps.generic1 < wpCfg->minCharge ) {
 					client->ps.weaponstate = WEAPON_RAISING;
 					break;
 				}
 
 				// handle the animation for the start of beam or ball shoot
-				switch( def->attackType ) {
+				switch( wpCfg->attackType ) {
 				case ATK_MISSILE:
 					client->ps.weaponstate = WEAPON_READY;
 					client->ps.weaponTime = 800; // 0.8 sec to keep the strike animation
 					// movementPenalty
-					Client_MovementPenaltyStun( client, def, ucmd );
+					Client_MovementPenaltyStun( client, wpCfg, ucmd );
 					break;
 				case ATK_RDMISSILE:
 				case ATK_BEAM:
 					client->ps.weaponstate = WEAPON_ACTIVE;
 					client->ps.weaponTime = weaponTime;
 					// movementPenalty
-					if ( def->movementPenalty > 0 ) {
-						client->ps.weaponTime = def->movementPenalty;
+					if ( wpCfg->movementPenalty > 0 ) {
+						client->ps.weaponTime = wpCfg->movementPenalty;
 					}
 					break;
 				case ATK_FORCEFIELD:
@@ -1245,7 +1240,7 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		}
 
 		// chargeAutoFire: keep firing while attack key is holding
-		if ( def->chargeAutoFire
+		if ( wpCfg->chargeAutoFire
 		&& client->ps.weaponTime <= 0 ) {
 			if ( !( ucmd->buttons & BUTTON_ATTACK )
 			|| ( ucmd->buttons & BUTTON_MELEE )
@@ -1258,20 +1253,20 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				client->ps.eFlags |= EF_FIRING;
 				BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
 			}
-			if ( def->attackType == ATK_BEAM
-			|| def->attackType == ATK_FORCEFIELD
-			|| def->attackType == ATK_RDMISSILE ) {
+			if ( wpCfg->attackType == ATK_BEAM
+			|| wpCfg->attackType == ATK_FORCEFIELD
+			|| wpCfg->attackType == ATK_RDMISSILE ) {
 				client->ps.weaponstate = WEAPON_ACTIVE;
 			}
 		}
-		if ( def->chargeAutoFire && def->movementPenalty > 0 ) {
+		if ( wpCfg->chargeAutoFire && wpCfg->movementPenalty > 0 ) {
 			if ( !( ucmd->buttons & BUTTON_ATTACK )
 			|| ( ucmd->buttons & BUTTON_MELEE )
 			|| client->ps.weapon != ucmd->weapon ) {
-				if ( def->movementPenalty > client->ps.weaponTime ) {
-					client->ps.weaponTime = def->movementPenalty - client->ps.weaponTime;
+				if ( wpCfg->movementPenalty > client->ps.weaponTime ) {
+					client->ps.weaponTime = wpCfg->movementPenalty - client->ps.weaponTime;
 				} else {
-					client->ps.weaponTime = def->movementPenalty;
+					client->ps.weaponTime = wpCfg->movementPenalty;
 				}
 				client->ps.eFlags &= ~EF_FIRING;
 				client->ps.weaponstate = WEAPON_STUN;
@@ -1281,13 +1276,13 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 
 		// check for fire
 		if ( client->ps.weaponTime <= 0 && ( ucmd->buttons & BUTTON_ATTACK )
-		&& ( def->chargeAttack || def->chargeAutoFire ) ) {
-			Client_ChargeKiAttackState( client, def, def->minCharge, def->maxCharge, weaponTime, kiCost );
+		&& ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) ) {
+			Client_ChargeKiAttackState( client, wpCfg, wpCfg->minCharge, wpCfg->maxCharge, weaponTime, kiCost );
 		}
 
-		if ( !def->chargeAttack && !def->chargeAutoFire
+		if ( !wpCfg->chargeAttack && !wpCfg->chargeAutoFire
 		&& client->ps.weaponTime <= 0 ) {
-			if ( def->attackType == ATK_HITSCAN ) {
+			if ( wpCfg->attackType == ATK_HITSCAN ) {
 				if ( ucmd->buttons & BUTTON_ATTACK ) {
 					Client_KiConsumption( client, weaponTime, kiCost );
 					if ( client->ps.stats[STAT_KI] >= kiCost ) {
@@ -1306,24 +1301,24 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				client->ps.eFlags |= EF_FIRING;
 				BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
 			}
-			if ( def->attackType == ATK_BEAM ) {
+			if ( wpCfg->attackType == ATK_BEAM ) {
 				client->ps.weaponstate = WEAPON_ACTIVE;
 			}
 			// movementPenalty
-			if ( def->attackType == ATK_MISSILE || def->attackType == ATK_RDMISSILE ) {
-				if ( !Client_MovementPenaltyStun( client, def, ucmd ) ) {
+			if ( wpCfg->attackType == ATK_MISSILE || wpCfg->attackType == ATK_RDMISSILE ) {
+				if ( !Client_MovementPenaltyStun( client, wpCfg, ucmd ) ) {
 					client->ps.weaponstate = WEAPON_READY;
 				}
 			}
 		}
-		if ( !def->chargeAttack && !def->chargeAutoFire && def->movementPenalty > 0 ) {
+		if ( !wpCfg->chargeAttack && !wpCfg->chargeAutoFire && wpCfg->movementPenalty > 0 ) {
 			if ( !( ucmd->buttons & BUTTON_ATTACK )
 			|| ( ucmd->buttons & BUTTON_MELEE )
 			|| client->ps.weapon != ucmd->weapon ) {
-				if ( def->movementPenalty > client->ps.weaponTime ) {
-					client->ps.weaponTime = def->movementPenalty - client->ps.weaponTime;
+				if ( wpCfg->movementPenalty > client->ps.weaponTime ) {
+					client->ps.weaponTime = wpCfg->movementPenalty - client->ps.weaponTime;
 				} else {
-					client->ps.weaponTime = def->movementPenalty;
+					client->ps.weaponTime = wpCfg->movementPenalty;
 				}
 				client->ps.eFlags &= ~EF_FIRING;
 				client->ps.weaponstate = WEAPON_STUN;
@@ -1339,55 +1334,55 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		//client->ps.eFlags |= EF_FIRING; // keep playing firing sound
 
 		// chargeAutoFire: keep firing while attack key is holding
-		if ( def->attackType == ATK_BEAM  && def->chargeAutoFire ) {
+		if ( wpCfg->attackType == ATK_BEAM  && wpCfg->chargeAutoFire ) {
 			if ( ( ucmd->buttons & BUTTON_ATTACK )
 			&& client->ps.weaponTime <= 0 ) {
 				// BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
-				Client_ChargeKiAttackState( client, def, def->minCharge, def->maxCharge, weaponTime, kiCost );
+				Client_ChargeKiAttackState( client, wpCfg, wpCfg->minCharge, wpCfg->maxCharge, weaponTime, kiCost );
 			}
 			if ( !( ucmd->buttons & BUTTON_ATTACK )
-			|| ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) )
+			|| ( client->kiCharging && ( client->ps.eFlags & EF_AURA ) )
 			|| ( client->ps.pm_flags & PMF_BLOCK ) ) {
 				// movementPenalty
-				if ( !Client_MovementPenaltyStun( client, def, ucmd ) ) {
+				if ( !Client_MovementPenaltyStun( client, wpCfg, ucmd ) ) {
 					client->ps.weaponstate = WEAPON_READY;
 				}
 			}
 			break;
 		}
 
-		if ( ( def->chargeAttack || def->chargeAutoFire ) 
-		&& def->attackType == ATK_FORCEFIELD ) {
+		if ( ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) 
+		&& wpCfg->attackType == ATK_FORCEFIELD ) {
 			if ( ( ucmd->buttons & BUTTON_ATTACK )
 			&& client->ps.weaponTime <= 0 ) {
 				BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
-				Client_ChargeKiAttackState( client, def, def->minCharge, def->maxCharge, weaponTime, kiCost );
+				Client_ChargeKiAttackState( client, wpCfg, wpCfg->minCharge, wpCfg->maxCharge, weaponTime, kiCost );
 			}
-			if ( def->chargeAttack && !def->chargeAutoFire && !( ucmd->buttons & BUTTON_ATTACK ) ) {
+			if ( wpCfg->chargeAttack && !wpCfg->chargeAutoFire && !( ucmd->buttons & BUTTON_ATTACK ) ) {
 				// movementPenalty
-				if ( !Client_MovementPenaltyStun( client, def, ucmd ) ) { // no weaponTime delay with chargeAttack
+				if ( !Client_MovementPenaltyStun( client, wpCfg, ucmd ) ) { // no weaponTime delay with chargeAttack
 					client->ps.weaponTime = 0;
 					client->ps.weaponstate = WEAPON_READY;
 				}
 			}
-			if ( def->chargeAutoFire && !( ucmd->buttons & BUTTON_ATTACK ) ) {
+			if ( wpCfg->chargeAutoFire && !( ucmd->buttons & BUTTON_ATTACK ) ) {
 				// movementPenalty
-				if ( !Client_MovementPenaltyStun( client, def, ucmd ) ) {
+				if ( !Client_MovementPenaltyStun( client, wpCfg, ucmd ) ) {
 					client->ps.weaponstate = WEAPON_READY;
 				}
 			}
 			break;
 		}
 
-		if ( def->attackType == ATK_RDMISSILE && def->chargeAutoFire ) {
+		if ( wpCfg->attackType == ATK_RDMISSILE && wpCfg->chargeAutoFire ) {
 			if ( ( ucmd->buttons & BUTTON_ATTACK )
 			&& client->ps.weaponTime <= 0 ) {
 				BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
-				Client_ChargeKiAttackState( client, def, def->minCharge, def->maxCharge, weaponTime, kiCost );
+				Client_ChargeKiAttackState( client, wpCfg, wpCfg->minCharge, wpCfg->maxCharge, weaponTime, kiCost );
 			}
 
 			// movementPenalty
-			if ( !Client_MovementPenaltyStun( client, def, ucmd ) ) {
+			if ( !Client_MovementPenaltyStun( client, wpCfg, ucmd ) ) {
 				if ( !( ucmd->buttons & BUTTON_ATTACK )
 				|| ( ucmd->buttons & BUTTON_MELEE )
 				|| client->ps.weapon != ucmd->weapon ) { // avoid when changing weapon
@@ -1399,20 +1394,20 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		client->ps.generic1 = 0;
 
 		// BFP - sbeam attack type
-		if ( def->attackType == ATK_SBEAM ) {
+		if ( wpCfg->attackType == ATK_SBEAM ) {
 			if ( client->ps.weaponTime <= 0 ) {
 				client->ps.stats[STAT_KI] -= kiCost;
 				client->ps.weaponTime += weaponTime;
 			}
 			if ( !( ucmd->buttons & BUTTON_ATTACK )
-			|| ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) )
+			|| ( client->kiCharging && ( client->ps.eFlags & EF_AURA ) )
 			|| ( ucmd->buttons & BUTTON_MELEE ) ) {
 				// movementPenalty
-				if ( def->movementPenalty > 0 ) {
-					if ( def->movementPenalty > client->ps.weaponTime ) {
-						client->ps.weaponTime = def->movementPenalty - client->ps.weaponTime;
+				if ( wpCfg->movementPenalty > 0 ) {
+					if ( wpCfg->movementPenalty > client->ps.weaponTime ) {
+						client->ps.weaponTime = wpCfg->movementPenalty - client->ps.weaponTime;
 					} else {
-						client->ps.weaponTime = def->movementPenalty;
+						client->ps.weaponTime = wpCfg->movementPenalty;
 					}
 					client->ps.weaponstate = WEAPON_STUN;
 				} else {
@@ -1420,30 +1415,30 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				}
 			}
 			// movementPenalty
-			Client_MovementPenaltyStun( client, def, ucmd );
+			Client_MovementPenaltyStun( client, wpCfg, ucmd );
 			break;
 		}
 
-		if ( def->attackType == ATK_BEAM ) {
+		if ( wpCfg->attackType == ATK_BEAM ) {
 			// movementPenalty
-			if ( def->movementPenalty > 0
+			if ( wpCfg->movementPenalty > 0
 			&& ( client->ps.eFlags & EF_FIRING ) 
 			&& ( ( ucmd->buttons & BUTTON_ATTACK ) || ( ucmd->buttons & BUTTON_MELEE )
 			|| client->ps.weapon != ucmd->weapon ) ) {
-				if ( def->movementPenalty > client->ps.weaponTime ) {
-					client->ps.weaponTime = def->movementPenalty - client->ps.weaponTime;
+				if ( wpCfg->movementPenalty > client->ps.weaponTime ) {
+					client->ps.weaponTime = wpCfg->movementPenalty - client->ps.weaponTime;
 				} else {
-					client->ps.weaponTime = def->movementPenalty;
+					client->ps.weaponTime = wpCfg->movementPenalty;
 				}
 				client->ps.weaponstate = WEAPON_STUN;
 				break;
 			}
 			if ( ( ucmd->buttons & BUTTON_ATTACK )
-			|| ( ( client->ps.pm_flags & PMF_KI_CHARGE ) && ( client->ps.eFlags & EF_AURA ) )
+			|| ( client->kiCharging && ( client->ps.eFlags & EF_AURA ) )
 			|| ( client->ps.pm_flags & PMF_BLOCK ) ) {
 				client->ps.weaponstate = WEAPON_READY;
 				// movementPenalty
-				Client_MovementPenaltyStun( client, def, ucmd );
+				Client_MovementPenaltyStun( client, wpCfg, ucmd );
 			}
 		}
 	}
@@ -1570,22 +1565,6 @@ void ClientThink_real( gentity_t *ent ) {
 	memset (&pm, 0, sizeof(pm));
 
 	if ( client->ps.pm_type != PM_DEAD && client->ps.pm_type != PM_SPECTATOR ) {
-
-		// BFP - After unlocking tier, when the time is out, the aura tier effect vanishes
-		if ( level.time >= client->tierUnlockedTime && client->ps.persistant[PERS_POWERLEVEL] < 1000 ) {
-			client->ps.eFlags &= ~EF_AURA_TIER_UP;
-		}
-
-		// BFP - Ultimate tier
-		if ( ( client->ps.pm_flags & PMF_ULTIMATE_TIER )
-		&& ( level.time >= client->tierUnlockedTime - 1000 ) ) { // remove aura transformation effect after 3.6 secs
-			client->ps.eFlags &= ~EF_AURA_TIER_UP;
-		}
-
-		if ( ( client->ps.pm_flags & PMF_ULTIMATE_TIER ) && level.time >= client->tierUnlockedTime ) {
-			client->ps.pm_flags &= ~PMF_ULTIMATE_TIER;
-		}
-		
 		// BFP - Short-Range Teleport (Zanzoken)
 		ZanzokenHandling( ent, ucmd );
 
@@ -1598,7 +1577,7 @@ void ClientThink_real( gentity_t *ent ) {
 		// BFP - g_chargeDelay cvar for ki charge animation and appearing the aura after this time
 		if ( !( ucmd->buttons & BUTTON_KI_USE ) 
 		&& ( ucmd->buttons & BUTTON_KI_CHARGE ) 
-		&& !( client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+		&& !client->kiCharging ) {
 			client->ps.pm_time = ( g_chargeDelay.integer > 0 ) ? g_chargeDelay.integer : 0;
 		}
 
@@ -1628,11 +1607,11 @@ void ClientThink_real( gentity_t *ent ) {
 		Client_Weapon( ent, ucmd, &pm );
 
 		// BFP - Ki Charge
-		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && ( client->ps.pm_flags & PMF_KI_CHARGE )
+		if ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && client->kiCharging
 		&& client->ps.pm_time > 0 ) { // still delayed
 			client->ps.eFlags &= ~EF_AURA;
 		}
-		if ( ( client->ps.pm_flags & PMF_KI_CHARGE )
+		if ( client->kiCharging
 		&& client->ps.pm_time <= 0 ) { // charge ki!
 			client->ps.eFlags |= EF_AURA;
 		}
@@ -1649,6 +1628,12 @@ void ClientThink_real( gentity_t *ent ) {
 	if ( g_meleeOnly.integer > 0 ) {
 		pm.meleeOnly = qtrue;
 	}
+
+	// BFP - Ultimate tier unlocked timer
+	pm.ultimateTierUnlockedTime = client->ultimateTierUnlockedTime;
+
+	// BFP - Ki charge state
+	pm.kiCharging = client->kiCharging;
 
 	// BFP - No force gesture anim
 #if 0
@@ -1680,6 +1665,9 @@ void ClientThink_real( gentity_t *ent ) {
 	VectorCopy( client->ps.origin, client->oldOrigin );
 
 	Pmove (&pm);
+
+	// BFP - Ki charge state
+	client->kiCharging = pm.kiCharging;
 
 	// save results of pmove
 	if ( client->ps.eventSequence != oldEventSequence ) {

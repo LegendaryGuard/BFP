@@ -32,22 +32,22 @@ static void G_SplitProjectile_Fire( gentity_t *ent, vec3_t start, vec3_t dir, in
 	// BFP - explosionSpawn sets to split the projectiles, then if that happens,
 	// goes to the weaponNum of this and fires there x number of splitted projectiles
 	// explosionSpawn is a weaponNum of the attack to set
-	bfpWeaponDef_t	*def;
+	bfpWeaponCfgDef_t	*wpCfg;
 
-	def = BG_FindBFPWeaponDef( explosionSpawn );
-	if ( !def ) {
-		def = BG_SetDefaultWeaponDef();
+	wpCfg = BG_FindBFPWeaponDef( explosionSpawn );
+	if ( !wpCfg ) {
+		wpCfg = BG_SetDefaultWeaponDef();
 	}
-	if ( !def ) {
+	if ( !wpCfg ) {
 		return;
 	}
 
-	if ( def->attackType == ATK_MISSILE ) {
-		m = G_BFPFireProjectileWeapon( ent, start, dir, def );
+	if ( wpCfg->attackType == ATK_MISSILE ) {
+		m = G_BFPFireProjectileWeapon( ent, start, dir, wpCfg );
 		m->splitKiBall = qtrue; // handle splitted ki ball, otherwise crashes (in DLL/SO)
 		// that part doesn't have -10 in the down minimum, because needs to be like a sphere collision
-		VectorSet( m->r.mins, -def->radius, -def->radius, -def->radius );
-		VectorSet( m->r.maxs, def->radius, def->radius, def->radius );
+		VectorSet( m->r.mins, -wpCfg->radius, -wpCfg->radius, -wpCfg->radius );
+		VectorSet( m->r.maxs, wpCfg->radius, wpCfg->radius, wpCfg->radius );
 	
 		//	VectorAdd( m->s.pos.trDelta, ent->client->ps.velocity, m->s.pos.trDelta );	// "real" physics
 	}

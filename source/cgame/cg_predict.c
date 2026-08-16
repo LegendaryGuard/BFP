@@ -624,6 +624,9 @@ void CG_PredictPlayerState( void ) {
 	cg_pmove.pmove_fixed = pmove_fixed.integer;// | cg_pmove_fixed.integer;
 	cg_pmove.pmove_msec = pmove_msec.integer;
 
+	// BFP - Ki charge state
+	cg_pmove.kiCharging = cg.predictedKiCharging;
+
 	// run cmds
 	moved = qfalse;
 	for ( cmdNum = current - CMD_BACKUP + 1 ; cmdNum <= current ; cmdNum++ ) {
@@ -727,6 +730,9 @@ void CG_PredictPlayerState( void ) {
 			cg_pmove.cmd.serverTime = ((cg_pmove.cmd.serverTime + pmove_msec.integer-1) / pmove_msec.integer) * pmove_msec.integer;
 		}
 
+		// BFP - Ultimate tier timer
+		cg_pmove.ultimateTierUnlockedTime = cg.ultimateTierUnlockedTime;
+
 		Pmove (&cg_pmove);
 
 		moved = qtrue;
@@ -748,6 +754,9 @@ void CG_PredictPlayerState( void ) {
 		}
 		return;
 	}
+
+	// BFP - Ki charge state
+	cg.predictedKiCharging = cg_pmove.kiCharging;
 
 	// adjust for the movement of the groundentity
 	CG_AdjustPositionForMover( cg.predictedPlayerState.origin, 

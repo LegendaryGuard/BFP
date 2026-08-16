@@ -892,25 +892,25 @@ BotChooseWeapon
 void BotChooseWeapon(bot_state_t *bs) { // BFP - HIGHLY MODIFIED: for BFP weapon config
 	int	i, bestSlot = -1;
 	int	bestDamage = 0;
-	bfpWeaponDef_t	*def;
+	bfpWeaponCfgDef_t	*wpCfg;
 
 	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
 		if ( !( bs->cur_ps.stats[STAT_WEAPONS] & ( 1 << i ) ) ) {
 			continue;
 		}
-		def = BG_GetClientWeaponDefForSlot( bs->client, i );
-		if ( !def ) {
-			def = BG_SetDefaultWeaponDef();
+		wpCfg = BG_GetClientWeaponDefForSlot( bs->client, i );
+		if ( !wpCfg ) {
+			wpCfg = BG_SetDefaultWeaponDef();
 		}
 
 		if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-			def = BG_SetMonsterDefaultWeaponDef();
+			wpCfg = BG_SetMonsterDefaultWeaponDef();
 		}
-		if ( !def ) {
+		if ( !wpCfg ) {
 			continue;
 		}
-		if ( def->damage > bestDamage ) {
-			bestDamage = def->damage;
+		if ( wpCfg->damage > bestDamage ) {
+			bestDamage = wpCfg->damage;
 			bestSlot = i;
 		}
 	}
@@ -3467,21 +3467,21 @@ BotCheckEvents
 ==================
 */
 void BotCheckForGrenades(bot_state_t *bs, entityState_t *state) {
-	bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( bs->client, bs->weaponnum );
-	if ( !def ) {
-		def = BG_SetDefaultWeaponDef();
+	bfpWeaponCfgDef_t	*wpCfg = BG_GetClientWeaponDefForSlot( bs->client, bs->weaponnum );
+	if ( !wpCfg ) {
+		wpCfg = BG_SetDefaultWeaponDef();
 	}
 
 	if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-		def = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultWeaponDef();
 	}
 
-	if ( !def ) {
+	if ( !wpCfg ) {
 		return;
 	}
 
 	// if this is not a grenade
-	if ( state->eType != ET_MISSILE || ( def->missileGravity <= 0 && !def->bounces ) )
+	if ( state->eType != ET_MISSILE || ( wpCfg->missileGravity <= 0 && !wpCfg->bounces ) )
 		return;
 	// try to avoid the grenade
 	trap_BotAddAvoidSpot(bs->ms, state->pos.trBase, 160, AVOID_ALWAYS);

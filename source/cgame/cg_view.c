@@ -410,7 +410,7 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 #if FPVISMODE_Q3BOBBING_MOVE
 			// don't bob/duck while on air, flying or charging
 			if ( ( cg.predictedPlayerState.eFlags & EF_FLIGHT )
-			|| ( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE )
+			|| cg.predictedKiCharging
 			|| cg.predictedPlayerState.groundEntityNum == ENTITYNUM_NONE ) {
 				return;
 			}
@@ -426,7 +426,7 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 #if FPVISMODE_Q3BOBBING_MOVE
 			// don't bob/duck while on air, flying or charging
 			if ( ( cg.predictedPlayerState.eFlags & EF_FLIGHT )
-			|| ( cg.predictedPlayerState.pm_flags & PMF_KI_CHARGE )
+			|| cg.predictedKiCharging
 			|| cg.predictedPlayerState.groundEntityNum == ENTITYNUM_NONE ) {
 				return;
 			}

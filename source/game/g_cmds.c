@@ -1754,9 +1754,9 @@ void Cmd_BFP_Fly_f( gentity_t* ent ) { // BFP - Flight
 		return;
 	}
 
-	if ( ent->client->ps.pm_type != PM_DEAD ) {
+	if ( ent->client && ent->client->ps.pm_type != PM_DEAD ) {
 		// do not play the sound in the charging status
-		if ( !( ent->client->ps.eFlags & EF_FLIGHT ) && !( ent->client->ps.pm_flags & PMF_KI_CHARGE ) ) {
+		if ( !( ent->client->ps.eFlags & EF_FLIGHT ) && !ent->client->kiCharging ) {
 			BG_AddPredictableEventToPlayerstate( EV_ENABLE_FLIGHT, 0, &ent->client->ps, -1 ); // play the sound
 		}
 		ent->client->ps.eFlags ^= EF_FLIGHT;
@@ -1775,7 +1775,7 @@ void Cmd_BFP_SetKiCharge_f( gentity_t* ent ) { // BFP - Set Ki charge
 
 	// Nah, that implementation doesn't make sense, 
 	// if you want silly and useless stuff like that, play it in original BFP
-	if ( ent->client->ps.pm_type != PM_DEAD
+	if ( ent->client && ent->client->ps.pm_type != PM_DEAD
 	&& ( ent->client->ps.eFlags & EF_AURA ) ) {
 		ent->client->ps.torsoTimer = ent->client->ps.legsTimer = 0;
 		ent->client->ps.legsAnim = LEGS_CHARGE;
@@ -1804,7 +1804,7 @@ Cmd_BFP_KiUseToggle_f
 */
 void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) { // BFP - Ki use toggle
 
-	if ( ent->client->ps.pm_type != PM_DEAD ) {
+	if ( ent->client && ent->client->ps.pm_type != PM_DEAD ) {
 		ent->client->ps.eFlags ^= EF_KI_BOOST;
 	}
 }
@@ -1817,7 +1817,7 @@ Cmd_BFP_SetKiIdle_f
 void Cmd_BFP_SetKiIdle_f( gentity_t* ent ) { // BFP - Set Ki idle
 
 	// BFP - NOTE: originally... Ki idling means disabling the ki? Sounds like it isn't operating...
-	if ( ent->client->ps.pm_type != PM_DEAD ) {
+	if ( ent->client && ent->client->ps.pm_type != PM_DEAD ) {
 		ent->client->ps.eFlags &= ~EF_KI_BOOST;
 	}
 }
@@ -1849,7 +1849,7 @@ Cmd_BFP_Block_f
 */
 void Cmd_BFP_Block_f( gentity_t* ent ) { // BFP - Block
 
-	if ( ent->client->ps.pm_type != PM_DEAD ) {
+	if ( ent->client && ent->client->ps.pm_type != PM_DEAD ) {
 		ent->client->ps.pm_flags |= PMF_BLOCK;
 		ent->client->blockTime = level.time + (g_blockLength.integer * 1000);
 	}
