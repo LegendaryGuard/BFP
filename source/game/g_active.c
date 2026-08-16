@@ -1094,6 +1094,11 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		return;
 	}
 
+	// BFP - Melee only, players can't fire weapons at all
+	if ( g_meleeOnly.integer > 0 ) {
+		return;
+	}
+
 	def = BG_GetClientWeaponDefForSlot( client->ps.clientNum, client->ps.weapon );
 
 	// BFP - Monster gamemode, player monster with g_monster 1 uses its own weapon
