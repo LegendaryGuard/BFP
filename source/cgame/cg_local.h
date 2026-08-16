@@ -824,8 +824,6 @@ typedef struct {
 	qhandle_t	railRingsShader;
 	qhandle_t	railCoreShader;
 
-	qhandle_t	lightningShader;
-
 	qhandle_t	friendShader;
 
 	qhandle_t	balloonShader;
@@ -844,9 +842,6 @@ typedef struct {
 	qhandle_t	chargeupbuttgreen;
 
 	qhandle_t	smokePuffShader;
-	qhandle_t	smokePuffRageProShader;
-	qhandle_t	shotgunSmokePuffShader;
-	qhandle_t	plasmaBallShader;
 	qhandle_t	waterBubbleShader;
 	qhandle_t	bloodTrailShader;
 
@@ -875,41 +870,27 @@ typedef struct {
 
 	// powerup shaders
 	qhandle_t	quadShader;
-	qhandle_t	redQuadShader;
-	qhandle_t	quadWeaponShader;
 	qhandle_t	invisShader;
 	qhandle_t	regenShader;
-	qhandle_t	battleSuitShader;
-	qhandle_t	battleWeaponShader;
-	qhandle_t	hastePuffShader;
-	qhandle_t	redKamikazeShader;
-	qhandle_t	blueKamikazeShader;
 
 	// weapon effect models
-	qhandle_t	bulletFlashModel;
 	qhandle_t	ringFlashModel;
-	qhandle_t	dishFlashModel;
-	qhandle_t	lightningExplosionModel;
+	//qhandle_t	lightningExplosionModel;	// BFP - No impact flare effect
 
 	// BFP - Explosion, projectile and beam models
-	qhandle_t	nukeModel;
+	//qhandle_t	nukeModel;
 	qhandle_t	lowPolySphereModel;
 	qhandle_t	highPolySphereModel;
-	qhandle_t	beamModel;
+	//qhandle_t	beamModel;	// BFP - NOTE: That beam model is like a beam trail used to display as model, what would this look like?
 
 	// BFP - Explosion shell shader
 	qhandle_t	explosionShellShader;
 
 	// BFP - Explosion shader tests
-	qhandle_t	ImpactBeamExplosionShader;
+	//qhandle_t	ImpactBeamExplosionShader;
 
 	// weapon effect shaders
 	qhandle_t	railExplosionShader;
-	qhandle_t	plasmaExplosionShader;
-	qhandle_t	bulletExplosionShader;
-	qhandle_t	rocketExplosionShader;
-	qhandle_t	grenadeExplosionShader;
-	qhandle_t	bfgExplosionShader;
 	qhandle_t	bloodExplosionShader;
 
 	// special effects models
@@ -949,15 +930,18 @@ typedef struct {
 	qhandle_t	auraYellowUseShader;
 	qhandle_t	ultimateAuraShader;
 
+	qhandle_t	spriteAura; // BFP - Sprite aura
+	qhandle_t	particleAura; // BFP - Particle aura
+
 	// BFP - Ki trail shaders
 	qhandle_t	kiTrailRedShader;
 	qhandle_t	kiTrailBlueShader;
 	qhandle_t	kiTrailYellowShader;
 
 	// BFP - Ki attack beam and projectile shaders (for testing purposes)
-	qhandle_t	SSBSpiralShader;
-	qhandle_t	SSBBeamShader;
-	qhandle_t	PowerWaveBeamShader;
+	//qhandle_t	SSBSpiralShader;
+	//qhandle_t	SSBBeamShader;
+	//qhandle_t	PowerWaveBeamShader;
 
 	// scoreboard headers
 	qhandle_t	scoreboardName;
@@ -1001,15 +985,6 @@ typedef struct {
 	sfxHandle_t	useNothingSound;
 	sfxHandle_t	wearOffSound;
 	sfxHandle_t	footsteps[FOOTSTEP_TOTAL][4];
-	sfxHandle_t	sfx_lghit1;
-	sfxHandle_t	sfx_lghit2;
-	sfxHandle_t	sfx_lghit3;
-	sfxHandle_t	sfx_ric1;
-	sfxHandle_t	sfx_ric2;
-	sfxHandle_t	sfx_ric3;
-	sfxHandle_t	sfx_railg;
-	sfxHandle_t	sfx_rockexp;
-	sfxHandle_t	sfx_plasmaexp;
 
 	sfxHandle_t	gibSound;
 	sfxHandle_t	gibBounce1Sound;
@@ -1017,7 +992,6 @@ typedef struct {
 	sfxHandle_t	gibBounce3Sound;
 	sfxHandle_t	teleInSound;
 	sfxHandle_t	teleOutSound;
-	sfxHandle_t	noAmmoSound;
 	sfxHandle_t	respawnSound;
 	sfxHandle_t talkSound;
 	sfxHandle_t landSound;
@@ -1033,11 +1007,8 @@ typedef struct {
 	sfxHandle_t oneFragSound;
 
 	sfxHandle_t hitSound;
-	sfxHandle_t hitSoundHighArmor;
-	sfxHandle_t hitSoundLowArmor;
 	sfxHandle_t hitTeamSound;
 	sfxHandle_t excellentSound;
-	sfxHandle_t firstExcellentSound;
 
 	// BFP - No impressive, gauntlet, defend and assist sounds
 /*
@@ -1054,10 +1025,6 @@ typedef struct {
 	sfxHandle_t tiedLeadSound;
 	sfxHandle_t lostLeadSound;
 
-	sfxHandle_t voteNow;
-	sfxHandle_t votePassed;
-	sfxHandle_t voteFailed;
-
 	sfxHandle_t watrInSound;
 	sfxHandle_t watrOutSound;
 	sfxHandle_t watrUnSound;
@@ -1066,10 +1033,7 @@ typedef struct {
 //	sfxHandle_t flightSound;
 	sfxHandle_t medkitSound;
 
-	sfxHandle_t weaponHoverSound;
-
 	// teamplay sounds
-	sfxHandle_t captureAwardSound;
 	sfxHandle_t redScoredSound;
 	sfxHandle_t blueScoredSound;
 	sfxHandle_t redLeadsSound;
@@ -1099,20 +1063,12 @@ typedef struct {
 	sfxHandle_t	countFightSound;
 	sfxHandle_t	countPrepareSound;
 
-	qhandle_t cursor;
-	qhandle_t selectCursor;
-	qhandle_t sizeCursor;
-
 	// BFP - No regen and grenade bounce sound
 //	sfxHandle_t	regenSound;
 	sfxHandle_t	protectSound;
 	sfxHandle_t	n_healthSound;
 //	sfxHandle_t	hgrenb1aSound;
 //	sfxHandle_t	hgrenb2aSound;
-	sfxHandle_t	wstbimplSound;
-	sfxHandle_t	wstbimpmSound;
-	sfxHandle_t	wstbimpdSound;
-	sfxHandle_t	wstbactvSound;
 
 	// BFP - Tier up sound
 	sfxHandle_t tierUpSound;
@@ -1128,10 +1084,10 @@ typedef struct {
 	sfxHandle_t kiChargeSound; 	// BFP - Ki charge sound
 	sfxHandle_t kiUseSound;		// BFP - Ki use sound
 
-	sfxHandle_t defaultKiBeamExplosionWaveSound;	// BFP - Default ki beam and ki explosion wave sound
-	sfxHandle_t defaultKiFiringAttackSound;			// BFP - Default ki firing sound
-	sfxHandle_t defaultKiChargingSound;				// BFP - Default ki attack charging sound
-	sfxHandle_t diskKiChargingSound;				// BFP - Disk ki attack charging sound
+	//sfxHandle_t	defaultKiBeamExplosionWaveSound;	// BFP - Default ki beam and ki explosion wave sound
+	//sfxHandle_t	defaultKiFiringAttackSound;			// BFP - Default ki firing sound
+	//sfxHandle_t	defaultKiChargingSound;				// BFP - Default ki attack charging sound
+	//sfxHandle_t	diskKiChargingSound;				// BFP - Disk ki attack charging sound
 } cgMedia_t;
 
 

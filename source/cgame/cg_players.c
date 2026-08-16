@@ -2412,7 +2412,7 @@ Adds sprite aura, just one quad
 ============
 */
 static void CG_SpriteAura( refEntity_t aura ) { // BFP - Sprite aura
-	// BFP - NOTE: What shader was added?? Originally, BFP didn't finish the shader to attach or they forgot...
+	// BFP - NOTE: Originally, BFP didn't finish the shader to attach or they forgot...
 	// That radius looks a bit big for an aura, maybe they thought to fit the texture that way or some circular aura?
 	// And... What the heck? This sprite view depends of pitch angle until some client connects?
 	// Also when cg_smallOwnAura cvar is enabled, it doesn't display any aura to the client itself. 
@@ -2427,7 +2427,7 @@ static void CG_SpriteAura( refEntity_t aura ) { // BFP - Sprite aura
 		}
 	}
 	aura.reType = RT_SPRITE;
-	aura.customShader = 0;
+	aura.customShader = cgs.media.spriteAura;
 	aura.radius += 75;
 	if ( connectedClients > 1 ) {
 		pitchView = -15;
