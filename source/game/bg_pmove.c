@@ -177,9 +177,11 @@ static void PM_AttackAnim( int anim, int prepareAnim ) { // BFP - Handles attack
 	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_CHARGEAUTOFIRE: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_CHARGEAUTOFIRE );
 	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_LOOPINGANIM: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_LOOPINGANIM );
 	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_NOATTACKANIM: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_NOATTACKANIM );
+	Com_Printf( "pm->ps->ammo[ %d ] & AMMOF_MOVEMENTPENALTY: %d\n", pm->ps->weapon, pm->ps->ammo[ pm->ps->weapon ] & AMMOF_MOVEMENTPENALTY );
 #endif
 	// noAttackAnim
-	if ( pm->ps->ammo[pm->ps->weapon] & AMMOF_NOATTACKANIM ) {
+	if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_NOATTACKANIM )
+	|| ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_SBEAM ) ) {
 		if ( !PM_IsInKiAttackState() && pm->ps->weaponstate != WEAPON_FIRING ) {
 			PM_ContinueTorsoAnim( prepareAnim );
 			return;
@@ -240,21 +242,21 @@ PM_KiAttackTorsoAnim
 static void PM_KiAttackTorsoAnim( void ) { // BFP - Torso ki attack anims
 	if ( ( pm->cmd.buttons & BUTTON_ATTACK ) && !PM_IsInKiAttackState() ) {
 		switch( pm->ps->weapon ) {
-		case WP_NONE: { PM_AttackAnim( TORSO_ATTACK0_STRIKE, TORSO_ATTACK0_PREPARE ); break; }
-		case WP_GAUNTLET: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
-		case WP_MACHINEGUN: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
-		case WP_SHOTGUN: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
-		case WP_GRENADE_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
+		case WP_ATTACK_0: { PM_AttackAnim( TORSO_ATTACK0_STRIKE, TORSO_ATTACK0_PREPARE ); break; }
+		case WP_ATTACK_1: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
+		case WP_ATTACK_2: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
+		case WP_ATTACK_3: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
+		case WP_ATTACK_4: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
 		}
 	} else if ( PM_IsInKiAttackState() ) {
 		pm->cmd.buttons &= ~BUTTON_GESTURE;
 		switch( pm->ps->weapon ) {
 		default:
-		case WP_NONE: { PM_AttackAnim( TORSO_ATTACK0_STRIKE, TORSO_ATTACK0_PREPARE ); break; }
-		case WP_GAUNTLET: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
-		case WP_MACHINEGUN: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
-		case WP_SHOTGUN: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
-		case WP_GRENADE_LAUNCHER: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
+		case WP_ATTACK_0: { PM_AttackAnim( TORSO_ATTACK0_STRIKE, TORSO_ATTACK0_PREPARE ); break; }
+		case WP_ATTACK_1: { PM_AttackAnim( TORSO_ATTACK1_STRIKE, TORSO_ATTACK1_PREPARE ); break; }
+		case WP_ATTACK_2: { PM_AttackAnim( TORSO_ATTACK2_STRIKE, TORSO_ATTACK2_PREPARE ); break; }
+		case WP_ATTACK_3: { PM_AttackAnim( TORSO_ATTACK3_STRIKE, TORSO_ATTACK3_PREPARE ); break; }
+		case WP_ATTACK_4: { PM_AttackAnim( TORSO_ATTACK4_STRIKE, TORSO_ATTACK4_PREPARE ); break; }
 		}
 	}
 }
@@ -755,9 +757,9 @@ static void PM_Drifting( void ) { // BFP - Drifting
 			driftFactor = 0.008;
 		}
 		if ( forwardSpeed > 0 ) { // left
-			VectorScale( pml.right, driftFactor * Q_fabs( forwardSpeed ) * pml.right[1], drift );
+			VectorScale( pml.right, driftFactor * Q_fabs( forwardSpeed ) * pml.right[0], drift );
 		} else { // right
-			VectorScale( pml.right, -driftFactor * Q_fabs( forwardSpeed ) * pml.right[1], drift );
+			VectorScale( pml.right, -driftFactor * Q_fabs( forwardSpeed ) * pml.right[0], drift );
 		}
 		VectorAdd( pm->ps->velocity, drift, pm->ps->velocity );
 	}
@@ -974,9 +976,12 @@ static void PM_WaterMove( void ) {
 		}
 
 		// BFP - Avoid going up, keep sinking
-		if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
-		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE 
-			&& ( pm->ps->eFlags & EF_FIRING ) )
+		if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY ) 
+		&& ( ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) 
+			&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->weaponstate == WEAPON_ACTIVE 
+				&& pm->ps->weaponTime > 0 ) ) )
 		|| pm->ps->weaponstate == WEAPON_STUN 
 		|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 			wishvel[2] = 0;
@@ -993,9 +998,12 @@ static void PM_WaterMove( void ) {
 	}
 
 	// BFP - Sink on stunned status
-	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
-	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
-		&& ( pm->ps->eFlags & EF_FIRING ) )
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY ) 
+	&& ( ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) 
+			&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->weaponstate == WEAPON_ACTIVE 
+				&& pm->ps->weaponTime > 0 ) ) )
 	|| pm->ps->weaponstate == WEAPON_STUN 
 	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		wishvel[2] -= pm->ps->gravity * pml.frametime;
@@ -1422,9 +1430,12 @@ static void PM_WalkMove( void ) {
 	}
 
 	// BFP - Sink on stunned status
-	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
-	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
-		&& ( pm->ps->eFlags & EF_FIRING ) )
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY ) 
+	&& ( ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) 
+			&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->weaponstate == WEAPON_ACTIVE 
+				&& pm->ps->weaponTime > 0 ) ) )
 	|| pm->ps->weaponstate == WEAPON_STUN 
 	|| pm->ps->stats[STAT_HITSTUN_TIME] > 0 ) {
 		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
@@ -2092,15 +2103,16 @@ static void PM_Footsteps( void ) {
 		return;
 	}
 
-	// BFP - Ki explosion wave state
-	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
-		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
-	&& ( pm->ps->eFlags & EF_FIRING ) ) ) {
+	// BFP - Movement penalty/weapon stun state for forcefield
+	if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
+	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
+	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE )
+	&& pm->ps->weaponstate == WEAPON_ACTIVE && ( pm->ps->eFlags & EF_FIRING ) ) {
 		PM_ContinueLegsAnim( LEGS_IDLE );
 		return;
 	}
 
-	// BFP - Ki explosion wave stun state
+	// BFP - Movement penalty/weapon stun stun state
 	if ( pm->ps->weaponstate == WEAPON_STUN ) {
 		PM_ContinueTorsoAnim( TORSO_STUN );
 		PM_ContinueLegsAnim( LEGS_IDLE );
@@ -2326,7 +2338,7 @@ PM_BeginWeaponChange
 ===============
 */
 static void PM_BeginWeaponChange( int weapon ) {
-	if ( weapon < WP_NONE || weapon >= BFP_NUM_WEAPONS ) {
+	if ( weapon < WP_ATTACK_0 || weapon >= BFP_NUM_WEAPONS ) {
 		return;
 	}
 
@@ -2355,15 +2367,15 @@ static void PM_FinishWeaponChange( void ) {
 	int		weapon;
 
 	weapon = pm->cmd.weapon;
-	if ( weapon < WP_NONE ) {
+	if ( weapon < WP_ATTACK_0 ) {
 		weapon = BFP_NUM_WEAPONS - 1;
 	}
 	if ( weapon >= BFP_NUM_WEAPONS ) {
-		weapon = WP_NONE;
+		weapon = WP_ATTACK_0;
 	}
 
 	if ( !( pm->ps->stats[STAT_WEAPONS] & ( 1 << weapon ) ) ) {
-		weapon = WP_NONE;
+		weapon = WP_ATTACK_0;
 	}
 
 	pm->ps->weapon = weapon;
@@ -2482,7 +2494,7 @@ static void PM_TorsoAnimation( void ) {
 
 #if 0
 	if ( pm->ps->weaponstate == WEAPON_READY ) {
-		if ( pm->ps->weapon == WP_GAUNTLET ) {
+		if ( pm->ps->weapon == WP_ATTACK_1 ) {
 			PM_ContinueTorsoAnim( TORSO_STAND ); // BFP - before TORSO_STAND2
 		} else {
 			PM_ContinueTorsoAnim( TORSO_STAND );
@@ -2574,8 +2586,10 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_RUN ) 
 	&& ( pml.groundTrace.contents & MASK_PLAYERSOLID ) 
 	&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
-	&& !( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
-		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE )
+	&& !( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
+	&& ( ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && pm->ps->weaponstate == WEAPON_ACTIVE && ( pm->cmd.buttons & BUTTON_ATTACK ) ) ) )
 	&& pm->ps->weaponstate != WEAPON_STUN ) {
 		pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
 		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
@@ -2754,16 +2768,16 @@ static void PM_Melee( void ) { // BFP - Melee
 
 /*
 ==============
-PM_KiExplosionWave
+PM_MovementPenalty
 
-Handle ki explosion wave during and at the end of its use
+Handle movement penalty/weapon stun during and at the end of its use
 ==============
 */
-static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
-	// ki explosion wave state
-	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
-	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
-	&& ( pm->ps->eFlags & EF_FIRING ) ) {
+static void PM_MovementPenalty( void ) { // BFP - Movement penalty/weapon stun handling
+	if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY ) 
+	&& ( ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && pm->ps->weaponstate == WEAPON_ACTIVE && pm->ps->weaponTime > 0 ) ) ) {
 		// don't move, also these keys cannot be used; blocking, ki charge and ki boost statuses are removed
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
 		pm->cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE | BUTTON_BLOCK );
@@ -2773,7 +2787,7 @@ static void PM_KiExplosionWave( void ) { // BFP - Ki explosion wave handling
 		return;
 	}
 
-	// ki explosion wave stun state
+	// stun state
 	if ( pm->ps->weaponstate == WEAPON_STUN ) {
 		// don't move, also these keys cannot be used; melee, attacking, blocking, ki charge and ki boost statuses are removed
 		pm->cmd.forwardmove = pm->cmd.rightmove = pm->cmd.upmove = 0;
@@ -2830,7 +2844,7 @@ static void PM_Weapon( void ) {
 
 	// check for dead player
 	if ( pm->ps->stats[STAT_HEALTH] <= 0 ) {
-		pm->ps->weapon = WP_NONE;
+		pm->ps->weapon = WP_ATTACK_0;
 		return;
 	}
 
@@ -2883,6 +2897,18 @@ static void PM_Weapon( void ) {
 	switch( pm->ps->weaponstate ) {
 	case WEAPON_READY:
 		pm->ps->eFlags &= ~EF_READY_KI_ATTACK;
+		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
+		&& ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) 
+		&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) ) 
+			|| ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+			|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) ) ) ) {
+			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
+
+			// fall even whether the player is flying
+			if ( pm->ps->eFlags & EF_FLIGHT ) {
+				pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
+			}
+		}
 		break;
 	case WEAPON_DROPPING:
 	case WEAPON_RAISING:
@@ -2898,6 +2924,20 @@ static void PM_Weapon( void ) {
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->weaponTime = 0;
 		}
+
+		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
+		&& ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) 
+			&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) )
+			|| ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+			|| ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) ) {
+			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
+
+			// fall even whether the player is flying
+			if ( pm->ps->eFlags & EF_FLIGHT ) {
+				pm->ps->velocity[2] -= pm->ps->gravity * 2 * pml.frametime;
+			}
+			break;
+		}
 		break;
 	// BFP - NOTE: The beam is triggering until pressing the attack key again after holded, using ki charge or blocking
 	// Pressing attack key again or changing weapon, the beam is exploded before the impact
@@ -2906,8 +2946,8 @@ static void PM_Weapon( void ) {
 	case WEAPON_BEAMSTRUGGLE:
 		pm->ps->eFlags |= EF_FIRING; // keep playing firing sound
 
-		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD )
-		&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) {
+		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
+		&& pm->ps->weaponTime > 0 ) {
 			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
 
 			// fall even whether the player is flying
@@ -3077,10 +3117,13 @@ static void PM_KiCharge( void ) { // BFP - Ki Charge
 		return;
 	}
 
-	// BFP - Ki explosion wave and stun after using it, avoid charging also
-	if ( ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) 
-	&& ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) && pm->ps->weaponstate == WEAPON_ACTIVE
-	&& ( pm->ps->eFlags & EF_FIRING ) )
+	// BFP - Movement penalty/weapon stun after using it, avoid charging also
+	if ( ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY ) 
+	&& ( ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+	|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
+	|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) 
+		&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->weaponstate == WEAPON_ACTIVE 
+			&& pm->ps->weaponTime > 0 ) ) )
 	|| pm->ps->weaponstate == WEAPON_STUN ) {
 		return;
 	}
@@ -3331,8 +3374,8 @@ void PmoveSingle (pmove_t *pmove) {
 	// BFP - Melee
 	PM_Melee();
 
-	// BFP - Ki explosion wave handling
-	PM_KiExplosionWave();
+	// BFP - Movement penalty/weapon stun handling
+	PM_MovementPenalty();
 
 	// BFP - Beam struggle handling
 	PM_BeamStruggleStatus();

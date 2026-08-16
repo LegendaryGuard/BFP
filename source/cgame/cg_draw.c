@@ -479,9 +479,9 @@ CG_DrawSelectedKiAttack
 ==================
 */
 static void CG_DrawSelectedKiAttack( void ) { // BFP - Show selected ki attack
-	bfpAttackSkinConfig_t	*atkCfg = CG_GetAttackConfig( cg.snap->ps.clientNum, cg.predictedPlayerState.weapon );
-	if ( atkCfg ) {
-		CG_DrawPic( 535, 383, 96, 37, atkCfg->attackIcon );
+	bfpAttackSkinConfig_t	*skinAtkCfg = CG_GetAttackConfig( cg.snap->ps.clientNum, cg.predictedPlayerState.weapon );
+	if ( skinAtkCfg ) {
+		CG_DrawPic( 535, 383, 96, 37, skinAtkCfg->attackIcon );
 	} else { // display forbidden icon
 		CG_DrawPic( 535, 383, 96, 37, cgs.media.deferShader );
 	}
@@ -958,9 +958,9 @@ static float CG_DrawTeamOverlay( float y, qboolean right, qboolean upper ) {
 
 			// BFP - Replace weapons to skin attack config
 			{
-				bfpAttackSkinConfig_t	*atkCfg = CG_GetAttackConfig( sortedTeamPlayers[i], ci->curWeapon );
-				if ( atkCfg && atkCfg->attackIcon ) {
-					CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, atkCfg->attackIcon );
+				bfpAttackSkinConfig_t	*skinAtkCfg = CG_GetAttackConfig( sortedTeamPlayers[i], ci->curWeapon );
+				if ( skinAtkCfg && skinAtkCfg->attackIcon ) {
+					CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, skinAtkCfg->attackIcon );
 				} else {
 					CG_DrawPic( xx, y, TINYCHAR_WIDTH, TINYCHAR_HEIGHT, cgs.media.deferShader );
 				}
@@ -2430,8 +2430,6 @@ static void CG_DrawWarmup( void ) {
 	int			w;
 	int			sec;
 	int			i;
-	// BFP - Unused variable, wth?
-	// float scale;
 	clientInfo_t	*ci1, *ci2;
 	int			cw;
 	const char	*s;
@@ -2518,24 +2516,18 @@ static void CG_DrawWarmup( void ) {
 		}
 	}
 
-	// BFP - Unused scale variable on this logic, wth?
-	// scale = 0.45f;
 	switch ( cg.warmupCount ) {
 	case 0:
 		cw = 28;
-		// scale = 0.54f;
 		break;
 	case 1:
 		cw = 24;
-		// scale = 0.51f;
 		break;
 	case 2:
 		cw = 20;
-		// scale = 0.48f;
 		break;
 	default:
 		cw = 16;
-		// scale = 0.45f;
 		break;
 	}
 

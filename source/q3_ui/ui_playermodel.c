@@ -123,7 +123,7 @@ UI_LoadBFPAttacksetInfo
 static void UI_LoadBFPAttacksetInfo( void ) {
 	fileHandle_t	f;
 	int				i, len, currentAttackSet = -1;
-	char			buf[BFP_CFG_BUFFER_SIZE];
+	static char		buf[BFP_CFG_BUFFER_SIZE];
 	char			*ptr;
 
 	s_numAttacksetInfo = 0;
@@ -347,7 +347,7 @@ UI_LoadSkinConfig
 */
 static void UI_LoadSkinConfig( const char *modelDir, const char *skinName, qhandle_t attackIcons[BFP_NUM_WEAPONS] ) { // BFP - Loads skin config
 	char			filename[MAX_QPATH*2];
-	char			buf[BFP_CFG_BUFFER_SIZE];
+	static char		buf[BFP_CFG_BUFFER_SIZE];
 	fileHandle_t	f;
 	int				i, len;
 	const char		*defaultModel = NULL;
@@ -590,7 +590,7 @@ static void PlayerModel_UpdateModel( void )
 	VectorClear( moveangles );
 
 	UI_PlayerInfo_SetModel( &s_playermodel.playerinfo, s_playermodel.modelskin );
-	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_RUN, TORSO_RUN, viewangles, moveangles, WP_NONE, qfalse ); // BFP - before "WP_MACHINEGUN"
+	UI_PlayerInfo_SetInfo( &s_playermodel.playerinfo, LEGS_RUN, TORSO_RUN, viewangles, moveangles, WP_ATTACK_0, qfalse ); // BFP - before "WP_MACHINEGUN"
 }
 
 /*

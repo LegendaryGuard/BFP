@@ -411,7 +411,7 @@ Loads and executes the BFP mod server config file (bfp_server.cfg)
 static void G_LoadBFPServerConfig( void ) { // BFP - Load bfp_server.cfg
 	fileHandle_t f;
 	int len;
-	char buf[BFP_CFG_BUFFER_SIZE];
+	static char buf[BFP_CFG_BUFFER_SIZE];
 	char *ptr;
 
 	len = trap_FS_FOpenFile( "bfp_server.cfg", &f, FS_READ );

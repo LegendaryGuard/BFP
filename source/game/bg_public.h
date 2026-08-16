@@ -40,8 +40,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	ITEM_RADIUS			15		// item sizes are needed for client side pickup detection
 
-#define	LIGHTNING_RANGE		1500 //768
-
 #define	SCORE_NOT_PRESENT	-9999	// for the CS_SCORES[12] when only one player is present
 
 #define	VOTE_TIME			30000	// 30 seconds before vote times out
@@ -144,7 +142,7 @@ typedef enum {
 	// (originally BFP didn't use that because of their abuse of WP_, PW_ and STAT_ stuff in their networking):
 	WEAPON_ACTIVE, // BFP - Active fire
 	WEAPON_BEAMSTRUGGLE, // BFP - Beam struggle
-	WEAPON_STUN // BFP - Stun status (not hit stun) when using ki explosion wave
+	WEAPON_STUN // BFP - Weapon stun status (not hit stun)
 } weaponstate_t;
 
 // BFP - Attack types
@@ -253,7 +251,7 @@ typedef enum {
 	STAT_UNUSED_INDEX12,			// unused stat index (don't remove if you want to keep demo networking!)
 	STAT_UNUSED_INDEX13,			// BFP - Beam firing weapon state
 	STAT_UNUSED_INDEX14,			// BFP - Force field weapon state
-	//STAT_UNUSED_INDEX15			// BFP - Fly tilt angles (left: moves to -80, right: moves to 80), rename during the config implementation
+	//STAT_UNUSED_INDEX15			// BFP - Fly tilt angles (left: moves to -80, right: moves to 80)
 	STAT_HITSTUN_TIME				// BFP - Hit stun time
 } statIndex_t;
 
@@ -374,30 +372,30 @@ typedef enum {
 
 // BFP - NOTE: According to keep original BFP networking, these are modified for features
 typedef enum {
-	WP_NONE,				// BFP - TODO: First attack selected, rename during the config implementation
-	WP_GAUNTLET,			// BFP - TODO: Second attack selected, rename during the config implementation
-	WP_MACHINEGUN,			// BFP - TODO: Third attack selected, rename during the config implementation
-	WP_SHOTGUN,				// BFP - TODO: Fourth attack selected, rename during the config implementation
-	WP_GRENADE_LAUNCHER,	// BFP - TODO: Fifth (or last) attack selected and also for a timer of 2000 msec when being attacked/damaged, rename during the config implementation
+	WP_ATTACK_0,			// BFP - First attack selected
+	WP_ATTACK_1,			// BFP - Second attack selected
+	WP_ATTACK_2,			// BFP - Third attack selected
+	WP_ATTACK_3,			// BFP - Fourth attack selected
+	WP_ATTACK_4,			// BFP - Fifth (or last) attack selected, in original BFP is also treated as a timer of 2000 msec when being attacked/damaged
 
-	WP_ROCKET_LAUNCHER,		// BFP - Original demo networking: Ki recharge delay time (for g_chargeDelay), rename during the config implementation
-	WP_LIGHTNING,			// BFP - Original demo networking: Hit stun delay after receiving hit stun, rename during the config implementation
-	WP_RAILGUN,				// BFP - Original demo networking: Block delay, rename during the config implementation
-	WP_PLASMAGUN,			// BFP - Original demo networking: Ki use/boost toggle, rename during the config implementation
-	WP_BFG,					// BFP - Original demo networking: Flight toggle key control, rename during the config implementation
-	WP_GRAPPLING_HOOK,		// BFP - Original demo networking: Blind seconds, rename during the config implementation
+	WP_UNUSED_INDEX5,		// BFP - Original demo networking: Ki recharge delay time (for g_chargeDelay)
+	WP_UNUSED_INDEX6,		// BFP - Original demo networking: Hit stun delay after receiving hit stun
+	WP_UNUSED_INDEX7,		// BFP - Original demo networking: Block delay
+	WP_UNUSED_INDEX8,		// BFP - Original demo networking: Ki use/boost toggle
+	WP_UNUSED_INDEX9,		// BFP - Original demo networking: Flight toggle key control
+	WP_UNUSED_INDEX10,		// BFP - Original demo networking: Blind seconds
 
-//	WP_UNUSED_INDEX11,		// BFP - Original demo networking: Rapid attacks like ki storm (alternates -1 and 1), rename during the config implementation
+//	WP_UNUSED_INDEX11,		// BFP - Original demo networking: Rapid attacks like ki storm (alternates -1 and 1)
 //	WP_UNUSED_INDEX12,		// BFP - Original demo networking: Unknown or unused index
-//	WP_UNUSED_INDEX13,		// BFP - Original demo networking: Toggle to use Short-Range Teleport - Zanzoken, rename during the config implementation
-//	WP_UNUSED_INDEX14,		// BFP - Original demo networking: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken, rename during the config implementation
-//	WP_UNUSED_INDEX15,		// BFP - Original demo networking: Enables/disables beam struggle , rename during the config implementation
+//	WP_UNUSED_INDEX13,		// BFP - Original demo networking: Toggle to use Short-Range Teleport - Zanzoken
+//	WP_UNUSED_INDEX14,		// BFP - Original demo networking: Directional left/right keys to move left/right while pressing, adds time msec, looks like a timer to handle for Zanzoken
+//	WP_UNUSED_INDEX15,		// BFP - Original demo networking: Enables/disables beam struggle 
 
 	WP_NUM_WEAPONS
 } weapon_t;
 
 // BFP - BFP number of weapon slots to be selected
-#define	BFP_NUM_WEAPONS			( WP_GRENADE_LAUNCHER + 1 )
+#define	BFP_NUM_WEAPONS			( WP_ATTACK_4 + 1 )
 
 // BFP - ps->ammo[WP_*] bit flags for ki attacks, used to handle pmove snapshots
 // NOTE: may not have more than 16
@@ -409,6 +407,7 @@ typedef enum {
 #define	AMMOF_CHARGEAUTOFIRE	32
 #define	AMMOF_LOOPINGANIM		64
 #define	AMMOF_NOATTACKANIM		128
+#define	AMMOF_MOVEMENTPENALTY	256
 
 // BFP - BFP WEAPON CONFIG
 /*
@@ -420,7 +419,7 @@ BFP WEAPON CONFIG
 */
 
 #define	MAX_BFP_ATTACKSETS		3072
-#define	MAX_BFP_WEAPON_DEFS		9999
+#define	MAX_BFP_WEAPON_DEFS		8192
 
 typedef struct {
 	qboolean	inuse;						// slot occupied by a parsed (attack_name) block
@@ -510,6 +509,7 @@ typedef struct {
 
 void			BG_LoadBFPAttacksetsConfig( void );
 const char		*BG_FindAttacksetDefaultModel( const char *modelPrefix );
+const char		*BG_FindAttacksetDefaultModelForModel( const char *modelName );
 int				BG_GetWeaponNumForSlot( const char *modelName, int attackSlot );
 qboolean		BG_ModelMatchesAnyAttacksetPrefix( const char *modelName );
 void			BG_SetClientAttackWeaponNums( int clientNum, const char *modelName );
@@ -787,7 +787,6 @@ typedef struct gitem_s {
 	char		*world_model[MAX_ITEM_MODELS];
 
 	char		*icon;
-	// BFP - TODO: Use as attackName for skin config
 	char		*pickup_name;	// for printing on pickup
 
 	int			quantity;		// for ammo how much, or duration of powerup

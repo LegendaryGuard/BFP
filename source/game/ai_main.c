@@ -1042,8 +1042,8 @@ int BotAI(int client, float thinktime) {
 	BotDeathmatchAI(bs, thinktime);
 	//set the weapon selection every AI frame
 	// BFP - Avoid "weapon number out of range" engine print error
-	if ( bs->weaponnum <= WP_NONE ) {
-		bs->weaponnum = WP_GAUNTLET;
+	if ( bs->weaponnum <= WP_ATTACK_0 ) {
+		bs->weaponnum = WP_ATTACK_1;
 	}
 	trap_EA_SelectWeapon(bs->client, bs->weaponnum);
 	//subtract the delta angles
@@ -1480,13 +1480,13 @@ int BotAIStartFrame(int time) {
 				continue;
 			}
 			// do not update missiles
-			if ( ent->s.eType == ET_MISSILE && ent->s.weapon != WP_GRAPPLING_HOOK ) {
+			/*if ( ent->s.eType == ET_MISSILE && ent->s.weapon != WP_GRAPPLING_HOOK ) {
 				if ( *s == qfalse ) {
 					*s = qtrue;
 					trap_BotLibUpdateEntity( i, NULL );
 				}
 				continue;
-			}
+			}*/
 			// do not update event only entities
 			if ( ent->s.eType > ET_EVENTS ) {
 				if ( *s == qfalse ) {
@@ -1496,10 +1496,10 @@ int BotAIStartFrame(int time) {
 				continue;
 			}
 			// do not update missiles
-			if (ent->s.eType == ET_MISSILE && ent->s.weapon != WP_GRAPPLING_HOOK) {
+			/*if (ent->s.eType == ET_MISSILE && ent->s.weapon != WP_GRAPPLING_HOOK) {
 				trap_BotLibUpdateEntity(i, NULL);
 				continue;
-			}
+			}*/
 			// do not update event only entities
 			if (ent->s.eType > ET_EVENTS) {
 				trap_BotLibUpdateEntity(i, NULL);

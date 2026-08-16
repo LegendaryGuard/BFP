@@ -9,6 +9,8 @@ BFP SKIN CONFIG
 
 #include "cg_local.h"
 
+static qboolean CG_LoadSkinConfigFile( const char *fileName, bfpSkinConfig_t *config );
+
 /*
 ================
 CG_SkinConfig_ReadToken
@@ -111,7 +113,7 @@ CG_ParseSkinConfigBuffer
 
 Parses one already-loaded skin-config-style buffer, applying every directive 
 it finds directly onto *config (the caller's in-progress bfpSkinConfig_t) - this 
-is what makes the 3-layer cascade work: call this once per layer, in order, 
+is what makes the cascade work: call this once per layer, in order, 
 on the same config, and each layer's directives simply overwrite whatever the 
 previous layer set for that same field.
 Fields the file doesn't mention at all are left exactly as they were
@@ -211,8 +213,12 @@ static void CG_ParseSkinConfigBuffer( char *buf, bfpSkinConfig_t *config ) {
 			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
 				CG_SkinConfig_ReadQuotedOrToken( &ptr, value, sizeof( value ) );
 				atk = &config->attacks[attackIdx];
-				Q_strncpyz( atk->attackFireVoicePath, value, sizeof( atk->attackFireVoicePath ) );
-				atk->attackFireVoice = value[0] ? trap_S_RegisterSound( value, qfalse ) : 0;
+
+				// turn off
+				if ( Q_stricmp( value, "0" ) ) {
+					Q_strncpyz( atk->attackFireVoicePath, value, sizeof( atk->attackFireVoicePath ) );
+					atk->attackFireVoice = value[0] ? trap_S_RegisterSound( value, qfalse ) : 0;
+				}
 			} else {
 				CG_SkinConfig_ReadQuotedOrToken( &ptr, value, sizeof( value ) );
 			}
@@ -223,18 +229,20 @@ static void CG_ParseSkinConfigBuffer( char *buf, bfpSkinConfig_t *config ) {
 				int		chargeIdx;
 
 				CG_SkinConfig_ReadToken( &ptr, chargeValue, sizeof( chargeValue ) );
-				chargeIdx = atoi( chargeValue ) - 1;
+				chargeIdx = atoi( chargeValue );
 				if ( chargeIdx < 0 ) {
 					chargeIdx = 0;
 				}
 				CG_SkinConfig_ReadQuotedOrToken( &ptr, value, sizeof( value ) );
 
-				if ( chargeIdx >= 0 && chargeIdx <= ATTACK_CHARGE_LIMIT - 1 ) {
+				if ( chargeIdx >= 0 && chargeIdx <= ATTACK_CHARGE_LIMIT ) {
 					atk = &config->attacks[attackIdx];
-					Q_strncpyz( atk->attackChargeVoicePath[chargeIdx], value, sizeof( atk->attackChargeVoicePath[chargeIdx] ) );
-					atk->attackChargeVoice[chargeIdx] = value[0] ? trap_S_RegisterSound( value, qfalse ) : 0;
-				} else {
-					
+
+					// turn off
+					if ( Q_stricmp( value, "0" ) ) {
+						Q_strncpyz( atk->attackChargeVoicePath[chargeIdx], value, sizeof( atk->attackChargeVoicePath[chargeIdx] ) );
+						atk->attackChargeVoice[chargeIdx] = value[0] ? trap_S_RegisterSound( value, qfalse ) : 0;
+					}
 				}
 			} else {
 				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) ); // charge index
@@ -433,6 +441,13 @@ static void CG_ParseSkinConfigBuffer( char *buf, bfpSkinConfig_t *config ) {
 			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
 				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
 				config->attacks[attackIdx].missileRotation = atoi( value );
+				atk = &config->attacks[attackIdx];
+				atk->missileRotation = atoi( value );
+				// turn off
+				if ( !Q_stricmp( value, "0" ) ) {
+					atk->missileModelRotation = 0;
+					atk->missileRotation = 0;
+				}
 			} else {
 				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
 			}
@@ -829,26 +844,65 @@ bfpWeaponDef_t *CG_GetWeaponDefForSlot( int clientNum, int slot ) {
 ======================
 CG_LoadSkinConfig
 
-Loads and merges the 3-layer skin config cascade for (modelName, skinName)
-into ci->skinConfig.
+Loads and merges the skin config cascade for (modelName, skinName)
+into ci->skinConfig, per 3-layer cascade:
+
+1. <attackset defaultModel>/default.cfg (e.g. bfp3-ryuujin/default.cfg)
+2. <modelName>/default.cfg (e.g. bfp3-moi/default.cfg)
+3. <modelName>/<skinName>.cfg, if skinName isn't "default"
+
 Each layer only overrides the specific fields it sets; anything a layer
-doesn't mention keeps whatever the previous layer left there. ci->skinConfig
-is zeroed first, so a totally missing cascade (e.g. no bfp_attacksets.cfg
-match) just leaves everything at safe zero defaults rather than stale data
-from whichever client previously used this clientInfo_t slot
+doesn't mention (including an attackFireVoice/attackChargeVoice "0",
+which Create_Custom_Models.md defines as explicitly "turning off" - i.e.
+not touching - a value) keeps whatever the previous layer left there.
+This is why layer 1 has to be loaded first and separately from layer 2,
+even though both are named "default.cfg": layer 2 is what's allowed to
+selectively fall back to layer 1's values via "0", so layer 1 must
+already be in ci->skinConfig before layer 2 is parsed.
+
+ci->skinConfig is zeroed first, so a totally missing cascade (e.g. no
+bfp_attacksets.cfg match at all) just leaves everything at safe zero
+defaults rather than stale data from whichever client previously used
+this clientInfo_t slot
 ======================
 */
 void CG_LoadSkinConfig( clientInfo_t *ci ) {
 	char		filename[MAX_QPATH*2];
 	qboolean	loadedAnyFile = qfalse;
+	const char	*attacksetDefaultModel;
+	int			i;
 
-	// modelName/default.cfg
+	memset( &ci->skinConfig, 0, sizeof( ci->skinConfig ) );
+
+	// set default properties, just in case, that applies 
+	// if there's like no 'missileModelRotation [attackIndex] "0"' set
+	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
+		ci->skinConfig.attacks[i].missileModelRotation = .25f;
+		ci->skinConfig.attacks[i].missileTrailRadius = 32;
+		ci->skinConfig.attacks[i].missileTrailTime = 2000;
+	}
+
+	// layer 1: <attackset defaultModel>/default.cfg
+	// skipped when modelName itself already IS the attackset's default
+	// model - that model's own default.cfg is about to be loaded as
+	// layer 2 anyway, so loading it twice here would be redundant (and
+	// any "0" in its own file has nothing earlier to fall back to)
+	attacksetDefaultModel = BG_FindAttacksetDefaultModelForModel( ci->modelName );
+	if ( attacksetDefaultModel && attacksetDefaultModel[0]
+	&& Q_stricmp( attacksetDefaultModel, ci->modelName ) ) {
+		Com_sprintf( filename, sizeof(filename), "models/players/%s/default.cfg", attacksetDefaultModel );
+		if ( CG_LoadSkinConfigFile( filename, &ci->skinConfig ) ) {
+			loadedAnyFile = qtrue;
+		}
+	}
+
+	// layer 2: modelName/default.cfg
 	Com_sprintf( filename, sizeof(filename), "models/players/%s/default.cfg", ci->modelName );
 	if ( CG_LoadSkinConfigFile( filename, &ci->skinConfig ) ) {
 		loadedAnyFile = qtrue;
 	}
 
-	// modelName/[skinName.cfg]
+	// layer 3: modelName/[skinName.cfg]
 	if ( ci->skinName[0] && Q_stricmp( ci->skinName, "default" ) ) {
 		Com_sprintf( filename, sizeof(filename), "models/players/%s/%s.cfg", ci->modelName, ci->skinName );
 		if ( CG_LoadSkinConfigFile( filename, &ci->skinConfig ) ) {

@@ -375,6 +375,8 @@ static void CG_ItemPickup( int itemNum ) {
 	cg.itemPickupTime = cg.time;
 	// cg.itemPickupBlendTime = cg.time; // BFP - BFP doesn't use the item pickup effect for the crosshair, now it's reused for when some opponent is being hit
 	// see if it should be the grabbed weapon
+	// BFP - No weapon item
+	/*
 	if ( bg_itemlist[itemNum].giType == IT_WEAPON ) {
 		// select it immediately
 		if ( cg_autoswitch.integer && bg_itemlist[itemNum].giTag != WP_MACHINEGUN ) {
@@ -382,6 +384,7 @@ static void CG_ItemPickup( int itemNum ) {
 			cg.weaponSelect = bg_itemlist[itemNum].giTag;
 		}
 	}
+	*/
 
 }
 
@@ -436,7 +439,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	int				clientNum;
 	clientInfo_t	*ci;
 	centity_t		*ce;
-	bfpAttackSkinConfig_t	*atkCfg;
+	bfpAttackSkinConfig_t	*skinAtkCfg;
 
 	es = &cent->currentState;
 	event = es->event & ~EV_EVENT_BITS;
@@ -460,7 +463,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		clientNum = 0;
 	}
 	ci = &cgs.clientinfo[ clientNum ];
-	atkCfg = &ci->skinConfig.attacks[es->weapon];
+	skinAtkCfg = &ci->skinConfig.attacks[es->weapon];
 	// BFP - HIGHLY MODIFIED, every event is sorted for original BFP networking
 
 	switch ( event ) {
@@ -890,11 +893,13 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 
 	case EV_GRENADE_BOUNCE:			// 67
+#if 0	/* BFP - No grenade bounce sound */
 		if ( rand() & 1 ) {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.hgrenb1aSound );
 		} else {
 			trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.hgrenb2aSound );
 		}
+#endif
 		break;
 
 	case EV_GENERAL_SOUND:			// 68
@@ -1005,27 +1010,27 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	//
 	case EV_MISSILE_HIT:			// 73
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum, atkCfg, cent );
+		CG_MissileHitPlayer( es->weapon, position, dir, es->otherEntityNum, skinAtkCfg, cent );
 		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
 	case EV_MISSILE_MISS:			// 74
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dir, IMPACTSOUND_DEFAULT, atkCfg, cent );
+		CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dir, IMPACTSOUND_DEFAULT, skinAtkCfg, cent );
 		// BFP - Debris particles explosion
-		CG_DebrisExplosion( position, dir, atkCfg );
+		CG_DebrisExplosion( position, dir, skinAtkCfg );
 		// BFP - Spark particles explosion
-		CG_SparksExplosion( position, dir, atkCfg );
+		CG_SparksExplosion( position, dir, skinAtkCfg );
 		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
 	case EV_MISSILE_MISS_METAL:		// 75
 		ByteToDir( es->eventParm, dir );
-		CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dir, IMPACTSOUND_METAL, atkCfg, cent );
+		CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dir, IMPACTSOUND_METAL, skinAtkCfg, cent );
 		// BFP - Debris particles explosion
-		CG_DebrisExplosion( position, dir, atkCfg );
+		CG_DebrisExplosion( position, dir, skinAtkCfg );
 		// BFP - Spark particles explosion
-		CG_SparksExplosion( position, dir, atkCfg );
+		CG_SparksExplosion( position, dir, skinAtkCfg );
 		CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		break;
 
@@ -1035,7 +1040,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	case EV_MISSILE_DETONATE:		// 76
 		{
 			vec3_t	dirDetonate = {0, 0, 1}; // place the explosion position and size correctly
-			CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dirDetonate, IMPACTSOUND_DEFAULT, atkCfg, cent );
+			CG_MissileHitWall( es->weapon, es->otherEntityNum, position, dirDetonate, IMPACTSOUND_DEFAULT, skinAtkCfg, cent );
 			CG_ResetTrail( BEAM_TRAIL, es->number, es->origin ); // BFP - Reset beam trail
 		}
 		break;

@@ -804,143 +804,6 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 	}
 }
 
-// BFP - Unused static functions, remove? I think so
-#if 0
-/*
-======================
-CG_CopyClientInfoModel
-======================
-*/
-static void CG_CopyClientInfoModel( clientInfo_t *from, clientInfo_t *to ) {
-	VectorCopy( from->headOffset, to->headOffset );
-	to->footsteps = from->footsteps;
-	to->gender = from->gender;
-
-	to->legsModel = from->legsModel;
-	to->legsSkin = from->legsSkin;
-	to->torsoModel = from->torsoModel;
-	to->torsoSkin = from->torsoSkin;
-	to->headModel = from->headModel;
-	to->headSkin = from->headSkin;
-	to->modelIcon = from->modelIcon;
-
-	to->newAnims = from->newAnims;
-
-	memcpy( to->animations, from->animations, sizeof( to->animations ) );
-	memcpy( to->sounds, from->sounds, sizeof( to->sounds ) );
-}
-
-/*
-======================
-CG_ScanForExistingClientInfo
-======================
-*/
-static qboolean CG_ScanForExistingClientInfo( clientInfo_t *ci ) {
-	int		i;
-	clientInfo_t	*match;
-
-	for ( i = 0 ; i < cgs.maxclients ; i++ ) {
-		match = &cgs.clientinfo[ i ];
-		if ( !match->infoValid ) {
-			continue;
-		}
-		if ( match->deferred ) {
-			continue;
-		}
-		if ( !Q_stricmp( ci->modelName, match->modelName )
-			&& !Q_stricmp( ci->skinName, match->skinName )
-			&& !Q_stricmp( ci->headModelName, match->headModelName )
-			&& !Q_stricmp( ci->headSkinName, match->headSkinName ) 
-			&& !Q_stricmp( ci->blueTeam, match->blueTeam ) 
-			&& !Q_stricmp( ci->redTeam, match->redTeam )
-			&& (cgs.gametype < GT_TEAM || ci->team == match->team) ) {
-			// this clientinfo is identical, so use it's handles
-
-			ci->deferred = qfalse;
-
-			CG_CopyClientInfoModel( match, ci );
-
-			return qtrue;
-		}
-	}
-
-	// nothing matches, so defer the load
-	return qfalse;
-}
-
-/*
-======================
-CG_SetDeferredClientInfo
-
-We aren't going to load it now, so grab some other
-client's info to use until we have some spare time.
-======================
-*/
-static void CG_SetDeferredClientInfo( clientInfo_t *ci ) {
-	int		i;
-	clientInfo_t	*match;
-
-	// if someone else is already the same models and skins we
-	// can just load the client info
-	for ( i = 0 ; i < cgs.maxclients ; i++ ) {
-		match = &cgs.clientinfo[ i ];
-		if ( !match->infoValid || match->deferred ) {
-			continue;
-		}
-		if ( Q_stricmp( ci->skinName, match->skinName ) ||
-			 Q_stricmp( ci->modelName, match->modelName ) ||
-//			 Q_stricmp( ci->headModelName, match->headModelName ) ||
-//			 Q_stricmp( ci->headSkinName, match->headSkinName ) ||
-			 (cgs.gametype >= GT_TEAM && ci->team != match->team) ) {
-			continue;
-		}
-		// just load the real info cause it uses the same models and skins
-		CG_LoadClientInfo( ci );
-		return;
-	}
-
-	// if we are in teamplay, only grab a model if the skin is correct
-	if ( cgs.gametype >= GT_TEAM ) {
-		for ( i = 0 ; i < cgs.maxclients ; i++ ) {
-			match = &cgs.clientinfo[ i ];
-			if ( !match->infoValid || match->deferred ) {
-				continue;
-			}
-			if ( Q_stricmp( ci->skinName, match->skinName ) ||
-				(cgs.gametype >= GT_TEAM && ci->team != match->team) ) {
-				continue;
-			}
-			ci->deferred = qtrue;
-			CG_CopyClientInfoModel( match, ci );
-			return;
-		}
-		// load the full model, because we don't ever want to show
-		// an improper team skin.  This will cause a hitch for the first
-		// player, when the second enters.  Combat shouldn't be going on
-		// yet, so it shouldn't matter
-		CG_LoadClientInfo( ci );
-		return;
-	}
-
-	// find the first valid clientinfo and grab its stuff
-	for ( i = 0 ; i < cgs.maxclients ; i++ ) {
-		match = &cgs.clientinfo[ i ];
-		if ( !match->infoValid ) {
-			continue;
-		}
-
-		ci->deferred = qtrue;
-		CG_CopyClientInfoModel( match, ci );
-		return;
-	}
-
-	// we should never get here...
-	CG_Printf( "CG_SetDeferredClientInfo: no valid clients!\n" );
-
-	CG_LoadClientInfo( ci );
-}
-#endif
-
 
 /*
 ======================
@@ -1553,12 +1416,15 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	if ( speed ) {
 		vec3_t	axis[3];
 		float	side;
+		// BFP - Adjusted to be the same as original BFP
+		float	torsoSpeed;
 
 		// BFP - Speed handling when moving too much the angles
-		if ( speed < -480.0f ) speed = -480.0f;
-		if ( speed >  480.0f ) speed =  480.0f;
+		if ( speed < -806.29f ) speed = -806.29f;
+		if ( speed >  806.29f ) speed =  806.29f;
+		torsoSpeed = speed * 0.0265f;
 
-		speed *= 0.03f; // BFP - Adjust speed when rotate the angles (not a starting velocity), before: 0.05f
+		speed *= 0.0175f; // BFP - Adjust speed when rotate the angles (not a starting velocity), before: 0.05f
 
 		AnglesToAxis( legsAngles, axis );
 		side = speed * DotProduct( velocity, axis[1] );
@@ -1570,24 +1436,10 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 		// BFP - Make the torso move the pitch angle a bit in the flight
 		if ( cent->currentState.eFlags & EF_FLIGHT ) {
 			AnglesToAxis( torsoAngles, axis );
-			side = speed * DotProduct( velocity, axis[0] );
+			side = torsoSpeed * DotProduct( velocity, axis[0] );
 			torsoAngles[PITCH] += side;
 		}
 	}
-
-	// BFP - Don't make every player forced to see this way with their legs to the others
-#if 0
-	//
-	clientNum = cent->currentState.clientNum;
-	if ( clientNum >= 0 && clientNum < MAX_CLIENTS ) {
-		ci = &cgs.clientinfo[ clientNum ];
-		if ( ci->fixedlegs ) {
-			legsAngles[YAW] = torsoAngles[YAW];
-			legsAngles[PITCH] = 0.0f;
-			legsAngles[ROLL] = 0.0f;
-		}
-	}
-#endif
 
 	// pain twitch
 	CG_AddPainTwitch( cent, torsoAngles );
@@ -1602,49 +1454,6 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 
 
 //==========================================================================
-
-// BFP - No smoke puff effect
-#if 0
-/*
-===============
-CG_HasteTrail
-===============
-*/
-static void CG_HasteTrail( centity_t *cent ) {
-	localEntity_t	*smoke;
-	vec3_t			origin;
-	int				anim;
-
-	if ( cent->trailTime > cg.time ) {
-		return;
-	}
-
-	anim = cent->pe.legs.animationNumber & ~ANIM_TOGGLEBIT;
-	if ( anim != LEGS_RUN && anim != LEGS_BACK ) {
-		return;
-	}
-
-	cent->trailTime += 100;
-	if ( cent->trailTime < cg.time ) {
-		cent->trailTime = cg.time;
-	}
-
-	VectorCopy( cent->lerpOrigin, origin );
-	origin[2] -= 16;
-
-	smoke = CG_SmokePuff( origin, vec3_origin, 
-				8,
-				1, 1, 1, 1,
-				500, 
-				cg.time,
-				0,
-				0,
-				cgs.media.hastePuffShader );
-
-	// use the optimized local entity add
-	smoke->leType = LE_SCALE_FADE;
-}
-#endif
 
 /*
 ===============
@@ -2909,7 +2718,11 @@ static void CG_FindAttachMuzzleTag( centity_t *cent, clientInfo_t *ci, refEntity
 	if ( attackTagPart && attackTagPart[0] && !Q_stricmp( attackTagPart, "head" )
 	&& trap_R_LerpTag( &tagOrient, head->hModel, head->oldframe, head->frame, 1.0 - head->backlerp, attackTagName ) ) {
 		CG_AddPlayerWeapon( head, NULL, cent, ci->team, attackTagName );
+		return;
 	}
+
+	// for these who don't have any tag, but it can reproduce the charging and firing attack sounds
+	CG_AddPlayerWeapon( torso, NULL, cent, ci->team, "" );
 }
 
 /*
@@ -2935,7 +2748,7 @@ void CG_Player( centity_t *cent ) {
 	animation_t		backupAnimations[MAX_TOTALANIMATIONS];
 
 	// BFP - Attack skin info to extract
-	bfpAttackSkinConfig_t	*atkCfg;
+	bfpAttackSkinConfig_t	*skinAtkCfg;
 
 	// BFP - That macro makes all body being transformed during tier up. 
 	// Enabled by default, originally on BFP only shows the head as transformation transition
@@ -2990,7 +2803,7 @@ void CG_Player( centity_t *cent ) {
 	}
 
 	// BFP - Get attack skin config and weapon config
-	atkCfg = &ci->skinConfig.attacks[cent->currentState.weapon];
+	skinAtkCfg = &ci->skinConfig.attacks[cent->currentState.weapon];
 
 	memset( &legs, 0, sizeof(legs) );
 	memset( &torso, 0, sizeof(torso) );
@@ -3330,14 +3143,14 @@ void CG_Player( centity_t *cent ) {
 	if ( cgs.gametype == GT_MONSTER && cgs.monster > 0 && ( cent->currentState.eFlags & EF_MONSTER ) ) {
 		CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, "head", "tag_mouth" );
 	} else {
-		if ( atkCfg ) {
-			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, atkCfg->attackTagPart, atkCfg->attackTag );
+		if ( skinAtkCfg ) {
+			CG_FindAttachMuzzleTag( cent, ci, &torso, &legs, &savedHead, skinAtkCfg->attackTagPart, skinAtkCfg->attackTag );
 		}
 	}
 
 	// BFP - Forcefield test
-	if ( cent->pe.chargeAutoFire && atkCfg && atkCfg->noExplosion ) {
-		CG_ForceFieldEffect( cent, torso.origin, atkCfg );
+	if ( cent->pe.chargeAutoFire && skinAtkCfg && skinAtkCfg->noExplosion ) {
+		CG_ForceFieldEffect( cent, torso.origin, skinAtkCfg );
 	}
 
 	// add powerups floating behind the player

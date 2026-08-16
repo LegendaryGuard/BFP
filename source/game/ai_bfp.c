@@ -69,7 +69,7 @@ BotBFPResetState
 */
 void BotBFPResetState( bot_state_t *bs ) {
 	bs->bfpButtons = 0;
-    bs->weaponnum = WP_NONE;
+    bs->weaponnum = WP_ATTACK_0;
 	bs->bfpKiRecharging = qfalse;
 	bs->bfpKiRechargeInterrupted_time = 0;
 	bs->bfpLastHealth = -1;
@@ -290,6 +290,10 @@ BotBFPEnemyAirborne
 static qboolean BotBFPEnemyAirborne( aas_entityinfo_t *entinfo ) {
 	bsp_trace_t	trace;
 	vec3_t		end;
+
+	if ( !entinfo ) {
+		return qfalse;
+	}
 
 	VectorCopy( entinfo->origin, end );
 	end[2] -= 48;

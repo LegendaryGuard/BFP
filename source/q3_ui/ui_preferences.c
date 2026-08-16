@@ -52,7 +52,6 @@ GAME OPTIONS MENU
 #define ID_CROSSHAIR			127
 #define ID_SIMPLEITEMS			128
 #define ID_HIGHQUALITYSKY		129
-//#define ID_EJECTINGBRASS		130 // BFP - unused
 #define ID_WALLMARKS			130
 #define ID_DYNAMICLIGHTS		131
 #define ID_IDENTIFYTARGET		132
@@ -76,7 +75,6 @@ typedef struct {
 	menulist_s			crosshair;
 	menulist_s			crosshaircolor; // BFP - Crosshair color
 	menuradiobutton_s	simpleitems;
-	// menuradiobutton_s	brass; // BFP - unused
 	menuradiobutton_s	wallmarks;
 	menuradiobutton_s	dynamiclights;
 	menuradiobutton_s	identifytarget;
@@ -149,7 +147,6 @@ static void Preferences_SetMenuItems( void ) {
 	uiColorIndex = s_preferences.crosshaircolor.curvalue = gamecodetoui[c];
 
 	s_preferences.simpleitems.curvalue		= trap_Cvar_VariableValue( "cg_simpleItems" ) != 0;
-	// s_preferences.brass.curvalue			= trap_Cvar_VariableValue( "cg_brassTime" ) != 0; // BFP - unused
 	s_preferences.wallmarks.curvalue		= trap_Cvar_VariableValue( "cg_marks" ) != 0;
 	s_preferences.identifytarget.curvalue	= trap_Cvar_VariableValue( "cg_drawCrosshairNames" ) != 0;
 	s_preferences.dynamiclights.curvalue	= trap_Cvar_VariableValue( "r_dynamiclight" ) != 0;
@@ -191,16 +188,6 @@ static void Preferences_Event( void* ptr, int notification ) {
 	case ID_HIGHQUALITYSKY:
 		trap_Cvar_SetValue( "r_fastsky", !s_preferences.highqualitysky.curvalue );
 		break;
-
-	// BFP - unused
-#if 0
-	case ID_EJECTINGBRASS:
-		if ( s_preferences.brass.curvalue )
-			trap_Cvar_Reset( "cg_brassTime" );
-		else
-			trap_Cvar_SetValue( "cg_brassTime", 0 );
-		break;
-#endif
 
 	case ID_WALLMARKS:
 		trap_Cvar_SetValue( "cg_marks", s_preferences.wallmarks.curvalue );
@@ -400,18 +387,6 @@ static void Preferences_MenuInit( void ) {
 	s_preferences.wallmarks.generic.x	          = PREFERENCES_X_POS;
 	s_preferences.wallmarks.generic.y	          = y;
 
-	// BFP - unused
-#if 0
-	y += BIGCHAR_HEIGHT+2;
-	s_preferences.brass.generic.type              = MTYPE_RADIOBUTTON;
-	s_preferences.brass.generic.name	          = "Ejecting Brass:";
-	s_preferences.brass.generic.flags	          = QMF_PULSEIFFOCUS|QMF_SMALLFONT;
-	s_preferences.brass.generic.callback          = Preferences_Event;
-	s_preferences.brass.generic.id                = ID_EJECTINGBRASS;
-	s_preferences.brass.generic.x	              = PREFERENCES_X_POS;
-	s_preferences.brass.generic.y	              = y;
-#endif
-
 	// BFP - Automatic download radio button moved here
 	y += BIGCHAR_HEIGHT+2+4;
 	s_preferences.allowdownload.generic.type     = MTYPE_RADIOBUTTON;
@@ -497,7 +472,6 @@ static void Preferences_MenuInit( void ) {
 	Menu_AddItem( &s_preferences.menu, &s_preferences.crosshaircolor ); // BFP - Crosshair color bar
 	Menu_AddItem( &s_preferences.menu, &s_preferences.simpleitems );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.wallmarks );
-	// Menu_AddItem( &s_preferences.menu, &s_preferences.brass ); // BFP - unused
 	Menu_AddItem( &s_preferences.menu, &s_preferences.allowdownload ); // BFP - Automatic download radio button moved here
 	Menu_AddItem( &s_preferences.menu, &s_preferences.dynamiclights );
 	Menu_AddItem( &s_preferences.menu, &s_preferences.identifytarget );

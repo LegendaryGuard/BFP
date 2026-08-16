@@ -953,6 +953,9 @@ void ClientSetAttack( gclient_t *client, int slot, bfpWeaponDef_t *def ) { // BF
 	if ( def->noAttackAnim ) {
 		client->ps.ammo[ slot ] |= AMMOF_NOATTACKANIM;
 	}
+	if ( def->movementPenalty > 0 ) {
+		client->ps.ammo[ slot ] |= AMMOF_MOVEMENTPENALTY;
+	}
 	// BFP - Debug ammo states for weapons
 #if 0
 	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_ATK_BEAM: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_ATK_BEAM );
@@ -962,6 +965,7 @@ void ClientSetAttack( gclient_t *client, int slot, bfpWeaponDef_t *def ) { // BF
 	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_CHARGEAUTOFIRE: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_CHARGEAUTOFIRE );
 	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_LOOPINGANIM: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_LOOPINGANIM );
 	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_NOATTACKANIM: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_NOATTACKANIM );
+	Com_Printf( "client->ps.ammo[ %d ] & AMMOF_MOVEMENTPENALTY: %d\n", slot, client->ps.ammo[ slot ] & AMMOF_MOVEMENTPENALTY );
 #endif
 }
 
@@ -1444,15 +1448,15 @@ void ClientSpawn(gentity_t *ent) {
 	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
 	&& client->ps.clientNum == level.monsterClientNum ) {
 		bfpWeaponDef_t	*def = BG_SetMonsterDefaultWeaponDef();
-		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_NONE );
-		client->ps.ammo[WP_NONE] = 1;
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_ATTACK_0 );
+		client->ps.ammo[WP_ATTACK_0] = 1;
 		if ( def ) {
-			ClientSetAttack( client, WP_NONE, def );
+			ClientSetAttack( client, WP_ATTACK_0, def );
 		}
 	} else {
 		int	slot;
 
-		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_NONE ) | ( 1 << WP_GAUNTLET ) | ( 1 << WP_MACHINEGUN ) | ( 1 << WP_SHOTGUN ) | ( 1 << WP_GRENADE_LAUNCHER );
+		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_ATTACK_0 ) | ( 1 << WP_ATTACK_1 ) | ( 1 << WP_ATTACK_2 ) | ( 1 << WP_ATTACK_3 ) | ( 1 << WP_ATTACK_4 );
 		for ( slot = 0; slot < BFP_NUM_WEAPONS; slot++ ) {
 			bfpWeaponDef_t	*def = BG_GetClientWeaponDefForSlot( client->ps.clientNum, slot );
 			if ( !def ) {
@@ -1493,7 +1497,7 @@ void ClientSpawn(gentity_t *ent) {
 		trap_LinkEntity (ent);
 
 		// force the base weapon up
-		client->ps.weapon = WP_NONE;
+		client->ps.weapon = WP_ATTACK_0;
 		client->ps.weaponstate = WEAPON_READY;
 
 	}
@@ -1518,7 +1522,7 @@ void ClientSpawn(gentity_t *ent) {
 
 		// select the highest weapon number available, after any
 		// spawn given items have fired
-		client->ps.weapon = WP_NONE;	// BFP - First attack to be selected freely
+		client->ps.weapon = WP_ATTACK_0;	// BFP - First attack to be selected freely
 		// BFP - Make the first attack selected instead
 #if 0
 		for ( i = BFP_NUM_WEAPONS - 1 ; i > 0 ; i-- ) {
