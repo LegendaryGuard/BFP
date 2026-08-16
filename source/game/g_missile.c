@@ -340,7 +340,9 @@ Checks the projectile collision radius and detonation point
 static void G_CollideDetonationCheck( gentity_t *ent, trace_t *trace ) { // BFP - Detonation check
 	vec3_t impactPoint;
 	// BFP - NOTE: This setup solves the issue of real impact crack mark for collision radius, but original BFP didn't that (uses -1)
-	float distToPlane = DotProduct( trace->endpos, trace->plane.normal ) - trace->plane.dist;
+	// but that doesn't fix the issue, because the dynamic light won't be shown if it isn't -1.
+	// So, let's leave as -1 by default
+	float distToPlane = -1; // DotProduct( trace->endpos, trace->plane.normal ) - trace->plane.dist;
 
 	// if there's a mover or a corpse going to be gibbed, change the impact direction, otherwise the explosion will appear very down or under the target
 	gentity_t *target = &g_entities[ trace->entityNum ];
@@ -411,8 +413,7 @@ static void G_BFPBeamImpact( gentity_t *ent, gentity_t *other, trace_t *trace ) 
 	trap_LinkEntity( ent );
 	trap_LinkEntity( nent );
 	// BFP - Free trails too
-	// if ( ent->s.weapon == WP_GRAPPLING_HOOK ) {
-		Weapon_BFPBeamFree( ent );
+	Weapon_BFPBeamFree( ent );
 }
 
 
@@ -424,7 +425,8 @@ G_Homing
 static void G_Homing( gentity_t *ent ) { // BFP - Homing
 	if ( ent && ent->weaponDef && ent->homing > 0 && ent->homingRange > 0 ) {
 		gentity_t	*target = NULL, *rad = NULL;
-		vec3_t		dir, raddir;
+		vec3_t		dir, raddir, start, end;
+		trace_t		tr;
 
 		// BFP - Don't apply gravity on this part, otherwise causes stucking or out of bounds glitches
 		if ( ent->weaponDef->missileGravity > 0 ) {
@@ -433,13 +435,25 @@ static void G_Homing( gentity_t *ent ) { // BFP - Homing
 		}
 
 		while ( ( rad = FindRadius(rad, ent->r.currentOrigin, ent->weaponDef->homingRange) ) != NULL ) {
-			if ( IsValidTargetRadius( ent, rad ) ) {
-				VectorSubtract( rad->r.currentOrigin, ent->r.currentOrigin, raddir );
-				raddir[2] += 16;
-				if ( target == NULL ) {
-					target = rad;
-					VectorCopy( raddir, dir );
-				}
+			if ( !IsValidTargetRadius( ent, rad ) ) {
+				continue;
+			}
+
+			// tracing...
+			VectorCopy( ent->r.currentOrigin, start );
+			VectorAdd( rad->r.absmin, rad->r.absmax, end );
+			VectorScale( end, 0.5, end );
+			trap_Trace( &tr, start, NULL, NULL, end, ent->s.number, MASK_SHOT );
+			if ( tr.fraction < 1.0 && tr.entityNum != rad->s.number ) { // target no visible
+				continue;
+			}
+
+			// TARGET DETECTED!
+			VectorSubtract( rad->r.currentOrigin, ent->r.currentOrigin, raddir );
+			raddir[2] += 16;
+			if ( target == NULL ) {
+				target = rad;
+				VectorCopy( raddir, dir );
 			}
 		}
 
@@ -942,7 +956,8 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 			G_ExplodeMissile( ent );
 			return;
 		}
-		G_AddEvent( ent, EV_GRENADE_BOUNCE, 0 );
+		// BFP - No grenade bounce sound
+		// G_AddEvent( ent, EV_GRENADE_BOUNCE, 0 );
 		return;
 	}
 
@@ -1177,8 +1192,23 @@ void G_RunMissile( gentity_t *ent ) {
 		if ( client 
 		&& ( client->ps.weaponstate == WEAPON_ACTIVE
 		|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE )
+		// avoid exploding if there's another projectile running on
+		&& ent->weaponDef
+		&& ( ent->weaponDef->attackType == ATK_BEAM
+		|| ent->weaponDef->attackType == ATK_SBEAM
+		|| ent->weaponDef->attackType == ATK_RDMISSILE )
 		&& ent->s.weapon != ent->parent->s.weapon ) {
-			client->ps.weaponstate = WEAPON_READY;
+			// BFP - movementPenalty
+			if ( ent->weaponDef->movementPenalty > 0 ) {
+				if ( ent->weaponDef->movementPenalty > client->ps.weaponTime ) {
+					client->ps.weaponTime = ent->weaponDef->movementPenalty - client->ps.weaponTime;
+				} else {
+					client->ps.weaponTime = ent->weaponDef->movementPenalty;
+				}
+				client->ps.weaponstate = WEAPON_STUN;
+			} else {
+				client->ps.weaponstate = WEAPON_READY;
+			}
 		}
 
 		// BFP - Splitting ki ball
@@ -1224,566 +1254,3 @@ void G_RunMissile( gentity_t *ent ) {
 	// check think function after bouncing
 	G_RunThink( ent );
 }
-
-
-// BFP - Q3 firing weapon functions, these were used for testing purposes previously, but now could be removed
-#if 0
-
-//=============================================================================
-
-/*
-=================
-fire_plasma
-
-=================
-*/
-gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*bolt;
-
-	VectorNormalize (dir);
-
-	bolt = G_Spawn();
-	bolt->classname = "rdmissile";
-	bolt->attackType = ATK_RDMISSILE; // BFP - Attack type
-	bolt->nextthink = level.time + 10000;
-	bolt->think = G_DetonateMissile;
-	bolt->s.eType = ET_MISSILE;
-	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	bolt->s.weapon = WP_PLASMAGUN;
-	bolt->r.ownerNum = self->s.number;
-	bolt->parent = self;
-	bolt->damage = 20;
-	bolt->splashDamage = 15;
-	bolt->splashRadius = 20;
-	bolt->methodOfDeath = MOD_PLASMA;
-	bolt->splashMethodOfDeath = MOD_PLASMA_SPLASH;
-	bolt->clipmask = MASK_SHOT;
-	bolt->target_ent = NULL;
-
-	// BFP - Save ki charged points
-	bolt->kiChargePoints = self->client->ps.generic1;
-	bolt->s.generic1 = self->client->ps.generic1;
-
-	bolt->splitKiBall = qfalse; // BFP - For splitting ki ball
-
-	// BFP - Speed similar to BFP ki blast attack (missileSpeed)
-	bolt->speed = 700;
-
-	// BFP - Projectile radius
-	bolt->radius = 30;
-
-	// BFP - Priority
-	bolt->priority = 0;
-
-	bolt->s.pos.trType = TR_LINEAR;
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
-	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
-
-	VectorCopy (start, bolt->r.currentOrigin);
-
-	// BFP - Collision radius
-	VectorSet( bolt->r.mins, -bolt->radius, -bolt->radius, -10 );
-	VectorSet( bolt->r.maxs, bolt->radius, bolt->radius, bolt->radius );
-
-	return bolt;
-}	
-
-//=============================================================================
-
-
-/*
-=================
-fire_grenade
-=================
-*/
-gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*bolt;
-
-	// BFP - Like (multiball) weapon
-
-	VectorNormalize (dir);
-
-	bolt = G_Spawn();
-	// BFP - missileDuration, bounces...
-	bolt->missileDuration = 1500;
-	bolt->bounces = qtrue;
-
-	bolt->classname = "missile";
-	bolt->attackType = ATK_MISSILE; // BFP - Attack type
-	bolt->nextthink = level.time + bolt->missileDuration;
-	bolt->think = G_ExplodeMissile;
-	bolt->s.eType = ET_MISSILE;
-	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	bolt->s.weapon = WP_GRENADE_LAUNCHER;
-	bolt->r.ownerNum = self->s.number;
-	bolt->parent = self;
-	bolt->damage = 8;
-	bolt->splashDamage = 8;
-	bolt->splashRadius = 250;
-	bolt->methodOfDeath = MOD_GRENADE;
-	bolt->splashMethodOfDeath = MOD_GRENADE_SPLASH;
-	bolt->clipmask = MASK_SHOT;
-	bolt->target_ent = NULL;
-
-	// BFP - Applying radius, missileSpeed, bounceFriction, ...
-	bolt->radius = 50;
-	bolt->speed = 3000;
-	bolt->bounceFriction = 0.9;
-	bolt->noZBounce = 0; //0.000001; // weird value found in the cfg files, really, it's a boolean though :/
-
-	bolt->homing = 0.3;
-	bolt->homingRange = 300;
-	bolt->homingAcceleration = 0;
-
-	bolt->missileGravity = 100;
-	bolt->missileAcceleration = 0;
-
-	bolt->s.pos.trType = TR_LINEAR;
-	// BFP - missileGravity
-	if ( bolt->missileGravity > 0 ) {
-		bolt->s.pos.trType = TR_GRAVITY;
-	}
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	if ( bolt->missileAcceleration > 0 ) { // BFP - Start from the very first frame if there's acceleration
-		bolt->s.pos.trTime = level.time;
-	}
-	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
-	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
-
-	VectorCopy (start, bolt->r.currentOrigin);
-
-	// BFP - Set delta time to avoid timescale < 1 issues
-	bolt->deltaTime = level.time;
-
-	// BFP - Collision radius
-	VectorSet( bolt->r.mins, -bolt->radius, -bolt->radius, -10 );
-	VectorSet( bolt->r.maxs, bolt->radius, bolt->radius, bolt->radius );
-
-	// BFP - Save ki charged points
-	bolt->kiChargePoints = self->client->ps.generic1;
-	bolt->s.generic1 = self->client->ps.generic1;
-
-	// BFP - Priority
-	bolt->priority = 1;
-
-	// BFP - Weapon config charge fields
-	bolt->chargeDamageMult = 20;
-	bolt->maxDamage = 80;
-	bolt->chargeRadiusMult = 25;
-	bolt->maxRadius = 75;
-	bolt->chargeExpRadiusMult = 120;
-	bolt->maxExpRadius = 700;
-	G_ChargeDamageScaling( bolt, 2 );
-
-	return bolt;
-}
-
-//=============================================================================
-
-
-/*
-=================
-fire_bfg
-=================
-*/
-gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*bolt;
-
-	VectorNormalize (dir);
-
-	bolt = G_Spawn();
-	bolt->classname = "bfg";
-	bolt->nextthink = level.time + 10000;
-	bolt->think = G_ExplodeMissile;
-	bolt->s.eType = ET_MISSILE;
-	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	bolt->s.weapon = WP_BFG;
-	bolt->r.ownerNum = self->s.number;
-	bolt->parent = self;
-	bolt->damage = 100;
-	bolt->splashDamage = 100;
-	bolt->splashRadius = 120;
-	bolt->methodOfDeath = MOD_BFG;
-	bolt->splashMethodOfDeath = MOD_BFG_SPLASH;
-	bolt->clipmask = MASK_SHOT;
-	bolt->target_ent = NULL;
-
-	bolt->s.pos.trType = TR_LINEAR;
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, 2000, bolt->s.pos.trDelta );
-	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
-	VectorCopy (start, bolt->r.currentOrigin);
-
-	return bolt;
-}
-
-//=============================================================================
-
-
-/*
-=================
-fire_rocket
-=================
-*/
-gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*bolt;
-	// BFP - Modified to fit (ki_blast) weapon properties
-
-	VectorNormalize (dir);
-
-	bolt = G_Spawn();
-	bolt->classname = "missile";
-	bolt->attackType = ATK_MISSILE; // BFP - Attack type
-	bolt->nextthink = level.time + 15000;
-	bolt->think = G_ExplodeMissile;
-	bolt->s.eType = ET_MISSILE;
-	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	bolt->s.weapon = WP_ROCKET_LAUNCHER;
-	bolt->r.ownerNum = self->s.number;
-	bolt->parent = self;
-	bolt->damage = 20;
-	bolt->splashDamage = 20;
-	bolt->splashRadius = 125;
-	bolt->methodOfDeath = MOD_ROCKET;
-	bolt->splashMethodOfDeath = MOD_ROCKET_SPLASH;
-	bolt->clipmask = MASK_SHOT;
-	bolt->target_ent = NULL;
-
-	// BFP - Save ki charged points
-	bolt->kiChargePoints = self->client->ps.generic1;
-	bolt->s.generic1 = self->client->ps.generic1;
-
-	// BFP - Speed similar to BFP ki blast attack (missileSpeed)
-	bolt->speed = 6000;
-
-	// BFP - Projectile radius
-	bolt->radius = 20;
-
-	// BFP - Priority
-	bolt->priority = 0;
-
-	bolt->missileGravity = 0;
-	bolt->missileAcceleration = 0;
-
-	bolt->s.pos.trType = TR_LINEAR;
-	// BFP - missileGravity
-	if ( bolt->missileGravity > 0 ) {
-		bolt->s.pos.trType = TR_GRAVITY;
-	}
-	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, bolt->speed, bolt->s.pos.trDelta );
-	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
-	VectorCopy (start, bolt->r.currentOrigin);
-
-	// BFP - Collision radius
-	VectorSet( bolt->r.mins, -bolt->radius, -bolt->radius, -10 );
-	VectorSet( bolt->r.maxs, bolt->radius, bolt->radius, bolt->radius );
-
-	// BFP - Charge scaling
-	G_ChargeDamageScaling( bolt, 0 );
-
-	return bolt;
-}
-// BFP - no hook
-#if 0
-/*
-=================
-fire_grapple
-=================
-*/
-gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*hook;
-
-	VectorNormalize (dir);
-
-	hook = G_Spawn();
-	hook->classname = "hook";
-	hook->nextthink = level.time + 10000;
-	hook->think = Weapon_HookFree;
-	hook->s.eType = ET_MISSILE;
-	hook->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	hook->s.weapon = WP_GRAPPLING_HOOK;
-	hook->r.ownerNum = self->s.number;
-	hook->methodOfDeath = MOD_GRAPPLE;
-	hook->clipmask = MASK_SHOT;
-	hook->parent = self;
-	hook->target_ent = NULL;
-
-	hook->s.pos.trType = TR_LINEAR;
-	hook->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	hook->s.otherEntityNum = self->s.number; // use to match beam in client
-	VectorCopy( start, hook->s.pos.trBase );
-	VectorScale( dir, 800, hook->s.pos.trDelta );
-	SnapVector( hook->s.pos.trDelta );			// save net bandwidth
-	VectorCopy (start, hook->r.currentOrigin);
-
-	self->client->hook = hook;
-
-	return hook;
-}
-#endif
-
-/*
-=================
-fire_bfpbeam
-=================
-*/
-gentity_t *fire_bfpbeam (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*beam;
-
-	VectorNormalize( dir );
-
-	beam = G_Spawn();
-	beam->classname = "beam";
-	beam->attackType = ATK_BEAM; // BFP - Attack type
-	beam->nextthink = level.time + 20000;
-	beam->think = Weapon_BFPBeamFree;
-	beam->s.eType = ET_MISSILE;
-	beam->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	beam->s.weapon = WP_GRAPPLING_HOOK;
-	beam->r.ownerNum = self->s.number;
-	beam->methodOfDeath = MOD_KI_ATTACK;
-	beam->clipmask = MASK_SHOT;
-	beam->parent = self;
-	beam->target_ent = NULL;
-
-	beam->damage = 80;
-	beam->splashDamage = 80;
-	beam->splashRadius = 350;
-	beam->splashMethodOfDeath = MOD_KI_ATTACK;
-
-	// BFP - Save ki charged points
-	beam->kiChargePoints = self->client->ps.generic1;
-	beam->s.generic1 = self->client->ps.generic1;
-
-	// BFP - Speed similar to BFP lightning blast/heaven's wrath attack (missileSpeed)
-	beam->speed = 2000;
-
-	// BFP - Projectile radius
-	beam->radius = 30;
-
-	// BFP - Piercing
-	beam->piercing = 0;
-
-	// BFP - Priority
-	beam->priority = 1;
-
-	beam->s.pos.trType = TR_LINEAR;
-	beam->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	beam->s.otherEntityNum = self->s.number; // use to match beam in client
-	VectorCopy( start, beam->s.pos.trBase );
-	VectorScale( dir, beam->speed, beam->s.pos.trDelta );	// speed
-	SnapVector( beam->s.pos.trDelta );			// save net bandwidth
-	VectorCopy( start, beam->r.currentOrigin );
-
-	// BFP - Set beam delta time and distance to avoid timescale < 1 issues
-	beam->deltaTime = level.time;
-	beam->distance = 0;
-
-	// BFP - TODO: For weapon config, if uses chargeAttack, maxRadius, chargeRadiusMult, calculate the radius here
-#if 0
-	if ( beam->chargeAttack ) {
-		float	r = cfg->radius + ( beam->kiChargePoints - cfg->minCharge ) * cfg->chargeRadiusMult;
-		if ( r > cfg->maxRadius && cfg->maxRadius > 0 ) {
-			r = cfg->maxRadius;
-		}
-		radius = r;
-	}
-#endif
-
-	// BFP - Collision radius
-	VectorSet( beam->r.mins, -beam->radius, -beam->radius, -beam->radius );
-	VectorSet( beam->r.maxs, beam->radius, beam->radius, beam->radius );
-
-	// BFP - Weapon config charge fields
-	beam->damage = 10;
-	beam->maxDamage = 50;
-	beam->splashDamage = 10;
-	beam->splashRadius = 350;
-	beam->chargeDamageMult = 10;
-	beam->chargeExpRadiusMult = 200;
-	// beam->maxExpRadius = 0;
-	G_ChargeDamageScaling( beam, 2 );
-
-	return beam;
-}
-
-// BFP - Just a testing disk proyectile
-/*
-=================
-fire_disk
-=================
-*/
-gentity_t *fire_disk (gentity_t *self, vec3_t start, vec3_t dir) {
-	gentity_t	*disk;
-
-	VectorNormalize ( dir );
-
-	disk = G_Spawn();
-	disk->classname = "missile";
-	disk->attackType = ATK_MISSILE; // BFP - Attack type
-	disk->nextthink = level.time + 10000;
-	disk->think = G_FreeEntity;
-	disk->s.eType = ET_MISSILE;
-	disk->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	disk->s.weapon = WP_BFG;
-	disk->r.ownerNum = self->s.number;
-	disk->parent = self;
-	disk->damage = 20;
-	disk->splashDamage = 20;
-	disk->splashRadius = 120;
-	disk->methodOfDeath = MOD_KI_ATTACK;
-	disk->splashMethodOfDeath = MOD_KI_ATTACK;
-	disk->clipmask = MASK_SHOT;
-	disk->target_ent = NULL;
-
-	// BFP - Save ki charged points
-	disk->kiChargePoints = self->client->ps.generic1;
-	disk->s.generic1 = self->client->ps.generic1;
-
-	disk->speed = 1000;
-
-	// BFP - Projectile radius
-	disk->radius = 75;
-
-	// BFP - Priority
-	disk->priority = 0;
-
-	disk->piercing = 1;
-	disk->homing = 0.5;
-	disk->homingRange = 2000;
-	disk->homingAcceleration = 0;
-
-	// BFP - Extra knockback
-	disk->extraKnockback = -1000;
-
-	disk->s.pos.trType = TR_LINEAR;
-	disk->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	VectorCopy( start, disk->s.pos.trBase );
-	VectorScale( dir, disk->speed, disk->s.pos.trDelta );
-	SnapVector( disk->s.pos.trDelta );			// save net bandwidth
-	VectorCopy (start, disk->r.currentOrigin);
-
-	// BFP - Collision radius
-	VectorSet( disk->r.mins, -disk->radius, -disk->radius, -10 );
-	VectorSet( disk->r.maxs, disk->radius, disk->radius, disk->radius );
-
-	// BFP - Charge scaling
-	G_ChargeDamageScaling( disk, 2 );
-
-	return disk;
-}
-
-// BFP - Just a testing forcefield
-/*
-=================
-fire_forcefield
-=================
-*/
-gentity_t *fire_forcefield (gentity_t *self, vec3_t start)
-{
-	gentity_t   *field;
-
-	field = G_Spawn();
-	field->classname = "forcefield";
-	field->attackType = ATK_FORCEFIELD; // BFP - Attack type
-	field->nextthink = level.time + 200;
-	field->think = Weapon_Forcefield_Think;
-	field->s.eType = ET_MISSILE;
-	field->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	field->s.weapon = WP_SHOTGUN;
-	field->r.ownerNum = self->s.number;
-	field->parent = self;
-	field->clipmask = MASK_SHOT;
-	field->target_ent = NULL;
-
-	field->damage = 20;
-	field->splashDamage = 0;
-	field->splashRadius = 0;
-	field->methodOfDeath = MOD_KI_ATTACK;
-	field->splashMethodOfDeath = MOD_KI_ATTACK;
-
-	// BFP - Save ki charged points
-	field->kiChargePoints = self->client->ps.generic1;
-	field->s.generic1 = self->client->ps.generic1;
-
-	field->radius = 900;
-	field->blinding = qfalse;
-
-	field->s.pos.trType = TR_STATIONARY;
-	field->s.pos.trTime = level.time;
-	VectorCopy( start, field->s.pos.trBase );
-	VectorClear( field->s.pos.trDelta );
-
-	VectorCopy( start, field->r.currentOrigin );
-
-	self->client->hook = field;
-
-	return field;
-}
-
-// BFP - Just a testing sbeam
-/*
-=================
-fire_sbeam
-=================
-*/
-gentity_t *fire_sbeam (gentity_t *self, vec3_t start, vec3_t dir)
-{
-	gentity_t   *sbeam;
-
-	sbeam = G_Spawn();
-	sbeam->classname = "sbeam";
-	sbeam->attackType = ATK_SBEAM; // BFP - Attack type
-	sbeam->nextthink = level.time + 20000;
-	sbeam->think = G_FreeEntity;
-	sbeam->s.eType = ET_MISSILE;
-	sbeam->r.svFlags = SVF_USE_CURRENT_ORIGIN;
-	sbeam->s.weapon = WP_GRAPPLING_HOOK;
-	sbeam->r.ownerNum = self->s.number;
-	sbeam->parent = self;
-	sbeam->clipmask = MASK_SHOT;
-	sbeam->target_ent = NULL;
-
-	sbeam->damage = 15;
-	sbeam->splashDamage = 15;
-	sbeam->splashRadius = 200;
-	sbeam->methodOfDeath = MOD_KI_ATTACK;
-	sbeam->splashMethodOfDeath = MOD_KI_ATTACK;
-
-	sbeam->radius = 50;
-
-	// BFP - Save ki charged points
-	sbeam->kiChargePoints = self->client->ps.generic1;
-	sbeam->s.generic1 = self->client->ps.generic1;
-
-	// BFP - Speed similar to BFP mouth beam (missileSpeed)
-	sbeam->speed = 1000;
-
-	// BFP - Priority
-	sbeam->priority = 0;
-
-	sbeam->s.pos.trType = TR_LINEAR;
-	sbeam->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
-	sbeam->s.otherEntityNum = self->s.number; // use to match sbeam in client
-	VectorCopy( start, sbeam->s.pos.trBase );
-	VectorScale( dir, sbeam->speed, sbeam->s.pos.trDelta );	// speed
-	SnapVector( sbeam->s.pos.trDelta );			// save net bandwidth
-	VectorCopy( start, sbeam->r.currentOrigin );
-
-	// BFP - Collision radius
-	VectorSet( sbeam->r.mins, -sbeam->radius, -sbeam->radius, -sbeam->radius );
-	VectorSet( sbeam->r.maxs, sbeam->radius, sbeam->radius, sbeam->radius );
-
-	// BFP - Charge scaling
-	G_ChargeDamageScaling( sbeam, 0 );
-
-	return sbeam;
-}
-
-#endif

@@ -378,7 +378,7 @@ static void CG_Missile( centity_t *cent ) {
 	refEntity_t			ent;
 	entityState_t		*s1;
 //	int	col;
-	bfpAttackSkinConfig_t	*atkCfg;
+	bfpAttackSkinConfig_t	*skinAtkCfg;
 	bfpWeaponDef_t			*def;
 
 	s1 = &cent->currentState;
@@ -389,23 +389,26 @@ static void CG_Missile( centity_t *cent ) {
 	// calculate the axis
 	VectorCopy( s1->angles, cent->lerpAngles);
 
-	atkCfg = CG_GetAttackConfig( s1->clientNum, s1->weapon );
+	skinAtkCfg = CG_GetAttackConfig( s1->clientNum, s1->weapon );
 
-	if ( !atkCfg ) {
+	if ( !skinAtkCfg ) {
 		return;
 	}
 
+	// BFP - Apply muzzle origin to the projectile
+	VectorCopy( cent->currentState.pos.trBase, cent->pe.muzzleOrigin );
+
 	// add trails
-	if ( atkCfg->missileTrailFunc ) {
-		switch ( atkCfg->missileTrailFunc ) {
+	if ( skinAtkCfg->missileTrailFunc ) {
+		switch ( skinAtkCfg->missileTrailFunc ) {
 		case MISSILE_TRAIL_FUNC_BEAM:
-			CG_BFPBeamTrail( cent, atkCfg );
+			CG_BFPBeamTrail( cent, skinAtkCfg );
 			break;
 		case MISSILE_TRAIL_FUNC_ROCKET:
-			CG_RocketTrail( cent, atkCfg );
+			CG_RocketTrail( cent, skinAtkCfg );
 			break;
 		case MISSILE_TRAIL_FUNC_SPIRALBEAM:
-			CG_BFPSpiralBeamTrail( cent, atkCfg );
+			CG_BFPSpiralBeamTrail( cent, skinAtkCfg );
 			break;
 		default:
 			break;
@@ -429,16 +432,16 @@ static void CG_Missile( centity_t *cent ) {
 	}
 */
 	// add dynamic light
-	if ( atkCfg->missileDlight ) {
-		trap_R_AddLightToScene(cent->lerpOrigin, atkCfg->missileDlight, 
-			atkCfg->missileDlightColor[0], atkCfg->missileDlightColor[1], atkCfg->missileDlightColor[2] );
+	if ( skinAtkCfg->missileDlight ) {
+		trap_R_AddLightToScene(cent->lerpOrigin, skinAtkCfg->missileDlight, 
+			skinAtkCfg->missileDlightColor[0], skinAtkCfg->missileDlightColor[1], skinAtkCfg->missileDlightColor[2] );
 	}
 
 	// add missile sound
-	if ( atkCfg->missileSound ) {
+	if ( skinAtkCfg->missileSound ) {
 		vec3_t	velocity;
 		BG_EvaluateTrajectoryDelta( &cent->currentState.pos, cg.time, velocity );
-		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, velocity, atkCfg->missileSound );
+		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, velocity, skinAtkCfg->missileSound );
 	}
 
 	// create the render entity
@@ -447,31 +450,35 @@ static void CG_Missile( centity_t *cent ) {
 	VectorCopy( cent->lerpOrigin, ent.oldorigin);
 
 	// BFP - missileShader
-	if ( atkCfg->missileShader ) {
-		ent.customShader = atkCfg->missileShader;
+	if ( skinAtkCfg->missileShader ) {
+		ent.customShader = skinAtkCfg->missileShader;
 	}
 
 	// BFP - missileRotation
-	if ( atkCfg->missileRotation > 0 ) {
-		ent.rotation = atkCfg->missileRotation;
+	if ( skinAtkCfg->missileRotation > 0 ) {
+		ent.rotation = skinAtkCfg->missileRotation;
 	}
 
 	def = CG_GetWeaponDefForSlot( s1->clientNum, s1->weapon );
 
 	// BFP - missileModel and missileShader
-	if ( !atkCfg->missileModel && atkCfg->missileShader ) {
+	if ( !skinAtkCfg->missileModel && skinAtkCfg->missileShader ) {
+		// BFP - missileRadius and missileRadiusChargeMult
+		float	radius;
+		float	missileRadius = skinAtkCfg->missileRadius, missileRadiusChargeMult = skinAtkCfg->missileRadiusChargeMult;
+		float	minCharge = ( def && def->minCharge > 0 ) ? (float)def->minCharge : 0;
+		float	totalCharge = (float)cent->currentState.generic1 - minCharge;
+		if ( totalCharge <= 0 ) {
+			totalCharge = 1;
+		}
+
 		ent.reType = RT_SPRITE;
 
-		// BFP - missileRadius and missileRadiusChargeMult
-		if ( ent.reType == RT_SPRITE ) {
-			float	missileRadius = atkCfg->missileRadius, missileRadiusChargeMult = atkCfg->missileRadiusChargeMult;
-			float	minCharge = ( def && def->minCharge > 0 ) ? (float)def->minCharge : 0;
-			float	totalCharge = (float)cent->currentState.generic1 - minCharge;
-			if ( totalCharge <= 0 ) {
-				totalCharge = 1;
-			}
-			ent.radius = missileRadius + missileRadiusChargeMult * totalCharge;
+		radius = missileRadius + missileRadiusChargeMult * totalCharge;
+		if ( radius <= 0 ) {
+			radius = 1;
 		}
+		ent.radius = radius;
 
 		trap_R_AddRefEntityToScene( &ent );
 		return;
@@ -479,9 +486,9 @@ static void CG_Missile( centity_t *cent ) {
 
 	// flicker between two skins
 	ent.skinNum = cg.clientFrame & 1;
-	ent.hModel = atkCfg->missileModel;
+	ent.hModel = skinAtkCfg->missileModel;
 	// BFP - Skip rendering if no missile model
-	if ( !atkCfg->missileModel ) {
+	if ( !skinAtkCfg->missileModel ) {
 		return;
 	}
 	ent.renderfx = RF_NOSHADOW;
@@ -493,9 +500,9 @@ static void CG_Missile( centity_t *cent ) {
 
 	// BFP - Is there a reason to keep s1->pos.trType != TR_STATIONARY conditional? It can't be fine enough
 	// spin as it moves
-	if ( !atkCfg->missileSpinHoriz ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
+	if ( !skinAtkCfg->missileSpinHoriz ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
 		// BFP - missileModelRotation
-		RotateAroundDirection( ent.axis, cg.time * atkCfg->missileModelRotation );
+		RotateAroundDirection( ent.axis, cg.time * skinAtkCfg->missileModelRotation );
 	} else {
 		{
 			// BFP - Rotate Z-axis like a wheel
@@ -511,8 +518,8 @@ static void CG_Missile( centity_t *cent ) {
 
 	// BFP - missileScaleFactor and missileScaleFactorChargeMult
 	if ( ent.reType == RT_MODEL ) {
-		float	scale = 1;
-		float	missileScaleFactor = atkCfg->missileScaleFactor, missileScaleFactorChargeMult = atkCfg->missileScaleFactorChargeMult;
+		float	scale;
+		float	missileScaleFactor = skinAtkCfg->missileScaleFactor, missileScaleFactorChargeMult = skinAtkCfg->missileScaleFactorChargeMult;
 		float	minCharge = ( def && def->minCharge > 0 ) ? (float)def->minCharge : 0;
 		float	totalCharge = (float)cent->currentState.generic1 - minCharge;
 		if ( totalCharge <= 0 ) {
@@ -520,6 +527,9 @@ static void CG_Missile( centity_t *cent ) {
 		}
 
 		scale = missileScaleFactor + missileScaleFactorChargeMult * totalCharge;
+		if ( scale <= 0 ) {
+			scale = 1;
+		}
 		CG_ModelSize( &ent, scale );
 	}
 

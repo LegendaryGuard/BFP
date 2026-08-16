@@ -203,15 +203,15 @@ gitem_t	bg_itemlist[] =
 /* pickup */	"Weapon",
 		0,
 		IT_WEAPON,
-		WP_NONE,
+		WP_ATTACK_0,
 /* precache */ "",
 /* sounds */ ""
 	},
 // BFP - 9 ... 116
-	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_GAUNTLET, "", "" },
-	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_SHOTGUN, "", "" },
-	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_MACHINEGUN, "", "" },
-	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_GRENADE_LAUNCHER, "", "" },
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_ATTACK_1, "", "" },
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_ATTACK_3, "", "" },
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_ATTACK_2, "", "" },
+	{ "weapon", "sound/misc/w_pkup.wav", {"models/powerups/instant/quad.md3", 0, 0, 0}, "icons/largekiblast", "Weapon", 0, IT_WEAPON, WP_ATTACK_4, "", "" },
 
 	// BFP - Original BFP demo networking uses until 116 in that part unknownly
 #if 0

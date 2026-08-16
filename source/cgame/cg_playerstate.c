@@ -29,67 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ==============
-CG_CheckAmmo
-
-If the ammo has gone low enough to generate the warning, play a sound
-==============
-*/
-void CG_CheckAmmo( void ) {
-	int		i;
-	int		total;
-	int		weapons;
-
-	// BFP - Unused variable
-	// int		previous;
-
-	// BFP - TODO: Replace to ki
-
-	// see about how many seconds of ammo we have remaining
-	weapons = cg.snap->ps.stats[ STAT_WEAPONS ];
-	total = 0;
-	for ( i = WP_MACHINEGUN ; i < WP_NUM_WEAPONS ; i++ ) {
-		if ( ! ( weapons & ( 1 << i ) ) ) {
-			continue;
-		}
-		switch ( i ) {
-		case WP_ROCKET_LAUNCHER:
-		case WP_GRENADE_LAUNCHER:
-		case WP_RAILGUN:
-		case WP_SHOTGUN:
-			total += cg.snap->ps.ammo[i] * 1000;
-			break;
-		default:
-			total += cg.snap->ps.ammo[i] * 200;
-			break;
-		}
-// BFP - disabled low ammo warning
-#if 0
-		if ( total >= 5000 ) {
-			cg.lowAmmoWarning = 0;
-			return;
-		}
-#endif
-	}
-
-// BFP - disabled low ammo warning
-#if 0
-	previous = cg.lowAmmoWarning;
-
-	if ( total == 0 ) {
-		cg.lowAmmoWarning = 2;
-	} else {
-		cg.lowAmmoWarning = 1;
-	}
-
-	// play a sound on transitions
-	if ( cg.lowAmmoWarning != previous ) {
-		trap_S_StartLocalSound( cgs.media.noAmmoSound, CHAN_LOCAL_SOUND );
-	}
-#endif
-}
-
-/*
-==============
 CG_DamageFeedback
 ==============
 */
@@ -312,8 +251,6 @@ CG_CheckLocalSounds
 */
 void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	int			highScore, reward;
-	// BFP - Unused in Q3? What?
-	// int			health, armor;
 	sfxHandle_t sfx;
 
 	// don't play the sounds if the player just changed teams
@@ -324,9 +261,6 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 	// hit changes
 	if ( ps->persistant[PERS_HITS] > ops->persistant[PERS_HITS] ) {
 		cg.opponentHitBlendTime = cg.time + 0.5f; // BFP - For crosshair opponent hit effect
-		// BFP - Unused in Q3? What?
-		// armor  = ps->persistant[PERS_ATTACKEE_ARMOR] & 0xff;
-		// health = ps->persistant[PERS_ATTACKEE_ARMOR] >> 8;
 
 		// BFP - Play hit sound
 		if ( cg_playHitSound.integer > 0 ) {
@@ -357,50 +291,8 @@ void CG_CheckLocalSounds( playerState_t *ps, playerState_t *ops ) {
 		reward = qtrue;
 		//Com_Printf("excellent\n");
 	}
-	// BFP - No impressive, gauntlet, defend, assist and capture counters
-#if 0
-	if (ps->persistant[PERS_CAPTURES] != ops->persistant[PERS_CAPTURES]) {
-		pushReward(cgs.media.captureAwardSound, cgs.media.medalCapture, ps->persistant[PERS_CAPTURES]);
-		reward = qtrue;
-		//Com_Printf("capture\n");
-	}
-	if (ps->persistant[PERS_IMPRESSIVE_COUNT] != ops->persistant[PERS_IMPRESSIVE_COUNT]) {
-		sfx = cgs.media.impressiveSound;
-		pushReward(sfx, cgs.media.medalImpressive, ps->persistant[PERS_IMPRESSIVE_COUNT]);
-		reward = qtrue;
-		//Com_Printf("impressive\n");
-	}
-	if (ps->persistant[PERS_GAUNTLET_FRAG_COUNT] != ops->persistant[PERS_GAUNTLET_FRAG_COUNT]) {
-		sfx = cgs.media.humiliationSound;
-		pushReward(sfx, cgs.media.medalGauntlet, ps->persistant[PERS_GAUNTLET_FRAG_COUNT]);
-		reward = qtrue;
-		//Com_Printf("guantlet frag\n");
-	}
-	if (ps->persistant[PERS_DEFEND_COUNT] != ops->persistant[PERS_DEFEND_COUNT]) {
-		pushReward(cgs.media.defendSound, cgs.media.medalDefend, ps->persistant[PERS_DEFEND_COUNT]);
-		reward = qtrue;
-		//Com_Printf("defend\n");
-	}
-	if (ps->persistant[PERS_ASSIST_COUNT] != ops->persistant[PERS_ASSIST_COUNT]) {
-		pushReward(cgs.media.assistSound, cgs.media.medalAssist, ps->persistant[PERS_ASSIST_COUNT]);
-		reward = qtrue;
-		//Com_Printf("assist\n");
-	}
-#endif
 	// if any of the player event bits changed
 	if (ps->persistant[PERS_PLAYEREVENTS] != ops->persistant[PERS_PLAYEREVENTS]) {
-	// BFP - No denied and gauntlet's humiliation sounds
-#if 0
-		if ((ps->persistant[PERS_PLAYEREVENTS] & PLAYEREVENT_DENIEDREWARD) !=
-				(ops->persistant[PERS_PLAYEREVENTS] & PLAYEREVENT_DENIEDREWARD)) {
-			trap_S_StartLocalSound( cgs.media.deniedSound, CHAN_ANNOUNCER );
-		}
-		else if ((ps->persistant[PERS_PLAYEREVENTS] & PLAYEREVENT_GAUNTLETREWARD) !=
-				(ops->persistant[PERS_PLAYEREVENTS] & PLAYEREVENT_GAUNTLETREWARD)) {
-			trap_S_StartLocalSound( cgs.media.humiliationSound, CHAN_ANNOUNCER );
-		}
-		else 
-#endif
 		if ((ps->persistant[PERS_PLAYEREVENTS] & PLAYEREVENT_HOLYSHIT) !=
 				(ops->persistant[PERS_PLAYEREVENTS] & PLAYEREVENT_HOLYSHIT)) {
 			trap_S_StartLocalSound( cgs.media.holyShitSound, CHAN_ANNOUNCER );
@@ -506,9 +398,6 @@ void CG_TransitionPlayerState( playerState_t *ps, playerState_t *ops ) {
 		&& ps->persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
 		CG_CheckLocalSounds( ps, ops );
 	}
-
-	// check for going low on ammo
-	CG_CheckAmmo();
 
 	// run events
 	CG_CheckPlayerstateEvents( ps, ops );

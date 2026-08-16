@@ -17,13 +17,20 @@ typedef struct {
 	vec3_t segments[MISSILE_TRAIL_SEGMENTS];
 	int segmentTime[MISSILE_TRAIL_SEGMENTS];
 	vec3_t color;
+	float radius;
 	qboolean rainbow;
 	int rainbowStartTime;
 	qhandle_t shader;
 	int numSegments;
+
+	// beam bend state
+	vec3_t bendOffset;	
+	vec3_t lastImpactOrigin;
+	int lastUpdateTime;
+	qboolean bendInitialized;
 } trail_t;
 
-static trail_t cg_trails[MAX_GENTITIES][3];
+static trail_t cg_trails[MAX_GENTITIES][MAX_TRAIL_TYPES];
 static vec3_t spiralSegments[CORKSCREW_SEGMENTS];
 
 /*
@@ -58,6 +65,12 @@ void CG_ResetTrail( const int TRAIL_TYPE, int entityNum, vec3_t origin ) {
         cg_trails[entityNum][TRAIL_TYPE].segmentTime[i] = 0;
 	}
 	cg_trails[entityNum][TRAIL_TYPE].numSegments = 0;
+
+	// reset beam bend state too, so a PVS pop-in doesn't produce a fake whip
+	VectorClear( cg_trails[entityNum][TRAIL_TYPE].bendOffset );
+	VectorCopy( origin, cg_trails[entityNum][TRAIL_TYPE].lastImpactOrigin );
+	cg_trails[entityNum][TRAIL_TYPE].lastUpdateTime = 0;
+	cg_trails[entityNum][TRAIL_TYPE].bendInitialized = qfalse;
 }
 
 /*
@@ -120,10 +133,15 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 			polyVert_t verts[4];
 			vec3_t forward, right;
 			vec3_t viewAxis;
+			float segLen, t; // textcoord scale
 
 			VectorSubtract( end, start, forward );
-			VectorNormalize( forward );
+			segLen = VectorNormalize( forward );
 
+			// same texcoord scaling as RT_RAIL_CORE:
+			// s scales with real distance instead of always spanning 0 ... 1,
+			// so the shader repeats along the trail instead of stretching per-segment
+			t = segLen * 0.00390625; // segLen / 256
 			VectorSubtract( cg.refdef.vieworg, start, viewAxis );
 			CrossProduct( viewAxis, forward, right );
 			VectorNormalize( right );
@@ -133,11 +151,11 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 			Byte4Set( verts[0].modulate, 255, 255, 255, 255 );
 
 			VectorMA( end, kiTrailWidth, right, verts[1].xyz );
-			Vector2Set( verts[1].st, 1, 0 );
+			Vector2Set( verts[1].st, t, 0 );
 			Byte4Set( verts[1].modulate, 255, 255, 255, 255 );
 
 			VectorMA( end, -kiTrailWidth, right, verts[2].xyz );
-			Vector2Set( verts[2].st, 1, 1 );
+			Vector2Set( verts[2].st, t, 1 );
 			Byte4Set( verts[2].modulate, 255, 255, 255, 255 );
 
 			VectorMA( start, -kiTrailWidth, right, verts[3].xyz );
@@ -173,7 +191,19 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 	int i;
 	int nBeamSegments = cg_beamTrail.integer;
 	trail_t *beamTrail = &cg_trails[entityNum][BEAM_TRAIL];
-	const float BEAM_STRAIGHTEN_RATE = 0.2f;	// how quickly segments straighten (0.0 - 1.0)
+
+	// beam bend tuning constants
+	// LATERAL_GAIN: how much of the impact point's frame-to-frame lateral movement gets converted into bend displacement
+	// BEND_DECAY_RATE: exponential decay rate per second (higher = straightens out faster)
+	// MAX_BEND_RADIUS: clamp so teleports / large snaps don't produce a huge whip
+	const float LATERAL_GAIN = 0.6f;
+	const float BEND_DECAY_RATE = 20.0f;
+	const float MAX_BEND_RADIUS = 250.0f;
+	// lateral displacement is captured as a fraction of beam length (an angle, effectively), 
+	// then re-scaled by this constant back into the world units LATERAL_GAIN/MAX_BEND_RADIUS 
+	// were tuned against, so beam length no longer changes how strongly 
+	// a given turn angle bends the beam
+	const float REFERENCE_BEND_LENGTH = 512.0f;
 
 	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
 		return;
@@ -190,74 +220,98 @@ void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t 
 
 	beamTrail->numSegments = nBeamSegments;
 
+	// update the bend offset from how much the impact point moved sideways
+	// since last frame, then let it decay so the beam whips and straightens out again
+	{
+		vec3_t	beamDir, lateralDelta, lateralOnly;
+		float	dot, decay, dt, beamLen, angularLateral;
+
+		VectorSubtract( origin, muzzleOrigin, beamDir );
+		beamLen = VectorNormalize( beamDir );
+		if ( beamLen < 1.0f ) {
+			beamLen = 1.0f;	// avoid division by zero
+		}
+
+		if ( !beamTrail->bendInitialized ) {
+			// first sample for this beam: nothing to compare against yet
+			VectorClear( beamTrail->bendOffset );
+			VectorCopy( origin, beamTrail->lastImpactOrigin );
+			beamTrail->lastUpdateTime = cg.time;
+			beamTrail->bendInitialized = qtrue;
+		} else {
+			dt = ( cg.time - beamTrail->lastUpdateTime ) * 0.001f;
+			if ( dt < 0.0f ) {
+				dt = 0.0f;
+			}
+			if ( dt > 0.5f ) {
+				// large time gap (pause, hitch, teleport): don't inject a spike
+				dt = 0.0f;
+				VectorClear( beamTrail->bendOffset );
+			}
+
+			// how far the impact point moved this frame
+			VectorSubtract( origin, beamTrail->lastImpactOrigin, lateralDelta );
+
+			// keep only the component perpendicular to the beam direction,
+			// so the beam moving straight forward/back doesn't cause bending
+			dot = DotProduct( lateralDelta, beamDir );
+			VectorMA( lateralDelta, -dot, beamDir, lateralOnly );
+
+			// turning near a close target moves the impact point by far
+			// fewer world units than the same turn angle against a far target
+			// (short radius = short arc). Without correcting for that, short
+			// beams barely accumulated any bend. Normalize by beam length so
+			// what's actually captured is closer to the turn angle, not the
+			// raw absolute displacement - this is what REFERENCE_BEND_LENGTH
+			// re-scales back into world units the bend constants were tuned for
+			angularLateral = VectorLength( lateralOnly ) / beamLen;
+			if ( angularLateral > 0.0f ) {
+				VectorNormalize( lateralOnly );
+				VectorScale( lateralOnly, angularLateral * REFERENCE_BEND_LENGTH, lateralOnly );
+			}
+
+			// sign flipped vs. a naive lateral only add
+			VectorMA( beamTrail->bendOffset, -LATERAL_GAIN, lateralOnly, beamTrail->bendOffset );
+
+			// decay back towards a straight beam
+			decay = 1.0f / ( 1.0f + BEND_DECAY_RATE * dt );
+			VectorScale( beamTrail->bendOffset, decay, beamTrail->bendOffset );
+
+			// clamp so a teleport or big snap can't produce a huge whip
+			if ( VectorLength( beamTrail->bendOffset ) > MAX_BEND_RADIUS ) {
+				VectorNormalize( beamTrail->bendOffset );
+				VectorScale( beamTrail->bendOffset, MAX_BEND_RADIUS, beamTrail->bendOffset );
+			}
+
+			VectorCopy( origin, beamTrail->lastImpactOrigin );
+			beamTrail->lastUpdateTime = cg.time;
+		}
+	}
+
 	VectorCopy( muzzleOrigin, beamTrail->segments[0] );
 	VectorCopy( origin, beamTrail->segments[nBeamSegments - 1] );
 
-	// start stretching segments
-	if ( nBeamSegments >= 10 ) {
-		vec3_t currentAngles, beamDir;
-		float beamLength, lengthFactor;
+	// fill in the intermediate segments along a quadratic Bezier curve (control point = midpoint + bendOffset)
+	// instead of a straight line, so the beam bows out to the side and relaxes back 
+	// to straight as bendOffset decays
+	if ( nBeamSegments > 2 ) {
+		vec3_t controlPoint, mid;
 
-		// beam length and direction
-		VectorSubtract( origin, muzzleOrigin, beamDir );
-		beamLength = VectorLength( beamDir );
-		VectorNormalize( beamDir );
-		vectoangles( beamDir, currentAngles );
+		VectorAdd( muzzleOrigin, origin, mid );
+		VectorScale( mid, 0.5f, mid );
+		VectorAdd( mid, beamTrail->bendOffset, controlPoint );
 
-		// length factor for straightening based on beam length
-		// longer beam = more straightening (less curve)
-		// reference length of 5000 units as baseline
-		lengthFactor = 1.0f + ( beamLength / 5000.0f );
-		if ( lengthFactor > 2.5f ) {
-			lengthFactor = 2.5f;
-		}
+		for ( i = 1; i < nBeamSegments - 1; ++i ) {
+			float	t = (float)i / (float)( nBeamSegments - 1 );
+			float	invT = 1.0f - t;
+			vec3_t	a, b;
 
-		// shift all segments down by one position (creating trail effect)
-		for ( i = nBeamSegments - 1; i > 0; --i ) {
-			VectorCopy( beamTrail->segments[i - 1], beamTrail->segments[i] );
-		}
-
-		// update all segments with distance-based straightening
-		for ( i = 1; i < nBeamSegments; ++i ) {
-			vec3_t targetPos, segmentToOrigin;
-			float distanceToOrigin, segmentFraction;
-			float straightenFactor, maxExpectedDistance, stretchRatio = 1.0f;
-
-			// ideal position on straight line from muzzle to origin
-			segmentFraction = (float)i / (float)( nBeamSegments - 1 );
-			VectorMA( muzzleOrigin, segmentFraction * beamLength, beamDir, targetPos );
-
-			// how far this segment is from the impact point
-			VectorSubtract( origin, beamTrail->segments[i], segmentToOrigin );
-			distanceToOrigin = VectorLength( segmentToOrigin );
-
-			// expected distance if beam was straight
-			maxExpectedDistance = beamLength * ( 1.0f - segmentFraction );
-
-			// stretch ratio (how much segments are stretched)
-			if ( maxExpectedDistance > 0.1f ) {
-				stretchRatio = distanceToOrigin / maxExpectedDistance;
-			}
-
-			if ( stretchRatio > 1.0f ) {
-				// segments are stretching, straighten them out more aggressively
-				// length factor: longer beams straighten more
-				straightenFactor = BEAM_STRAIGHTEN_RATE * stretchRatio * lengthFactor;
-				if ( straightenFactor > 1.0f ) {
-					straightenFactor = 1.0f;
-				}
-			} else {
-				// not aiming and not stretched - gentle straightening
-				// length factor: longer beams straighten faster
-				straightenFactor = BEAM_STRAIGHTEN_RATE * lengthFactor;
-				if ( straightenFactor > 1.0f ) {
-					straightenFactor = 1.0f;
-				}
-			}
-
-			// transition toward target position
-			VectorScale( beamTrail->segments[i], 1.0f - straightenFactor, beamTrail->segments[i] );
-			VectorMA( beamTrail->segments[i], straightenFactor, targetPos, beamTrail->segments[i] );
+			// quadratic Bezier: (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+			VectorScale( muzzleOrigin, invT * invT, a );
+			VectorScale( controlPoint, 2.0f * invT * t, b );
+			VectorAdd( a, b, beamTrail->segments[i] );
+			VectorScale( origin, t * t, b );
+			VectorAdd( beamTrail->segments[i], b, beamTrail->segments[i] );
 		}
 	}
 
@@ -428,7 +482,7 @@ CG_MissileTrail
 Just adds segments, doesn't draw
 =====================
 */
-void CG_MissileTrail( int entityNum, vec3_t origin, qhandle_t hShader, vec3_t color, qboolean rainbow ) {
+void CG_MissileTrail( int entityNum, vec3_t origin, float radius, qhandle_t hShader, vec3_t color, qboolean rainbow ) {
 	int		i;
 	trail_t	*missileTrail = &cg_trails[entityNum][MISSILE_TRAIL];
 
@@ -449,6 +503,7 @@ void CG_MissileTrail( int entityNum, vec3_t origin, qhandle_t hShader, vec3_t co
 		missileTrail->segmentTime[i] = missileTrail->segmentTime[i-1];
 	}
 
+	missileTrail->radius = radius;
 	VectorCopy( origin, missileTrail->segments[0] );
 	missileTrail->segmentTime[0] = cg.time;
 	missileTrail->shader = hShader;
@@ -506,8 +561,12 @@ void CG_DrawMissileTrails( void ) {
 			alpha = 1.0f - (float)age / SEGMENT_LIFESPAN_MSEC;
 			if ( alpha < 0.0f ) alpha = 0.0f;
 			alphaByte = (byte)(alpha * 255.0f);
-			width = START_WIDTH * ( 1.0f - (float)age / SEGMENT_LIFESPAN_MSEC )
-						+ END_WIDTH * ( (float)age / SEGMENT_LIFESPAN_MSEC );
+			width = trail->radius * ( 1.0f - (float)age / SEGMENT_LIFESPAN_MSEC )
+							+ trail->radius * ( (float)age / SEGMENT_LIFESPAN_MSEC );
+			if ( width <= 1 ) {
+				width = START_WIDTH * ( 1.0f - (float)age / SEGMENT_LIFESPAN_MSEC )
+							+ END_WIDTH * ( (float)age / SEGMENT_LIFESPAN_MSEC );
+			}
 
 			// render the polys
 			{

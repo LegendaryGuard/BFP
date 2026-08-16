@@ -1117,7 +1117,7 @@ UI_WriteBFPConfig
 static void UI_WriteBFPConfig( void ) { // BFP - Overwrites bfp.cfg
 	fileHandle_t	f;
 	int				i, len, bufLen = 0;
-	char			buffer[BFP_CFG_BUFFER_SIZE];
+	static char 	buffer[BFP_CFG_BUFFER_SIZE];
 	char			modelBuffer[MAX_STRING_CHARS], binding[MAX_STRING_CHARS];
 	char			keyname[32];
 

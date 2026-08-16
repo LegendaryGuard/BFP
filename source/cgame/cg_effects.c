@@ -588,15 +588,15 @@ void CG_BigExplode( vec3_t playerOrigin ) {
 CG_DebrisExplosion
 =================
 */
-void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Debris particles explosion
+void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Debris particles explosion
 	int				i;
 	vec3_t			sprOrg, sprVel;
 	int				numRocks = 0;
 	vec3_t			right, up, forward;
 
 	// BFP - explosionRocks <weaponNum> <numRocks>
-	if ( atkCfg ) {
-		numRocks = atkCfg->explosionRocks;
+	if ( skinAtkCfg ) {
+		numRocks = skinAtkCfg->explosionRocks;
 	}
 
 	VectorCopy( dir, forward );
@@ -668,15 +668,15 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCf
 CG_SparksExplosion
 =================
 */
-void CG_SparksExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Spark particles explosion
+void CG_SparksExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Spark particles explosion
 	int				i;
 	vec3_t			sparkOrg, sparkVel;
 	int				numSparks = 0;
 	vec3_t			right, up, forward;
 
 	// BFP - explosionSparks <weaponNum> <numSparks>
-	if ( atkCfg ) {
-		numSparks = atkCfg->explosionSparks;
+	if ( skinAtkCfg ) {
+		numSparks = skinAtkCfg->explosionSparks;
 	}
 
 	VectorCopy( dir, forward );
@@ -756,17 +756,17 @@ void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir ) { // BFP - Beam struggle
 CG_SmokeExplosion
 =================
 */
-void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Explosion smoke
-	if ( cg_explosionSmoke.integer > 0 && atkCfg && atkCfg->explosionSmoke > 0
+void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Explosion smoke
+	if ( cg_explosionSmoke.integer > 0 && skinAtkCfg && skinAtkCfg->explosionSmoke > 0
 	&& !( trap_CM_PointContents( origin, 0 ) & MASK_WATER ) ) { // don't spawn smoke under water, lava or any liquid
 		// BFP - explosionSmoke <weaponNum> <numSmokes(int)>
-		int	i, numSmokes = atkCfg->explosionSmoke;
+		int	i, numSmokes = skinAtkCfg->explosionSmoke;
 		// BFP - explosionSmokeRadius <weaponNum> <radius(int)>
-		int	explosionSmokeRadius = atkCfg->explosionSmokeRadius;
+		int	explosionSmokeRadius = skinAtkCfg->explosionSmokeRadius;
 		// BFP - explosionSmokeLife <weaponNum> <lifetime(int)>
-		int	explosionSmokeLife = atkCfg->explosionSmokeLife;
+		int	explosionSmokeLife = skinAtkCfg->explosionSmokeLife;
 		// BFP - explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
-		int	explosionSmokeSpeed = atkCfg->explosionSmokeSpeed;
+		int	explosionSmokeSpeed = skinAtkCfg->explosionSmokeSpeed;
 
 		// for spreading smoke
 		vec3_t up = {0, 0, 1};
@@ -823,8 +823,8 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg
 CG_ExplosionSound
 =================
 */
-void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Explosion sounds
-	if ( atkCfg && !atkCfg->noExplosionSound ) {
+void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Explosion sounds
+	if ( skinAtkCfg && !skinAtkCfg->noExplosionSound ) {
 		int	i = rand() % 6;
 
 		switch ( i ) {
@@ -844,60 +844,60 @@ void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *atkCfg ) { // BFP 
 CG_ExplosionEffect
 =================
 */
-void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg, centity_t *cent ) { // BFP - Explosion effects
+void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg, centity_t *cent ) { // BFP - Explosion effects
 	// to debug the attack skin config set from this explosion
 #if 0
 {
 	int	i;
 	Com_Printf( "^3Slot %d:\n", cent->currentState.weapon );
-	Com_Printf( "  ^6name^7=^3'%s'^7, ^6icon^7=^3%d\n", atkCfg->attackName, atkCfg->attackIcon );
-	Com_Printf( "  ^6attackTag^7=^3'%s'^7, ^6attackTagPart^7=^3%s\n", atkCfg->attackTag, atkCfg->attackTagPart );
+	Com_Printf( "  ^6name^7=^3'%s'^7, ^6icon^7=^3%d\n", skinAtkCfg->attackName, skinAtkCfg->attackIcon );
+	Com_Printf( "  ^6attackTag^7=^3'%s'^7, ^6attackTagPart^7=^3%s\n", skinAtkCfg->attackTag, skinAtkCfg->attackTagPart );
 	Com_Printf( "  ^6constantFireAttack^7=^3%d^7, ^6lightningBolt^7=^3%d^7, ^6noExplosion^7=^3%d^7, ^6noExplosionSound^7=^3%d\n",
-		atkCfg->constantFireAttack, atkCfg->lightningBolt, atkCfg->noExplosion, atkCfg->noExplosionSound );
-	Com_Printf( "  ^6attackFireVoicePath^7=^3'%s'^7 (sfx^7=^3%d^7)\n", atkCfg->attackFireVoicePath, atkCfg->attackFireVoice );
+		skinAtkCfg->constantFireAttack, skinAtkCfg->lightningBolt, skinAtkCfg->noExplosion, skinAtkCfg->noExplosionSound );
+	Com_Printf( "  ^6attackFireVoicePath^7=^3'%s'^7 (sfx^7=^3%d^7)\n", skinAtkCfg->attackFireVoicePath, skinAtkCfg->attackFireVoice );
 	for ( i = 0; i < ATTACK_CHARGE_LIMIT - 1; i++ ) {
-		if ( atkCfg->attackChargeVoicePath[i][0] ) {
-			Com_Printf( "  ^6attackChargeVoicePath[%d]^7=^3'%s'^7 (sfx^7=^3%d^7)\n", i, atkCfg->attackChargeVoicePath[i], atkCfg->attackChargeVoice[i] );
+		if ( skinAtkCfg->attackChargeVoicePath[i][0] ) {
+			Com_Printf( "  ^6attackChargeVoicePath[%d]^7=^3'%s'^7 (sfx^7=^3%d^7)\n", i, skinAtkCfg->attackChargeVoicePath[i], skinAtkCfg->attackChargeVoice[i] );
 		}
 	}
 	Com_Printf( "  ^6missileSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6chargeSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
-		atkCfg->missileSoundPath, atkCfg->missileSound, atkCfg->chargeSoundPath, atkCfg->chargeSound );
+		skinAtkCfg->missileSoundPath, skinAtkCfg->missileSound, skinAtkCfg->chargeSoundPath, skinAtkCfg->chargeSound );
 	Com_Printf( "  ^6flashSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6firingSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
-		atkCfg->flashSoundPath, atkCfg->flashSound, atkCfg->firingSoundPath, atkCfg->firingSound );
+		skinAtkCfg->flashSoundPath, skinAtkCfg->flashSound, skinAtkCfg->firingSoundPath, skinAtkCfg->firingSound );
 	Com_Printf( "  ^6missileDlight^7=^3%d^7, ^6color^7=(^3%f^7,^3%f^7,^3%f^7)\n",
-		atkCfg->missileDlight, atkCfg->missileDlightColor[0], atkCfg->missileDlightColor[1], atkCfg->missileDlightColor[2] );
+		skinAtkCfg->missileDlight, skinAtkCfg->missileDlightColor[0], skinAtkCfg->missileDlightColor[1], skinAtkCfg->missileDlightColor[2] );
 	Com_Printf( "  ^6missileTrailFunc^7=^3%d^7, ^6trailTime^7=^3%d^7, ^6trailRadius^7=^3%d\n",
-		atkCfg->missileTrailFunc, atkCfg->missileTrailTime, atkCfg->missileTrailRadius );
+		skinAtkCfg->missileTrailFunc, skinAtkCfg->missileTrailTime, skinAtkCfg->missileTrailRadius );
 	Com_Printf( "  ^6beamShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6spiralBeamShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
-		atkCfg->beamShaderName, atkCfg->beamShader, atkCfg->spiralBeamShaderName, atkCfg->spiralBeamShader );
+		skinAtkCfg->beamShaderName, skinAtkCfg->beamShader, skinAtkCfg->spiralBeamShaderName, skinAtkCfg->spiralBeamShader );
 	Com_Printf( "  ^6flashModel^7=^3'%s'^7 (model^7=^3%d^7) ^6flashShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
-		atkCfg->flashModelName, atkCfg->flashModel, atkCfg->flashShaderName, atkCfg->flashShader );
+		skinAtkCfg->flashModelName, skinAtkCfg->flashModel, skinAtkCfg->flashShaderName, skinAtkCfg->flashShader );
 	Com_Printf( "  ^6flashRadius^7=^3%d^7, ^6flashScaleFactor^7=^3%f^7, ^6firingFlashRadius^7=^3%d^7, ^6firingFlashScaleFactor^7=^3%f\n",
-		atkCfg->flashRadius, atkCfg->flashScaleFactor, atkCfg->firingFlashRadius, atkCfg->firingFlashScaleFactor );
+		skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor, skinAtkCfg->firingFlashRadius, skinAtkCfg->firingFlashScaleFactor );
 	Com_Printf( "  ^6missileShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6missileModel^7=^3'%s'^7 (model^7=^3%d^7)\n",
-		atkCfg->missileShaderName, atkCfg->missileShader, atkCfg->missileModelName, atkCfg->missileModel );
+		skinAtkCfg->missileShaderName, skinAtkCfg->missileShader, skinAtkCfg->missileModelName, skinAtkCfg->missileModel );
 	Com_Printf( "  ^6missileRotation^7=^3%d^7, ^6missileModelRotation^7=^3%f^7, ^6missileSpinHoriz^7=^3%d\n",
-		atkCfg->missileRotation, atkCfg->missileModelRotation, atkCfg->missileSpinHoriz );
+		skinAtkCfg->missileRotation, skinAtkCfg->missileModelRotation, skinAtkCfg->missileSpinHoriz );
 	Com_Printf( "  ^6missileRadius^7=^3%f^7, ^6missileRadiusChargeMult^7=^3%d^7, ^6missileScaleFactor^7=^3%f^7, ^6missileScaleFactorChargeMult^7=^3%f\n",
-		atkCfg->missileRadius, atkCfg->missileRadiusChargeMult, atkCfg->missileScaleFactor, atkCfg->missileScaleFactorChargeMult );
+		skinAtkCfg->missileRadius, skinAtkCfg->missileRadiusChargeMult, skinAtkCfg->missileScaleFactor, skinAtkCfg->missileScaleFactorChargeMult );
 	Com_Printf( "  ^6explosionModel^7=^3'%s'^7 (model^7=^3%d^7) ^6explosionShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
-		atkCfg->explosionModelName, atkCfg->explosionModel, atkCfg->explosionShaderName, atkCfg->explosionShader );
+		skinAtkCfg->explosionModelName, skinAtkCfg->explosionModel, skinAtkCfg->explosionShaderName, skinAtkCfg->explosionShader );
 	Com_Printf( "  ^6explosionRing^7=^3%d^7, ^6explosionShell^7=^3%d^7, ^6explosionRocks^7=^3%d^7, ^6explosionSparks^7=^3%d\n",
-		atkCfg->explosionRing, atkCfg->explosionShell, atkCfg->explosionRocks, atkCfg->explosionSparks );
+		skinAtkCfg->explosionRing, skinAtkCfg->explosionShell, skinAtkCfg->explosionRocks, skinAtkCfg->explosionSparks );
 	Com_Printf( "  ^6explosionSmoke^7=^3%d^7, ^6smokeRadius^7=^3%d^7, ^6smokeLife^7=^3%d^7, ^6smokeSpeed^7=^3%d\n",
-		atkCfg->explosionSmoke, atkCfg->explosionSmokeRadius, atkCfg->explosionSmokeLife, atkCfg->explosionSmokeSpeed );
+		skinAtkCfg->explosionSmoke, skinAtkCfg->explosionSmokeRadius, skinAtkCfg->explosionSmokeLife, skinAtkCfg->explosionSmokeSpeed );
 	Com_Printf( "  ^6explosionScaleFactor^7=^3%f^7, ^6explosionScaleFactorChargeMult^7=^3%f\n",
-		atkCfg->explosionScaleFactor, atkCfg->explosionScaleFactorChargeMult );
+		skinAtkCfg->explosionScaleFactor, skinAtkCfg->explosionScaleFactorChargeMult );
 	Com_Printf( "  ^6explosionRingScaleFactor^7=^3%f^7, ^6explosionRingScaleFactorChargeMult^7=^3%f\n",
-		atkCfg->explosionRingScaleFactor, atkCfg->explosionRingScaleFactorChargeMult );
+		skinAtkCfg->explosionRingScaleFactor, skinAtkCfg->explosionRingScaleFactorChargeMult );
 	Com_Printf( "  ^6explosionShellScaleFactor^7=^3%f^7, ^6explosionShellScaleFactorChargeMult^7=^3%f\n",
-		atkCfg->explosionShellScaleFactor, atkCfg->explosionShellScaleFactorChargeMult );
+		skinAtkCfg->explosionShellScaleFactor, skinAtkCfg->explosionShellScaleFactorChargeMult );
 	Com_Printf( "^2=== Explosion End skin config debug ===\n" );
 }
 #endif
-	if ( atkCfg && !atkCfg->noExplosion ) {
+	if ( skinAtkCfg && !skinAtkCfg->noExplosion ) {
 		// BFP - Low poly sphere
-		qhandle_t	explosionModel = ( cg_lowpolysphere.integer > 0 && atkCfg->explosionModel == cgs.media.highPolySphereModel ) ? cgs.media.lowPolySphereModel : atkCfg->explosionModel;
+		qhandle_t	explosionModel = ( cg_lowpolysphere.integer > 0 && skinAtkCfg->explosionModel == cgs.media.highPolySphereModel ) ? cgs.media.lowPolySphereModel : skinAtkCfg->explosionModel;
 		qhandle_t	shellModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
 		localEntity_t *leSphere = NULL, *leRing = NULL, *leShell = NULL;
 		float		scale = 1;
@@ -940,23 +940,23 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCf
 #endif
 
 		if ( explosionModel ) {
-			leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, explosionModel, atkCfg->explosionShader, 1200 );
+			leSphere = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SPHERE, explosionModel, skinAtkCfg->explosionShader, 1200 );
 		}
-		if ( cg_explosionShell.integer > 0 && atkCfg->explosionShell && shellModel ) { // BFP - Explosion shell
+		if ( cg_explosionShell.integer > 0 && skinAtkCfg->explosionShell && shellModel ) { // BFP - Explosion shell
 			leShell = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_SHELL, shellModel, cgs.media.explosionShellShader, 250 );
 		}
-		if ( cg_explosionRing.integer > 0 && atkCfg->explosionRing ) { // BFP - Explosion ring
+		if ( cg_explosionRing.integer > 0 && skinAtkCfg->explosionRing ) { // BFP - Explosion ring
 			leRing = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
 		}
-		CG_SmokeExplosion( origin, dir, atkCfg ); // BFP - Explosion smoke
+		CG_SmokeExplosion( origin, dir, skinAtkCfg ); // BFP - Explosion smoke
 
-		if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
+		{
 			const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
 			int		minCharge = ( def && def->minCharge >= 0 ) ? def->minCharge : 0;
 			int		numPointsChargedOverMin = ( cent->currentState.generic1 > 0 ) ? ( cent->currentState.generic1 - minCharge ) : 0; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
-			float	explosionScaleFactor = atkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = atkCfg->explosionScaleFactorChargeMult;
-			float	explosionRingScaleFactor = atkCfg->explosionRingScaleFactor, explosionRingScaleFactorChargeMult = atkCfg->explosionRingScaleFactorChargeMult;
-			float	explosionShellScaleFactor = atkCfg->explosionShellScaleFactor, explosionShellScaleFactorChargeMult = atkCfg->explosionShellScaleFactorChargeMult;
+			float	explosionScaleFactor = skinAtkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = skinAtkCfg->explosionScaleFactorChargeMult;
+			float	explosionRingScaleFactor = skinAtkCfg->explosionRingScaleFactor, explosionRingScaleFactorChargeMult = skinAtkCfg->explosionRingScaleFactorChargeMult;
+			float	explosionShellScaleFactor = skinAtkCfg->explosionShellScaleFactor, explosionShellScaleFactorChargeMult = skinAtkCfg->explosionShellScaleFactorChargeMult;
 
 			if ( leSphere ) {
 				vec3_t	missileDlightColor;
@@ -964,11 +964,13 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCf
 				if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
 				scale = explosionScaleFactor + explosionScaleFactorChargeMult * numPointsChargedOverMin;
 				if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-				VectorScale( leSphere->refEntity.axis[0], scale, leSphere->refEntity.axis[0] );
-				VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
-				VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
+				if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
+					VectorScale( leSphere->refEntity.axis[0], scale, leSphere->refEntity.axis[0] );
+					VectorScale( leSphere->refEntity.axis[1], scale, leSphere->refEntity.axis[1] );
+					VectorScale( leSphere->refEntity.axis[2], scale, leSphere->refEntity.axis[2] );
+				}
 
-				VectorCopy( atkCfg->missileDlightColor, missileDlightColor );
+				VectorCopy( skinAtkCfg->missileDlightColor, missileDlightColor );
 				if ( def && def->attackType == ATK_HITSCAN  
 				&& missileDlightColor[0] <= 0
 				&& missileDlightColor[1] <= 0
@@ -987,24 +989,26 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCf
 				leSphere->lightColor[2] = missileDlightColor[2];
 			}
 	
-			if ( cg_explosionRing.integer > 0 && atkCfg->explosionRing && leRing ) {
-				if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
-				if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
-				scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
-				if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-				VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
-				VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
-				VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
-			}
-	
-			if ( cg_explosionShell.integer > 0 && atkCfg->explosionShell && leShell ) {
-				if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
-				if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
-				scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
-				if ( scale > MAX_SCALE ) scale = MAX_SCALE;
-				VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
-				VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
-				VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
+			if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
+				if ( cg_explosionRing.integer > 0 && skinAtkCfg->explosionRing && leRing ) {
+					if ( explosionRingScaleFactor > MAX_SCALEFACTOR ) explosionRingScaleFactor = MAX_SCALEFACTOR;
+					if ( explosionRingScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionRingScaleFactorChargeMult = MAX_SCALEFACTOR;
+					scale = explosionRingScaleFactor + explosionRingScaleFactorChargeMult * numPointsChargedOverMin;
+					if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+					VectorScale( leRing->refEntity.axis[0], scale, leRing->refEntity.axis[0] );
+					VectorScale( leRing->refEntity.axis[1], scale, leRing->refEntity.axis[1] );
+					VectorScale( leRing->refEntity.axis[2], scale, leRing->refEntity.axis[2] );
+				}
+		
+				if ( cg_explosionShell.integer > 0 && skinAtkCfg->explosionShell && leShell ) {
+					if ( explosionShellScaleFactor > MAX_SCALEFACTOR ) explosionShellScaleFactor = MAX_SCALEFACTOR;
+					if ( explosionShellScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionShellScaleFactorChargeMult = MAX_SCALEFACTOR;
+					scale = explosionShellScaleFactor + explosionShellScaleFactorChargeMult * numPointsChargedOverMin;
+					if ( scale > MAX_SCALE ) scale = MAX_SCALE;
+					VectorScale( leShell->refEntity.axis[0], scale, leShell->refEntity.axis[0] );
+					VectorScale( leShell->refEntity.axis[1], scale, leShell->refEntity.axis[1] );
+					VectorScale( leShell->refEntity.axis[2], scale, leShell->refEntity.axis[2] );
+				}
 			}
 		}
 	}
@@ -1016,13 +1020,8 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCf
 CG_ForceFieldEffect
 =================
 */
-void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *atkCfg ) { // BFP - Forcefield effect
+void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Forcefield effect
 	bfpWeaponDef_t	*def = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
-
-	if ( def && def->attackType != ATK_FORCEFIELD && !def->chargeAutoFire ) {
-		cent->pe.forceFieldStartTime = 0;
-		return;
-	}
 
 	if ( cent->currentState.eFlags & EF_FIRING ) {
 		if ( !cent->pe.forceFieldStartTime ) {
@@ -1032,20 +1031,25 @@ void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t 
 		cent->pe.forceFieldStartTime = 0;
 	}
 
+	if ( def && def->attackType != ATK_FORCEFIELD && !def->chargeAutoFire ) {
+		cent->pe.forceFieldStartTime = 0;
+		return;
+	}
+
 	if ( cent->pe.forceFieldStartTime ) {
 		const float		MAX_SCALE = 20;
 		int				elapsed = cg.time - cent->pe.forceFieldStartTime;
 		float			scale;
 		// BFP - explosionScaleFactor <weaponNum> <scaleFactor>
 		// BFP - explosionScaleFactorChargeMult <weaponNum> <scaleFactor>
-		float			explosionScaleFactor = atkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = atkCfg->explosionScaleFactorChargeMult;
+		float			explosionScaleFactor = skinAtkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = skinAtkCfg->explosionScaleFactorChargeMult;
 		refEntity_t		ff;
 
 		memset( &ff, 0, sizeof(ff) );
 
 		ff.reType = RT_MODEL;
-		ff.hModel = atkCfg->explosionModel;
-		ff.customShader = atkCfg->explosionShader;
+		ff.hModel = skinAtkCfg->explosionModel;
+		ff.customShader = skinAtkCfg->explosionShader;
 		ff.renderfx = RF_LIGHTING_ORIGIN;
 
 		VectorCopy( origin, ff.origin );
@@ -1099,6 +1103,6 @@ void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t 
 		trap_R_AddRefEntityToScene( &ff );
 
 		// add the dlight
-		trap_R_AddLightToScene( ff.origin, 600 * scale, atkCfg->missileDlightColor[0], atkCfg->missileDlightColor[1], atkCfg->missileDlightColor[2] );
+		trap_R_AddLightToScene( ff.origin, 600 * scale, skinAtkCfg->missileDlightColor[0], skinAtkCfg->missileDlightColor[1], skinAtkCfg->missileDlightColor[2] );
 	}
 }

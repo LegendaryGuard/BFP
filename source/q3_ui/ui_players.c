@@ -31,123 +31,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define UI_TIMER_WEAPON_SWITCH	300
 #define UI_TIMER_ATTACK			500
 #define	UI_TIMER_MUZZLE_FLASH	20
-#define	UI_TIMER_WEAPON_DELAY	250
 
 #define JUMP_HEIGHT				56
 
 #define SWINGSPEED				0.3f
 
-#define SPIN_SPEED				0.9f
-#define COAST_TIME				1000
-
 
 static int			dp_realtime;
 static float		jumpHeight;
-
-
-// BFP - No player info set weapon
-#if 0
-/*
-===============
-UI_PlayerInfo_SetWeapon
-===============
-*/
-static void UI_PlayerInfo_SetWeapon( playerInfo_t *pi, weapon_t weaponNum ) {
-	gitem_t *	item;
-	char		path[MAX_QPATH];
-
-	pi->currentWeapon = weaponNum;
-tryagain:
-	pi->realWeapon = weaponNum;
-	pi->weaponModel = 0;
-	pi->barrelModel = 0;
-	pi->flashModel = 0;
-
-	if ( weaponNum == WP_NONE ) {
-		return;
-	}
-
-	for ( item = bg_itemlist + 1; item->classname ; item++ ) {
-		if ( item->giType != IT_WEAPON ) {
-			continue;
-		}
-		if ( item->giTag == weaponNum ) {
-			break;
-		}
-	}
-
-	if ( item->classname ) {
-		pi->weaponModel = trap_R_RegisterModel( item->world_model[0] );
-	}
-
-	if( pi->weaponModel == 0 ) {
-		if( weaponNum == WP_MACHINEGUN ) {
-			weaponNum = WP_NONE;
-			goto tryagain;
-		}
-		weaponNum = WP_MACHINEGUN;
-		goto tryagain;
-	}
-
-	if ( weaponNum == WP_MACHINEGUN || weaponNum == WP_GAUNTLET || weaponNum == WP_BFG ) {
-		strcpy( path, item->world_model[0] );
-		COM_StripExtension( path, path, sizeof(path) );
-		strcat( path, "_barrel.md3" );
-		pi->barrelModel = trap_R_RegisterModel( path );
-	}
-
-	strcpy( path, item->world_model[0] );
-	COM_StripExtension( path, path, sizeof(path) );
-	strcat( path, "_flash.md3" );
-	pi->flashModel = trap_R_RegisterModel( path );
-
-	switch( weaponNum ) {
-	case WP_GAUNTLET:
-		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
-		break;
-
-	case WP_MACHINEGUN:
-		MAKERGB( pi->flashDlightColor, 1, 1, 0 );
-		break;
-
-	case WP_SHOTGUN:
-		MAKERGB( pi->flashDlightColor, 1, 1, 0 );
-		break;
-
-	case WP_GRENADE_LAUNCHER:
-		MAKERGB( pi->flashDlightColor, 1, 0.7f, 0.5f );
-		break;
-
-	case WP_ROCKET_LAUNCHER:
-		MAKERGB( pi->flashDlightColor, 1, 0.75f, 0 );
-		break;
-
-	case WP_LIGHTNING:
-		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
-		break;
-
-	case WP_RAILGUN:
-		MAKERGB( pi->flashDlightColor, 1, 0.5f, 0 );
-		break;
-
-	case WP_PLASMAGUN:
-		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
-		break;
-
-	case WP_BFG:
-		MAKERGB( pi->flashDlightColor, 1, 0.7f, 1 );
-		break;
-
-	case WP_GRAPPLING_HOOK:
-		MAKERGB( pi->flashDlightColor, 0.6f, 0.6f, 1 );
-		break;
-
-	default:
-		MAKERGB( pi->flashDlightColor, 1, 1, 1 );
-		break;
-	}
-}
-#endif
 
 
 /*
@@ -162,22 +53,6 @@ static void UI_ForceLegsAnim( playerInfo_t *pi, int anim ) {
 		pi->legsAnimationTimer = UI_TIMER_JUMP;
 	}
 }
-
-// BFP - Unused Q3 function
-#if 0
-/*
-===============
-UI_SetLegsAnim
-===============
-*/
-static void UI_SetLegsAnim( playerInfo_t *pi, int anim ) {
-	if ( pi->pendingLegsAnim ) {
-		anim = pi->pendingLegsAnim;
-		pi->pendingLegsAnim = 0;
-	}
-	UI_ForceLegsAnim( pi, anim );
-}
-#endif
 
 
 /*
@@ -264,14 +139,6 @@ static void UI_LegsSequencing( playerInfo_t *pi ) {
 		jumpHeight = 0;
 		return;
 	}
-
-// BFP doesn't use this animation
-#if 0
-	if ( currentAnim == LEGS_LAND ) {
-		UI_SetLegsAnim( pi, LEGS_IDLE );
-		return;
-	}
-#endif
 }
 
 
@@ -639,46 +506,6 @@ static void UI_PlayerFloatSprite( playerInfo_t *pi, vec3_t origin, qhandle_t sha
 }
 
 
-// BFP - No machine gun spin angle
-#if 0
-/*
-======================
-UI_MachinegunSpinAngle
-======================
-*/
-float	UI_MachinegunSpinAngle( playerInfo_t *pi ) {
-	int		delta;
-	float	angle;
-	float	speed;
-	int		torsoAnim;
-
-	delta = dp_realtime - pi->barrelTime;
-	if ( pi->barrelSpinning ) {
-		angle = pi->barrelAngle + delta * SPIN_SPEED;
-	} else {
-		if ( delta > COAST_TIME ) {
-			delta = COAST_TIME;
-		}
-
-		speed = 0.5 * ( SPIN_SPEED + (float)( COAST_TIME - delta ) / COAST_TIME );
-		angle = pi->barrelAngle + delta * speed;
-	}
-
-	torsoAnim = pi->torsoAnim  & ~ANIM_TOGGLEBIT;
-	if( torsoAnim == TORSO_ATTACK0_STRIKE ) {
-		torsoAnim = TORSO_ATTACK0_PREPARE;
-	}
-	if ( pi->barrelSpinning == !(torsoAnim == TORSO_ATTACK0_PREPARE) ) {
-		pi->barrelTime = dp_realtime;
-		pi->barrelAngle = AngleMod( angle );
-		pi->barrelSpinning = !!(torsoAnim == TORSO_ATTACK0_PREPARE);
-	}
-
-	return angle;
-}
-#endif
-
-
 /*
 ===============
 UI_DrawPlayer
@@ -812,66 +639,6 @@ void UI_DrawPlayer( float x, float y, float w, float h, playerInfo_t *pi, int ti
 	head.renderfx = renderfx;
 
 	trap_R_AddRefEntityToScene( &head );
-
-	// BFP - No gun, spinning barrel and muzzle flash
-#if 0
-	//
-	// add the gun
-	//
-	if ( pi->currentWeapon != WP_NONE ) {
-		memset( &gun, 0, sizeof(gun) );
-		gun.hModel = pi->weaponModel;
-		VectorCopy( origin, gun.lightingOrigin );
-		UI_PositionEntityOnTag( &gun, &torso, pi->torsoModel, "tag_weapon");
-		gun.renderfx = renderfx;
-		trap_R_AddRefEntityToScene( &gun );
-	}
-
-	//
-	// add the spinning barrel
-	//
-	if ( pi->realWeapon == WP_MACHINEGUN || pi->realWeapon == WP_GAUNTLET || pi->realWeapon == WP_BFG ) {
-		vec3_t	angles;
-
-		memset( &barrel, 0, sizeof(barrel) );
-		VectorCopy( origin, barrel.lightingOrigin );
-		barrel.renderfx = renderfx;
-
-		barrel.hModel = pi->barrelModel;
-		angles[YAW] = 0;
-		angles[PITCH] = 0;
-		angles[ROLL] = UI_MachinegunSpinAngle( pi );
-		if( pi->realWeapon == WP_GAUNTLET || pi->realWeapon == WP_BFG ) {
-			angles[PITCH] = angles[ROLL];
-			angles[ROLL] = 0;
-		}
-		AnglesToAxis( angles, barrel.axis );
-
-		UI_PositionRotatedEntityOnTag( &barrel, &gun, pi->weaponModel, "tag_barrel");
-
-		trap_R_AddRefEntityToScene( &barrel );
-	}
-
-	//
-	// add muzzle flash
-	//
-	if ( dp_realtime <= pi->muzzleFlashTime ) {
-		if ( pi->flashModel ) {
-			memset( &flash, 0, sizeof(flash) );
-			flash.hModel = pi->flashModel;
-			VectorCopy( origin, flash.lightingOrigin );
-			UI_PositionEntityOnTag( &flash, &gun, pi->weaponModel, "tag_flash");
-			flash.renderfx = renderfx;
-			trap_R_AddRefEntityToScene( &flash );
-		}
-
-		// make a dlight for the flash
-		if ( pi->flashDlightColor[0] || pi->flashDlightColor[1] || pi->flashDlightColor[2] ) {
-			trap_R_AddLightToScene( flash.origin, 200 + (rand()&31), pi->flashDlightColor[0],
-				pi->flashDlightColor[1], pi->flashDlightColor[2] );
-		}
-	}
-#endif
 
 	//
 	// add the chat icon
@@ -1130,7 +897,6 @@ void UI_PlayerInfo_SetModel( playerInfo_t *pi, const char *model ) {
 	pi->weaponTimer = 0;
 	pi->chat = qfalse;
 	pi->newModel = qtrue;
-	// UI_PlayerInfo_SetWeapon( pi, pi->weapon );
 }
 
 
@@ -1165,43 +931,15 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->torso.yawAngle = viewAngles[YAW];
 		pi->torso.yawing = qfalse;
 
-
-// BFP - 5th parameter for the function has been disabled/removed
-#if 0
-		if ( weaponNumber != -1 ) {
-			pi->weapon = weaponNumber;
-			pi->currentWeapon = weaponNumber;
-			pi->lastWeapon = weaponNumber;
-			pi->pendingWeapon = -1;
-			pi->weaponTimer = 0;
-			UI_PlayerInfo_SetWeapon( pi, pi->weapon );
-		}
-#endif
-
 		return;
 	}
-
-// BFP - 5th parameter for the function has been disabled/removed
-#if 0
-	// weapon
-	if ( weaponNumber == -1 ) {
-		pi->pendingWeapon = -1;
-		pi->weaponTimer = 0;
-	}
-	else if ( weaponNumber != WP_NONE ) {
-		pi->pendingWeapon = weaponNumber;
-		pi->weaponTimer = dp_realtime + UI_TIMER_WEAPON_DELAY;
-	}
-#endif
 
 	weaponNum = pi->lastWeapon;
 	pi->weapon = weaponNum;
 
 	if ( torsoAnim == BOTH_DEATH1 || legsAnim == BOTH_DEATH1 ) {
 		torsoAnim = legsAnim = BOTH_DEATH1;
-		pi->weapon = pi->currentWeapon = WP_NONE;
-		// BFP - No player info set weapon
-		//UI_PlayerInfo_SetWeapon( pi, pi->weapon );
+		pi->weapon = pi->currentWeapon = WP_ATTACK_0;
 
 		jumpHeight = 0;
 		pi->pendingLegsAnim = 0;
@@ -1225,28 +963,26 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 
 	// torso animation
-	// BFP - TODO: ki attack handling animations
+	// BFP - Ki attack handling animations
 	if ( torsoAnim == TORSO_STAND ) { // || torsoAnim == TORSO_STAND2 ) { // BFP doesn't use this animation
 		switch ( weaponNum ) {
-			//case WP_NONE:
-			case WP_GAUNTLET:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
-			case WP_MACHINEGUN:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
-			case WP_SHOTGUN:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
-			case WP_GRENADE_LAUNCHER:	torsoAnim = TORSO_ATTACK3_PREPARE; break;
-			case WP_ROCKET_LAUNCHER:	torsoAnim = TORSO_ATTACK4_PREPARE; break;
+			case WP_ATTACK_0:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
+			case WP_ATTACK_1:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
+			case WP_ATTACK_2:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
+			case WP_ATTACK_3:			torsoAnim = TORSO_ATTACK3_PREPARE; break;
+			case WP_ATTACK_4:			torsoAnim = TORSO_ATTACK4_PREPARE; break;
 			default: 					torsoAnim = TORSO_STAND; break;
 		}
 	}
 
-	// BFP - TODO: ki attack handling animations
+	// BFP - Ki attack handling animations
 	if ( torsoAnim == TORSO_STAND ) {
 		switch ( weaponNum ) {
-			//case WP_NONE:
-			case WP_GAUNTLET:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
-			case WP_MACHINEGUN:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
-			case WP_SHOTGUN:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
-			case WP_GRENADE_LAUNCHER:	torsoAnim = TORSO_ATTACK3_PREPARE; break;
-			case WP_ROCKET_LAUNCHER:	torsoAnim = TORSO_ATTACK4_PREPARE; break;
+			case WP_ATTACK_0:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
+			case WP_ATTACK_1:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
+			case WP_ATTACK_2:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
+			case WP_ATTACK_3:			torsoAnim = TORSO_ATTACK3_PREPARE; break;
+			case WP_ATTACK_4:			torsoAnim = TORSO_ATTACK4_PREPARE; break;
 			default: 					torsoAnim = TORSO_STAND; break;
 		}
 		pi->muzzleFlashTime = dp_realtime + UI_TIMER_MUZZLE_FLASH;

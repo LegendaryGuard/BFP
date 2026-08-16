@@ -28,12 +28,17 @@ CREDITS
 =======================================================================
 */
 
+// BFP - HIGHLY MODIFIED
+
 
 #include "ui_local.h"
 
 #define ART_BFPLOGO			"menu/art/bfp_logol"	// BFP - Logo
-#define SCROLLSPEED			6.50	// The scrolling speed in pixels per second. Modify as appropriate for our credits
-#define ART_MENUBG			""	// "menu/art/menubg"		// BFP - Menu background
+#define SCROLLSPEED			6.50					// The scrolling speed in pixels per second. Modify as appropriate for our credits
+#define ART_MENUBG			"" // "menu/art/menubg"	// BFP - Menu background
+
+// BFP - A macro to enable/disable credits music
+#define	ENABLE_CREDITS_MUSIC	1
 
 typedef struct {
 	menuframework_s	menu;
@@ -74,8 +79,8 @@ cr_line credits[] = { // edit this as necessary for the credits
 
 	CR_START
 
-	// BFP - Source Code Recreation credits
-	CR_TITLE( "Bid For Power", "Source Code Recreation" )
+	// BFP - Recreation Project credits
+	CR_TITLE( "Bid For Power", "Recreation Project" )
 
 	CR_SMALL_SEPARATOR
 
@@ -84,12 +89,13 @@ cr_line credits[] = { // edit this as necessary for the credits
 
 	CR_SMALL_SEPARATOR
 
-	CR_PERSON( "Mjuksel" )
-	CR_ROLE( "Contributor" )
+	CR_PERSON( "Special Thanks" )
+	CR_ROLE( "Quake3World" )
+	CR_ROLE( "ZEQ2" )
 
 	CR_CUT
 
-	// BFP - BFP Team credits credits
+	// BFP - BFP Team credits
 	CR_BFP_TEAM_TITLE( "The Bid For Power Team" )
 
 	CR_SMALL_SEPARATOR
@@ -336,8 +342,8 @@ void UI_CreditMenu( void ) {
 	UI_PushMenu ( &s_credits.menu );
 
 	starttime = uis.realtime; // record start time for credits to scroll properly
-// BFP - There's no music in the credits
-#if 0
+// BFP - Originally in BFP, there's no music in the credits
+#if ENABLE_CREDITS_MUSIC
 	mvolume = trap_Cvar_VariableValue( "s_musicvolume" );
 	if ( mvolume < 0.5 )
 		trap_Cmd_ExecuteText( EXEC_APPEND, "s_musicvolume 0.5\n" );

@@ -471,12 +471,12 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.sfx_rockexp = trap_S_RegisterSound ("sound/weapons/rocket/rocklx1a.wav", qfalse);
 	cgs.media.sfx_plasmaexp = trap_S_RegisterSound ("sound/weapons/plasma/plasmx1a.wav", qfalse);
 
-	// BFP - No regen sound
+	// BFP - No regen and grenade bounce sound
 	// cgs.media.regenSound = trap_S_RegisterSound("sound/items/regen.wav", qfalse);
 	cgs.media.protectSound = trap_S_RegisterSound("sound/items/protect3.wav", qfalse);
 	cgs.media.n_healthSound = trap_S_RegisterSound("sound/items/n_health.wav", qfalse );
-	cgs.media.hgrenb1aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb1a.wav", qfalse);
-	cgs.media.hgrenb2aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb2a.wav", qfalse);
+	// cgs.media.hgrenb1aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb1a.wav", qfalse);
+	// cgs.media.hgrenb2aSound = trap_S_RegisterSound("sound/weapons/grenade/hgrenb2a.wav", qfalse);
 
 	// BFP - Explosion sounds
 	cgs.media.explosion1Sound = trap_S_RegisterSound("sound/bfp/explosion1.wav", qfalse);
@@ -832,7 +832,7 @@ static void CG_RegisterGraphics( void ) {
 	if ( !cgs.media.pebbleMdl1
 	|| !cgs.media.pebbleMdl2
 	|| !cgs.media.pebbleMdl3 ) {
-		CG_Printf( "^3Unable to load pebble models, some of them are missing. Remember: must be in models/effects/pebble[1-3].md3 one per each, all 3 of them must be available" );
+		CG_Printf( "^3Unable to load pebble models, some of them are missing. Remember: must be in models/effects/pebble[1-3].md3 one per each, all 3 of them must be available\n" );
 	}
 
 	// register the inline models
@@ -991,7 +991,8 @@ Loads and executes the BFP mod config file (bfp.cfg)
 static void CG_LoadBFPConfig( void ) { // BFP - Load bfp.cfg
 	fileHandle_t f;
 	int len;
-	char buf[BFP_CFG_BUFFER_SIZE], cmd[MAX_STRING_CHARS];
+	static char buf[BFP_CFG_BUFFER_SIZE];
+	char cmd[MAX_STRING_CHARS];
 	char *ptr;
 
 	len = trap_FS_FOpenFile( "bfp.cfg", &f, FS_READ );
@@ -1150,7 +1151,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	CG_InitConsoleCommands();
 
-	cg.weaponSelect = WP_MACHINEGUN;
+	cg.weaponSelect = WP_ATTACK_2;
 
 	cgs.redflag = cgs.blueflag = -1; // For compatibily, default to unset for
 	cgs.flagStatus = -1;
@@ -1194,6 +1195,15 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 
 	CG_RegisterGraphics();
 
+	// BFP - Load bfp.cfg
+	CG_LoadBFPConfig();
+
+	// BFP - Load bfp_weapon.cfg
+	BG_LoadBFPWeaponConfig();
+
+	// BFP - Load bfp_attacksets.cfg
+	BG_LoadBFPAttacksetsConfig();
+
 	CG_LoadingString( "clients" );
 
 	CG_RegisterClients();		// if low on memory, some clients will be deferred
@@ -1216,15 +1226,6 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum ) {
 	CG_StartMusic();
 
 	CG_LoadingString( "" );
-
-	// BFP - Load bfp.cfg
-	CG_LoadBFPConfig();
-
-	// BFP - Load bfp_weapon.cfg
-	BG_LoadBFPWeaponConfig();
-
-	// BFP - Load bfp_attacksets.cfg
-	BG_LoadBFPAttacksetsConfig();
 
 	CG_ShaderStateChanged();
 

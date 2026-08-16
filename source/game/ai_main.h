@@ -87,7 +87,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PRESENCE_NORMAL				2
 #define PRESENCE_CROUCH				4
 //
-#define MAX_PROXMINES				64
+//#define MAX_PROXMINES				64
 
 //check points
 typedef struct bot_waypoint_s
@@ -204,9 +204,9 @@ typedef struct bot_state_s
 	vec3_t enemyvelocity;							//enemy velocity 0.5 secs ago during battle
 	vec3_t enemyorigin;								//enemy origin 0.5 secs ago during battle
 	//
-	int kamikazebody;								//kamikaze body
-	int proxmines[MAX_PROXMINES];
-	int numproxmines;
+	//int kamikazebody;								//kamikaze body
+	//int proxmines[MAX_PROXMINES];
+	//int numproxmines;
 	//
 	int character;									//the bot character
 	int ms;											//move state of the bot

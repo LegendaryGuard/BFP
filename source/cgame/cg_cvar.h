@@ -39,7 +39,6 @@ CG_CVAR( cg_crosshairX, "cg_crosshairX", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_crosshairY, "cg_crosshairY", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_lifedeaths, "cg_lifedeaths", "0", CVAR_ROM | CVAR_ARCHIVE ) // BFP - Number of deaths
 CG_CVAR( cg_lifekills, "cg_lifekills", "0", CVAR_ROM | CVAR_ARCHIVE ) // BFP - Number of kills
-CG_CVAR( cg_brassTime, "cg_brassTime", "2500", CVAR_ARCHIVE )
 CG_CVAR( cg_simpleItems, "cg_simpleItems", "0", CVAR_ARCHIVE )
 CG_CVAR( cg_addMarks, "cg_marks", "1", CVAR_ARCHIVE )
 CG_CVAR( cg_particles, "cg_particles", "1", CVAR_ARCHIVE ) // BFP - Particles
@@ -136,12 +135,6 @@ CG_CVAR( cg_smallFont, "ui_smallFont", "0.25", CVAR_ARCHIVE )
 CG_CVAR( cg_bigFont, "ui_bigFont", "0.4", CVAR_ARCHIVE )
 
 CG_CVAR( cg_oldRocketTrail, "cg_oldRocketTrail", "0", CVAR_ARCHIVE )
-/*
-// BFP - Remove these unused cvars from the code in the future
-CG_CVAR( cg_oldRail, "cg_oldRail", "1", CVAR_ARCHIVE )
-CG_CVAR( cg_oldPlasma, "cg_oldPlasma", "1", CVAR_ARCHIVE )
-CG_CVAR( cg_trueLightning, "cg_trueLightning", "0.0", CVAR_ARCHIVE )
-*/
 
 //CG_CVAR( cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE )
 

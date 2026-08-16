@@ -147,16 +147,6 @@ typedef struct {
 
 	vec3_t			muzzleOrigin;	// BFP - Muzzle origin
 
-	// railgun trail spawning
-	vec3_t			railgunImpact;
-	qboolean		railgunFlash;
-
-	// BFP - No machinegun spinning
-	// machinegun spinning
-	//float			barrelAngle;
-	//int				barrelTime;
-	//qboolean		barrelSpinning;
-
 	int				forceFieldStartTime;	// BFP - Forcefield start time
 
 	// BFP - Handle chargeAutoFire for forcefield attack
@@ -164,7 +154,7 @@ typedef struct {
 
 	qboolean		constantFireAtkPlayed;	// BFP - To play constantFireAttack fire sound once
 
-	qboolean		lastChargeVoiceLevel;	// BFP - To play charge voice once
+	int				lastChargeVoiceLevel;	// BFP - To play charge voice in one charge count once
 } playerEntity_t;
 
 //=================================================
@@ -1107,12 +1097,12 @@ typedef struct {
 	qhandle_t selectCursor;
 	qhandle_t sizeCursor;
 
-	// BFP - No regen sound
+	// BFP - No regen and grenade bounce sound
 //	sfxHandle_t	regenSound;
 	sfxHandle_t	protectSound;
 	sfxHandle_t	n_healthSound;
-	sfxHandle_t	hgrenb1aSound;
-	sfxHandle_t	hgrenb2aSound;
+//	sfxHandle_t	hgrenb1aSound;
+//	sfxHandle_t	hgrenb2aSound;
 	sfxHandle_t	wstbimplSound;
 	sfxHandle_t	wstbimpmSound;
 	sfxHandle_t	wstbimpdSound;
@@ -1447,13 +1437,13 @@ void CG_Weapon_f( void );
 void CG_RegisterItemVisuals( int itemNum );
 
 void CG_FireWeapon( centity_t *cent );
-void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType, bfpAttackSkinConfig_t *atkCfg, centity_t *cent );
-void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum, bfpAttackSkinConfig_t *atkCfg, centity_t *cent );
+void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, impactSound_t soundType, bfpAttackSkinConfig_t *skinAtkCfg, centity_t *cent );
+void CG_MissileHitPlayer( int weapon, vec3_t origin, vec3_t dir, int entityNum, bfpAttackSkinConfig_t *skinAtkCfg, centity_t *cent );
 
-void CG_RocketTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg );
+void CG_RocketTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg );
 void CG_RailTrail( clientInfo_t *ci, vec3_t start, vec3_t end );
-void CG_BFPBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg ); // BFP - BFP Beam trail handling
-void CG_BFPSpiralBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *atkCfg ); // BFP - BFP Spiral beam trail handling
+void CG_BFPBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ); // BFP - BFP Beam trail handling
+void CG_BFPSpiralBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ); // BFP - BFP Spiral beam trail handling
 void CG_AddViewWeapon (playerState_t *ps);
 void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent, int team, char *tagName );
 void CG_DrawWeaponSelect( void );
@@ -1506,34 +1496,38 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 // BFP - Explosion models
 localEntity_t *CG_SpawnExplosionModel( vec3_t origin, vec3_t dir, leType_t type, qhandle_t hModel, qhandle_t shader, float duration );
 // BFP - Debris particles explosion
-void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg );
+void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg );
 // BFP - Spark particles explosion
-void CG_SparksExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg );
+void CG_SparksExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg );
 // BFP - Beam struggle sparks
 void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir );
 // BFP - Explosion smoke
-void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg );
+void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg );
 // BFP - Explosion sounds
-void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *atkCfg );
+void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *skinAtkCfg );
 // BFP - Explosion effects
-void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *atkCfg, centity_t *cent );
+void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg, centity_t *cent );
 // BFP - Forcefield effect
-void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *atkCfg );
+void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *skinAtkCfg );
 
 // BFP - Trails
 //
 // cg_trails.c
 //
 /* Trail types */
-#define KI_TRAIL			0
-#define BEAM_TRAIL			1
-#define MISSILE_TRAIL		2
+enum {
+	KI_TRAIL,
+	BEAM_TRAIL,
+	MISSILE_TRAIL,
+
+	MAX_TRAIL_TYPES
+};
 void CG_InitTrails( void );
 void CG_ResetTrail( const int TRAIL_TYPE, int entityNum, vec3_t origin );
 void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShader );
 void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t hShader );
 void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t beamShader, qhandle_t corkscrewShader );
-void CG_MissileTrail( int entityNum, vec3_t origin, qhandle_t hShader, vec3_t color, qboolean rainbow );
+void CG_MissileTrail( int entityNum, vec3_t origin, float radius, qhandle_t hShader, vec3_t color, qboolean rainbow );
 void CG_DrawMissileTrails( void );
 
 //

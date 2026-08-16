@@ -100,18 +100,6 @@ typedef struct
 #define ID_KIATTACK3	20	// BFP
 #define ID_KIATTACK4	21	// BFP
 #define ID_KIATTACK5	22	// BFP
-// BFP - unused
-#if 0
-#define ID_WEAPON1		18
-#define ID_WEAPON2		19
-#define ID_WEAPON3		20
-#define ID_WEAPON4		21
-#define ID_WEAPON5		22
-#define ID_WEAPON6		23
-#define ID_WEAPON7		24
-#define ID_WEAPON8		25
-#define ID_WEAPON9		26
-#endif
 #define ID_ATTACK		23
 #define ID_MELEE		24	// BFP
 #define ID_BLOCK		25	// BFP
@@ -148,19 +136,6 @@ typedef struct
 #define ANIM_TURNRIGHT	9
 #define ANIM_LOOKUP		10
 #define ANIM_LOOKDOWN	11
-// BFP - unused
-#if 0
-#define ANIM_WEAPON1	12
-#define ANIM_WEAPON2	13
-#define ANIM_WEAPON3	14
-#define ANIM_WEAPON4	15
-#define ANIM_WEAPON5	16
-#define ANIM_WEAPON6	17
-#define ANIM_WEAPON7	18
-#define ANIM_WEAPON8	19
-#define ANIM_WEAPON9	20
-#define ANIM_WEAPON10	21
-#endif
 #define ANIM_ATTACK		12
 #define ANIM_KIATTACK1	13 // BFP
 #define ANIM_KIATTACK2	14 // BFP
@@ -200,18 +175,7 @@ typedef struct
 	menuaction_s		sidestep;
 	menuaction_s		enableflight; // BFP - flight menu action
 	menuaction_s		run;
-	// BFP - unused
-#if 0 	
-	menuaction_s		machinegun;
-	menuaction_s		chainsaw;
-	menuaction_s		shotgun;
-	menuaction_s		grenadelauncher;
-	menuaction_s		rocketlauncher;
-	menuaction_s		lightning;
-	menuaction_s		railgun;
-	menuaction_s		plasma;
-	menuaction_s		bfg;
-#endif
+
 	// BFP - Ki attack menu actions
 	menuaction_s		kiattack1;
 	menuaction_s		kiattack2;
@@ -295,13 +259,6 @@ static bind_t g_bindings[] =
 	{ "weapon 3",			"ki attack 3",		ID_KIATTACK3,	ANIM_KIATTACK3,	'3',			-1, -1, -1 }, // BFP - ki attack 3 (before shotgun)
 	{ "weapon 4",			"ki attack 4",		ID_KIATTACK4,	ANIM_KIATTACK4,	'4',			-1, -1, -1 }, // BFP - ki attack 4 (before grenade launcher)
 	{ "weapon 5",			"ki attack 5",		ID_KIATTACK5,	ANIM_KIATTACK5,	'5',			-1, -1, -1 }, // BFP - ki attack 5 (before rocket launcher)
-	// BFP - unused
-#if 0
-	{ "weapon 6",			"lightning",		ID_WEAPON6,		ANIM_WEAPON6,	'6',			-1, -1, -1 },
-	{ "weapon 7",			"railgun",			ID_WEAPON7,		ANIM_WEAPON7,	'7',			-1, -1, -1 },
-	{ "weapon 8",			"plasma gun",		ID_WEAPON8,		ANIM_WEAPON8,	'8',			-1, -1, -1 },
-	{ "weapon 9",			"BFG",				ID_WEAPON9,		ANIM_WEAPON9,	'9',			-1, -1, -1 },
-#endif
 	{ "+attack", 			"attack",			ID_ATTACK,		ANIM_ATTACK,	K_CTRL,			-1, -1, -1 },
 	{ "+button7",			"Melee Combat",		ID_MELEE,		ANIM_MELEE,		K_ALT,			-1, -1, -1 }, // BFP - melee
 	{ "+button10",			"Block",			ID_BLOCK,		ANIM_BLOCK,		K_CTRL,			-1, -1, -1 }, // BFP - block
@@ -355,18 +312,6 @@ static menucommon_s *g_weapons_controls[] = {
 	(menucommon_s *)&s_controls.nextweapon,
 	(menucommon_s *)&s_controls.prevweapon,
 	(menucommon_s *)&s_controls.autoswitch,
-	// BFP - unused
-#if 0
-	(menucommon_s *)&s_controls.chainsaw,
-	(menucommon_s *)&s_controls.machinegun,
-	(menucommon_s *)&s_controls.shotgun,
-	(menucommon_s *)&s_controls.grenadelauncher,
-	(menucommon_s *)&s_controls.rocketlauncher,
-	(menucommon_s *)&s_controls.lightning,
-	(menucommon_s *)&s_controls.railgun,
-	(menucommon_s *)&s_controls.plasma,
-	(menucommon_s *)&s_controls.bfg,
-#endif
 	(menucommon_s *)&s_controls.kiattack1, // BFP
 	(menucommon_s *)&s_controls.kiattack2, // BFP
 	(menucommon_s *)&s_controls.kiattack3, // BFP
@@ -574,48 +519,6 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_LOOKDOWN:
 		s_controls.playerViewangles[PITCH] = 45;
 		break;
-// BFP - unused
-#if 0
-	case ANIM_WEAPON1:
-		s_controls.playerWeapon = WP_GAUNTLET;
-		break;
-
-	case ANIM_WEAPON2:
-		s_controls.playerWeapon = WP_MACHINEGUN;
-		break;
-
-	case ANIM_WEAPON3:
-		s_controls.playerWeapon = WP_SHOTGUN;
-		break;
-
-	case ANIM_WEAPON4:
-		s_controls.playerWeapon = WP_GRENADE_LAUNCHER;
-		break;
-
-	case ANIM_WEAPON5:
-		s_controls.playerWeapon = WP_ROCKET_LAUNCHER;
-		break;
-
-	case ANIM_WEAPON6:
-		s_controls.playerWeapon = WP_LIGHTNING;
-		break;
-
-	case ANIM_WEAPON7:
-		s_controls.playerWeapon = WP_RAILGUN;
-		break;
-
-	case ANIM_WEAPON8:
-		s_controls.playerWeapon = WP_PLASMAGUN;
-		break;
-
-	case ANIM_WEAPON9:
-		s_controls.playerWeapon = WP_BFG;
-		break;
-
-	case ANIM_WEAPON10:
-		s_controls.playerWeapon = WP_GRAPPLING_HOOK;
-		break;
-#endif
 	case ANIM_KIATTACK1:
 		s_controls.playerTorso = TORSO_ATTACK0_PREPARE;
 		break;
@@ -643,7 +546,7 @@ static void Controls_UpdateModel( int anim ) {
 	case ANIM_DIE:
 		s_controls.playerLegs = BOTH_DEATH1;
 		s_controls.playerTorso = BOTH_DEATH1;
-		s_controls.playerWeapon = WP_NONE;
+		s_controls.playerWeapon = WP_ATTACK_0;
 		break;
 
 	case ANIM_CHAT:
@@ -1464,62 +1367,7 @@ static void Controls_MenuInit( void )
 	s_controls.run.generic.callback  = Controls_ActionEvent;
 	s_controls.run.generic.ownerdraw = Controls_DrawKeyBinding;
 	s_controls.run.generic.id        = ID_SPEED;
-// BFP - unused
-#if 0
-	s_controls.chainsaw.generic.type	  = MTYPE_ACTION;
-	s_controls.chainsaw.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.chainsaw.generic.callback  = Controls_ActionEvent;
-	s_controls.chainsaw.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.chainsaw.generic.id        = ID_WEAPON1;
 
-	s_controls.machinegun.generic.type	    = MTYPE_ACTION;
-	s_controls.machinegun.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.machinegun.generic.callback  = Controls_ActionEvent;
-	s_controls.machinegun.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.machinegun.generic.id        = ID_WEAPON2;
-
-	s_controls.shotgun.generic.type	     = MTYPE_ACTION;
-	s_controls.shotgun.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.shotgun.generic.callback  = Controls_ActionEvent;
-	s_controls.shotgun.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.shotgun.generic.id        = ID_WEAPON3;
-
-	s_controls.grenadelauncher.generic.type	     = MTYPE_ACTION;
-	s_controls.grenadelauncher.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.grenadelauncher.generic.callback  = Controls_ActionEvent;
-	s_controls.grenadelauncher.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.grenadelauncher.generic.id        = ID_WEAPON4;
-
-	s_controls.rocketlauncher.generic.type	    = MTYPE_ACTION;
-	s_controls.rocketlauncher.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.rocketlauncher.generic.callback  = Controls_ActionEvent;
-	s_controls.rocketlauncher.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.rocketlauncher.generic.id        = ID_WEAPON5;
-
-	s_controls.lightning.generic.type	   = MTYPE_ACTION;
-	s_controls.lightning.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.lightning.generic.callback  = Controls_ActionEvent;
-	s_controls.lightning.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.lightning.generic.id        = ID_WEAPON6;
-
-	s_controls.railgun.generic.type	     = MTYPE_ACTION;
-	s_controls.railgun.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.railgun.generic.callback  = Controls_ActionEvent;
-	s_controls.railgun.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.railgun.generic.id        = ID_WEAPON7;
-
-	s_controls.plasma.generic.type	    = MTYPE_ACTION;
-	s_controls.plasma.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.plasma.generic.callback  = Controls_ActionEvent;
-	s_controls.plasma.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.plasma.generic.id        = ID_WEAPON8;
-
-	s_controls.bfg.generic.type	     = MTYPE_ACTION;
-	s_controls.bfg.generic.flags     = QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
-	s_controls.bfg.generic.callback  = Controls_ActionEvent;
-	s_controls.bfg.generic.ownerdraw = Controls_DrawKeyBinding;
-	s_controls.bfg.generic.id        = ID_WEAPON9;
-#endif
 	// BFP - Ki attack 1 option
 	s_controls.kiattack1.generic.type		= MTYPE_ACTION;
 	s_controls.kiattack1.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS|QMF_GRAYED|QMF_HIDDEN;
@@ -1798,18 +1646,7 @@ static void Controls_MenuInit( void )
 	Menu_AddItem( &s_controls.menu, &s_controls.nextweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.prevweapon );
 	Menu_AddItem( &s_controls.menu, &s_controls.autoswitch );
-	// BFP - unused
-#if 0
-	Menu_AddItem( &s_controls.menu, &s_controls.chainsaw );
-	Menu_AddItem( &s_controls.menu, &s_controls.machinegun );
-	Menu_AddItem( &s_controls.menu, &s_controls.shotgun );
-	Menu_AddItem( &s_controls.menu, &s_controls.grenadelauncher );
-	Menu_AddItem( &s_controls.menu, &s_controls.rocketlauncher );
-	Menu_AddItem( &s_controls.menu, &s_controls.lightning );
-	Menu_AddItem( &s_controls.menu, &s_controls.railgun );
-	Menu_AddItem( &s_controls.menu, &s_controls.plasma );
-	Menu_AddItem( &s_controls.menu, &s_controls.bfg );
-#endif
+
 	// BFP - Ki attacks
 	Menu_AddItem( &s_controls.menu, &s_controls.kiattack1 );
 	Menu_AddItem( &s_controls.menu, &s_controls.kiattack2 );

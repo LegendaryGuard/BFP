@@ -215,8 +215,6 @@ static void BG_ReadConfigToken( char **ptr, char *value, int valueSize ) {
 BG_ParseAttackTypeToken
 
 Maps an attackType string token (e.g. "hitscan") to its ATK_* value.
-Returns qtrue and fills *outType if recognized, qfalse otherwise (cur
-keeps whatever attackType it had, i.e. ATK_MISSILE from the memset)
 
 attackType string -> ATK_* value
 ================
@@ -592,7 +590,7 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 			ptr += 15;
 			BG_ReadConfigToken( &ptr, value, sizeof( value ) );
 			if ( cur ) {
-				cur->movementPenalty = atoi( value );
+				cur->movementPenalty = atoi( value ) * 1000; // msec
 			}
 		} else if ( !Q_stricmpn( ptr, "explosionSpawn", 14 ) && ( ptr[14] == ' ' || ptr[14] == '\t' ) ) {
 			char	value[32];
@@ -602,7 +600,7 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 				cur->explosionSpawn = atoi( value );
 			}
 		} else if ( !Q_stricmpn( ptr, "usesGravity", 11 ) && ( ptr[11] == ' ' || ptr[11] == '\t' ) ) {
-			// NOTE: usesGravity is unused, skip its value
+			// BFP - NOTE: usesGravity is unused, skip its value
 			char	value[32];
 			ptr += 11;
 			BG_ReadConfigToken( &ptr, value, sizeof( value ) );
@@ -678,9 +676,7 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 ================
 BG_LoadBFPWeaponConfigFile
 
-Loads one named file into a local buffer and hands it to
-BG_ParseBFPWeaponConfigFile. Returns qtrue if the file existed and was
-read, qfalse = not found
+Loads one named file into a local buffer and hands it to BG_ParseBFPWeaponConfigFile
 ================
 */
 static qboolean BG_LoadBFPWeaponConfigFile( const char *fileName ) {
@@ -774,8 +770,7 @@ void BG_LoadBFPWeaponConfig( void ) {
 ATTACKSETS
 
 Maps each player model prefix group (e.g. "bfp1-") to 5 weaponNum entries,
-one per attack slot (WP_ATTACK_0..WP_ATTACK_4). Moved here (from g_utils.c)
-so bg_pmove.c can resolve pm->ps->weapon (a slot) straight into a
+one per attack slot. bg_pmove.c can resolve pm->ps->weapon (a slot) straight into a
 weaponNum via BG_GetWeaponNumForSlot(), without any extra playerState_t stat
 ===========================================================================
 */
@@ -840,6 +835,39 @@ const char *BG_FindAttacksetDefaultModel( const char *prefix ) {
 
 /*
 ==================
+BG_FindAttacksetDefaultModelForModel
+
+Convenience wrapper: given a full model name (e.g. "bfp3-moi"), finds the
+attackset group whose modelPrefix it starts with (e.g. "bfp3-") and returns
+that group's defaultModel (e.g. "bfp3-ryuujin").
+
+This is what a skin-config value of "0" for attackFireVoice/attackChargeVoice
+resolves against: "0" means "use whatever the attackset's default model's
+own default.cfg says for this same slot/charge index", and this is the
+model name that default.cfg has to be loaded from
+==================
+*/
+const char *BG_FindAttacksetDefaultModelForModel( const char *modelName ) {
+	int	i, prefixLen;
+
+	for ( i = 0; i < bfpAttacksets.numSets; ++i ) {
+		prefixLen = (int)strlen( bfpAttacksets.sets[i].modelPrefix );
+		if ( prefixLen == 0 ) {
+			continue;
+		}
+		if ( !Q_stricmpn( modelName, bfpAttacksets.sets[i].modelPrefix, prefixLen ) ) {
+			if ( !bfpAttacksets.sets[i].defaultModel[0] ) {
+				return NULL; // matched prefix but no defaultModel was set for it
+			}
+			return bfpAttacksets.sets[i].defaultModel;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+==================
 BG_GetWeaponNumForSlot
 
 Resolves (player model name, attack slot) -> weaponNum, by finding
@@ -885,7 +913,7 @@ static qboolean bfpClientAttackWeaponDefsSet[MAX_CLIENTS];
 ==================
 BG_SetClientAttackWeaponNums
 
-Resolves and caches all 5 attack slots -> weaponNum for one client's
+Resolves and caches all attack slots -> weaponNum for one client's
 current model. Call this whenever a client's model changes; it does the
 BG_GetWeaponNumForSlot lookup once per slot right away so later
 BG_GetClientWeaponNumForSlot calls are a plain array read
@@ -908,12 +936,8 @@ void BG_SetClientAttackWeaponNums( int clientNum, const char *modelName ) {
 ==================
 BG_GetClientWeaponNumForSlot
 
-Reads back a value cached by BG_SetClientAttackWeaponNums: which
-weaponNum this client's current model has assigned to the given attack
-slot. Returns -1 if the client index is out of range, the slot is out of
-range, or nothing has been cached for this client yet (e.g. before its
-first ClientUserinfoChanged on the server, or before cgame has learned
-this client's model)
+Reads back a value cached by BG_SetClientAttackWeaponNums: which weaponNum 
+this client's current model has assigned to the given attack slot
 ==================
 */
 bfpWeaponDef_t *BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot ) {
