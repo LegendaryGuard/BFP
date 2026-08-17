@@ -516,22 +516,50 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 	case EV_TIER_RESET:				// 13
 		break;
 	case EV_TIER_0:					// 14
-	case EV_TIER_1:					// 15
-	case EV_TIER_2:					// 16
-	case EV_TIER_3:					// 17
-	case EV_TIER_4:					// 18
 		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
 		cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 2000;
 		if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
+			cg.weaponSelect = WP_ATTACK_0; // force weapon selection to the unlocked weapon slot
+			cg.weaponSelectTime = cg.time;
 			cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 2000;
 		}
-		if ( event == EV_TIER_4 ) {
-			cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 4200;
-			if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
-				cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 4200;
-				cg.ultimateTierUnlockedTime = cg.time + 5000;
-				trap_SendConsoleCommand( "transformorbit\n" );
-			}
+		break;
+	case EV_TIER_1:					// 15
+		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
+		cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 2000;
+		if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
+			cg.weaponSelect = WP_ATTACK_1; // force weapon selection to the unlocked weapon slot
+			cg.weaponSelectTime = cg.time;
+			cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 2000;
+		}
+		break;
+	case EV_TIER_2:					// 16
+		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
+		cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 2000;
+		if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
+			cg.weaponSelect = WP_ATTACK_2; // force weapon selection to the unlocked weapon slot
+			cg.weaponSelectTime = cg.time;
+			cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 2000;
+		}
+		break;
+	case EV_TIER_3:					// 17
+		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
+		cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 2000;
+		if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
+			cg.weaponSelect = WP_ATTACK_3; // force weapon selection to the unlocked weapon slot
+			cg.weaponSelectTime = cg.time;
+			cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 2000;
+		}
+		break;
+	case EV_TIER_4:					// 18
+		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
+		cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 4200;
+		if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
+			cg.weaponSelect = WP_ATTACK_4; // force weapon selection to the unlocked weapon slot
+			cg.weaponSelectTime = cg.time;
+			cg.predictedPlayerEntity.pe.tierAuraTime = cg.time + 4200;
+			cg.ultimateTierUnlockedTime = cg.time + 5000;
+			trap_SendConsoleCommand( "transformorbit\n" );
 		}
 		break;
 

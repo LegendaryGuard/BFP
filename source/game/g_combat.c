@@ -254,6 +254,9 @@ static void UnlockAttackSlot( gentity_t *ent, int slot ) { // BFP - Unlock a new
 	if ( wpCfg ) {
 		ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << slot );
 		ClientSetAttack( ent->client, slot, wpCfg );
+		// force weapon selection to the unlocked weapon slot
+		ent->client->ps.weapon = slot;
+		ent->client->pers.cmd.weapon = slot;
 	}
 }
 
