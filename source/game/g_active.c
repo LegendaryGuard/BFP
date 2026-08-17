@@ -1007,7 +1007,8 @@ static void Client_ChargeKiAttackState( gclient_t *client, bfpWeaponCfgDef_t *wp
 	}
 	if ( ( wpCfg->chargeAutoFire
 	|| maxCharge < client->ps.generic1
-	|| ( maxCharge > 0 && client->ps.generic1 < maxCharge ) )
+	|| ( maxCharge > 0 && client->ps.generic1 < maxCharge )
+	|| ( maxCharge <= 0 && client->ps.generic1 < minCharge ) ) // if minCharge is superior to maxCharge, e.g. minCharge 3, maxCharge 0
 	&& client->ps.generic1 < ATTACK_CHARGE_LIMIT ) {
 		++client->ps.generic1;
 	}
@@ -1038,7 +1039,14 @@ static qboolean Client_MovementPenaltyStun( gclient_t *client, bfpWeaponCfgDef_t
 		return qfalse;
 	}
 
+	if ( wpCfg->chargeAutoFire && wpCfg->minCharge >= 0
+	&& client->ps.generic1 < wpCfg->minCharge ) {
+		return qfalse;
+	}
+
 	// ki boost/aura can't be used while under movementPenalty
+	ucmd->buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE );
+	client->pers.cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE );
 	client->ps.eFlags &= ~( EF_AURA | EF_KI_BOOST );
 
 	if ( !( ucmd->buttons & BUTTON_ATTACK )
@@ -1087,6 +1095,7 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 
 	// BFP - Don't allow attack when recharging ki
 	if ( client->kiCharging ) {
+		ucmd->buttons &= ~BUTTON_ATTACK;
 		return;
 	}
 
@@ -1127,30 +1136,44 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 #endif
 
 	// BFP - Melee, avoid shooting if the player is in this status
-	if ( ( ucmd->buttons & BUTTON_MELEE )
-	&& !( wpCfg->attackType == ATK_FORCEFIELD && client->ps.weaponstate == WEAPON_ACTIVE )
-	&& client->ps.weaponstate != WEAPON_STUN ) {
-		// avoid playing change weapon sound continuously while changing weapon by pressing melee button
-		if ( client->ps.weapon != ucmd->weapon ) {
+	if ( ucmd->buttons & BUTTON_MELEE ) {
+		// cancel attack
+		if ( ( client->ps.eFlags & EF_FIRING )
+		&& ( ( wpCfg->attackType == ATK_FORCEFIELD && wpCfg->chargeAutoFire ) 
+			|| wpCfg->movementPenalty > 0 )
+		&& client->ps.weaponstate != WEAPON_STUN ) {
+			client->ps.eFlags &= ~EF_FIRING;
+			// apply movementPenalty
+			if ( !Client_MovementPenaltyStun( client, wpCfg, ucmd ) ) {
+				client->ps.weaponstate = WEAPON_READY;
+				client->ps.weaponTime = 0;
+			}
+			client->ps.generic1 = 0;
 			return;
 		}
-		// only use when there's no splitting ki ball until it has been splitted or collided, 
-		// unless if the player wanna change the weapon from this state
-		if ( client->ps.weaponstate != WEAPON_ACTIVE ) {
-			client->ps.weaponstate = WEAPON_READY;
-			client->ps.generic1 = 0;
-		}
-		// Melee fight handling
-		if ( pm->meleeHit && client->ps.weaponTime <= 0 ) {
-			int rndSnd = rand() % 6;
-			client->ps.weaponTime += 300;
-			client->ps.pm_flags |= PMF_MELEE;
-			// melee sound event is randomly executed
-			if ( rndSnd > 3 ) {
-				BG_AddPredictableEventToPlayerstate( EV_MELEE, 0, &ent->client->ps, -1 );
+		else if ( client->ps.weaponstate != WEAPON_STUN ) {
+			// avoid playing change weapon sound continuously while changing weapon by pressing melee button
+			if ( client->ps.weapon != ucmd->weapon ) {
+				return;
 			}
+			// only use when there's no splitting ki ball until it has been splitted or collided, 
+			// unless if the player wanna change the weapon from this state
+			if ( client->ps.weaponstate != WEAPON_ACTIVE ) {
+				client->ps.weaponstate = WEAPON_READY;
+				client->ps.generic1 = 0;
+			}
+			// Melee fight handling
+			if ( pm->meleeHit && client->ps.weaponTime <= 0 ) {
+				int rndSnd = rand() % 6;
+				client->ps.weaponTime += 300;
+				client->ps.pm_flags |= PMF_MELEE;
+				// melee sound event is randomly executed
+				if ( rndSnd > 3 ) {
+					BG_AddPredictableEventToPlayerstate( EV_MELEE, 0, &ent->client->ps, -1 );
+				}
+			}
+			return;
 		}
-		return;
 	}
 
 	// BFP - Weapon states, Q3 doesn't have this way
@@ -1203,8 +1226,11 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 			break;
 		}
 
-		// BFP - There are charging states here
+		// BFP - Charging states here
 		if ( wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
+			if ( wpCfg->attackType == ATK_FORCEFIELD ) {
+				client->ps.eFlags |= EF_FIRING;
+			}
 			if ( !( ucmd->buttons & BUTTON_ATTACK ) ) {
 				// BFP - When the ki attack is fully charged, enter beam firing state
 				// or enter splitting ki ball firing state if it's a splitting ki ball
@@ -1272,6 +1298,13 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				} else {
 					client->ps.weaponTime = wpCfg->movementPenalty;
 				}
+				if ( wpCfg->chargeAutoFire && wpCfg->minCharge >= 0
+				&& client->ps.generic1 < wpCfg->minCharge ) {
+					client->ps.weaponTime = 0;
+					client->ps.weaponstate = WEAPON_READY;
+					client->ps.eFlags &= ~EF_FIRING;
+					break;
+				}
 				client->ps.eFlags &= ~EF_FIRING;
 				client->ps.weaponstate = WEAPON_STUN;
 				break;
@@ -1300,11 +1333,11 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				break;
 			}
 
-			Client_KiConsumption( client, weaponTime, kiCost );
 			if ( client->ps.stats[STAT_KI] >= kiCost ) {
 				client->ps.eFlags |= EF_FIRING;
 				BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
 			}
+			Client_KiConsumption( client, weaponTime, kiCost );
 			if ( wpCfg->attackType == ATK_BEAM ) {
 				client->ps.weaponstate = WEAPON_ACTIVE;
 			}
@@ -1373,6 +1406,7 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 				// movementPenalty
 				if ( !Client_MovementPenaltyStun( client, wpCfg, ucmd ) ) {
 					client->ps.weaponstate = WEAPON_READY;
+					client->ps.eFlags &= ~EF_FIRING;
 				}
 			}
 			break;
