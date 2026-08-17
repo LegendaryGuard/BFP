@@ -622,79 +622,20 @@ typedef enum {
 	LEGS_MELEE,				// BFP
 	LEGS_MELEE_STRIKE,		// BFP
 
-
-	// BFP - the following attack animations will be used for attacksets and new config stuff
-
-	// BFP - (push right hand)
 	TORSO_ATTACK0_PREPARE,	// BFP
 	TORSO_ATTACK0_STRIKE,	// BFP
 
-	// BFP - (throw right hand)
 	TORSO_ATTACK1_PREPARE,	// BFP
 	TORSO_ATTACK1_STRIKE,	// BFP
 
-	// BFP - (both hands ki attack)
 	TORSO_ATTACK2_PREPARE,	// BFP
 	TORSO_ATTACK2_STRIKE,	// BFP
 
-	// BFP - (eye laser)
 	TORSO_ATTACK3_PREPARE,	// BFP
 	TORSO_ATTACK3_STRIKE,	// BFP
 
-	// BFP - (soul ball)
 	TORSO_ATTACK4_PREPARE,	// BFP
 	TORSO_ATTACK4_STRIKE,	// BFP
-
-	// BFP - The following attackset animations are just reminders, these aren't used as variables
-/*
-	// BFP - (point finger right hand)
-	TORSO_ATTACK5_PREPARE,	// BFP
-	TORSO_ATTACK5_STRIKE,	// BFP
-
-	// BFP - (angry expulsion)
-	TORSO_ATTACK6_PREPARE,	// BFP
-	TORSO_ATTACK6_STRIKE,	// BFP
-
-	// BFP - (big disc hold)
-	TORSO_ATTACK7_PREPARE,	// BFP
-	TORSO_ATTACK7_STRIKE,	// BFP
-
-	// BFP - (triangle attack)
-	TORSO_ATTACK8_PREPARE,	// BFP
-	TORSO_ATTACK8_STRIKE,	// BFP
-
-	// BFP - (ending flash attack)
-	TORSO_ATTACK9_PREPARE,	// BFP
-	TORSO_ATTACK9_STRIKE,	// BFP
-
-	// BFP - (2 hands forehead attack)
-	TORSO_ATTACK10_PREPARE,	// BFP
-	TORSO_ATTACK10_STRIKE,	// BFP
-
-	// BFP - (big gnab attack)
-	TORSO_ATTACK11_PREPARE,	// BFP
-	TORSO_ATTACK11_STRIKE,	// BFP
-
-	// BFP - (1 hand on forehead attack)
-	TORSO_ATTACK12_PREPARE,	// BFP
-	TORSO_ATTACK12_STRIKE,	// BFP
-
-	// BFP - (charge 2 hands center)
-	TORSO_ATTACK13_PREPARE,	// BFP
-	TORSO_ATTACK13_STRIKE,	// BFP
-
-	// BFP - (controlled sphere attack)
-	TORSO_ATTACK14_PREPARE,	// BFP
-	TORSO_ATTACK14_STRIKE,	// BFP
-
-	// BFP - (hold sphere w/finger attack)
-	TORSO_ATTACK15_PREPARE,	// BFP
-	TORSO_ATTACK15_STRIKE,	// BFP
-
-	// BFP - (ken and ryu fireball)
-	TORSO_ATTACK16_PREPARE,	// BFP
-	TORSO_ATTACK16_STRIKE,	// BFP
-*/
 
 	// BFP - The following animations are useless, 
 	// possibly can be removed only if the game works as should

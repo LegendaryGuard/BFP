@@ -2859,6 +2859,7 @@ static void PM_Weapon( void ) {
 
 	// BFP - Don't allow attack when recharging ki
 	if ( pm->kiCharging ) {
+		pm->cmd.buttons &= ~BUTTON_ATTACK;
 		return;
 	}
 
@@ -2910,6 +2911,7 @@ static void PM_Weapon( void ) {
 		&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) ) 
 			|| ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
 			|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) ) ) ) {
+			pm->cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE );
 			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
 
 			// fall even whether the player is flying
@@ -2938,6 +2940,7 @@ static void PM_Weapon( void ) {
 			&& ( pm->ps->eFlags & EF_FIRING ) && !( pm->cmd.buttons & BUTTON_ATTACK ) )
 			|| ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
 			|| ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) ) ) {
+			pm->cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE );
 			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
 
 			// fall even whether the player is flying
@@ -2956,6 +2959,7 @@ static void PM_Weapon( void ) {
 
 		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
 		&& pm->ps->weaponTime > 0 ) {
+			pm->cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE );
 			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
 
 			// fall even whether the player is flying

@@ -27,14 +27,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*
 ===================
-CG_AddFlashMissile
+CG_AddFlash
 
-Adds muzzle flash or missile shader/model
+Adds normal (or charging) flash shader/model
 ===================
 */
-void CG_AddFlashMissile( qboolean isMissile, qboolean isMissileMoving, qboolean isFiringFlash, centity_t *cent, int entityNum, bfpAttackSkinConfig_t *skinAtkCfg, vec3_t origin, refEntity_t *parent, char *tagName, qhandle_t flashMissileShader, qhandle_t flashMissileModel, float flashMissileRadius, float flashMissileScaleFactor ) { // BFP - Flash or missile from player weapon tag
-	refEntity_t	flashMissile;
-	float		missileRadiusChargeMult = 0, missileScaleFactorChargeMult = 0;
+void CG_AddFlash( centity_t *cent, int entityNum, bfpAttackSkinConfig_t *skinAtkCfg, vec3_t origin, refEntity_t *parent, char *tagName ) { // BFP - Flash shader/model
+	refEntity_t	flash;
+	qhandle_t	flashShader, flashModel;
+	float		flashRadius, flashScaleFactor;
 	float		scale = 0;
 	int			minCharge = 0, totalCharge = 0;
 	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
@@ -46,8 +47,10 @@ void CG_AddFlashMissile( qboolean isMissile, qboolean isMissileMoving, qboolean 
 		return;
 	}
 
-	missileRadiusChargeMult = skinAtkCfg->missileRadiusChargeMult;
-	missileScaleFactorChargeMult = skinAtkCfg->missileScaleFactorChargeMult;
+	flashRadius = skinAtkCfg->flashRadius;
+	flashScaleFactor = skinAtkCfg->flashScaleFactor;
+	flashShader = skinAtkCfg->flashShader;
+	flashModel = skinAtkCfg->flashModel;
 
 	// don't show the muzzle flash to the player itself on first person camera, even on first person vis mode
 	if ( cg_thirdPerson.integer <= 0 && entityNum == cg.snap->ps.clientNum ) {
@@ -58,118 +61,254 @@ void CG_AddFlashMissile( qboolean isMissile, qboolean isMissileMoving, qboolean 
 		totalCharge = 0;
 	}
 
-	if ( flashMissileRadius < 0 ) {
-		flashMissileRadius = 0;
+	if ( flashRadius < 0 ) {
+		flashRadius = 0;
+	}
+	if ( flashScaleFactor < 0 ) {
+		flashScaleFactor = 0;
 	}
 
-	if ( flashMissileScaleFactor < 0 ) {
-		flashMissileScaleFactor = 0;
-	}
+	memset( &flash, 0, sizeof( flash ) );
+	VectorCopy( origin, flash.origin );
 
-	memset( &flashMissile, 0, sizeof( flashMissile ) );
-
-	// BFP - These function parameters can be applied for the following cfg variable calls:
-	// - flashModel [attack index] ["name of model"]: The model used for the weapon flash. 
-	// If this is not set or set to 0 and flashShader is set, the flash shader will be treated as a sprite.
-	
-	// - flashShader [attack index] ["name of shader"]: The shader used for the flash.
-	// - flashRadius [attack index] [int]: Only used for sprite flashes. `flashRadius` is the radius of the flash sprite.
-
-	// - flashScaleFactor [attack index] [float]: The scale factor used for the flash. 
-	// Used to resize non-sprite flashes.
-	
-	// - firingFlashRadius [attack index] [int]: The radius of the firing flash. 
-	// This is used for beam attacks while the beam is firing.
-	
-	// - firingFlashScaleFactor [attack index] [float]: The scale factor used for the firing flash. 
-	// Used to resize non-sprite flashes.
-
-	VectorCopy( origin, flashMissile.origin );
-
-	if ( flashMissileModel ) {
-		flashMissile.reType = RT_MODEL;
-		flashMissile.hModel = flashMissileModel;
+	if ( flashModel ) {
+		flash.reType = RT_MODEL;
+		flash.hModel = flashModel;
 
 		if ( parent ) {
-			AxisCopy( parent->axis, flashMissile.axis );
+			AxisCopy( parent->axis, flash.axis );
 		} else {
-			AxisClear( flashMissile.axis );
+			AxisClear( flash.axis );
 		}
 
-		if ( isMissile ) {
-			scale = flashMissileScaleFactor + missileScaleFactorChargeMult * (float)totalCharge;
-
-			if ( isMissileMoving && VectorNormalize2( cent->currentState.pos.trDelta, flashMissile.axis[0] ) == 0 ) {
-				flashMissile.axis[0][2] = 1;
-			}
-
-			// spin as it moves
-			if ( !skinAtkCfg->missileSpinHoriz ) { // BFP - For disk or missileSpinHoriz (qboolean) weapons, don't rotate like the rocket
-				// BFP - missileModelRotation
-				RotateAroundDirection( flashMissile.axis, cg.time * skinAtkCfg->missileModelRotation );
-			} else {
-				// BFP - Rotate Z-axis like a wheel
-				vec3_t	temp;
-				RotateAroundDirection( flashMissile.axis, cent->currentState.time );
-
-				VectorCopy( flashMissile.axis[0], temp );
-				RotatePointAroundVector( flashMissile.axis[0], flashMissile.axis[2], temp, cg.autoAnglesFast[1] );
-				VectorCopy( flashMissile.axis[1], temp );
-				RotatePointAroundVector( flashMissile.axis[1], flashMissile.axis[2], temp, cg.autoAnglesFast[1] );
-			}
-		} else {
-			scale = flashMissileScaleFactor;
-			if ( scale > 10 ) {
-				scale = 10;
-			}
-			// BFP - Make muzzle flash fit better for player monster
-			if ( ( cent->currentState.eFlags & EF_MONSTER )
-			|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-				scale *= 2;
-			}
+		scale = flashScaleFactor;
+		if ( scale > 10 ) {
+			scale = 10;
 		}
-		if ( scale <= 0 ) {
-			scale = 1;
+		// BFP - Make muzzle flash fit better for player monster
+		if ( ( cent->currentState.eFlags & EF_MONSTER )
+		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
+			scale *= 2;
 		}
-		CG_ModelSize( &flashMissile, scale );
+		if ( scale <= 0 ) scale = 1;
+		CG_ModelSize( &flash, scale );
 	} else {
-		flashMissile.reType = RT_SPRITE;
-
-		if ( isMissile ) {
-			scale = flashMissileRadius + missileRadiusChargeMult * (float)totalCharge;
-			flashMissile.rotation = skinAtkCfg->missileRotation;
-		} else {
-			scale = flashMissileRadius;
-			if ( scale > 50 && isFiringFlash ) {
-				scale = 50;
-			}
-			if ( scale > 20 && !isFiringFlash ) {
-				scale = 20;
-			}
-			// BFP - Make muzzle flash fit better for player monster
-			if ( ( cent->currentState.eFlags & EF_MONSTER )
-			|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-				scale *= 2;
-			}
+		flash.reType = RT_SPRITE;
+		scale = flashRadius + (float)minCharge;
+		// BFP - Make muzzle flash fit better for player monster
+		if ( ( cent->currentState.eFlags & EF_MONSTER )
+		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
+			scale *= 2;
 		}
 		if ( scale <= 0 ) {
 			scale = 1;
 		}
-		flashMissile.radius = scale;
+		flash.radius = scale;
 	}
 
-	if ( !flashMissileShader && !isMissile && flashMissile.reType == RT_SPRITE ) {
+	if ( !flashShader && flash.reType == RT_SPRITE ) {
 		return;
 	}
-	if ( flashMissileShader ) {
-		flashMissile.customShader = flashMissileShader;
+	if ( flashShader ) {
+		flash.customShader = flashShader;
+	}
+	flash.shaderRGBA[0] = 0xff;
+	flash.shaderRGBA[1] = 0xff;
+	flash.shaderRGBA[2] = 0xff;
+	flash.shaderRGBA[3] = 0xff;
+	trap_R_AddRefEntityToScene( &flash );
+}
+
+/*
+===================
+CG_AddFiringFlash
+
+Adds firing flash shader/model (used for continuous beam attacks)
+===================
+*/
+void CG_AddFiringFlash( centity_t *cent, int entityNum, bfpAttackSkinConfig_t *skinAtkCfg, vec3_t origin, refEntity_t *parent, char *tagName ) {
+	refEntity_t	firingFlash;
+	qhandle_t	flashShader, flashModel;
+	float		firingFlashRadius, firingFlashScaleFactor;
+	float		scale = 0;
+	int			minCharge = 0, totalCharge = 0;
+	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+
+	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? wpCfg->minCharge : 0;
+	totalCharge = cent->currentState.generic1 - minCharge;
+
+	if ( !skinAtkCfg ) {
+		return;
 	}
 
-	flashMissile.shaderRGBA[0] = 0xff;
-	flashMissile.shaderRGBA[1] = 0xff;
-	flashMissile.shaderRGBA[2] = 0xff;
-	flashMissile.shaderRGBA[3] = 0xff;
-	trap_R_AddRefEntityToScene( &flashMissile );
+	firingFlashRadius = skinAtkCfg->firingFlashRadius;
+	firingFlashScaleFactor = skinAtkCfg->firingFlashScaleFactor;
+	flashShader = skinAtkCfg->flashShader;
+	flashModel = skinAtkCfg->flashModel;
+
+	if ( cg_thirdPerson.integer <= 0 && entityNum == cg.snap->ps.clientNum ) {
+		return;
+	}
+
+	if ( totalCharge < 0 ) {
+		totalCharge = 0;
+	}
+
+	if ( firingFlashRadius < 0 ) {
+		firingFlashRadius = 0;
+	}
+	if ( firingFlashScaleFactor < 0 ) {
+		firingFlashScaleFactor = 0;
+	}
+
+	memset( &firingFlash, 0, sizeof( firingFlash ) );
+	VectorCopy( origin, firingFlash.origin );
+
+	if ( flashModel ) {
+		firingFlash.reType = RT_MODEL;
+		firingFlash.hModel = flashModel;
+
+		if ( parent ) {
+			AxisCopy( parent->axis, firingFlash.axis );
+		} else {
+			AxisClear( firingFlash.axis );
+		}
+
+		scale = firingFlashScaleFactor;
+
+		// BFP - Make firing flash fit better for player monster
+		if ( ( cent->currentState.eFlags & EF_MONSTER )
+		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
+			scale *= 2;
+		}
+		if ( scale <= 0 ) {
+			scale = 1;
+		}
+		CG_ModelSize( &firingFlash, scale );
+	} else {
+		firingFlash.reType = RT_SPRITE;
+
+		scale = firingFlashRadius + (float)minCharge;
+		// BFP - Make firing flash fit better for player monster
+		if ( ( cent->currentState.eFlags & EF_MONSTER )
+		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
+			scale *= 2;
+		}
+		if ( scale <= 0 ) {
+			scale = 1;
+		}
+		firingFlash.radius = scale;
+	}
+
+	if ( !flashShader && firingFlash.reType == RT_SPRITE ) {
+		return;
+	}
+	if ( flashShader ) {
+		firingFlash.customShader = flashShader;
+	}
+	firingFlash.shaderRGBA[0] = 0xff;
+	firingFlash.shaderRGBA[1] = 0xff;
+	firingFlash.shaderRGBA[2] = 0xff;
+	firingFlash.shaderRGBA[3] = 0xff;
+	trap_R_AddRefEntityToScene( &firingFlash );
+}
+
+/*
+===================
+CG_AddMissile
+
+Adds missile shader/model
+===================
+*/
+void CG_AddMissile( centity_t *cent, int entityNum, qboolean isMissileMoving, bfpAttackSkinConfig_t *skinAtkCfg, vec3_t origin, refEntity_t *parent, char *tagName ) {
+	refEntity_t	missile;
+	qhandle_t	missileShader, missileModel;
+	float		missileRadius, missileScaleFactor, missileRadiusChargeMult, missileScaleFactorChargeMult;
+	float		scale = 0;
+	int			minCharge = 0, totalCharge = 0;
+	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+
+	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? wpCfg->minCharge : 0;
+	totalCharge = cent->currentState.generic1 - minCharge;
+
+	if ( !skinAtkCfg ) {
+		return;
+	}
+
+	missileShader = skinAtkCfg->missileShader;
+	missileModel = skinAtkCfg->missileModel;
+	missileRadius = skinAtkCfg->missileRadius;
+	missileRadiusChargeMult = skinAtkCfg->missileRadiusChargeMult;
+	missileScaleFactor = skinAtkCfg->missileScaleFactor;
+	missileScaleFactorChargeMult = skinAtkCfg->missileScaleFactorChargeMult;
+
+	if ( cg_thirdPerson.integer <= 0 && entityNum == cg.snap->ps.clientNum ) {
+		return;
+	}
+
+	if ( totalCharge < 0 ) {
+		totalCharge = 0;
+	}
+
+	if ( missileRadius < 0 ) {
+		missileRadius = 0;
+	}
+	if ( missileScaleFactor < 0 ) {
+		missileScaleFactor = 0;
+	}
+
+	memset( &missile, 0, sizeof( missile ) );
+	VectorCopy( origin, missile.origin );
+
+	if ( missileModel ) {
+		missile.reType = RT_MODEL;
+		missile.hModel = missileModel;
+
+		if ( parent ) {
+			AxisCopy( parent->axis, missile.axis );
+		} else {
+			AxisClear( missile.axis );
+		}
+
+		scale = missileScaleFactor + missileScaleFactorChargeMult * (float)totalCharge;
+		if ( isMissileMoving && VectorNormalize2( cent->currentState.pos.trDelta, missile.axis[0] ) == 0 ) {
+			missile.axis[0][2] = 1;
+		}
+		if ( !skinAtkCfg->missileSpinHoriz ) {
+			RotateAroundDirection( missile.axis, cg.time * skinAtkCfg->missileModelRotation );
+		} else {
+			vec3_t	temp;
+			RotateAroundDirection( missile.axis, cent->currentState.time );
+			VectorCopy( missile.axis[0], temp );
+			RotatePointAroundVector( missile.axis[0], missile.axis[2], temp, cg.autoAnglesFast[1] );
+			VectorCopy( missile.axis[1], temp );
+			RotatePointAroundVector( missile.axis[1], missile.axis[2], temp, cg.autoAnglesFast[1] );
+		}
+		if ( scale <= 0 ) {
+			scale = 1;
+		}
+		CG_ModelSize( &missile, scale );
+	} else {
+		missile.reType = RT_SPRITE;
+		scale = missileRadius + missileRadiusChargeMult * (float)totalCharge;
+		missile.rotation = skinAtkCfg->missileRotation;
+		if ( scale <= 0 ) {
+			scale = 1;
+		}
+		missile.radius = scale;
+	}
+
+	if ( !missileShader && missile.reType == RT_SPRITE ) {
+		return;
+	}
+	if ( missileShader ) {
+		missile.customShader = missileShader;
+	}
+	missile.shaderRGBA[0] = 0xff;
+	missile.shaderRGBA[1] = 0xff;
+	missile.shaderRGBA[2] = 0xff;
+	missile.shaderRGBA[3] = 0xff;
+	trap_R_AddRefEntityToScene( &missile );
 }
 
 
@@ -365,9 +504,8 @@ void CG_BFPBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) { // B
 	// ent->trailTime = cg.time;
 
 	// BFP - NOTE: That's where we apply the flash properties read from skin config
-	CG_AddFlashMissile( qfalse, qfalse, qtrue, ent, es->clientNum, skinAtkCfg, muzzleOrigin, NULL, "", skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->firingFlashRadius, skinAtkCfg->firingFlashScaleFactor );
-
-	CG_AddFlashMissile( qtrue, qtrue, qfalse, ent, es->number, skinAtkCfg, origin, NULL, "", skinAtkCfg->missileShader, skinAtkCfg->missileModel, skinAtkCfg->missileRadius, skinAtkCfg->missileScaleFactor );
+	CG_AddFiringFlash( ent, es->clientNum, skinAtkCfg, muzzleOrigin, NULL, "" );
+	CG_AddMissile( ent, es->number, qtrue, skinAtkCfg, origin, NULL, "" );
 
 	CG_BeamTrail( es->number, origin, muzzleOrigin, skinAtkCfg->beamShader );
 }
@@ -394,9 +532,8 @@ void CG_BFPSpiralBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) 
 	// ent->trailTime = cg.time;
 
 	// BFP - NOTE: That's where we apply the flash properties read from skin config
-	CG_AddFlashMissile( qfalse, qfalse, qtrue, ent, es->clientNum, skinAtkCfg, muzzleOrigin, NULL, "", skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->firingFlashRadius, skinAtkCfg->firingFlashScaleFactor );
-
-	CG_AddFlashMissile( qtrue, qtrue, qfalse, ent, es->number, skinAtkCfg, origin, NULL, "", skinAtkCfg->missileShader, skinAtkCfg->missileModel, skinAtkCfg->missileRadius, skinAtkCfg->missileScaleFactor );
+	CG_AddFiringFlash( ent, es->clientNum, skinAtkCfg, muzzleOrigin, NULL, "" );
+	CG_AddMissile( ent, es->number, qtrue, skinAtkCfg, origin, NULL, "" );
 
 	CG_CorkscrewTrail( es->number, origin, muzzleOrigin, skinAtkCfg->beamShader, skinAtkCfg->spiralBeamShader );
 }
@@ -744,20 +881,36 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	// BFP - Displaying the muzzle flash to the other player correctly
 	if ( skinAtkCfg && skinAtkCfg->constantFireAttack ) {
 		// constant fire: show flash when firing or when charging, if chargeAttack is set
-		if ( wpCfg && ( ( nonPredictedCent->currentState.eFlags & EF_FIRING ) && !wpCfg->chargeAttack )
-		|| ( wpCfg->chargeAttack && !wpCfg->chargeAutoFire && nonPredictedCent->currentState.generic1 >= wpCfg->minCharge ) ) {
-			CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, 
-				&tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
+		if ( wpCfg && !wpCfg->chargeAttack
+		&& ( nonPredictedCent->currentState.eFlags & EF_FIRING ) ) {
+			if ( !skinAtkCfg ) {
+				return;
+			}
+			if ( skinAtkCfg->firingFlashScaleFactor > 0 ) {
+				CG_AddFiringFlash( nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName );
+			} else {
+				CG_AddFlash( nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName );
+			}
+		}
+		if ( wpCfg && ( ( wpCfg->chargeAttack && !wpCfg->chargeAutoFire 
+		&& nonPredictedCent->currentState.generic1 >= wpCfg->minCharge ) ) ) {
+			CG_AddFlash( nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName );
 		}
 	} else {
 		// impulse or charge-based flash, non-constant
-		if ( ( nonPredictedCent->currentState.eFlags & EF_FIRING ) && cg.time - cent->muzzleFlashTime <= MUZZLE_FLASH_TIME ) {
-			CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, 
-				&tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
+		if ( ( nonPredictedCent->currentState.eFlags & EF_FIRING ) 
+		&& cg.time - cent->muzzleFlashTime <= MUZZLE_FLASH_TIME ) {
+			if ( !skinAtkCfg ) {
+				return;
+			}
+			if ( skinAtkCfg->firingFlashScaleFactor > 0 ) {
+				CG_AddFiringFlash( nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName );
+			} else {
+				CG_AddFlash( nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName );
+			}
 		} else if ( wpCfg && nonPredictedCent->currentState.generic1 >= wpCfg->minCharge
 		&& wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
-			CG_AddFlashMissile( qfalse, qfalse, qfalse, nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, 
-				&tagEnt, tagName, skinAtkCfg->flashShader, skinAtkCfg->flashModel, skinAtkCfg->flashRadius, skinAtkCfg->flashScaleFactor );
+			CG_AddFlash( nonPredictedCent, -1, skinAtkCfg, nonPredictedCent->pe.muzzleOrigin, &tagEnt, tagName );
 		}
 	}
 
@@ -1124,9 +1277,10 @@ void CG_FireWeapon( centity_t *cent ) {
 	// BFP - Forcefield with chargeAutoFire
 	if ( wpCfg && wpCfg->attackType == ATK_FORCEFIELD && wpCfg->chargeAutoFire ) {
 		cent->pe.chargeAutoFire = qtrue;
+	} else {
+		cent->pe.chargeAutoFire = qfalse;
 	}
-	if ( wpCfg && wpCfg->attackType == ATK_FORCEFIELD && !wpCfg->chargeAutoFire && !cent->pe.chargeAutoFire
-	&& skinAtkCfg->noExplosion ) {
+	if ( wpCfg && wpCfg->attackType == ATK_FORCEFIELD && !wpCfg->chargeAutoFire && !cent->pe.chargeAutoFire ) {
 		// BFP - Use that as blinding_flash weapon, no chargeAutoFire set
 		// this is when noExplosion is set as weapon config dictates
 
@@ -1134,12 +1288,14 @@ void CG_FireWeapon( centity_t *cent ) {
 		qhandle_t		explosionModel = ( cg_lowpolysphere.integer > 0 && skinAtkCfg->explosionModel == cgs.media.highPolySphereModel ) ? cgs.media.lowPolySphereModel : skinAtkCfg->explosionModel;
 		localEntity_t	*leSphere;
 		const float		MAX_SCALE = 27, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
+		int		minCharge = ( wpCfg && wpCfg->minCharge >= 0 ) ? wpCfg->minCharge : 0;
+		int		numPointsChargedOverMin = ( cent->currentState.generic1 > 0 ) ? ( cent->currentState.generic1 - minCharge ) : 0; // that means when reaching to 'READY!', it starts as 1 and if it's charging another charge point, adds 1 more
 		float	explosionScaleFactor = skinAtkCfg->explosionScaleFactor, explosionScaleFactorChargeMult = skinAtkCfg->explosionScaleFactorChargeMult;
 		float	scale = 1;
 
 		if ( explosionScaleFactor > MAX_SCALEFACTOR ) explosionScaleFactor = MAX_SCALEFACTOR;
 		if ( explosionScaleFactorChargeMult > MAX_SCALEFACTOR ) explosionScaleFactorChargeMult = MAX_SCALEFACTOR;
-		scale = explosionScaleFactor + explosionScaleFactorChargeMult;
+		scale = explosionScaleFactor + explosionScaleFactorChargeMult * numPointsChargedOverMin;
 		if ( scale > MAX_SCALE ) scale = MAX_SCALE;
 
 		leSphere = CG_SpawnExplosionModel( cent->lerpOrigin, NULL, LE_EXPLOSION_SPHERE, explosionModel, skinAtkCfg->explosionShader, 1000 );
