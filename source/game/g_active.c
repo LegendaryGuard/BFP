@@ -1130,6 +1130,10 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 	if ( ( ucmd->buttons & BUTTON_MELEE )
 	&& !( wpCfg->attackType == ATK_FORCEFIELD && client->ps.weaponstate == WEAPON_ACTIVE )
 	&& client->ps.weaponstate != WEAPON_STUN ) {
+		// avoid playing change weapon sound continuously while changing weapon by pressing melee button
+		if ( client->ps.weapon != ucmd->weapon ) {
+			return;
+		}
 		// only use when there's no splitting ki ball until it has been splitted or collided, 
 		// unless if the player wanna change the weapon from this state
 		if ( client->ps.weaponstate != WEAPON_ACTIVE ) {
