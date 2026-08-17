@@ -1119,6 +1119,14 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		return;
 	}
 
+	// if it isn't unlocked, or it has no active ammo locked by powerlevel, force to the first valid weapon selection
+	if ( ucmd->weapon < BFP_NUM_WEAPONS ) {
+		if ( !( client->ps.stats[STAT_WEAPONS] & ( 1 << ucmd->weapon ) )
+		|| client->ps.ammo[ucmd->weapon] == 0 ) {
+			ucmd->weapon = client->ps.weapon;
+		}
+	}
+
 	kiCost = Client_KiCost( client, wpCfg );
 	weaponTime = Client_RandomWeaponTime( wpCfg );
 

@@ -1195,6 +1195,11 @@ void CG_Weapon_f( void ) {
 		return;		// don't have the weapon
 	}
 
+	// BFP - Don't select a weapon slot locked by powerlevel
+	if ( !CG_WeaponSelectable( num - 1 ) ) {
+		return;
+	}
+
 	cg.weaponSelect = num - 1;
 }
 
