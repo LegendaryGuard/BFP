@@ -1229,8 +1229,9 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 	case WEAPON_RAISING:
 		break;
 	case WEAPON_FIRING:
-		// don't allow ki charging while charging the attack
-		if ( client->kiCharging || ( ucmd->buttons & BUTTON_KI_CHARGE ) ) {
+		// don't allow ki charging while charging the attack, skip if BUTTON_KI_USE is also held
+		if ( ( client->kiCharging && !( ucmd->buttons & BUTTON_KI_USE ) )
+		|| ( ( ucmd->buttons & BUTTON_KI_CHARGE ) && !( ucmd->buttons & BUTTON_KI_USE ) ) ) {
 			break;
 		}
 
