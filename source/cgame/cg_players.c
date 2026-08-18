@@ -318,84 +318,6 @@ static qboolean	CG_FileExists( const char *filename ) {
 	return qfalse;
 }
 
-// BFP - No CG_FindClientModelFile, remove in the future?
-#if 0
-/*
-==========================
-CG_FindClientModelFile
-==========================
-*/
-static qboolean	CG_FindClientModelFile( char *filename, int length, clientInfo_t *ci, const char *teamName, const char *modelName, const char *skinName, const char *base, const char *ext ) {
-	char *team;
-	int i;
-
-	if ( cgs.gametype >= GT_TEAM ) {
-		switch ( ci->team ) {
-			case TEAM_BLUE: {
-				team = "blue";
-				break;
-			}
-			default: {
-				team = "red";
-				break;
-			}
-		}
-	}
-	else {
-		team = "default";
-	}
-	while(1) {
-		for ( i = 0; i < 2; i++ ) {
-			if ( i == 0 && teamName && *teamName ) {
-				//								"models/players/james/stroggs/lower_lily_red.skin"
-				Com_sprintf( filename, length, "models/players/%s/%s%s_%s_%s.%s", modelName, teamName, base, skinName, team, ext );
-			}
-			else {
-				//								"models/players/james/lower_lily_red.skin"
-				Com_sprintf( filename, length, "models/players/%s/%s_%s_%s.%s", modelName, base, skinName, team, ext );
-			}
-			if ( CG_FileExists( filename ) ) {
-				return qtrue;
-			}
-
-// BFP - Avoid loading team skins (causes crash)
-#if 0
-			if ( cgs.gametype >= GT_TEAM ) {
-				if ( i == 0 && teamName && *teamName ) {
-					//								"models/players/james/stroggs/lower_red.skin"
-					Com_sprintf( filename, length, "models/players/%s/%s%s_%s.%s", modelName, teamName, base, team, ext );
-				}
-				else {
-					//								"models/players/james/lower_red.skin"
-					Com_sprintf( filename, length, "models/players/%s/%s_%s.%s", modelName, base, team, ext );
-				}
-			}
-			else {
-				if ( i == 0 && teamName && *teamName ) {
-					//								"models/players/james/stroggs/lower_lily.skin"
-					Com_sprintf( filename, length, "models/players/%s/%s%s_%s.%s", modelName, teamName, base, skinName, ext );
-				}
-				else {
-					//								"models/players/james/lower_lily.skin"
-					Com_sprintf( filename, length, "models/players/%s/%s_%s.%s", modelName, base, skinName, ext );
-				}
-			}
-#endif
-
-			Com_sprintf( filename, length, "models/players/%s/%s_%s.%s", modelName, base, skinName, ext );
-			if ( CG_FileExists( filename ) ) {
-				return qtrue;
-			}
-			if ( !teamName || !*teamName ) {
-				break;
-			}
-		}
-	}
-
-	return qfalse;
-}
-#endif
-
 /*
 ==========================
 CG_FindClientHeadFile
@@ -439,26 +361,6 @@ qboolean CG_FindClientHeadFile( char *filename, int length, clientInfo_t *ci, co
 			if ( CG_FileExists( filename ) ) {
 				return qtrue;
 			}
-
-// BFP - Avoid loading team skins (causes crash)
-#if 0
-			if ( cgs.gametype >= GT_TEAM ) {
-				if ( i == 0 &&  teamName && *teamName ) {
-					Com_sprintf( filename, length, "models/players/%s%s/%s%s_%s.%s", headsFolder, headModelName, teamName, base, team, ext );
-				}
-				else {
-					Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", headsFolder, headModelName, base, team, ext );
-				}
-			}
-			else {
-				if ( i == 0 && teamName && *teamName ) {
-					Com_sprintf( filename, length, "models/players/%s%s/%s%s_%s.%s", headsFolder, headModelName, teamName, base, headSkinName, ext );
-				}
-				else {
-					Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", headsFolder, headModelName, base, headSkinName, ext );
-				}
-			}
-#endif
 
 			Com_sprintf( filename, length, "models/players/%s%s/%s_%s.%s", headsFolder, headModelName, base, headSkinName, ext );
 			if ( CG_FileExists( filename ) ) {
@@ -530,30 +432,6 @@ static qboolean	CG_RegisterClientSkin( clientInfo_t *ci, const char *teamName, c
 	// if (!ci->ultTierHeadSkin) {
 		//	Com_Printf( "Ultimate tier head skin load failure: %s\n", filename );
 	// }
-
-	// BFP - Uses more memory load, not recommended, remove in the future?
-#if 0
-	if ( CG_FindClientModelFile( filename, sizeof(filename), ci, teamName, modelName, skinName, "lower", "skin" ) ) {
-		ci->legsSkin = trap_R_RegisterSkin( filename );
-	}
-	if (!ci->legsSkin) {
-		Com_Printf( "Leg skin load failure: %s\n", filename );
-	}
-
-	if ( CG_FindClientModelFile( filename, sizeof(filename), ci, teamName, modelName, skinName, "upper", "skin" ) ) {
-		ci->torsoSkin = trap_R_RegisterSkin( filename );
-	}
-	if (!ci->torsoSkin) {
-		Com_Printf( "Torso skin load failure: %s\n", filename );
-	}
-
-	if ( CG_FindClientHeadFile( filename, sizeof(filename), ci, teamName, headModelName, headSkinName, "head", "skin" ) ) {
-		ci->headSkin = trap_R_RegisterSkin( filename );
-	}
-	if (!ci->headSkin) {
-		Com_Printf( "Head skin load failure: %s\n", filename );
-	}
-#endif
 
 	// if any skins failed to load
 	if ( !ci->legsSkin || !ci->torsoSkin || !ci->headSkin ) {
@@ -735,25 +613,6 @@ static void CG_LoadClientInfo( clientInfo_t *ci ) {
 			modelloaded = qfalse; // BFP - if the model didn't load
 		}
 
-// BFP - no team skin and model
-#if 0
-		// fall back to default team name
-		if( cgs.gametype >= GT_TEAM) {
-			// keep skin name
-			if( ci->team == TEAM_BLUE ) {
-				Q_strncpyz(teamname, DEFAULT_BLUETEAM_NAME, sizeof(teamname) );
-			} else {
-				Q_strncpyz(teamname, DEFAULT_REDTEAM_NAME, sizeof(teamname) );
-			}
-			if ( !CG_RegisterClientModelname( ci, DEFAULT_TEAM_MODEL, ci->skinName, DEFAULT_TEAM_HEAD, ci->skinName, teamname ) ) {
-				CG_Error( "DEFAULT_TEAM_MODEL / skin (%s/%s) failed to register", DEFAULT_TEAM_MODEL, ci->skinName );
-			}
-		} else {
-			if ( !CG_RegisterClientModelname( ci, DEFAULT_MODEL, "default", DEFAULT_MODEL, "default", teamname ) ) {
-				CG_Error( "DEFAULT_MODEL (%s) failed to register", DEFAULT_MODEL );
-			}
-		}
-#endif
 		if ( !CG_RegisterClientModelname( ci, DEFAULT_MODEL, "default", DEFAULT_MODEL, "default", teamname ) ) {
 			CG_Error( "DEFAULT_MODEL (%s) failed to register", DEFAULT_MODEL );
 		}
@@ -865,38 +724,7 @@ void CG_NewClientInfo( int clientNum ) {
 
 	// model
 	v = Info_ValueForKey( configstring, "model" );
-	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
-#if 0
-	if ( cg_forceModel.integer ) {
-		// forcemodel makes everyone use a single model
-		// to prevent load hitches
-		char modelStr[MAX_QPATH];
-		char *skin;
 
-		if( cgs.gametype >= GT_TEAM ) {
-			Q_strncpyz( newInfo.modelName, DEFAULT_TEAM_MODEL, sizeof( newInfo.modelName ) );
-			Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
-		} else {
-			trap_Cvar_VariableStringBuffer( "model", modelStr, sizeof( modelStr ) );
-			if ( ( skin = strchr( modelStr, '/' ) ) == NULL) {
-				skin = "default";
-			} else {
-				*skin++ = 0;
-			}
-
-			Q_strncpyz( newInfo.skinName, skin, sizeof( newInfo.skinName ) );
-			Q_strncpyz( newInfo.modelName, modelStr, sizeof( newInfo.modelName ) );
-		}
-
-		if ( cgs.gametype >= GT_TEAM ) {
-			// keep skin name
-			slash = strchr( v, '/' );
-			if ( slash ) {
-				Q_strncpyz( newInfo.skinName, slash + 1, sizeof( newInfo.skinName ) );
-			}
-		}
-	} else 
-#endif
 	Q_strncpyz( newInfo.modelName, v, sizeof( newInfo.modelName ) );
 
 	slash = strchr( newInfo.modelName, '/' );
@@ -913,39 +741,6 @@ void CG_NewClientInfo( int clientNum ) {
 	if ( cg_forceSkin.integer ) {
 		Q_strncpyz( newInfo.skinName, "default", sizeof( newInfo.skinName ) );
 	}
-
-	// BFP - No force model (In the future, remove cg_forceModel, which wasn't removed originally?)
-#if 0
-	if ( cg_forceModel.integer ) {
-		// forcemodel makes everyone use a single model
-		// to prevent load hitches
-		char modelStr[MAX_QPATH];
-		char *skin;
-
-		if( cgs.gametype >= GT_TEAM ) {
-			Q_strncpyz( newInfo.headModelName, DEFAULT_TEAM_MODEL, sizeof( newInfo.headModelName ) );
-			Q_strncpyz( newInfo.headSkinName, "default", sizeof( newInfo.headSkinName ) );
-		} else {
-			trap_Cvar_VariableStringBuffer( "headmodel", modelStr, sizeof( modelStr ) );
-			if ( ( skin = strchr( modelStr, '/' ) ) == NULL) {
-				skin = "default";
-			} else {
-				*skin++ = 0;
-			}
-
-			Q_strncpyz( newInfo.headSkinName, skin, sizeof( newInfo.headSkinName ) );
-			Q_strncpyz( newInfo.headModelName, modelStr, sizeof( newInfo.headModelName ) );
-		}
-
-		if ( cgs.gametype >= GT_TEAM ) {
-			// keep skin name
-			slash = strchr( v, '/' );
-			if ( slash ) {
-				Q_strncpyz( newInfo.headSkinName, slash + 1, sizeof( newInfo.headSkinName ) );
-			}
-		}
-	} else 
-#endif
 
 	// BFP - Set the head model name as the same as model name
 	Q_strncpyz( newInfo.headModelName, newInfo.modelName, sizeof( newInfo.headModelName ) );
@@ -967,31 +762,7 @@ void CG_NewClientInfo( int clientNum ) {
 	// BFP - SKIN CONFIG: load skin config
 	CG_LoadSkinConfig( &newInfo );
 
-	// BFP - Change the model without impeding with defer
-	// BFP - TODO: Remove cg_deferPlayers cvar and its unnecessary code in the future
-#if 0
-	// scan for an existing clientinfo that matches this modelname
-	// so we can avoid loading checks if possible
-	// if ( !CG_ScanForExistingClientInfo( &newInfo ) ) 
-	// {
-		qboolean	forceDefer;
-
-		forceDefer = trap_MemoryRemaining() < 4000000;
-
-		// if we are defering loads, just have it pick the first valid
-		if ( forceDefer || (cg_deferPlayers.integer && !cg_buildScript.integer && !cg.loading ) ) {
-			// keep whatever they had if it won't violate team skins
-			CG_SetDeferredClientInfo( &newInfo );
-			// if we are low on memory, leave them with this model
-			if ( forceDefer ) {
-				CG_Printf( "Memory is low.  Using deferred model.\n" );
-				newInfo.deferred = qfalse;
-			}
-		} else {
-#endif
-			CG_LoadClientInfo( &newInfo );
-		// }
-	// }
+	CG_LoadClientInfo( &newInfo );
 
 	// replace whatever was there with the new one
 	newInfo.infoValid = qtrue;

@@ -907,7 +907,7 @@ UI_PlayerInfo_SetInfo
 */
 void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_t viewAngles, vec3_t moveAngles, weapon_t weaponNumber, qboolean chat ) {
 	int			currentAnim;
-	weapon_t	weaponNum; // BFP - that may be unused
+	weapon_t	weaponNum;
 
 	pi->chat = chat;
 

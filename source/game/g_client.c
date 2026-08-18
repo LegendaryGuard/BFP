@@ -1418,8 +1418,6 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.clientNum = index;
 
-	// BFP - TODO: list of 5 skills
-
 	// BFP - Powerlevel start
 	if ( client->ps.persistant[PERS_POWERLEVEL] < g_basePL.integer ) {
 		client->ps.persistant[PERS_POWERLEVEL] = g_basePL.integer;
