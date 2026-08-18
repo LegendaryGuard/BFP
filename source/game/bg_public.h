@@ -245,19 +245,19 @@ typedef enum {
 	STAT_WEAPONS,					// 16 bit fields
 	STAT_ARMOR,				
 	// BFP - Got rid of STAT_DEAD_YAW, now uses ps->damageYaw and ps->damagePitch
-	STAT_UNUSED_INDEX4,				// unused stat index (don't remove if you want to keep demo networking!)
+	STAT_UNUSED_INDEX4,				// unused stat index
 	STAT_CLIENTS_READY,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
 
-	STAT_UNUSED_INDEX6,				// BFP - Powerlevel
-	STAT_UNUSED_INDEX7,				// BFP - Flight jump anim transition seconds, maximum is 21 sec and stops changing to 0, even when stop flying also reproduces this stat index like starting to fly (looks weird)
+	STAT_UNUSED_INDEX6,				// BFP - Original demo networking: Powerlevel
+	STAT_UNUSED_INDEX7,				// BFP - Original demo networking: Flight jump anim transition seconds, maximum is 21 sec and stops changing to 0, even when stop flying also reproduces this stat index like starting to fly (looks weird)
 	STAT_KI,						// BFP - Ki
 	STAT_MAX_KI,					// BFP - Maximum ki
-	STAT_UNUSED_INDEX10,			// BFP - Melee attack time
+	STAT_UNUSED_INDEX10,			// BFP - Original demo networking: Melee attack time
 	STAT_MAX_HEALTH,				// health / armor limit, changable by handicap
-	STAT_UNUSED_INDEX12,			// unused stat index (don't remove if you want to keep demo networking!)
-	STAT_UNUSED_INDEX13,			// BFP - Beam firing weapon state
-	STAT_UNUSED_INDEX14,			// BFP - Force field weapon state
-	//STAT_UNUSED_INDEX15			// BFP - Fly tilt angles (left: moves to -80, right: moves to 80)
+	STAT_UNUSED_INDEX12,			// Original demo networking: unused stat index, unknown
+	STAT_UNUSED_INDEX13,			// BFP - Original demo networking: Beam firing weapon state
+	STAT_UNUSED_INDEX14,			// BFP - Original demo networking: Force field weapon state
+	//STAT_UNUSED_INDEX15			// BFP - Original demo networking: Fly tilt angles (left: moves to -80, right: moves to 80)
 	STAT_HITSTUN_TIME				// BFP - Hit stun time
 } statIndex_t;
 
@@ -350,17 +350,17 @@ typedef enum {
 	PW_REDFLAG, //PW_BATTLESUIT,
 	PW_BLUEFLAG, //PW_HASTE,
 
-	PW_UNUSED_INDEX4,	// BFP - Unused powerup index //PW_INVIS
-	PW_UNUSED_INDEX5,	// BFP - That would be PW_FLIGHT, used for flying
-	PW_UNUSED_INDEX6,	// BFP - Used for ki recharge
-	PW_UNUSED_INDEX7,	// BFP - Used for ki use/boost
-	PW_UNUSED_INDEX8,	// BFP - Used for blocking seconds (defend from melee, beams, explosions and impacts, and reflect ki attack projectiles)
-	PW_UNUSED_INDEX9,	// BFP - Used for melee toggle
-	PW_UNUSED_INDEX10,	// BFP - Used for hit stun seconds
-	PW_UNUSED_INDEX11,	// BFP - Used for ki attack charge points
-	PW_UNUSED_INDEX12,	// BFP - Used for enable/disable monster in monster gamemode (g_gametype 4)
-	PW_UNUSED_INDEX13,	// BFP - Used for beam firing state
-	PW_UNUSED_INDEX14,	// BFP - Used for jump (looks strange...)
+	PW_UNUSED_INDEX4,	// BFP - Original demo networking: Unused powerup index //PW_INVIS
+	PW_UNUSED_INDEX5,	// BFP - Original demo networking: That would be PW_FLIGHT, used for flying
+	PW_UNUSED_INDEX6,	// BFP - Original demo networking: Used for ki recharge
+	PW_UNUSED_INDEX7,	// BFP - Original demo networking: Used for ki use/boost
+	PW_UNUSED_INDEX8,	// BFP - Original demo networking: Used for blocking seconds (defend from melee, beams, explosions and impacts, and reflect ki attack projectiles)
+	PW_UNUSED_INDEX9,	// BFP - Original demo networking: Used for melee toggle
+	PW_UNUSED_INDEX10,	// BFP - Original demo networking: Used for hit stun seconds
+	PW_UNUSED_INDEX11,	// BFP - Original demo networking: Used for ki attack charge points
+	PW_UNUSED_INDEX12,	// BFP - Original demo networking: Used for enable/disable monster in monster gamemode (g_gametype 4)
+	PW_UNUSED_INDEX13,	// BFP - Original demo networking: Used for beam firing state
+	PW_UNUSED_INDEX14,	// BFP - Original demo networking: Used for jump (looks strange...)
 
 	PW_NUM_POWERUPS
 

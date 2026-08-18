@@ -3223,7 +3223,6 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// BFP - Handling the PMF flag when stepping the ground and when preparing to attack
 	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
-		// BFP - TODO: Set to the first selected weapon
 		pm->ps->pm_flags &= ~PMF_AIR_GRAVITY; // BFP - Air gravity
 	}
 
