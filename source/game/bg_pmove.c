@@ -940,7 +940,7 @@ static void PM_WaterMove( void ) {
 		PM_ContinueFlyAnim();
 		// keep charging animation, otherwise looks jerky
 		if ( ( pm->cmd.buttons & BUTTON_KI_CHARGE )
-		&& !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
+		&& !PM_IsInUltimateTier() ) { // avoid forcing animations on transformation phase
 			PM_ContinueTorsoAnim( TORSO_CHARGE );
 			PM_ContinueLegsAnim( LEGS_CHARGE );
 		}
@@ -2108,7 +2108,7 @@ static void PM_Footsteps( void ) {
 	qboolean	footstep;
 
 	// BFP - Hit stun and ultimate tier
-	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( PM_IsInUltimateTier() ) ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || PM_IsInUltimateTier() ) {
 		return;
 	}
 
@@ -2319,7 +2319,7 @@ static void PM_WaterEvents( void ) {		// FIXME?
 		&& !( pm->cmd.buttons & BUTTON_KI_CHARGE )
 		&& !pm->kiCharging
 		&& !( pm->ps->pm_flags & PMF_MELEE )
-		&& !( PM_IsInUltimateTier() )
+		&& !PM_IsInUltimateTier()
 		&& pm->ps->stats[STAT_HITSTUN_TIME] <= 0 ) {
 			PM_ForceJumpAnim(); // BFP - Keep legs animation
 		}
@@ -2604,7 +2604,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
 
 		// don't play the animation when being transformed
-		if ( !( PM_IsInUltimateTier() ) ) {
+		if ( !PM_IsInUltimateTier() ) {
 			if ( !PM_IsInKiAttackState()
 			&& !( pm->ps->pm_flags & PMF_MELEE ) ) {
 				if ( pm->cmd.forwardmove > 0 ) {
@@ -2683,7 +2683,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 			&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
 				|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
 			&& pm->waterlevel <= 1 // Don't force inside the water
-			&& !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
+			&& !PM_IsInUltimateTier() ) { // avoid forcing animations on transformation phase
 				PM_ForceJumpAnim();
 				PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
@@ -2694,7 +2694,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->ps->pm_time = 200; // Make sure to avoid entering jump flying status after recharging ki
 		pm->ps->eFlags &= ~EF_AURA; // Make sure the aura is off, otherwise the ki use proceeds
 		pm->kiCharging = qfalse;
-		if ( !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
+		if ( !PM_IsInUltimateTier() ) { // avoid forcing animations on transformation phase
 			PM_ContinueLegsAnim( LEGS_IDLE ); // Keep the legs when being near to the ground at that height
 		}
 		// do jump animation if it's falling
@@ -2703,7 +2703,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 			&& !( ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMP
 				|| ( pm->ps->legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_JUMPB )
 			&& pm->waterlevel <= 1 // don't force inside the water
-			&& ( !( PM_IsInUltimateTier() ) ) ) { // avoid forcing animations on transformation phase
+			&& !PM_IsInUltimateTier() ) { // avoid forcing animations on transformation phase
 			PM_ForceJumpAnim();
 			PM_ContinueTorsoAnim( TORSO_STAND ); // Keep the torso
 		}
@@ -2716,7 +2716,7 @@ static void PM_KiChargeAnimation( void ) { // BFP - Ki Charge
 		pm->ps->eFlags &= ~EF_KI_BOOST;
 		pm->ps->eFlags &= ~EF_FIRING; // don't display shooting effects
 		pm->kiCharging = qtrue;
-		if ( !( PM_IsInUltimateTier() ) ) { // avoid forcing animations on transformation phase
+		if ( !PM_IsInUltimateTier() ) { // avoid forcing animations on transformation phase
 			PM_ContinueTorsoAnim( TORSO_CHARGE );
 			PM_ContinueLegsAnim( LEGS_CHARGE );
 		}
@@ -2835,7 +2835,7 @@ static void PM_Weapon( void ) {
 	// BFP - HIGHLY MODIFIED
 
 	// BFP - Hit stun and ultimate tier, avoid shooting if the player is in this status
-	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || ( PM_IsInUltimateTier() ) ) {
+	if ( pm->ps->stats[STAT_HITSTUN_TIME] > 0 || PM_IsInUltimateTier() ) {
 		pm->ps->generic1 = 0;
 		pm->ps->weaponTime = 0;
 		return;
@@ -2929,8 +2929,9 @@ static void PM_Weapon( void ) {
 		}
 		break;
 	case WEAPON_FIRING:
-		// don't allow ki charging while charging the attack
-		if ( pm->kiCharging || ( pm->cmd.buttons & BUTTON_KI_CHARGE ) ) {
+		// don't allow ki charging while charging the attack, skip if BUTTON_KI_USE is also held
+		if ( ( pm->kiCharging && !( pm->cmd.buttons & BUTTON_KI_USE ) )
+		|| ( ( pm->cmd.buttons & BUTTON_KI_CHARGE ) && !( pm->cmd.buttons & BUTTON_KI_USE ) ) ) {
 			pm->ps->weaponstate = WEAPON_READY;
 			pm->ps->weaponTime = 0;
 		}

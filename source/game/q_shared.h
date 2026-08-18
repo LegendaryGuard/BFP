@@ -643,8 +643,6 @@ void Parse3DMatrix (char **buf_p, int z, int y, int x, float *m);
 
 int	QDECL Com_sprintf (char *dest, int size, const char *fmt, ...);
 
-// BFP - Buffer size for bfp.cfg and bfp_server.cfg files
-#define BFP_CFG_BUFFER_SIZE		65536
 
 // mode parm for FS_FOpenFile
 typedef enum {
@@ -880,11 +878,6 @@ typedef enum {
 #define	ENTITYNUM_WORLD		(MAX_GENTITIES-2)
 #define	ENTITYNUM_MAX_NORMAL	(MAX_GENTITIES-2)
 
-
-// BFP - Monster gamemode, monster model name macro
-#define	MONSTER_NAME		"oozaru"
-// BFP - Macro to enable/disable kicking the player who uses an illegal player model, if disabled, the player will be forced to spectate
-#define	KICK_ILLEGAL_PLAYER_MODEL	1
 
 #define	MAX_MODELS			256		// these are sent over the net as 8 bits
 #define	MAX_SOUNDS			256		// so they cannot be blindly increased

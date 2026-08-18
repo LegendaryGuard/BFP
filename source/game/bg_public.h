@@ -110,6 +110,13 @@ typedef enum {
 
 typedef enum { GENDER_MALE, GENDER_FEMALE, GENDER_NEUTER } gender_t;
 
+// BFP - Buffer size for bfp.cfg and bfp_server.cfg files
+#define BFP_CFG_BUFFER_SIZE		65536
+// BFP - Monster gamemode, monster model name macro
+#define	MONSTER_NAME		"oozaru"
+// BFP - Macro to enable/disable kicking the player who uses an illegal player model, if disabled, the player will be forced to spectate
+#define	KICK_ILLEGAL_PLAYER_MODEL	1
+
 /*
 ===================================================================================
 
