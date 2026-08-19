@@ -1205,29 +1205,6 @@ typedef enum _flag_status {
 #define LERP( a, b, w ) ( ( a ) * ( 1.0f - ( w ) ) + ( b ) * ( w ) )
 #endif
 
-// custom functions
-int BG_sprintf( char *buf, const char *format, ... );
-int Q_vsprintf( char *buffer, const char *fmt, va_list argptr );
-
-char *Q_stristr( const char * str1, const char * str2 );
-
-char *strtok( char *strToken, const char *strDelimit );
-char *EncodedString( const char *str );
-char *DecodedString( const char *str );
-
-void BG_CleanName( const char *in, char *out, int outSize, const char *blankString );
-char *BG_StripColor( char *string );
-
-void Q_strcpy( char *dst, const char *src );
-char *Q_stradd( char *dst, const char *src );
-int Q_sscanf( const char *buffer, const char *fmt, ... );
-
-int replace_s( char * str1, char * str2, char * src, int max_len );
-qboolean replace1( const char match, const char replace, char *str );
-
-qboolean  BigEndian( void );
-
-
 float mp3dec_pow( float x, float y ); // BFP - Unpack music, memory management for ui_mp3decoder
 
 #endif	// __Q_SHARED_H
