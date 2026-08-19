@@ -600,9 +600,12 @@ static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
 				&& rad->client == other->client ) {
 					ent->target_ent = other;
 				}
-				G_PiercingDamage( ent, ent->target_ent, damage );
+				if ( ent->target_ent ) {
+					G_PiercingDamage( ent, ent->target_ent, damage );
+				}
 				VectorCopy( ent->r.currentOrigin, ent->piercingOrigin );
-				if ( ent->target_ent->health <= 0 || ent->target_ent->client->ps.pm_type == PM_DEAD ) {
+				if ( ent->target_ent
+				&& ( ent->target_ent->health <= 0 || ent->target_ent->client->ps.pm_type == PM_DEAD ) ) {
 					ent->target_ent = NULL;
 					ent->piercingHitTime = 0;
 					ent->piercingTime = 0;
@@ -819,11 +822,20 @@ G_ChargeDamageScaling
 =====================
 */
 void G_ChargeDamageScaling( gentity_t *ent, float radius ) { // BFP - Charge damage scaling
-	int		chargeLevel = ent->kiChargePoints;
+	int		chargeLevel, totalCharge;
 	float	r, rdown, er;
 
 	if ( !ent->weaponDef ) {
 		return;
+	}
+
+	totalCharge = ent->kiChargePoints - ent->weaponDef->minCharge;
+	chargeLevel = 1 + totalCharge; // add one point to adjust
+	if ( chargeLevel < 0 ) {
+		chargeLevel = 0;
+	}
+	if ( chargeLevel > totalCharge ) { // don't surpass the total
+		chargeLevel = totalCharge;
 	}
 
 	r = radius + chargeLevel * ent->weaponDef->chargeRadiusMult;

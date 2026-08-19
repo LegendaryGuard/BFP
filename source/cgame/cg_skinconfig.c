@@ -878,7 +878,7 @@ void CG_LoadSkinConfig( clientInfo_t *ci ) {
 	// if there's like no 'missileModelRotation [attackIndex] "0"' set
 	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
 		ci->skinConfig.attacks[i].missileModelRotation = .25f;
-		ci->skinConfig.attacks[i].missileTrailRadius = 32;
+		ci->skinConfig.attacks[i].missileTrailRadius = 15;
 		ci->skinConfig.attacks[i].missileTrailTime = 2000;
 	}
 
