@@ -377,8 +377,9 @@ The information in the map file can be useful for debugging and performance anal
 - bg_events.h
 - bg_meansofdeath.h
 - bg_weaponconfig.c
-- cg_skinconfig.c
+- cg_aura.c
 - cg_cvar.h
+- cg_skinconfig.c
 - cg_trails.c
 - g_cvar.h
 - ui_bfpoptions.c

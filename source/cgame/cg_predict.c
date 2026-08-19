@@ -273,15 +273,6 @@ void CG_StoreEvent( entity_event_t evt, int eventParm, int entityNum )
 	if ( eventStack >= MAX_PREDICTED_EVENTS )
 		return;
 
-// BFP - Remove that in the future >:(
-#if 0
-	if ( evt == EV_FALL_FAR ) {
-		CG_AddFallDamage( 10 );
-	} else if ( evt == EV_FALL_MEDIUM ) {
-		CG_AddFallDamage( 5 );
-	}
-#endif
-
 	events[ eventStack ] = evt;
 	eventParms[ eventStack ] = eventParm;
 	eventParm2[ eventStack ] = entityNum;

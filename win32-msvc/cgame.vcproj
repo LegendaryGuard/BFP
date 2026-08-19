@@ -286,6 +286,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\source\cgame\cg_aura.c"
+				>
+			</File>
+			<File
 				RelativePath="..\source\cgame\cg_consolecmds.c"
 				>
 			</File>
