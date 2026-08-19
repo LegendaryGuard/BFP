@@ -22,7 +22,7 @@ set NO_JTS=0
 rem If NO_MAP=1 is set, these directories and .map files won't be available if the operation compiled successfully
 set NO_MAP=1
 
-rem Remove binaries, intermediate and pak9.pk3 if these are already here to clean up
+rem Remove binaries, intermediate and bfpr.pk3 if these are already here to clean up
 if exist %~dp0\binaries\ (
   echo    The directory called binaries exists, removing...
   rd binaries /s /q
@@ -33,9 +33,9 @@ if exist %~dp0\intermediate\ (
  rd intermediate /q /s
 )
 
-if exist %~dp0\pak9.pk3 (
-  echo    pak9.pk3 exists, removing...
-  del pak9.pk3
+if exist %~dp0\bfpr.pk3 (
+  echo    bfpr.pk3 exists, removing...
+  del bfpr.pk3
 )
 
 @echo on
@@ -99,7 +99,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 @echo on
-..\tools\bin\7za.exe a -tzip ..\pak9.pk3 vm
+..\tools\bin\7za.exe a -tzip ..\bfpr.pk3 vm
 cd ..
 
 @echo off
@@ -124,15 +124,15 @@ if not "%1" == "" (
     echo.
     goto :quit
   )
-  if exist pak9.pk3 (
+  if exist bfpr.pk3 (
     echo.
-    move pak9.pk3 "%1"
-    echo    pak9.pk3 has been moved successfully!
+    move bfpr.pk3 "%1"
+    echo    bfpr.pk3 has been moved successfully!
     echo.
   ) else (
     echo.
     echo *************************************
-    echo    ERROR: pak9.pk3 doesn't exist
+    echo    ERROR: bfpr.pk3 doesn't exist
     echo *************************************
     echo.
   )

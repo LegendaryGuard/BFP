@@ -151,7 +151,7 @@ The information in the map file can be useful for debugging and performance anal
 
     1. Keep in mind you must be in the repository directory. Execute `build.bat` to compile qvms.
 
-    2. Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
+    2. Once compiled successfully, look for `bfpr.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
 
     Alternatively, in `build.bat`, you can set `NO_MAP=0` to obtain .map files, you can see them in binaries and intermediate directories.
 
@@ -170,7 +170,7 @@ The information in the map file can be useful for debugging and performance anal
     make -f MakefileQVM
     ```
 
-    3. Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory. You can look `vm/` where you can see the objects and compiled files.
+    3. Once compiled successfully, look for `bfpr.pk3`, copy and paste into `baseq3/` or mod Q3 game directory. You can look `vm/` where you can see the objects and compiled files.
 
     Alternatively, you can execute:
     ```sh
@@ -286,7 +286,7 @@ The information in the map file can be useful for debugging and performance anal
     make -f MakefileQVM
     ```
 
-    3. Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory. You can look `vm/` where you can see the objects and compiled files.
+    3. Once compiled successfully, look for `bfpr.pk3`, copy and paste into `baseq3/` or mod Q3 game directory. You can look `vm/` where you can see the objects and compiled files.
 
     Alternatively, you can execute:
     ```sh
@@ -317,7 +317,7 @@ The information in the map file can be useful for debugging and performance anal
     wine cmd /c build.bat
     ```
 
-    3. Once compiled successfully, look for `pak9.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
+    3. Once compiled successfully, look for `bfpr.pk3`, copy and paste into `baseq3/` or mod Q3 game directory.
 
     * #### _Building shared libraries (.so)_:
     
