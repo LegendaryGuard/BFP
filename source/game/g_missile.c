@@ -567,7 +567,7 @@ static void G_Piercing( gentity_t *ent, trace_t *trace ) { // BFP - Piercing
 				continue;
 			}
 
-			if ( rad && rad->s.eType == ET_MISSILE && !rad->weaponDef->piercing ) { // pierce that projectile, let it explode
+			if ( rad && rad->s.eType == ET_MISSILE && rad->weaponDef && !rad->weaponDef->piercing ) { // pierce that projectile, let it explode
 				G_MissileImpact( rad, trace );
 				continue;
 			}
@@ -887,7 +887,7 @@ static void G_Priority( gentity_t *ent, trace_t *trace ) { // BFP - Priority
 	for ( i = 0; i < numEntities; ++i ) {
 		other = &g_entities[entityList[i]];
 
-		if ( !other->inuse || other == ent ) {
+		if ( !other || !other->inuse || other == ent ) {
 			continue;
 		}
 		if ( other->s.eType != ET_MISSILE ) { // projectiles only
@@ -897,21 +897,37 @@ static void G_Priority( gentity_t *ent, trace_t *trace ) { // BFP - Priority
 			continue;
 		}
 
-		if ( other->weaponDef->attackType == ATK_BEAM
+		if ( other->weaponDef && ( other->weaponDef->attackType == ATK_BEAM
 		|| other->weaponDef->attackType == ATK_SBEAM
-		|| other->weaponDef->attackType == ATK_RDMISSILE
-		|| other->weaponDef->attackType == ATK_FORCEFIELD ) {
+		|| other->weaponDef->attackType == ATK_FORCEFIELD ) ) {
 			continue;
 		}
 
-		if ( ent->weaponDef->priority > other->weaponDef->priority ) {
-			G_MissileImpact( other, trace );
-		} else if ( ent->weaponDef->priority < other->weaponDef->priority ) {
-			G_MissileImpact( ent, trace );
-			return;
-		} else {
-			G_MissileImpact( other, trace );
-			G_MissileImpact( ent, trace );
+		if ( other->weaponDef && ent->weaponDef->priority > other->weaponDef->priority ) {
+			if ( other->parent && other->parent->client
+			&& other->weaponDef->attackType == ATK_RDMISSILE && !other->splitKiBall ) {
+				other->parent->client->ps.weaponstate = WEAPON_READY;
+				G_RDMissile( other, other->parent->client );
+			} else {
+				G_MissileImpact( other, trace );
+			}
+		}
+
+		if ( other->weaponDef && ent->weaponDef->priority == other->weaponDef->priority ) {
+			if ( other->parent && other->parent->client
+			&& other->weaponDef->attackType == ATK_RDMISSILE && !other->splitKiBall ) {
+				other->parent->client->ps.weaponstate = WEAPON_READY;
+				G_RDMissile( other, other->parent->client );
+			} else {
+				G_MissileImpact( other, trace );
+			}
+			if ( ent->parent && ent->parent->client
+			&& ent->weaponDef->attackType == ATK_RDMISSILE && !ent->splitKiBall ) {
+				ent->parent->client->ps.weaponstate = WEAPON_READY;
+				G_RDMissile( ent, ent->parent->client );
+			} else {
+				G_MissileImpact( ent, trace );
+			}
 			return;
 		}
 	}
