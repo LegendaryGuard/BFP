@@ -176,6 +176,9 @@ static void PM_AttackAnim( int anim, int prepareAnim ) { // BFP - Handles attack
 	if ( pm->ps->pm_type == PM_DEAD || pm->ps->pm_type == PM_SPECTATOR ) {
 		return;
 	}
+	if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
+		return;		// don't allow attack pose until all buttons are up
+	}
 
 	// debug the selected weapon properties
 #if 0
@@ -3252,8 +3255,6 @@ void PmoveSingle (pmove_t *pmove) {
 	} else {
 		if ( !( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_ATK_FORCEFIELD ) && ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) ) ) { // BFP - That would be with chargeAttack set
 			pm->ps->eFlags &= ~EF_FIRING;
-			// BFP - Handle attack button when holding to prepare the attack at the start
-			pm->cmd.buttons &= ~BUTTON_ATTACK;
 		}
 	}
 
