@@ -248,6 +248,19 @@ UnlockAttackSlot
 */
 static void UnlockAttackSlot( gentity_t *ent, int slot ) { // BFP - Unlock a new attack slot on tier up
 	bfpWeaponCfgDef_t	*wpCfg = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, slot );
+
+	// BFP - Monster gamemode, for player monster in g_monster 1, don't give an extra useless slot
+	if ( ( ent->client->ps.eFlags & EF_MONSTER )
+	&& g_gametype.integer == GT_MONSTER && g_monster.integer > 0 ) {
+		return;
+	}
+
+	// fallback on monster gamemode for player monster with g_monster 1
+	if ( !wpCfg && ( ent->client->ps.eFlags & EF_MONSTER )
+	&& g_gametype.integer == GT_MONSTER && g_monster.integer > 0 ) {
+		wpCfg = BG_SetMonsterDefaultWeaponDef();
+	}
+
 	if ( !wpCfg ) {
 		wpCfg = BG_SetDefaultWeaponDef();
 	}
