@@ -156,7 +156,7 @@ bfpWeaponCfgDef_t *BG_SetMonsterDefaultWeaponDef( void ) {
 	wpCfg.chargeExpRadiusMult = 0;
 	wpCfg.maxRadius = 0;
 	wpCfg.maxExpRadius = 0;
-	wpCfg.missileSpeed = 1000;
+	wpCfg.missileSpeed = 2000;
 	wpCfg.homing = 0;
 	wpCfg.homingRange = 0;
 	wpCfg.homingAcceleration = 0;
