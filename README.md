@@ -65,6 +65,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - how particles move (e.g. bubbles are handled underwater and touching something solid vanishes to save performance)
 - explosion dynamic lights are back (these were broken after RC/beta versions)
 - there's code about real impact crack mark, when projectiles/ki attacks impact something solid on ground, walls or slopes
+- projectile with missile attack type using beam trail applies where the beam muzzle was started
 - particle aura is implemented, "powerups/particleaura" shader can be used
 - sprite aura looks implemented, "powerups/spriteeaura" shader can be used
 - while charging ki near water, bubble particles appear

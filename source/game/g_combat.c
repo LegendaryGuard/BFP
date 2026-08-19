@@ -1124,10 +1124,6 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	if ( attacker->client ) {
 		// BFP - Apply attacker powerlevel calculation, no maximum health calculation
 		max = attacker->client->ps.persistant[PERS_POWERLEVEL] + 1; // BFP - before Q3: max = attacker->client->ps.stats[STAT_MAX_HEALTH];
-		// charge damage calculates another way
-		if ( inflictor && inflictor->weaponDef && inflictor->weaponDef->chargeDamageMult > 0 ) {
-			max = 1 + damage * attacker->client->ps.persistant[PERS_POWERLEVEL] * 0.01;
-		}
 		damage = damage * max * 0.01; // BFP - before Q3: damage = damage * max / 100;
 	}
 

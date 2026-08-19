@@ -798,11 +798,11 @@ void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAt
 			VectorNormalize( spreadDir );
 
 			// position smoke offset in the spread direction
-			VectorMA( origin, 20 + ( rand() % 80 ), spreadDir, smokeOrg );
+			VectorMA( origin, 20 + ( crandom() * 80 ), spreadDir, smokeOrg );
 
 			// velocity moves outward in spread direction
 			VectorScale( spreadDir, 150 + ( rand() % 500 ), vel );
-			vel[2] = maxVert + ( rand() % (int)( minVert ) );
+			vel[2] = maxVert + ( crandom() * minVert );
 
 			leSmoke = CG_SmokePuff( smokeOrg, vel, 
 				explosionSmokeRadius,

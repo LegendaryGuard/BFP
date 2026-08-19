@@ -411,10 +411,10 @@ static void CG_DrawHealthGauge( float x, float y, float w, float h, int value, i
 		float	barWidth = 2 * w * percentage;
 		float	*barColor = barGreen;
 
-		if ( (float)value <= (float)maxValue * 0.64 ) { // <= 64% of health
+		if ( (float)value <= (float)maxValue * 0.65 ) { // <= 65% of health
 			barColor = barBlue;
 		}
-		if ( (float)value <= (float)maxValue * 0.31 ) { // <= 31% of health
+		if ( (float)value <= (float)maxValue * 0.33 ) { // <= 33% of health
 			barColor = barRed;
 		}
 		CG_FillRect( x - w, y, w * 2, h, backgroundBlue );

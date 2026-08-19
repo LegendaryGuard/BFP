@@ -2602,6 +2602,7 @@ static void PM_FlightStart( void ) { // BFP - Start flight handling
 	&& ( ( !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && !( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
 		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEAUTOFIRE ) && ( pm->cmd.buttons & BUTTON_ATTACK ) )
 		|| ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_CHARGEATTACK ) && pm->ps->weaponstate == WEAPON_ACTIVE && ( pm->cmd.buttons & BUTTON_ATTACK ) ) ) )
+	&& !( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY ) && pm->ps->weaponTime > 0 )
 	&& pm->ps->weaponstate != WEAPON_STUN ) {
 		pm->ps->pm_time = 1120; // to avoid drifting while standing the jump velocity
 		pm->ps->velocity[2] = JUMP_VELOCITY - 200;
@@ -2961,8 +2962,7 @@ static void PM_Weapon( void ) {
 	case WEAPON_BEAMSTRUGGLE:
 		pm->ps->eFlags |= EF_FIRING; // keep playing firing sound
 
-		if ( ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY )
-		&& pm->ps->weaponTime > 0 ) {
+		if ( pm->ps->ammo[pm->ps->weapon] & AMMOF_MOVEMENTPENALTY ) {
 			pm->cmd.buttons &= ~( BUTTON_KI_USE | BUTTON_KI_CHARGE );
 			pm->ps->eFlags &= ~( EF_AURA | EF_KI_BOOST );
 

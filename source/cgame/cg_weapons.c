@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // BFP - HIGHLY MODIFIED
 
+// BFP - A macro to debug flash/firing flash/missile scale/size
+#define	FLASH_MISSILE_SCALE_DEBUG	0
 /*
 ===================
 CG_AddFlash
@@ -82,23 +84,32 @@ void CG_AddFlash( centity_t *cent, int entityNum, bfpAttackSkinConfig_t *skinAtk
 		}
 
 		scale = flashScaleFactor;
-		if ( scale > 10 ) {
-			scale = 10;
+#if FLASH_MISSILE_SCALE_DEBUG
+		CG_Printf( "Flash model scale: %f\n", scale );
+#endif
+		if ( scale > 1 ) {
+			scale = 1;
 		}
-		// BFP - Make muzzle flash fit better for player monster
-		if ( ( cent->currentState.eFlags & EF_MONSTER )
-		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-			scale *= 2;
+		if ( scale <= 0 ) {
+			scale = 1;
 		}
-		if ( scale <= 0 ) scale = 1;
 		CG_ModelSize( &flash, scale );
 	} else {
 		flash.reType = RT_SPRITE;
-		scale = flashRadius + (float)minCharge;
+		scale = flashRadius;
+#if FLASH_MISSILE_SCALE_DEBUG
+		CG_Printf( "Flash sprite size: %f\n", scale );
+#endif
+		if ( scale > 500 ) {
+			scale = 50;
+		}
 		// BFP - Make muzzle flash fit better for player monster
 		if ( ( cent->currentState.eFlags & EF_MONSTER )
 		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-			scale *= 2;
+			scale *= 6;
+			if ( scale > 400 ) {
+				scale = 400;
+			}
 		}
 		if ( scale <= 0 ) {
 			scale = 1;
@@ -175,12 +186,9 @@ void CG_AddFiringFlash( centity_t *cent, int entityNum, bfpAttackSkinConfig_t *s
 		}
 
 		scale = firingFlashScaleFactor;
-
-		// BFP - Make firing flash fit better for player monster
-		if ( ( cent->currentState.eFlags & EF_MONSTER )
-		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-			scale *= 2;
-		}
+#if FLASH_MISSILE_SCALE_DEBUG
+		CG_Printf( "Firing flash scale: %f\n", scale );
+#endif
 		if ( scale <= 0 ) {
 			scale = 1;
 		}
@@ -188,11 +196,17 @@ void CG_AddFiringFlash( centity_t *cent, int entityNum, bfpAttackSkinConfig_t *s
 	} else {
 		firingFlash.reType = RT_SPRITE;
 
-		scale = firingFlashRadius + (float)minCharge;
+		scale = firingFlashRadius;
+#if FLASH_MISSILE_SCALE_DEBUG
+		CG_Printf( "Firing flash size: %f\n", scale );
+#endif
 		// BFP - Make firing flash fit better for player monster
 		if ( ( cent->currentState.eFlags & EF_MONSTER )
 		|| ( cg_entities[ entityNum ].currentState.eFlags & EF_MONSTER ) ) {
-			scale *= 2;
+			scale *= 3;
+			if ( scale > 300 ) {
+				scale = 300;
+			}
 		}
 		if ( scale <= 0 ) {
 			scale = 1;
@@ -271,6 +285,9 @@ void CG_AddMissile( centity_t *cent, int entityNum, qboolean isMissileMoving, bf
 		}
 
 		scale = missileScaleFactor + missileScaleFactorChargeMult * (float)totalCharge;
+#if FLASH_MISSILE_SCALE_DEBUG
+		CG_Printf( "Missile model scale: %f\n", scale );
+#endif
 		if ( isMissileMoving && VectorNormalize2( cent->currentState.pos.trDelta, missile.axis[0] ) == 0 ) {
 			missile.axis[0][2] = 1;
 		}
@@ -291,6 +308,12 @@ void CG_AddMissile( centity_t *cent, int entityNum, qboolean isMissileMoving, bf
 	} else {
 		missile.reType = RT_SPRITE;
 		scale = missileRadius + missileRadiusChargeMult * (float)totalCharge;
+#if FLASH_MISSILE_SCALE_DEBUG
+		CG_Printf( "Missile sprite size: %f\n", scale );
+#endif
+		if ( scale > 150 ) {
+			scale = 150;
+		}
 		missile.rotation = skinAtkCfg->missileRotation;
 		if ( scale <= 0 ) {
 			scale = 1;
