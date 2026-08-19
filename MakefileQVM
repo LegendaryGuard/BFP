@@ -57,7 +57,7 @@ ifndef DESTDIR
   DESTDIR = .
 endif
 
-PK3 = $(DESTDIR)/pak9.pk3
+PK3 = $(DESTDIR)/bfpr.pk3
 MOUNTDIR = source
 
 QADIR = $(MOUNTDIR)/game
