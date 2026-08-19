@@ -400,6 +400,7 @@ CGOBJ_ = \
   $(B)/cgame/bg_slidemove.o \
   $(B)/cgame/bg_weaponconfig.o \
   $(B)/cgame/cg_consolecmds.o \
+  $(B)/cgame/cg_aura.o \
   $(B)/cgame/cg_draw.o \
   $(B)/cgame/cg_drawtools.o \
   $(B)/cgame/cg_effects.o \

@@ -22,6 +22,8 @@ set cc=..\..\..\tools\bin\lcc.exe -DQ3_VM -S -Wf-target=bytecode -Wf-g -I%src%\c
 @if errorlevel 1 goto quit
 %cc% %src%/game/q_shared.c
 @if errorlevel 1 goto quit
+%cc% %src%/cgame/cg_aura.c
+@if errorlevel 1 goto quit
 %cc% %src%/cgame/cg_consolecmds.c
 @if errorlevel 1 goto quit
 %cc% %src%/cgame/cg_draw.c

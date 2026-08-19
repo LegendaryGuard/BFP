@@ -493,10 +493,6 @@ typedef struct weaponInfo_s {
 	qboolean		registered;
 	gitem_t			*item;
 
-	// BFP - No handsModel, weaponModel and barrelModel
-	//qhandle_t		handsModel;			// the hands don't actually draw, they just position the weapon
-	//qhandle_t		weaponModel;
-	//qhandle_t		barrelModel;
 	qhandle_t		flashModel;
 
 	vec3_t			weaponMidpoint;		// so it will rotate centered instead of by tag
@@ -510,8 +506,6 @@ typedef struct weaponInfo_s {
 	sfxHandle_t		attackFireVoice;	// BFP - attackFireVoice
 
 	qhandle_t		weaponIcon;			// BFP - Indication here: attackIcon
-	// BFP - No ammoIcon
-	//qhandle_t		ammoIcon;
 
 	qhandle_t		ammoModel;
 
@@ -875,7 +869,6 @@ typedef struct {
 
 	// weapon effect models
 	qhandle_t	ringFlashModel;
-	//qhandle_t	lightningExplosionModel;	// BFP - No impact flare effect
 
 	// BFP - Explosion, projectile and beam models
 	//qhandle_t	nukeModel;
@@ -1344,6 +1337,12 @@ void CG_ResetPlayerEntity( centity_t *cent );
 void CG_AddRefEntityWithPowerups( refEntity_t re, entityState_t *state, int team );
 void CG_NewClientInfo( int clientNum );
 sfxHandle_t	CG_CustomSound( int clientNum, const char *soundName );
+
+//
+// cg_aura.c
+//
+qhandle_t CG_AuraPowerlevelSetShaderColor( centity_t *cent ); // BFP - Set aura shader color by powerlevel
+void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int renderfx, refEntity_t legs, qhandle_t kiTrailShader ); // BFP - Aura and ki trails
 
 //
 // cg_skinconfig.c

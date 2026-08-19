@@ -83,8 +83,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	const char	*attackerInfo;
 	char		targetName[32];
 	char		attackerName[32];
-	// BFP - No gender variable for MOD messages
-	// gender_t	gender;
 
 	target = ent->otherEntityNum;
 	attacker = ent->otherEntityNum2;
@@ -147,47 +145,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	}
 
 	if (attacker == target) {
-		// BFP - No gender MOD messages
-#if 0
-		gender = ci->gender;
-		switch (mod) {
-		case MOD_GRENADE_SPLASH:
-			if ( gender == GENDER_FEMALE )
-				message = "tripped on her own grenade";
-			else if ( gender == GENDER_NEUTER )
-				message = "tripped on its own grenade";
-			else
-				message = "tripped on his own grenade";
-			break;
-		case MOD_ROCKET_SPLASH:
-			if ( gender == GENDER_FEMALE )
-				message = "blew herself up";
-			else if ( gender == GENDER_NEUTER )
-				message = "blew itself up";
-			else
-				message = "blew himself up";
-			break;
-		case MOD_PLASMA_SPLASH:
-			if ( gender == GENDER_FEMALE )
-				message = "melted herself";
-			else if ( gender == GENDER_NEUTER )
-				message = "melted itself";
-			else
-				message = "melted himself";
-			break;
-		case MOD_BFG_SPLASH:
-			message = "should have used a smaller gun";
-			break;
-		default:
-			if ( gender == GENDER_FEMALE )
-				message = "killed herself";
-			else if ( gender == GENDER_NEUTER )
-				message = "killed itself";
-			else
-				message = "killed himself";
-			break;
-		}
-#endif
 		if ( attacker == cg.snap->ps.clientNum ) { // BFP - Add 1 lifedeath in the history
 			trap_Cvar_Set( "cg_lifedeaths", va( "%i", (int)( cg_lifedeaths.integer + 1 ) ) );
 		}
@@ -231,60 +188,6 @@ static void CG_Obituary( entityState_t *ent ) {
 	// BFP - Don't admit that the attacker is the same as the target
 	if ( attacker != ENTITYNUM_WORLD && attacker != target ) {
 		switch (mod) {
-		// BFP - No other MOD messages
-#if 0
-		case MOD_GRAPPLE:
-			message = "was caught by";
-			break;
-		case MOD_GAUNTLET:
-			message = "was pummeled by";
-			break;
-		case MOD_MACHINEGUN:
-			message = "was machinegunned by";
-			break;
-		case MOD_SHOTGUN:
-			message = "was gunned down by";
-			break;
-		case MOD_GRENADE:
-			message = "ate";
-			message2 = "'s grenade";
-			break;
-		case MOD_GRENADE_SPLASH:
-			message = "was shredded by";
-			message2 = "'s shrapnel";
-			break;
-		case MOD_ROCKET:
-			message = "ate";
-			message2 = "'s rocket";
-			break;
-		case MOD_ROCKET_SPLASH:
-			message = "almost dodged";
-			message2 = "'s rocket";
-			break;
-		case MOD_PLASMA:
-			message = "was melted by";
-			message2 = "'s plasmagun";
-			break;
-		case MOD_PLASMA_SPLASH:
-			message = "was melted by";
-			message2 = "'s plasmagun";
-			break;
-		case MOD_RAILGUN:
-			message = "was railed by";
-			break;
-		case MOD_LIGHTNING:
-			message = "was electrocuted by";
-			break;
-		case MOD_BFG:
-		case MOD_BFG_SPLASH:
-			message = "was blasted by";
-			message2 = "'s BFG";
-			break;
-		case MOD_TELEFRAG:
-			message = "tried to invade";
-			message2 = "'s personal space";
-			break;
-#endif
 		case MOD_MELEE: // BFP - Melee
 			message = "was beaten up by";
 			break;
@@ -1108,8 +1011,6 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 
 	case EV_SHOTGUN:				// 78
-		// BFP - No shotgun fire, just force field test
-		// CG_ShotgunFire( es );
 		break;
 	
 	case EV_UNUSED_INDEX79:			// 79

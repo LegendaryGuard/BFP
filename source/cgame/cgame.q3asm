@@ -1,6 +1,7 @@
 -o "..\..\..\binaries\vm\cgame.qvm"
 cg_main
 ..\..\..\source\cgame\cg_syscalls
+cg_aura
 cg_consolecmds
 cg_draw
 cg_drawtools
@@ -16,6 +17,7 @@ cg_playerstate
 cg_predict
 cg_scoreboard
 cg_servercmds
+cg_skinconfig
 cg_snapshot
 cg_trails
 cg_view
@@ -24,5 +26,6 @@ bg_slidemove
 bg_pmove
 bg_lib
 bg_misc
+bg_weaponconfig
 q_math
 q_shared
