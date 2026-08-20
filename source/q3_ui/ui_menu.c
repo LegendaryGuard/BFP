@@ -37,7 +37,7 @@ MAIN MENU
 #define ART_CRBANNER		"menu/art/cr"			// BFP - copyright banner
 
 // BFP - BFP loves Roger Sullivan! This music feels nostalgic. Just wondering what kind of music is this. This data can't be found on Internet though...  (· ·;) *curiosity sweat*
-#define MENU_MUSICBG		"music/RogerSullivan-touch_of_the_sun.menu"	// BFP - Q3 menu extension for music, well, it could be .wav extension
+#define MENU_MUSICBG		"music/RogerSullivan-touch_of_the_sun"	// BFP - It used to be .menu, Q3 menu extension for music, well, it could be .wav extension
 
 // #define ID_SINGLEPLAYER			10 // BFP - Disabled due to full BFP vanilla implementation
 #define ID_MULTIPLAYER			10

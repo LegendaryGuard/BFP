@@ -39,6 +39,7 @@ CREDITS
 
 // BFP - A macro to enable/disable credits music
 #define	ENABLE_CREDITS_MUSIC	1
+#define MENU_MUSICBG		"music/ending"			// BFP - Ending music background
 
 typedef struct {
 	menuframework_s	menu;
@@ -347,7 +348,7 @@ void UI_CreditMenu( void ) {
 	mvolume = trap_Cvar_VariableValue( "s_musicvolume" );
 	if ( mvolume < 0.5 )
 		trap_Cmd_ExecuteText( EXEC_APPEND, "s_musicvolume 0.5\n" );
-	trap_Cmd_ExecuteText( EXEC_APPEND, "music music/fla22k_02\n" );
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "music %s\n", MENU_MUSICBG ) );
 #endif
 
 	// load the background shader
