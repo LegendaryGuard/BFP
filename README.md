@@ -385,9 +385,6 @@ The information in the map file can be useful for debugging and performance anal
 - g_cvar.h
 - ui_bfpoptions.c
 - ui_cvar.h
-- ui_mem.c
-- ui_mp3decoder.c
-- ui_mp3decoder.h
 
 #### Removed source code files from the build tools:
 
@@ -412,12 +409,6 @@ The information in the map file can be useful for debugging and performance anal
 # Legal
 
 The mod source code is [GPLv2 licensed](./COPYING.txt), the contents are based on Quake III Arena.
-
-The ancient abandoned MP3 decoder (`ui_mem.c`, `ui_mem.h`, `ui_mp3decoder.c` and `ui_mp3decoder.h`) uses _Open Source Modification License (OSML) v1.0_ and is based on code from various contributors:
-- Copyright (C) 1993 Sun Microsystems
-- Copyright (C) 1995-1997 Michael Hipp
-- Copyright (C) 1999 Aaron Holtzman
-- Copyright (C) 2000-2001 Tim Angus
 
 The images, screenshots, and URLs, even in the docs, included in this repository are used for reference purposes only and are not covered by the GPL license. They're sourced from various locations and are subject to their respective copyrights and terms of use.
 
