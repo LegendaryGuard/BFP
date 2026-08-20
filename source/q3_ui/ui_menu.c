@@ -38,7 +38,6 @@ MAIN MENU
 
 // BFP - BFP loves Roger Sullivan! This music feels nostalgic. Just wondering what kind of music is this. This data can't be found on Internet though...  (· ·;) *curiosity sweat*
 #define MENU_MUSICBG		"music/RogerSullivan-touch_of_the_sun.menu"	// BFP - Q3 menu extension for music, well, it could be .wav extension
-#define MP3_MUSICBG			"music/RogerSullivan-touch_of_the_sun.mp3"	// BFP - MP3 music version, for the converter...  (· ·;) *curiosity sweat*
 
 // #define ID_SINGLEPLAYER			10 // BFP - Disabled due to full BFP vanilla implementation
 #define ID_MULTIPLAYER			10
@@ -50,7 +49,6 @@ MAIN MENU
 #define ID_MODS					15 // BFP - Maybe not necessary
 #endif
 #define ID_EXIT					13
-#define ID_UNPACKMUSIC			14 // BFP - Unpack music, strange feature  (· ·;) *curiosity sweat*
 
 // BFP - That's the main banner 3d model of Quake 3 words, it would be a good idea to add a proper 3d banner model :P
 #define ENABLE_BANNER_MODEL		0
@@ -71,7 +69,6 @@ typedef struct {
 	menubitmap_s		capbar1;	// BFP - SETUP cap bar
 	menubitmap_s		capbar2;	// BFP - DEMOS cap bar
 	menubitmap_s		capbar3;	// BFP - EXIT cap bar
-	menubitmap_s		capbar4;	// BFP - UNPACK MUSIC cap bar
 
 	// BFP - Just wondering if anyone will come up with Single Player/Campaign/Story mode in their mind
 	// menutext_s		singleplayer;
@@ -84,7 +81,6 @@ typedef struct {
 	menutext_s		cinematics;
 	menutext_s		mods;
 #endif
-	menutext_s		unpackmusic; // BFP - Unpack music text
 	menutext_s		exit;
 
 	// BFP - As said before, idea for a proper 3d banner model
@@ -115,49 +111,6 @@ static void MainMenu_ExitAction( qboolean result ) {
 	UI_PopMenu();
 	UI_CreditMenu();
 }
-
-
-/*
-=================
-MainMenu_UnpackMusicAction
-=================
-*/
-static void MainMenu_UnpackMusicAction( qboolean result ) { // BFP - Unpack music logic, that looks weird  (· ·;) *curiosity sweat*
-	/*
-	--- Yrgol dev journal ---
-	# mp3 support - 11/30/2001 by Yrgol	
-		I added Tim "Timbo" Angus' mp3 to wav converter into bfp. It can be found at http://tremulous.sourceforge.net/junk/cg_mp3decoder/
-		This will allow us to include more music in the download, since each music file will have a smaller filesize.
-		This will not allow you to play your own mp3's. It is not an mp3 player, it is an in-game utility to convert mp3's into a q3-playable format.
-	-------------------------
-	*/
-	char mp3file[ MAX_QPATH ];
-	char wavfile[ MAX_QPATH ];
-
-	if( !result ) {
-		return;
-	}
-	UI_PopMenu();
-
-	Q_strncpyz( mp3file, MP3_MUSICBG, sizeof(mp3file) );
-	mp3file[sizeof(mp3file) - 1] = '\0';
-	Q_strncpyz( wavfile, MENU_MUSICBG, sizeof(wavfile) );
-	wavfile[sizeof(wavfile) - 1] = '\0';
-
-	S_decodeMP3( MP3_MUSICBG, MENU_MUSICBG );
-	trap_Cvar_SetValue( "cg_musicUnpacked", 1 );
-}
-
-
-/*
-=================
-MainMenu_UnpackMusic_Draw
-=================
-*/
-static void MainMenu_UnpackMusic_Draw( void ) { // BFP - Draw the warning on Unpack music menu
-	UI_DrawProportionalString( SCREEN_WIDTH/2, 50, "THIS MAY TAKE SEVERAL MINUTES", UI_CENTER, color_white );
-}
-
 
 
 /*
@@ -200,11 +153,6 @@ void Main_MenuEvent (void* ptr, int event) {
 		UI_ModsMenu();
 		break;
 #endif
-
-	// BFP - Unpack music
-	case ID_UNPACKMUSIC:
-		UI_ConfirmMenu( "UNPACK MUSIC?", MainMenu_UnpackMusic_Draw, MainMenu_UnpackMusicAction );
-		break;
 
 	case ID_EXIT:
 		UI_ConfirmMenu( "EXIT GAME?", NULL, MainMenu_ExitAction );
@@ -473,16 +421,6 @@ void UI_MainMenu( void ) {
 	s_main.capbar3.width				= 340;
 	s_main.capbar3.height				= 78;
 
-	// BFP - UNPACK MUSIC cap bar
-	y += MAIN_MENU_VERTICAL_SPACING;
-	s_main.capbar4.generic.type			= MTYPE_BITMAP;
-	s_main.capbar4.generic.name			= ART_CAPBAR;
-	s_main.capbar4.generic.flags		= QMF_LEFT_JUSTIFY | QMF_INACTIVE;
-	s_main.capbar4.generic.x			= 160;
-	s_main.capbar4.generic.y			= y;
-	s_main.capbar4.width				= 340;
-	s_main.capbar4.height				= 78;
-
 	// BFP - copyright banner
 	s_main.crbanner.generic.type			= MTYPE_BITMAP;
 	s_main.crbanner.generic.name			= ART_CRBANNER;
@@ -575,18 +513,6 @@ void UI_MainMenu( void ) {
 	s_main.exit.color						= color_white;
 	s_main.exit.style						= style;
 
-	// BFP - Unpack music button
-	y += MAIN_MENU_VERTICAL_SPACING;
-	s_main.unpackmusic.generic.type			= MTYPE_PTEXT;
-	s_main.unpackmusic.generic.flags		= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.unpackmusic.generic.x			= 350;
-	s_main.unpackmusic.generic.y			= y;
-	s_main.unpackmusic.generic.id			= ID_UNPACKMUSIC;
-	s_main.unpackmusic.generic.callback		= Main_MenuEvent; 
-	s_main.unpackmusic.string				= "UNPACK MUSIC";
-	s_main.unpackmusic.color				= color_white;
-	s_main.unpackmusic.style				= style;
-
 	// BFP - For 3d banner model :P
 #if !ENABLE_BANNER_MODEL
 	Menu_AddItem( &s_main.menu, &s_main.menubg ); // BFP - Menu background
@@ -615,12 +541,6 @@ void UI_MainMenu( void ) {
 	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
 	Menu_AddItem( &s_main.menu,	&s_main.mods );
 #endif
-
-	// BFP - Unpack music button, checks if the music is unpacked  (· ·;) *curiosity sweat*
-	if ( !trap_Cvar_VariableValue( "cg_musicUnpacked" ) ) {
-		Menu_AddItem( &s_main.menu, &s_main.capbar4 ); // BFP - cap bar for UNPACK MUSIC button
-		Menu_AddItem( &s_main.menu, &s_main.unpackmusic ); // BFP - UNPACK MUSIC button
-	}
 
 	trap_Key_SetCatcher( KEYCATCH_UI );
 	uis.menusp = 0;

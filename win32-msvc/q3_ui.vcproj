@@ -335,19 +335,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\source\q3_ui\ui_mem.c"
-				>
-			</File>
-			<File
 				RelativePath="..\source\q3_ui\ui_menu.c"
 				>
 			</File>
 			<File
 				RelativePath="..\source\q3_ui\ui_mfield.c"
-				>
-			</File>
-			<File
-				RelativePath="..\source\q3_ui\ui_mp3decoder.c"
 				>
 			</File>
 			<File

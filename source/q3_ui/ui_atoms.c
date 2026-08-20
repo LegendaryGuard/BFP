@@ -1181,7 +1181,6 @@ static void UI_WriteBFPConfig( void ) { // BFP - Overwrites bfp.cfg
 			{ "cg_stableCrosshair", "0" },
 			{ "cg_explosionRing", "1" },
 			{ "cg_lowpolysphere", "0" },
-			{ "cg_musicUnpacked", "1" },
 			{ "cg_playHitSound", "0" },
 			{ "g_hitStun", "1" }
 		};
@@ -1241,9 +1240,6 @@ UI_Init
 =================
 */
 void UI_Init( void ) {
-	//TA: dyn memory
-	UI_InitMem(); // BFP - Unpack music, memory management for ui_mp3decoder
-
 	UI_RegisterCvars();
 
 	UI_InitGameinfo();

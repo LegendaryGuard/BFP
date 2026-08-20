@@ -312,11 +312,6 @@ typedef	int	fixed16_t;
 #define M_PI		3.14159265358979323846f	// matches value in gcc v2 math.h
 #endif
 
-// BFP - Unpack music, for ui_mp3decoder.c
-#ifndef M_SQRT2
-#define M_SQRT2 1.414213562f
-#endif
-
 #define NUMVERTEXNORMALS	162
 extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
 
@@ -1204,7 +1199,5 @@ typedef enum _flag_status {
 #ifndef LERP
 #define LERP( a, b, w ) ( ( a ) * ( 1.0f - ( w ) ) + ( b ) * ( w ) )
 #endif
-
-float mp3dec_pow( float x, float y ); // BFP - Unpack music, memory management for ui_mp3decoder
 
 #endif	// __Q_SHARED_H
