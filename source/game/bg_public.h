@@ -503,12 +503,12 @@ typedef struct {
 	int			movementPenalty;			// seconds of movement penalty (forcefield only)
 
 	int			explosionSpawn;				// explosion spawn (rdmissile only): weaponNum of the split projectile into on detonation
-} bfpWeaponCfgDef_t;
+} bfpWeapon_t;
 
 void			BG_LoadBFPWeaponConfig( void );
-bfpWeaponCfgDef_t	*BG_FindBFPWeaponDef( int weaponNum );
-bfpWeaponCfgDef_t	*BG_SetDefaultWeaponDef( void );
-bfpWeaponCfgDef_t	*BG_SetMonsterDefaultWeaponDef( void );
+bfpWeapon_t		*BG_FindBFPBFPWeapon( int weaponNum );
+bfpWeapon_t		*BG_SetDefaultBFPWeapon( void );
+bfpWeapon_t		*BG_SetMonsterDefaultBFPWeapon( void );
 
 // BFP - bfp_attacksets.cfg: maps a player model prefix group to 5 weaponNum entries,
 // one per attack slot (WP_ATTACK_0 ... WP_ATTACK_4)
@@ -526,7 +526,7 @@ const char		*BG_FindAttacksetDefaultModelForModel( const char *modelName );
 int				BG_GetWeaponNumForSlot( const char *modelName, int attackSlot );
 qboolean		BG_ModelMatchesAnyAttacksetPrefix( const char *modelName );
 void			BG_SetClientAttackWeaponNums( int clientNum, const char *modelName );
-bfpWeaponCfgDef_t	*BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot );
+bfpWeapon_t	*BG_GetClientBFPWeaponForSlot( int clientNum, int attackSlot );
 
 // BFP - End of BFP WEAPON CONFIG
 

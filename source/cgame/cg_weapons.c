@@ -40,7 +40,7 @@ void CG_AddFlash( centity_t *cent, int entityNum, bfpAttackSkinConfig_t *skinAtk
 	float		flashRadius, flashScaleFactor;
 	float		scale = 0;
 	int			minCharge = 0, totalCharge = 0;
-	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeapon_t	*wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? wpCfg->minCharge : 0;
 	totalCharge = cent->currentState.generic1 - minCharge;
@@ -143,7 +143,7 @@ void CG_AddFiringFlash( centity_t *cent, int entityNum, bfpAttackSkinConfig_t *s
 	float		firingFlashRadius, firingFlashScaleFactor;
 	float		scale = 0;
 	int			minCharge = 0, totalCharge = 0;
-	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeapon_t	*wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? wpCfg->minCharge : 0;
 	totalCharge = cent->currentState.generic1 - minCharge;
@@ -240,7 +240,7 @@ void CG_AddMissile( centity_t *cent, int entityNum, qboolean isMissileMoving, bf
 	float		missileRadius, missileScaleFactor, missileRadiusChargeMult, missileScaleFactorChargeMult;
 	float		scale = 0;
 	int			minCharge = 0, totalCharge = 0;
-	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeapon_t	*wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	minCharge = ( wpCfg && wpCfg->minCharge > 0 ) ? wpCfg->minCharge : 0;
 	totalCharge = cent->currentState.generic1 - minCharge;
@@ -510,10 +510,10 @@ CG_BFPBeamTrail
 void CG_BFPBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - BFP Beam trail handling
 	vec3_t	origin, muzzleOrigin;
 	entityState_t	*es;
-	bfpWeaponCfgDef_t	*wpCfg;
+	bfpWeapon_t		*wpCfg;
 
 	es = &ent->currentState;
-	wpCfg = CG_GetWeaponDefForSlot( es->clientNum, es->weapon );
+	wpCfg = CG_GetBFPWeaponForSlot( es->clientNum, es->weapon );
 	if ( wpCfg && ( wpCfg->attackType == ATK_MISSILE || wpCfg->attackType == ATK_RDMISSILE )
 	// BFP - Monster gamemode, avoid detaching the muzzle origin from its mouth
 	&& !( cgs.gametype == GT_MONSTER && cgs.monster > 0 
@@ -541,10 +541,10 @@ CG_BFPSpiralBeamTrail
 void CG_BFPSpiralBeamTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - BFP Spiral beam trail handling
 	vec3_t	origin, muzzleOrigin;
 	entityState_t	*es;
-	bfpWeaponCfgDef_t	*wpCfg;
+	bfpWeapon_t		*wpCfg;
 
 	es = &ent->currentState;
-	wpCfg = CG_GetWeaponDefForSlot( es->clientNum, es->weapon );
+	wpCfg = CG_GetBFPWeaponForSlot( es->clientNum, es->weapon );
 	if ( wpCfg && ( wpCfg->attackType == ATK_MISSILE || wpCfg->attackType == ATK_RDMISSILE ) ) {
 		VectorCopy( ent->pe.muzzleOrigin, muzzleOrigin );
 	} else {
@@ -720,7 +720,7 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin, bfpAttackSkinConfi
 	refEntity_t	beam;
 	vec3_t		forward;
 	vec3_t		muzzlePoint, endPoint;
-	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeapon_t	*wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 	float		range = wpCfg->range;
 
 	if ( !wpCfg ) {
@@ -794,7 +794,7 @@ static void CG_LightningBolt( centity_t *cent, vec3_t origin, bfpAttackSkinConfi
 CG_ChargingTorsoAnim
 =============
 */
-static qboolean CG_ChargingTorsoAnim( centity_t *cent, bfpWeaponCfgDef_t *wpCfg ) { // BFP - To handle torso charging animation
+static qboolean CG_ChargingTorsoAnim( centity_t *cent, bfpWeapon_t *wpCfg ) { // BFP - To handle torso charging animation
 	int	torsoAnim = cent->currentState.torsoAnim & ~ANIM_TOGGLEBIT;
 
 	if ( !wpCfg || wpCfg->chargeAutoFire ) {
@@ -830,12 +830,12 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	weapon_t	weaponNum;
 	centity_t	*nonPredictedCent;
 	refEntity_t	tagEnt;
-	bfpWeaponCfgDef_t			*wpCfg;
+	bfpWeapon_t				*wpCfg;
 	bfpAttackSkinConfig_t	*skinAtkCfg;
 
 	weaponNum = cent->currentState.weapon;
 	skinAtkCfg = CG_GetAttackConfig( cent->currentState.clientNum, weaponNum );
-	wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	if ( !ps ) {
 		int			chargeId = cent->currentState.generic1 - 1;
@@ -1266,7 +1266,7 @@ Caused by an EV_FIRE_WEAPON event
 void CG_FireWeapon( centity_t *cent ) {
 	entityState_t *ent;
 	bfpAttackSkinConfig_t	*skinAtkCfg;
-	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeapon_t		*wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	ent = &cent->currentState;
 	skinAtkCfg = CG_GetAttackConfig( ent->clientNum, ent->weapon );

@@ -947,7 +947,7 @@ int ClientGetUnlockedAttackSlots( int powerlevel ) { // BFP - Tier, unlocked att
 ClientSetAttack
 =============
 */
-void ClientSetAttack( gclient_t *client, int slot, bfpWeaponCfgDef_t *wpCfg ) { // BFP - Set attack
+void ClientSetAttack( gclient_t *client, int slot, bfpWeapon_t *wpCfg ) { // BFP - Set attack
 	switch ( wpCfg->attackType ) {
 	case ATK_BEAM:
 		client->ps.ammo[ slot ] = AMMOF_ATK_BEAM;
@@ -1466,7 +1466,7 @@ void ClientSpawn(gentity_t *ent) {
 	// BFP - Monster gamemode
 	if ( g_gametype.integer == GT_MONSTER && g_monster.integer > 0
 	&& client->ps.clientNum == level.monsterClientNum ) {
-		bfpWeaponCfgDef_t	*wpCfg = BG_SetMonsterDefaultWeaponDef();
+		bfpWeapon_t	*wpCfg = BG_SetMonsterDefaultBFPWeapon();
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_ATTACK_0 );
 		client->ps.ammo[WP_ATTACK_0] = 1;
 		if ( wpCfg ) {
@@ -1479,9 +1479,9 @@ void ClientSpawn(gentity_t *ent) {
 
 		client->ps.stats[STAT_WEAPONS] = ( 1 << WP_ATTACK_0 ) | ( 1 << WP_ATTACK_1 ) | ( 1 << WP_ATTACK_2 ) | ( 1 << WP_ATTACK_3 ) | ( 1 << WP_ATTACK_4 );
 		for ( slot = 0; slot < unlockedSlots; slot++ ) {
-			bfpWeaponCfgDef_t	*wpCfg = BG_GetClientWeaponDefForSlot( client->ps.clientNum, slot );
+			bfpWeapon_t	*wpCfg = BG_GetClientBFPWeaponForSlot( client->ps.clientNum, slot );
 			if ( !wpCfg ) {
-				wpCfg = BG_SetDefaultWeaponDef();
+				wpCfg = BG_SetDefaultBFPWeapon();
 			}
 			if ( wpCfg ) {
 				client->ps.stats[STAT_WEAPONS] |= ( 1 << slot );

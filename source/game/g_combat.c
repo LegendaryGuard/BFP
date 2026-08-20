@@ -247,7 +247,7 @@ UnlockAttackSlot
 ==============
 */
 static void UnlockAttackSlot( gentity_t *ent, int slot ) { // BFP - Unlock a new attack slot on tier up
-	bfpWeaponCfgDef_t	*wpCfg = BG_GetClientWeaponDefForSlot( ent->client->ps.clientNum, slot );
+	bfpWeapon_t	*wpCfg = BG_GetClientBFPWeaponForSlot( ent->client->ps.clientNum, slot );
 
 	// BFP - Monster gamemode, for player monster in g_monster 1, don't give an extra useless slot
 	if ( ( ent->client->ps.eFlags & EF_MONSTER )
@@ -258,11 +258,11 @@ static void UnlockAttackSlot( gentity_t *ent, int slot ) { // BFP - Unlock a new
 	// fallback on monster gamemode for player monster with g_monster 1
 	if ( !wpCfg && ( ent->client->ps.eFlags & EF_MONSTER )
 	&& g_gametype.integer == GT_MONSTER && g_monster.integer > 0 ) {
-		wpCfg = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultBFPWeapon();
 	}
 
 	if ( !wpCfg ) {
-		wpCfg = BG_SetDefaultWeaponDef();
+		wpCfg = BG_SetDefaultBFPWeapon();
 	}
 	if ( wpCfg ) {
 		ent->client->ps.stats[STAT_WEAPONS] |= ( 1 << slot );
@@ -1161,8 +1161,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 	knockback = (float)damageForce;
 	// BFP - extraKnockback from weapon/projectile
-	if ( inflictor && inflictor->weaponDef && inflictor->weaponDef->extraKnockback != 0 ) {
-		knockback += (float)inflictor->weaponDef->extraKnockback;
+	if ( inflictor && inflictor->bfpWeapon && inflictor->bfpWeapon->extraKnockback != 0 ) {
+		knockback += (float)inflictor->bfpWeapon->extraKnockback;
 	}
 
 	// BFP - Knockback can't be negative
@@ -1195,7 +1195,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	}
 
 	// BFP - Blinds the opponent and it can be blinded again after 4 seconds (look inside cg_draw.c in CG_DrawBlindEffect for more details)
-	if ( inflictor && inflictor->weaponDef && inflictor->weaponDef->blinding
+	if ( inflictor && inflictor->bfpWeapon && inflictor->bfpWeapon->blinding
 	&& ( !targ->blindedTime || level.time - targ->blindedTime >= 2000 )
 	&& targ->client && targ->client->ps.pm_type != PM_DEAD ) {
 		targ->blindedTime = level.time;
@@ -1210,7 +1210,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		mass = 200;
 		// BFP - Using hitscan weapons, the mass is different
 		if ( targ->client != attacker->client
-		&& inflictor && inflictor->weaponDef && inflictor->weaponDef->attackType == ATK_HITSCAN ) {
+		&& inflictor && inflictor->bfpWeapon && inflictor->bfpWeapon->attackType == ATK_HITSCAN ) {
 			mass = 50;
 		}
 

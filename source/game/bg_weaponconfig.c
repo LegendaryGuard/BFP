@@ -15,7 +15,7 @@ void	trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void	trap_FS_FCloseFile( fileHandle_t f );
 
 typedef struct {
-	bfpWeaponCfgDef_t	defs[MAX_BFP_WEAPON_DEFS];
+	bfpWeapon_t	defs[MAX_BFP_WEAPON_DEFS];
 	int				numDefs;
 } bfpWeaponList_t;
 
@@ -39,15 +39,15 @@ static const attackTypeToken_t	attackTypeTokens[] = {
 
 /*
 ================
-BG_FindBFPWeaponDef
+BG_FindBFPBFPWeapon
 
 Looks up a parsed attack definition by weaponNum. Returns NULL if not found
 (caller should fall back to safe defaults rather than crash)
 
-weaponNum -> bfpWeaponCfgDef_t lookup
+weaponNum -> bfpWeapon_t lookup
 ================
 */
-bfpWeaponCfgDef_t *BG_FindBFPWeaponDef( int weaponNum ) {
+bfpWeapon_t *BG_FindBFPBFPWeapon( int weaponNum ) {
 	int	i;
 
 	for ( i = 0; i < bfpWeapons.numDefs; i++ ) {
@@ -61,13 +61,13 @@ bfpWeaponCfgDef_t *BG_FindBFPWeaponDef( int weaponNum ) {
 
 /*
 ================
-BG_SetDefaultWeaponDef
+BG_SetDefaultBFPWeapon
 
 Sets default weapon properties. A regular missile attack type
 ================
 */
-bfpWeaponCfgDef_t *BG_SetDefaultWeaponDef( void ) {
-	static bfpWeaponCfgDef_t	wpCfg;
+bfpWeapon_t *BG_SetDefaultBFPWeapon( void ) {
+	static bfpWeapon_t	wpCfg;
 
 	wpCfg.inuse = qtrue;
 	Q_strncpyz( wpCfg.attackName, "ki_blast", sizeof(wpCfg.attackName) );
@@ -125,13 +125,13 @@ bfpWeaponCfgDef_t *BG_SetDefaultWeaponDef( void ) {
 
 /*
 ================
-BG_SetMonsterDefaultWeaponDef
+BG_SetMonsterDefaultBFPWeapon
 
 Sets default monster weapon properties. A sbeam attack type
 ================
 */
-bfpWeaponCfgDef_t *BG_SetMonsterDefaultWeaponDef( void ) {
-	static bfpWeaponCfgDef_t	wpCfg;
+bfpWeapon_t *BG_SetMonsterDefaultBFPWeapon( void ) {
+	static bfpWeapon_t	wpCfg;
 
 	wpCfg.inuse = qtrue;
 	Q_strncpyz( wpCfg.attackName, "mouthbeam", sizeof(wpCfg.attackName) );
@@ -243,7 +243,7 @@ chain bfp_weapon.cfg then bfp_weapon2.cfg into the same table)
 */
 static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 	char			*ptr;
-	bfpWeaponCfgDef_t	*cur;
+	bfpWeapon_t		*cur;
 
 	cur = NULL;
 	ptr = buf;
@@ -653,7 +653,7 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 
 			if ( value[0] && bfpWeapons.numDefs < MAX_BFP_WEAPON_DEFS ) {
 				cur = &bfpWeapons.defs[bfpWeapons.numDefs];
-				memset( cur, 0, sizeof( bfpWeaponCfgDef_t ) );
+				memset( cur, 0, sizeof( bfpWeapon_t ) );
 				cur->inuse = qtrue;
 				cur->attackType = ATK_MISSILE; // default attackType
 				Q_strncpyz( cur->attackName, value, sizeof( cur->attackName ) );
@@ -725,7 +725,7 @@ void BG_LoadBFPWeaponConfig( void ) {
 {
 	int	i;
 	for ( i = 0; i < bfpWeapons.numDefs; i++ ) {
-		const bfpWeaponCfgDef_t *d = &bfpWeapons.defs[i];
+		const bfpWeapon_t *d = &bfpWeapons.defs[i];
 		Com_Printf( "^6[%d] ^3%s ^6(weaponNum=^3%d^6)^7\n", i, d->attackName, d->weaponNum );
 		Com_Printf( "  ^2attackType: ^3%d ^7(%s)\n", d->attackType,
 			( d->attackType == ATK_MISSILE ) ? "missile" :
@@ -875,7 +875,7 @@ which attackset group's modelPrefix the model name starts with, then
 reading that group's attack[attackSlot] entry.
 
 Returns -1 if no attackset group matches the model, or attackSlot is out
-of range; callers (BG_FindBFPWeaponDef via pm->ps->weapon) should treat
+of range; callers (BG_FindBFPBFPWeapon via pm->ps->weapon) should treat
 that as "no attack definition available" rather than crash
 
 (playerModel, slot) -> weaponNum
@@ -906,8 +906,8 @@ int BG_GetWeaponNumForSlot( const char *modelName, int attackSlot ) {
 Per-client attack slot -> weaponNum cache
 =========================================
 */
-static bfpWeaponCfgDef_t *bfpClientAttackWeaponDefs[MAX_CLIENTS][BFP_NUM_WEAPONS];
-static qboolean bfpClientAttackWeaponDefsSet[MAX_CLIENTS];
+static bfpWeapon_t *bfpClientAttackBFPWeapons[MAX_CLIENTS][BFP_NUM_WEAPONS];
+static qboolean bfpClientAttackBFPWeaponsSet[MAX_CLIENTS];
 
 /*
 ==================
@@ -927,9 +927,9 @@ void BG_SetClientAttackWeaponNums( int clientNum, const char *modelName ) {
 
 	for ( slot = 0; slot < BFP_NUM_WEAPONS; slot++ ) {
 		int	wn = BG_GetWeaponNumForSlot( modelName, slot );
-		bfpClientAttackWeaponDefs[clientNum][slot] = ( wn != -1 ) ? BG_FindBFPWeaponDef( wn ) : NULL;
+		bfpClientAttackBFPWeapons[clientNum][slot] = ( wn != -1 ) ? BG_FindBFPBFPWeapon( wn ) : NULL;
 	}
-	bfpClientAttackWeaponDefsSet[clientNum] = qtrue;
+	bfpClientAttackBFPWeaponsSet[clientNum] = qtrue;
 }
 
 /*
@@ -940,17 +940,17 @@ Reads back a value cached by BG_SetClientAttackWeaponNums: which weaponNum
 this client's current model has assigned to the given attack slot
 ==================
 */
-bfpWeaponCfgDef_t *BG_GetClientWeaponDefForSlot( int clientNum, int attackSlot ) {
+bfpWeapon_t *BG_GetClientBFPWeaponForSlot( int clientNum, int attackSlot ) {
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
 		return NULL;
 	}
 	if ( attackSlot < 0 || attackSlot >= BFP_NUM_WEAPONS ) {
 		return NULL;
 	}
-	if ( !bfpClientAttackWeaponDefsSet[clientNum] ) {
+	if ( !bfpClientAttackBFPWeaponsSet[clientNum] ) {
 		return NULL;
 	}
-	return bfpClientAttackWeaponDefs[clientNum][attackSlot];
+	return bfpClientAttackBFPWeapons[clientNum][attackSlot];
 }
 
 /*
@@ -1121,7 +1121,7 @@ void BG_LoadBFPAttacksetsConfig( void ) {
 	// to debug with weapon defs
 #if 0
 			if ( wn != 0 ) {
-				bfpWeaponCfgDef_t	*wpCfg = BG_FindBFPWeaponDef( wn );
+				bfpWeapon_t	*wpCfg = BG_FindBFPBFPWeapon( wn );
 				if ( wpCfg ) {
 					Com_Printf( " ^6(^3%s^6)", wpCfg->attackName );
 					// print all weapon properties

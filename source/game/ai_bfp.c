@@ -504,19 +504,19 @@ BotBFPCheckChargedAttack
 ==================
 */
 static void BotBFPCheckChargedAttack( bot_state_t *bs, aas_entityinfo_t *entinfo ) {
-	bfpWeaponCfgDef_t	*wpCfg;
+	bfpWeapon_t		*wpCfg;
 	qboolean		lineOfFireClear;
 	bsp_trace_t		trace;
 
 	bs->bfpForceAttackOff = qfalse;
 
-	wpCfg = BG_GetClientWeaponDefForSlot( bs->client, bs->weaponnum );
+	wpCfg = BG_GetClientBFPWeaponForSlot( bs->client, bs->weaponnum );
 	if ( !wpCfg ) {
-		wpCfg = BG_SetDefaultWeaponDef();
+		wpCfg = BG_SetDefaultBFPWeapon();
 	}
 
 	if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-		wpCfg = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultBFPWeapon();
 	}
 
 	if ( !wpCfg ) {

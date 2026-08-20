@@ -189,7 +189,7 @@ struct gentity_s {
 	float		distance;		// BFP - For beam struggle
 
 	// BFP - BFP WEAPON CONFIG
-	bfpWeaponCfgDef_t	*weaponDef;
+	bfpWeapon_t	*bfpWeapon;
 
 	qboolean	splitKiBall;			// BFP - Projectile state for splitting ki ball
 	qboolean	alternatingOffsetSide;	// BFP - For alternatingXOffset
@@ -661,7 +661,7 @@ void Weapon_HookFree (gentity_t *ent);
 void Weapon_HookThink (gentity_t *ent);
 
 // BFP - Fire BFP projectile weapon
-gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir, bfpWeaponCfgDef_t *wpCfg );
+gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir, bfpWeapon_t *wpCfg );
 
 // BFP - Rail trail fire
 void Weapon_RailTrail_Fire( gentity_t *ent );
@@ -692,7 +692,7 @@ void InitClientPersistant (gclient_t *client);
 void InitClientResp (gclient_t *client);
 void InitBodyQue (void);
 int ClientGetUnlockedAttackSlots( int powerlevel ); // BFP - Tier, unlocked attack slot count
-void ClientSetAttack( gclient_t *client, int slot, bfpWeaponCfgDef_t *wpCfg ); // BFP - Set attack
+void ClientSetAttack( gclient_t *client, int slot, bfpWeapon_t *wpCfg ); // BFP - Set attack
 void ClientSpawn( gentity_t *ent );
 void player_die (gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod);
 void AddScore( gentity_t *ent, vec3_t origin, int score );

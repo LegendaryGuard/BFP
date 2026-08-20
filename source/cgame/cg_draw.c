@@ -2408,7 +2408,7 @@ CG_DrawReadyKiAttack
 static void CG_DrawReadyKiAttack( void ) { // BFP - Ready message in the bottom centerprint when charging attacks
 	const char	*s;
 	int			w;
-	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cg.predictedPlayerState.clientNum, cg.predictedPlayerState.weapon );
+	bfpWeapon_t	*wpCfg = CG_GetBFPWeaponForSlot( cg.predictedPlayerState.clientNum, cg.predictedPlayerState.weapon );
 
 	s = ""; // avoid printing when there are no status changes, for dll and shared objects
 	if ( cg_chargeupAlert.integer <= 0 ) { // if disabled, don't show it

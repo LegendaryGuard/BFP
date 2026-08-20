@@ -982,7 +982,7 @@ static void Client_KiConsumption( gclient_t *client, int addTime, int kiConsume 
 Client_KiCost
 ===========
 */
-static float Client_KiCost( gclient_t *client, bfpWeaponCfgDef_t *wpCfg ) { // BFP - kiCost, kiCostAsPct and kiPct
+static float Client_KiCost( gclient_t *client, bfpWeapon_t *wpCfg ) { // BFP - kiCost, kiCostAsPct and kiPct
 	float	kiCost = ( wpCfg->kiCost > 0 ) ? wpCfg->kiCost : 0;
 	float	kiPct = ( wpCfg->kiPct > 1 ) ? 1 : wpCfg->kiPct;
 	if ( wpCfg->kiCostAsPct && kiPct > 0 ) {
@@ -997,7 +997,7 @@ static float Client_KiCost( gclient_t *client, bfpWeaponCfgDef_t *wpCfg ) { // B
 Client_ChargeKiAttackState
 ============
 */
-static void Client_ChargeKiAttackState( gclient_t *client, bfpWeaponCfgDef_t *wpCfg, int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
+static void Client_ChargeKiAttackState( gclient_t *client, bfpWeapon_t *wpCfg, int minCharge, int maxCharge, int addTime, int kiConsume ) { // BFP - Charge ki attack state
 	Client_KiConsumption( client, addTime, kiConsume );
 	if ( client->ps.stats[STAT_KI] < kiConsume ) {
 		return;
@@ -1019,7 +1019,7 @@ static void Client_ChargeKiAttackState( gclient_t *client, bfpWeaponCfgDef_t *wp
 Client_RandomWeaponTime
 ============
 */
-static int Client_RandomWeaponTime( bfpWeaponCfgDef_t *wpCfg ) { // BFP - randomWeaponTime calculation
+static int Client_RandomWeaponTime( bfpWeapon_t *wpCfg ) { // BFP - randomWeaponTime calculation
 	int		weaponTime = wpCfg->weaponTime;
 	float	randomWeaponTime = 0;
 	if ( wpCfg->randomWeaponTime > 0 ) {
@@ -1034,7 +1034,7 @@ static int Client_RandomWeaponTime( bfpWeaponCfgDef_t *wpCfg ) { // BFP - random
 Client_MovementPenaltyStun
 =============
 */
-static qboolean Client_MovementPenaltyStun( gclient_t *client, bfpWeaponCfgDef_t *wpCfg, usercmd_t *ucmd ) { // BFP - movementPenalty stun
+static qboolean Client_MovementPenaltyStun( gclient_t *client, bfpWeapon_t *wpCfg, usercmd_t *ucmd ) { // BFP - movementPenalty stun
 	if ( wpCfg->movementPenalty <= 0 ) {
 		return qfalse;
 	}
@@ -1067,7 +1067,7 @@ Client_Weapon
 */
 static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // BFP - Client weapon handling
 	gclient_t		*client = ent->client;
-	bfpWeaponCfgDef_t	*wpCfg;
+	bfpWeapon_t		*wpCfg;
 	// BFP - Ki cost
 	float		kiCost;
 	// BFP - Weapon time
@@ -1104,15 +1104,15 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		return;
 	}
 
-	wpCfg = BG_GetClientWeaponDefForSlot( client->ps.clientNum, client->ps.weapon );
+	wpCfg = BG_GetClientBFPWeaponForSlot( client->ps.clientNum, client->ps.weapon );
 
 	// BFP - Monster gamemode, player monster with g_monster 1 uses its own weapon
 	if ( ( client->ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-		wpCfg = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultBFPWeapon();
 	}
 
 	if ( !wpCfg ) { // safe fallback
-		wpCfg = BG_SetDefaultWeaponDef();
+		wpCfg = BG_SetDefaultBFPWeapon();
 	}
 
 	if ( !wpCfg ) { // don't continue
@@ -1132,7 +1132,7 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 
 	// BFP - Debug extracted weapon from bfp_weapon.cfg 
 #if 0
-	Com_Printf( "Client_Weapon - WEAPONDEF: client %d, slot %d -> (attackName %s, chargeAttack %d, chargeAutoFire %d, kiCost %d, kiPct %f, weaponTime %d, randomWeaponTime %d)\n",
+	Com_Printf( "Client_Weapon - BFPWeapon: client %d, slot %d -> (attackName %s, chargeAttack %d, chargeAutoFire %d, kiCost %d, kiPct %f, weaponTime %d, randomWeaponTime %d)\n",
 		client->ps.clientNum, client->ps.weapon, 
 		wpCfg ? wpCfg->attackName : "NULL", 
 		wpCfg->chargeAttack, 

@@ -892,19 +892,19 @@ BotChooseWeapon
 void BotChooseWeapon(bot_state_t *bs) { // BFP - HIGHLY MODIFIED: for BFP weapon config
 	int	i, bestSlot = -1;
 	int	bestDamage = 0;
-	bfpWeaponCfgDef_t	*wpCfg;
+	bfpWeapon_t	*wpCfg;
 
 	for ( i = 0; i < BFP_NUM_WEAPONS; i++ ) {
 		if ( !( bs->cur_ps.stats[STAT_WEAPONS] & ( 1 << i ) ) ) {
 			continue;
 		}
-		wpCfg = BG_GetClientWeaponDefForSlot( bs->client, i );
+		wpCfg = BG_GetClientBFPWeaponForSlot( bs->client, i );
 		if ( !wpCfg ) {
-			wpCfg = BG_SetDefaultWeaponDef();
+			wpCfg = BG_SetDefaultBFPWeapon();
 		}
 
 		if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-			wpCfg = BG_SetMonsterDefaultWeaponDef();
+			wpCfg = BG_SetMonsterDefaultBFPWeapon();
 		}
 		if ( !wpCfg ) {
 			continue;
@@ -3467,13 +3467,13 @@ BotCheckEvents
 ==================
 */
 void BotCheckForGrenades(bot_state_t *bs, entityState_t *state) {
-	bfpWeaponCfgDef_t	*wpCfg = BG_GetClientWeaponDefForSlot( bs->client, bs->weaponnum );
+	bfpWeapon_t	*wpCfg = BG_GetClientBFPWeaponForSlot( bs->client, bs->weaponnum );
 	if ( !wpCfg ) {
-		wpCfg = BG_SetDefaultWeaponDef();
+		wpCfg = BG_SetDefaultBFPWeapon();
 	}
 
 	if ( ( bs->cur_ps.eFlags & EF_MONSTER ) && g_monster.integer > 0 ) {
-		wpCfg = BG_SetMonsterDefaultWeaponDef();
+		wpCfg = BG_SetMonsterDefaultBFPWeapon();
 	}
 
 	if ( !wpCfg ) {
