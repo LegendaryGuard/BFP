@@ -412,7 +412,7 @@ The information in the map file can be useful for debugging and performance anal
 The mod source code is [GPLv2 licensed](./COPYING.txt), the contents are based on Quake III Arena.
 
 > [!WARNING]
-> Any derivative works must follow the same rules and disclose their code to the public as to encourage fan projects based on Bid For Power.
+> Any derivative works must be licensed under the same terms, guaranteeing its recipients access to the corresponding source code. If you distribute this mod or modified versions of it, you are required to provide the complete source code to those who receive it, under the same terms of this license.
 
 ### Bid For Power name
 
