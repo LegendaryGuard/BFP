@@ -820,10 +820,10 @@ bfpAttackSkinConfig_t *CG_GetAttackConfig( int clientNum, int weaponNum ) {
 
 /*
 ================
-CG_GetWeaponDefForSlot
+CG_GetBFPWeaponForSlot
 ================
 */
-bfpWeaponCfgDef_t *CG_GetWeaponDefForSlot( int clientNum, int slot ) {
+bfpWeapon_t *CG_GetBFPWeaponForSlot( int clientNum, int slot ) {
 	char	*modelName;
 	int		weaponNum = -1;
 	if ( clientNum < 0 || clientNum >= MAX_CLIENTS ) {
@@ -837,7 +837,7 @@ bfpWeaponCfgDef_t *CG_GetWeaponDefForSlot( int clientNum, int slot ) {
 	if ( weaponNum == -1 ) {
 		return NULL;
 	}
-	return BG_FindBFPWeaponDef( weaponNum );
+	return BG_FindBFPBFPWeapon( weaponNum );
 }
 
 /*

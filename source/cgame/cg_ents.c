@@ -379,7 +379,7 @@ static void CG_Missile( centity_t *cent ) {
 	entityState_t		*s1;
 //	int	col;
 	bfpAttackSkinConfig_t	*skinAtkCfg;
-	bfpWeaponCfgDef_t			*wpCfg;
+	bfpWeapon_t			*wpCfg;
 
 	s1 = &cent->currentState;
 	if ( s1->weapon >= BFP_NUM_WEAPONS ) {
@@ -459,7 +459,7 @@ static void CG_Missile( centity_t *cent ) {
 		ent.rotation = skinAtkCfg->missileRotation;
 	}
 
-	wpCfg = CG_GetWeaponDefForSlot( s1->clientNum, s1->weapon );
+	wpCfg = CG_GetBFPWeaponForSlot( s1->clientNum, s1->weapon );
 
 	// BFP - missileModel and missileShader
 	if ( !skinAtkCfg->missileModel && skinAtkCfg->missileShader ) {

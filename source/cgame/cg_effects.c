@@ -901,7 +901,7 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 		qhandle_t	shellModel = ( cg_lowpolysphere.integer > 0 ) ? cgs.media.lowPolySphereModel : cgs.media.highPolySphereModel;
 		localEntity_t *leSphere = NULL, *leRing = NULL, *leShell = NULL;
 		float		scale = 1;
-		bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+		bfpWeapon_t	*wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 #if 0
 		Com_Printf( " ^6(^3%s^6)", wpCfg->attackName );
@@ -1021,7 +1021,7 @@ CG_ForceFieldEffect
 =================
 */
 void CG_ForceFieldEffect( centity_t *cent, vec3_t origin, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Forcefield effect
-	bfpWeaponCfgDef_t	*wpCfg = CG_GetWeaponDefForSlot( cent->currentState.clientNum, cent->currentState.weapon );
+	bfpWeapon_t	*wpCfg = CG_GetBFPWeaponForSlot( cent->currentState.clientNum, cent->currentState.weapon );
 
 	if ( cent->currentState.eFlags & EF_FIRING ) {
 		if ( !cent->pe.forceFieldStartTime ) {

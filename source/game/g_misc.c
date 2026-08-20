@@ -289,7 +289,7 @@ static void Use_Shooter( gentity_t *ent, gentity_t *other, gentity_t *activator 
 
 	// BFP - Replaced into a regular ki attack
 	{
-		bfpWeaponCfgDef_t	*wpCfg = BG_SetDefaultWeaponDef();
+		bfpWeapon_t	*wpCfg = BG_SetDefaultBFPWeapon();
 		if ( !wpCfg ) {
 			return;
 		}

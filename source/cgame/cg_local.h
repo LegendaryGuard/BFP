@@ -1350,7 +1350,7 @@ void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int renderfx, re
 void CG_SetMonsterSkinConfig( void ); // BFP - Sets player monster skin config
 void CG_SetDefaultSkinConfig( bfpSkinConfig_t *config ); // BFP - Sets default skin config
 bfpAttackSkinConfig_t *CG_GetAttackConfig( int clientNum, int weaponNum ); // BFP - Get saved skin attack config
-bfpWeaponCfgDef_t *CG_GetWeaponDefForSlot( int clientNum, int slot ); // BFP - Get weapon config from bfp_weapon*.cfg
+bfpWeapon_t *CG_GetBFPWeaponForSlot( int clientNum, int slot ); // BFP - Get weapon config from bfp_weapon*.cfg
 void CG_LoadSkinConfig( clientInfo_t *ci ); // BFP - Load skin config file (models/players/<model>/[skinName].cfg)
 
 //
