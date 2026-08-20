@@ -1,8 +1,8 @@
 {
-	"Add BFP comment": {
-		"prefix": ".BFP",
-		"body": "// BFP - ${0:description}",
-		"description": "Add `// BFP` comment"
+	"Add BFPR comment": {
+		"prefix": ".BFPR",
+		"body": "// BFPR - ${0:description}",
+		"description": "Add `// BFPR` comment"
 	},
 	"Com_Printf": {
 		"prefix": ".pr",
@@ -10,7 +10,7 @@
 	},
 	"Cmd Add Command": {
 		"prefix": ".cmd",
-		"body": "void Cmd_BFP_${1:functionName}_f( gentity_t* ent ) {\n\n}"
+		"body": "void Cmd_BFPR_${1:functionName}_f( gentity_t* ent ) {\n\n}"
 	},
 	"Declare cg_ cvar (use only in cgame/cg_cvar.h)": {
 		"prefix": ".CG_CVAR",
