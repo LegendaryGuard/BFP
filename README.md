@@ -1,4 +1,4 @@
-Bid For Power (BFP) source code
+Bid For Power (BFP) Recreation Project source code
 ===============================
 [![Stars](https://img.shields.io/github/stars/LegendaryGuard/BFP)](https://github.com/LegendaryGuard/BFP/stargazers)
 [![Forks](https://img.shields.io/github/forks/LegendaryGuard/BFP)](https://github.com/LegendaryGuard/BFP/forks)
@@ -119,6 +119,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - SERVER INFO menu displays all server info (on original BFP, the info was badly displayed and nothing was shown) and it has pagination
 - DRIVER INFO menu is fixed (on original BFP crashes) and it has pagination on extensions
 - CHANGE MAP button is added in in-game pause MENU, allows you to change the map without restarting the server and making everyone reconnect
+- CREDITS menu can play music (on original BFP, no), by default, plays `music/fla22k_02` file, feel free to change the music name or the file itself without changing the filename
 
 #### MISC:
 - `cg_drawTeamOverlay 2` is fixed on the lower right corner (on original BFP looks non-visible)
@@ -410,8 +411,6 @@ The information in the map file can be useful for debugging and performance anal
 
 The mod source code is [GPLv2 licensed](./COPYING.txt), the contents are based on Quake III Arena.
 
-The images, screenshots, and URLs, even in the docs, included in this repository are used for reference purposes only and are not covered by the GPL license. They're sourced from various locations and are subject to their respective copyrights and terms of use.
-
 > [!WARNING]
 > Any derivative works must follow the same rules and disclose their code to the public as to encourage fan projects based on Bid For Power.
 
@@ -427,9 +426,22 @@ The game elements such as characters, and events depicted in this game are ficti
 
 # Credits
 
-Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their assets.
-
 <div align="center">
+
+### Bid For Power Recreation Project
+
+<h4>
+
+LegendGuard<br/>
+Maintainer<br/><br/>
+
+Special Thanks<br/>
+Quake3World<br/>
+ZEQ2<br/><br/>
+</h4>
+
+
+Bid For Power is made by these staff members. We don't own materials such as art designs, maps and character models from their assets.
 
 ### Bid For Power Staff Members
 
