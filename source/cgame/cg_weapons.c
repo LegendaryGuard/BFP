@@ -1302,10 +1302,10 @@ void CG_FireWeapon( centity_t *cent ) {
 		}
 	}
 
-	// BFP - For hitscan attack type with chargeAttack or chargeAutoFire
+	// BFP - For hitscan attack type with chargeAttack or chargeAutoFire, no railTrail and no range
 	if ( skinAtkCfg && wpCfg && wpCfg->attackType == ATK_HITSCAN 
 	&& ( wpCfg->chargeAttack || wpCfg->chargeAutoFire )
-	&& !wpCfg->railTrail ) {
+	&& !wpCfg->railTrail && wpCfg->range <= 0 ) {
 		vec3_t dir = {0, 0, 1};
 		CG_ExplosionSound( cent->lerpOrigin, skinAtkCfg ); // BFP - Explosion sounds
 		CG_DebrisExplosion( cent->lerpOrigin, dir, skinAtkCfg ); // BFP - Debris particles explosion
