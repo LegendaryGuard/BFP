@@ -1302,10 +1302,13 @@ void CG_FireWeapon( centity_t *cent ) {
 		}
 	}
 
-	// BFP - For hitscan attack type with chargeAttack
-	if ( skinAtkCfg && wpCfg && wpCfg->attackType == ATK_HITSCAN && wpCfg->chargeAttack && !wpCfg->chargeAutoFire ) {
+	// BFP - For hitscan attack type with chargeAttack or chargeAutoFire
+	if ( skinAtkCfg && wpCfg && wpCfg->attackType == ATK_HITSCAN 
+	&& ( wpCfg->chargeAttack || wpCfg->chargeAutoFire )
+	&& !wpCfg->railTrail ) {
 		vec3_t dir = {0, 0, 1};
 		CG_ExplosionSound( cent->lerpOrigin, skinAtkCfg ); // BFP - Explosion sounds
+		CG_DebrisExplosion( cent->lerpOrigin, dir, skinAtkCfg ); // BFP - Debris particles explosion
 		CG_SparksExplosion( cent->lerpOrigin, dir, skinAtkCfg ); // BFP - Spark particles explosion
 		CG_ExplosionEffect( cent->lerpOrigin, dir, skinAtkCfg, cent ); // BFP - Explosion effects
 	}

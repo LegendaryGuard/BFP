@@ -599,6 +599,10 @@ void CG_DebrisExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 		numRocks = skinAtkCfg->explosionRocks;
 	}
 
+	if ( numRocks <= 0 ) {
+		return;
+	}
+
 	VectorCopy( dir, forward );
 	PerpendicularVector( right, forward );
 	CrossProduct( forward, right, up );
@@ -677,6 +681,10 @@ void CG_SparksExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 	// BFP - explosionSparks <weaponNum> <numSparks>
 	if ( skinAtkCfg ) {
 		numSparks = skinAtkCfg->explosionSparks;
+	}
+
+	if ( numSparks <= 0 ) {
+		return;
 	}
 
 	VectorCopy( dir, forward );
