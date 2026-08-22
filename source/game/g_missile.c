@@ -228,8 +228,8 @@ void G_BounceMissile( gentity_t *ent, trace_t *trace ) {
 	VectorMA( velocity, -2*dot, trace->plane.normal, ent->s.pos.trDelta );
 
 	// BFP - Replaced to bounces instead using EF_BOUNCE_HALF eFlag
-	if ( ent && ent->bfpWeapon && ent->bfpWeapon->bounces ) {
-		if ( ent && !ent->client ) {
+	if ( ent && ent->bfpWeapon && ent->bounces ) {
+		if ( ent && !ent->client && ent->bfpWeapon->bounceFriction > 0 ) {
 			VectorScale( ent->s.pos.trDelta, ent->bfpWeapon->bounceFriction, ent->s.pos.trDelta );
 		}
 
