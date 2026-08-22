@@ -779,7 +779,8 @@ void G_Reflective( gentity_t *ent, qboolean useViewAngles, const vec3_t start ) 
 
 			rad->r.ownerNum = ent->parent->s.number;
 			rad->parent = ent->parent;
-			rad->s.clientNum = ent->parent->client->ps.clientNum;
+			// don't use this, otherwise, it'll convert in your weapon skin :P
+			// rad->s.clientNum = ent->parent->client->ps.clientNum;
 
 			rad->homingRange = 0;
 			rad->homing = 0;

@@ -627,7 +627,7 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 
 	trap_Trace( &tr, muzzle, mins, maxs, end, self->s.number, 
 			( wpCfg->piercing ) ? CONTENTS_BODY : MASK_SHOT );
-	if ( r > 0 && ent->splashDamage > 0
+	if ( r > 0 && ( wpCfg->range > 0 || ent->splashDamage > 0 )
 	&& ( tr.startsolid || tr.allsolid || tr.entityNum == ENTITYNUM_NONE ) ) {
 		vec3_t		boxMins, boxMaxs;
 		int			entityList[MAX_GENTITIES];
@@ -663,8 +663,13 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 				continue;
 			}
 
-			// G_Damage( other, ent, self, forward, visTrace.endpos, ent->splashDamage, 0, MOD_KI_ATTACK );
-			G_RadiusDamage( ent, tr.endpos, self, ent->splashDamage, ent->splashRadius, 0, MOD_KI_ATTACK );
+			if ( wpCfg->range > 0 && other != self ) { // avoid damaging itself
+				G_Damage( other, ent, self, forward, visTrace.endpos, ent->damage, 0, MOD_KI_ATTACK );
+			}
+
+			if ( ent->splashDamage > 0 ) {
+				G_RadiusDamage( ent, tr.endpos, self, ent->splashDamage, ent->splashRadius, 0, MOD_KI_ATTACK );
+			}
 
 			if ( LogAccuracyHit( other, self ) ) {
 				self->client->accuracy_hits++;
