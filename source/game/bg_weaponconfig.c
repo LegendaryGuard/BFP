@@ -268,7 +268,30 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 			ptr += 9;
 			BG_ReadConfigToken( &ptr, value, sizeof( value ) );
 			if ( cur ) {
-				cur->weaponNum = atoi( value );
+				int		i, newWeaponNum = atoi( value );
+
+				// keep the previous weaponNum properties if the new one doesn't have
+				for ( i = 0; i < bfpWeapons.numDefs; i++ ) {
+					if ( &bfpWeapons.defs[i] == cur ) {
+						continue;
+					}
+					if ( bfpWeapons.defs[i].inuse && bfpWeapons.defs[i].weaponNum == newWeaponNum ) {
+						qboolean	savedInuse = cur->inuse;
+						char		savedAttackName[MAX_QPATH];
+
+						Q_strncpyz( savedAttackName, cur->attackName, sizeof( savedAttackName ) );
+
+						*cur = bfpWeapons.defs[i]; // inherit every field as a starting point
+
+						cur->inuse = savedInuse; // keep this block's own inuse/attackName,
+						Q_strncpyz( cur->attackName, savedAttackName, sizeof( cur->attackName ) ); // not the predecessor's
+
+						bfpWeapons.defs[i].inuse = qfalse;
+						break; // only one predecessor can ever be live for a given weaponNum (see invalidation above)
+					}
+				}
+
+				cur->weaponNum = newWeaponNum;
 			}
 		} else if ( !Q_stricmpn( ptr, "attackType", 10 ) && ( ptr[10] == ' ' || ptr[10] == '\t' ) ) {
 			char	value[32];
@@ -651,16 +674,35 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 				}
 			}
 
-			if ( value[0] && bfpWeapons.numDefs < MAX_BFP_WEAPON_DEFS ) {
-				cur = &bfpWeapons.defs[bfpWeapons.numDefs];
-				memset( cur, 0, sizeof( bfpWeapon_t ) );
-				cur->inuse = qtrue;
-				cur->attackType = ATK_MISSILE; // default attackType
-				Q_strncpyz( cur->attackName, value, sizeof( cur->attackName ) );
-				bfpWeapons.numDefs++;
-			} else if ( value[0] ) {
-				Com_Printf( S_COLOR_YELLOW "WARNING: Maximum BFP weapon defs reached, ignoring further attacks in bfp_weapon.cfg\n" );
-				cur = NULL;
+			if ( value[0] ) {
+				// if there's a previous weaponNum with the same one, overwrite it
+				int		freeSlot, i;
+
+				freeSlot = -1;
+				for ( i = 0; i < bfpWeapons.numDefs; i++ ) {
+					if ( !bfpWeapons.defs[i].inuse ) {
+						freeSlot = i;
+						break;
+					}
+				}
+
+				if ( freeSlot == -1 ) {
+					if ( bfpWeapons.numDefs < MAX_BFP_WEAPON_DEFS ) {
+						freeSlot = bfpWeapons.numDefs;
+						bfpWeapons.numDefs++;
+					} else {
+						Com_Printf( S_COLOR_YELLOW "WARNING: Maximum BFP weapon defs reached, ignoring further attacks in bfp_weapon.cfg\n" );
+						cur = NULL;
+					}
+				}
+
+				if ( freeSlot != -1 ) {
+					cur = &bfpWeapons.defs[freeSlot];
+					memset( cur, 0, sizeof( bfpWeapon_t ) );
+					cur->inuse = qtrue;
+					cur->attackType = ATK_MISSILE; // default attackType
+					Q_strncpyz( cur->attackName, value, sizeof( cur->attackName ) );
+				}
 			}
 			// if value[0] is empty here, the line was blank/unparseable; skip it silently
 		}
