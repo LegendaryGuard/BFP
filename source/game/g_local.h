@@ -204,6 +204,13 @@ struct gentity_s {
 
 	float		homing;						// BFP - Homing
 	float		homingRange;				// BFP - Homing range
+
+	// BFPR - Missile arch
+	vec3_t		archStartPoint;				// missile arch: spawn origin
+	vec3_t		archControlPoint;			// missile arch: control point derived from launch offset (Bézier P1)
+	vec3_t		archTargetPoint;			// missile arch: crosshair trace endpoint, locked at spawn (Bézier P2)
+	int			archStartTime;				// missile arch: level.time at spawn
+	int			archDuration;				// missile arch: total flight time in ms, distance/speed based
 };
 
 #define	SPAWN_HEIGHT	0.0f

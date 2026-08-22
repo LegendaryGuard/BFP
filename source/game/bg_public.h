@@ -492,6 +492,7 @@ typedef struct {
 	int			missileGravity;				// missile gravity
 	float		missileAcceleration;		// missile acceleration
 	int			missileDuration;			// missile lifetime duration
+	qboolean	missileArch;				// BFPR - Missile arch
 
 	int			multishot;					// multishot, number of shots for a weapon
 	qboolean	bounces;					// projectile can bounce
@@ -808,6 +809,9 @@ typedef enum {
 
 void	BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 void	BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result );
+
+// BFPR - Interpolates a quadratic Bézier curve between 3 points
+void	BG_LerpQuadraticSpline( const vec3_t cp1, const vec3_t cp2, const vec3_t cp3, float t, vec3_t lerpBase );
 
 void	BG_AddPredictableEventToPlayerstate( entity_event_t newEvent, int eventParm, playerState_t *ps, int entityNum );
 

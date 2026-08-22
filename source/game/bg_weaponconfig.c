@@ -113,6 +113,7 @@ bfpWeapon_t *BG_SetDefaultBFPWeapon( void ) {
 	wpCfg.movementPenalty = 0;
 	wpCfg.missileGravity = 0;
 	wpCfg.missileAcceleration = 0;
+	wpCfg.missileArch = 0;
 	wpCfg.multishot = 0;
 	wpCfg.bounces = qfalse;
 	wpCfg.noZBounce = qfalse;
@@ -177,6 +178,7 @@ bfpWeapon_t *BG_SetMonsterDefaultBFPWeapon( void ) {
 	wpCfg.movementPenalty = 0;
 	wpCfg.missileGravity = 0;
 	wpCfg.missileAcceleration = 0;
+	wpCfg.missileArch = 0;
 	wpCfg.multishot = 0;
 	wpCfg.bounces = qfalse;
 	wpCfg.noZBounce = qfalse;
@@ -559,6 +561,13 @@ static void BG_ParseBFPWeaponConfigFile( char *buf ) {
 			if ( cur ) {
 				cur->missileAcceleration = (float)atof( value );
 			}
+		} else if ( !Q_stricmpn( ptr, "missileArch", 11 ) && ( ptr[11] == ' ' || ptr[11] == '\t' ) ) { // BFPR - Missile arch
+			char	value[32];
+			ptr += 11;
+			BG_ReadConfigToken( &ptr, value, sizeof( value ) );
+			if ( cur ) {
+				cur->missileArch = atoi( value );
+			}
 		} else if ( !Q_stricmpn( ptr, "missileDuration", 15 ) && ( ptr[15] == ' ' || ptr[15] == '\t' ) ) {
 			char	value[32];
 			ptr += 15;
@@ -794,8 +803,8 @@ void BG_LoadBFPWeaponConfig( void ) {
 		Com_Printf( "  ^2coneOfFireX: ^3%d  ^2coneOfFireY: ^3%d\n", d->coneOfFireX, d->coneOfFireY );
 		Com_Printf( "  ^2piercing: ^3%d  ^2reflective: ^3%d  ^2priority: ^3%d  ^2blinding: ^3%d\n",
 			d->piercing, d->reflective, d->priority, d->blinding );
-		Com_Printf( "  ^2missileGravity: ^3%d  ^2missileAcceleration: ^3%f  ^2missileDuration: ^3%d\n",
-			d->missileGravity, d->missileAcceleration, d->missileDuration );
+		Com_Printf( "  ^2missileGravity: ^3%d  ^2missileAcceleration: ^3%f  ^2missileDuration: ^3%d  ^2missileArch: ^3%d\n",
+			d->missileGravity, d->missileAcceleration, d->missileDuration, d->missileArch );
 		Com_Printf( "  ^2multishot: ^3%d  ^2bounces: ^3%d  ^2bounceFriction: ^3%f  ^2noZBounce: ^3%d\n",
 			d->multishot, d->bounces, d->bounceFriction, d->noZBounce );
 		Com_Printf( "  ^2extraKnockback: ^3%d  ^2railTrail: ^3%d  ^2movementPenalty: ^3%d  ^2explosionSpawn: ^3%d\n",
@@ -1192,8 +1201,8 @@ void BG_LoadBFPAttacksetsConfig( void ) {
 					Com_Printf( "\n      ^2coneOfFireX: ^3%d  ^2coneOfFireY: ^3%d", wpCfg->coneOfFireX, wpCfg->coneOfFireY );
 					Com_Printf( "\n      ^2piercing: ^3%d  ^2reflective: ^3%d  ^2priority: ^3%d  ^2blinding: ^3%d",
 						wpCfg->piercing, wpCfg->reflective, wpCfg->priority, wpCfg->blinding );
-					Com_Printf( "\n      ^2missileGravity: ^3%d  ^2missileAcceleration: ^3%f  ^2missileDuration: ^3%d",
-						wpCfg->missileGravity, wpCfg->missileAcceleration, wpCfg->missileDuration );
+					Com_Printf( "\n      ^2missileGravity: ^3%d  ^2missileAcceleration: ^3%f  ^2missileDuration: ^3%d  ^2missileArch: ^3%d",
+						wpCfg->missileGravity, wpCfg->missileAcceleration, wpCfg->missileDuration, wpCfg->missileArch );
 					Com_Printf( "\n      ^2multishot: ^3%d  ^2bounces: ^3%d  ^2bounceFriction: ^3%f  ^2noZBounce: ^3%d",
 						wpCfg->multishot, wpCfg->bounces, wpCfg->bounceFriction, wpCfg->noZBounce );
 					Com_Printf( "\n      ^2extraKnockback: ^3%d  ^2railTrail: ^3%d  ^2movementPenalty: ^3%d  ^2explosionSpawn: ^3%d",

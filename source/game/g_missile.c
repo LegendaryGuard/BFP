@@ -816,6 +816,38 @@ static void G_MissileAcceleration( gentity_t *ent ) { // BFP - Missile accelerat
 	}
 }
 
+/*
+================
+G_MissileArch
+================
+*/
+static void G_MissileArch( gentity_t *ent ) { // BFPR - Missile arch
+	if ( ent && ent->bfpWeapon && ent->bfpWeapon->missileArch ) {
+		vec3_t	curPos, nextPos, dir;
+		float	t0, t1, dt, speed;
+		int		nextTime;
+
+		dt = FRAMETIME * 0.001f; // seconds per server frame, same units as TR_LINEAR
+		t0 = (float)( level.time - ent->archStartTime ) / (float) ent->archDuration;
+		nextTime = level.time + FRAMETIME;
+		t1 = (float)( nextTime - ent->archStartTime ) / (float) ent->archDuration;
+
+		// evaluate the quadratic Bézier at "now"
+		BG_LerpQuadraticSpline( ent->archTargetPoint, ent->archControlPoint, ent->archStartPoint, t0, curPos );
+		BG_LerpQuadraticSpline( ent->archTargetPoint, ent->archControlPoint, ent->archStartPoint, t1, nextPos );
+
+		// derive an instantaneous velocity from the curve's local slope
+		VectorSubtract( nextPos, curPos, dir );
+		speed = VectorLength( dir );
+		if ( speed > 0.001f ) {
+			VectorScale( dir, 1.0f / dt, ent->s.pos.trDelta ); // units/sec
+		}
+
+		VectorCopy( curPos, ent->r.currentOrigin );
+		VectorCopy( curPos, ent->s.pos.trBase );
+		ent->s.pos.trTime = level.time;
+	}
+}
 
 /*
 =====================
@@ -1167,6 +1199,9 @@ void G_RunMissile( gentity_t *ent ) {
 
 	// BFP - Reflective
 	G_Reflective( ent, qfalse, ent->r.currentOrigin );
+
+	// BFPR - Missile arch
+	G_MissileArch( ent );
 
 	// BFP - Missile gravity
 	G_MissileGravity( ent, &tr );

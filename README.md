@@ -135,6 +135,10 @@ You'll notice some differences and things that the original Bid For Power didn't
 - some Q3e patches are applied, like events and function stuff...
 - ...
 
+### NEW FEATURES (BFPR):
+
+- `missileArch [0/1]`: the projectile, with missile or rdmissile attack type, moves like an arch across the crosshair
+
 # How to build
 
 ### Introduction
