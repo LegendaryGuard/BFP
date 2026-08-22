@@ -385,6 +385,55 @@ gentity_t *G_BFPFireProjectileWeapon( gentity_t *self, vec3_t start, vec3_t dir,
 		ApplyConeOfFire( wpCfg->coneOfFireX, wpCfg->coneOfFireY );
 	}
 
+	// BFPR - Missile arch
+	if ( wpCfg->missileArch ) {
+		trace_t	archTr;
+		vec3_t	archEnd, archRight, archUp, launchDir;
+		float	length, lateral, vertical, speed = wpCfg->missileSpeed;
+
+		// where the crosshair trace actually stops
+		VectorMA( start, 10240, dir, archEnd );
+		trap_Trace( &archTr, start, NULL, NULL, archEnd, self->s.number, MASK_SHOT );
+		if ( archTr.fraction < 1.0f ) {
+			float	pushDist = 4096;
+			float	availableDist = Distance( start, archTr.endpos );
+
+			if ( pushDist > availableDist * 0.5f ) {
+				pushDist = availableDist * 0.5f; // never push farther than the real half distance
+			}
+			VectorMA( archTr.endpos, pushDist, dir, proj->archTargetPoint );
+		} else {
+			VectorCopy( archTr.endpos, proj->archTargetPoint );
+		}
+
+		VectorCopy( start, proj->archStartPoint );
+
+		// random launch from the center, changes the muzzle position a bit
+		lateral  = crandom() * 0.15f;
+		vertical = crandom() * 0.15f;
+
+		VectorCopy( dir, launchDir );
+		AngleVectors( self->client->ps.viewangles, NULL, archRight, archUp );
+		VectorMA( launchDir, lateral, archRight, launchDir );
+		VectorMA( launchDir, vertical, archUp, launchDir );
+		VectorNormalize( launchDir );
+
+		length = Distance( proj->archStartPoint, proj->archTargetPoint );
+		VectorMA( proj->archStartPoint, length * 0.5f, launchDir, proj->archControlPoint );
+
+		proj->archStartTime = level.time;
+		if ( speed <= 0 ) {
+			speed = 1;
+		}
+		proj->archDuration = (int)( 1000.0f * length / speed );
+		if ( proj->archDuration < 1 ) {
+			proj->archDuration = 1;
+		}
+
+		VectorMA( start, ( lateral / 0.15 ) * 8.0f, archRight, start );
+		VectorMA( start, ( vertical / 0.15 ) * 8.0f, archUp, start );
+	}
+
 	if ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) {
 		G_ChargeDamageScaling( proj, r );
 	}

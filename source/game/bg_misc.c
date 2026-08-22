@@ -769,6 +769,28 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 	}
 }
 
+
+/*
+================
+BG_LerpQuadraticSpline
+
+Interpolates a quadratic Bézier curve between 3 points 
+to generate a smooth, arch-shaped trajectory
+================
+*/
+void BG_LerpQuadraticSpline( const vec3_t cp1, const vec3_t cp2, const vec3_t cp3, float t, vec3_t lerpBase ) { // BFPR - Interpolates a quadratic Bézier curve between 3 points
+	float	quadB1 = t * t;
+	float	quadB2 = 2 * t * ( 1 - t );
+	float	quadB3 = ( 1 - t ) * ( 1 - t );
+
+	// cp1: start point
+	// cp2: mid point
+	// cp3: end point
+	lerpBase[0] = cp1[0]*quadB1 + cp2[0]*quadB2 + cp3[0]*quadB3;
+	lerpBase[1] = cp1[1]*quadB1 + cp2[1]*quadB2 + cp3[1]*quadB3;
+	lerpBase[2] = cp1[2]*quadB1 + cp2[2]*quadB2 + cp3[2]*quadB3;
+}
+
 const char *eventnames[EV_MAX] = {
 	// BFP - Events are declared in bg_events.h file
 #define EVENT_STRINGS
