@@ -2975,6 +2975,7 @@ static void PM_Weapon( void ) {
 		//pm->ps->generic1 = 0;
 		break;
 	case WEAPON_STUN:
+		pm->ps->eFlags &= ~EF_FIRING;
 		if ( pm->ps->weaponTime <= 0 ) {
 			pm->ps->weaponTime = 0;
 			pm->ps->weaponstate = WEAPON_READY;

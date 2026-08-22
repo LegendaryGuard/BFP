@@ -824,7 +824,7 @@ CG_ExplosionSound
 =================
 */
 void CG_ExplosionSound( vec3_t origin, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Explosion sounds
-	if ( skinAtkCfg && !skinAtkCfg->noExplosionSound ) {
+	if ( skinAtkCfg && !skinAtkCfg->noExplosion && !skinAtkCfg->noExplosionSound ) {
 		int	i = rand() % 6;
 
 		switch ( i ) {

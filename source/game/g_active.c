@@ -1271,6 +1271,22 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 					client->ps.eFlags |= EF_FIRING;
 					client->ps.weaponstate = WEAPON_ACTIVE;
 					client->ps.weaponTime = weaponTime;
+					break;
+				case ATK_HITSCAN:
+					client->ps.eFlags |= EF_FIRING;
+					client->ps.weaponstate = WEAPON_READY;
+					// movementPenalty
+					if ( wpCfg->movementPenalty > 0 ) {
+						if ( wpCfg->movementPenalty > client->ps.weaponTime ) {
+							client->ps.weaponTime = wpCfg->movementPenalty - client->ps.weaponTime;
+						} else {
+							client->ps.weaponTime = wpCfg->movementPenalty;
+						}
+						client->ps.weaponstate = WEAPON_STUN;
+					} else {
+						client->ps.weaponTime = weaponTime;
+						client->ps.weaponstate = WEAPON_READY;
+					}
 				}
 
 				// fire and make a sound

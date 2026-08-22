@@ -570,6 +570,7 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 	int			weaponTime;
 	gentity_t	*traceEnt;
 	gentity_t	*ent = G_Spawn();
+	float		r = wpCfg->radius;
 
 	if ( !self || !self->client ) {
 		return;
@@ -596,12 +597,6 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 	// apply weaponTime calculation to handle event effects
 	weaponTime = wpCfg->weaponTime + wpCfg->randomWeaponTime;
 
-	// rail trail, behaves like a rail gun
-	if ( wpCfg->railTrail ) {
-		Weapon_RailTrail_Fire( ent );
-		return;
-	}
-
 	// set aiming directions
 	AngleVectors( self->client->ps.viewangles, forward, right, up );
 	CalcMuzzlePoint( self, forward, right, up, muzzle );
@@ -609,12 +604,22 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 	ApplyMuzzleOffsets( ent, wpCfg->randXOffset, wpCfg->randYOffset, wpCfg->alternatingXOffset );
 	ApplyConeOfFire( wpCfg->coneOfFireX, wpCfg->coneOfFireY );
 
+	// rail trail, behaves like a rail gun
+	if ( wpCfg->railTrail ) {
+		Weapon_RailTrail_Fire( ent );
+		return;
+	}
+
 	VectorMA( muzzle, wpCfg->range, forward, end );
 
+	if ( wpCfg->chargeAttack || wpCfg->chargeAutoFire ) {
+		G_ChargeDamageScaling( ent, r );
+	}
+
 	// set radius to the hitscan bounding box
-	if ( wpCfg->radius > 0 ) {
-		VectorSet( mins, -wpCfg->radius, -wpCfg->radius, -wpCfg->radius );
-		VectorSet( maxs, wpCfg->radius, wpCfg->radius, wpCfg->radius );
+	if ( r > 0 ) {
+		VectorSet( mins, -r, -r, -r );
+		VectorSet( maxs, r, r, r );
 	}
 
 	// BFP - Reflective
@@ -622,7 +627,8 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 
 	trap_Trace( &tr, muzzle, mins, maxs, end, self->s.number, 
 			( wpCfg->piercing ) ? CONTENTS_BODY : MASK_SHOT );
-	if ( wpCfg->radius > 0 && ( tr.startsolid || tr.allsolid || tr.entityNum == ENTITYNUM_NONE ) ) {
+	if ( r > 0 && ent->splashDamage > 0
+	&& ( tr.startsolid || tr.allsolid || tr.entityNum == ENTITYNUM_NONE ) ) {
 		vec3_t		boxMins, boxMaxs;
 		int			entityList[MAX_GENTITIES];
 		int			numEntities, i;
@@ -636,7 +642,7 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 			gentity_t	*other = &g_entities[ entityList[i] ];
 			vec3_t		targetOrigin;
 			trace_t		visTrace;
-			if ( !other->client || other == self ) {
+			if ( !other->client ) {
 				continue;
 			}
 			if ( !other->takedamage ) {
@@ -657,7 +663,8 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 				continue;
 			}
 
-			G_Damage( other, ent, self, forward, visTrace.endpos, wpCfg->damage, 0, MOD_KI_ATTACK );
+			// G_Damage( other, ent, self, forward, visTrace.endpos, ent->splashDamage, 0, MOD_KI_ATTACK );
+			G_RadiusDamage( ent, tr.endpos, self, ent->splashDamage, ent->splashRadius, 0, MOD_KI_ATTACK );
 
 			if ( LogAccuracyHit( other, self ) ) {
 				self->client->accuracy_hits++;
@@ -702,13 +709,13 @@ static void G_BFPFireHitscanWeapon( gentity_t *self, bfpWeapon_t *wpCfg ) { // B
 	}
 
 	if ( traceEnt && traceEnt->takedamage ) {
-		G_Damage( traceEnt, ent, self, forward, tr.endpos, wpCfg->damage, 0, MOD_KI_ATTACK );
+		G_Damage( traceEnt, ent, self, forward, tr.endpos, ent->damage, 0, MOD_KI_ATTACK );
 		return;
 	}
 
 	// splash damage
-	if ( wpCfg->splashDamage > 0 && wpCfg->explosionRadius > 0 ) {
-		G_RadiusDamage( ent, tr.endpos, self, wpCfg->splashDamage, wpCfg->explosionRadius, 0, MOD_KI_ATTACK );
+	if ( ent->splashDamage > 0 && ent->splashRadius > 0 ) {
+		G_RadiusDamage( ent, tr.endpos, self, ent->splashDamage, ent->splashRadius, 0, MOD_KI_ATTACK );
 	}
 }
 
@@ -1258,7 +1265,9 @@ void FireWeapon( gentity_t *ent ) {
 		G_BFPFireProjectileWeapon( ent, muzzle, forward, wpCfg );
 		break;
 	case ATK_HITSCAN:
-		G_BFPFireHitscanWeapon( ent, wpCfg );
+		for ( i = 0; i < shots; i++ ) {
+			G_BFPFireHitscanWeapon( ent, wpCfg );
+		}
 		break;
 	default:
 		break;
