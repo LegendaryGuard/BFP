@@ -1328,6 +1328,11 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 
 		if ( !wpCfg->chargeAttack && !wpCfg->chargeAutoFire
 		&& client->ps.weaponTime <= 0 ) {
+			if ( wpCfg->attackType == ATK_FORCEFIELD 
+			&& !( ucmd->buttons & BUTTON_ATTACK ) ) {
+				client->ps.weaponstate = WEAPON_READY;
+				break;
+			}
 			if ( wpCfg->attackType == ATK_HITSCAN ) {
 				if ( ucmd->buttons & BUTTON_ATTACK ) {
 					Client_KiConsumption( client, weaponTime, kiCost );
