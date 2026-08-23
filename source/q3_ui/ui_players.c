@@ -963,35 +963,8 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 	}
 
 	// torso animation
-	// BFP - Ki attack handling animations
-	if ( torsoAnim == TORSO_STAND ) { // || torsoAnim == TORSO_STAND2 ) { // BFP doesn't use this animation
-		switch ( weaponNum ) {
-			case WP_ATTACK_0:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
-			case WP_ATTACK_1:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
-			case WP_ATTACK_2:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
-			case WP_ATTACK_3:			torsoAnim = TORSO_ATTACK3_PREPARE; break;
-			case WP_ATTACK_4:			torsoAnim = TORSO_ATTACK4_PREPARE; break;
-			default: 					torsoAnim = TORSO_STAND; break;
-		}
-	}
-
-	// BFP - Ki attack handling animations
-	if ( torsoAnim == TORSO_STAND ) {
-		switch ( weaponNum ) {
-			case WP_ATTACK_0:			torsoAnim = TORSO_ATTACK0_PREPARE; break;
-			case WP_ATTACK_1:			torsoAnim = TORSO_ATTACK1_PREPARE; break;
-			case WP_ATTACK_2:			torsoAnim = TORSO_ATTACK2_PREPARE; break;
-			case WP_ATTACK_3:			torsoAnim = TORSO_ATTACK3_PREPARE; break;
-			case WP_ATTACK_4:			torsoAnim = TORSO_ATTACK4_PREPARE; break;
-			default: 					torsoAnim = TORSO_STAND; break;
-		}
-		pi->muzzleFlashTime = dp_realtime + UI_TIMER_MUZZLE_FLASH;
-		//FIXME play firing sound here
-	}
-
 	currentAnim = pi->torsoAnim & ~ANIM_TOGGLEBIT;
 
-#if 1
 	if ( weaponNum != pi->currentWeapon ) { // || currentAnim == TORSO_RAISE || currentAnim == TORSO_DROP ) { // BFP doesn't use these animations
 		pi->pendingTorsoAnim = torsoAnim;
 	}
@@ -1002,5 +975,4 @@ void UI_PlayerInfo_SetInfo( playerInfo_t *pi, int legsAnim, int torsoAnim, vec3_
 		pi->pendingTorsoAnim = 0;
 		UI_ForceTorsoAnim( pi, torsoAnim );
 	}
-#endif
 }
