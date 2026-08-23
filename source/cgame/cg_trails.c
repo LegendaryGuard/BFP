@@ -448,15 +448,16 @@ void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhand
 }
 
 
+// BFPR - Functions for a rainbow effect
 /*
 =====================
-HSVtoRGB
+CG_HSVtoRGB
 =====================
 */
 static float ModFloat( float a, float b ) {
 	return ( b <= 0.0f ) ? 0 : ( a - (int)( a / b ) * b );
 }
-static void HSVtoRGB( float h, float s, float v, float *r, float *g, float *b ) {
+void CG_HSVtoRGB( float h, float s, float v, float *r, float *g, float *b ) {
 	int i;
 	float f, p, q, t;
 	h = ModFloat( h, 1.0f );
@@ -591,7 +592,7 @@ void CG_DrawMissileTrails( void ) {
 					float elapsed = ( cg.time - trail->rainbowStartTime ) * 0.0006f;
 					float	hue = (float)age / SEGMENT_LIFESPAN_MSEC;
 					hue = ModFloat( elapsed, 1.0f );
-					HSVtoRGB( hue, 1.0f, 1.0f, &rf, &gf, &bf );
+					CG_HSVtoRGB( hue, 1.0f, 1.0f, &rf, &gf, &bf );
 					r = (byte)(rf * alphaByte);
 					g = (byte)(gf * alphaByte);
 					b = (byte)(bf * alphaByte);

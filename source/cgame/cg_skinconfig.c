@@ -312,6 +312,14 @@ static void CG_ParseSkinConfigBuffer( char *buf, bfpSkinConfig_t *config ) {
 			} else {
 				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
 			}
+		} else if ( !Q_stricmpn( ptr, "missileDlightRainbow", 20 ) && ( ptr[20] == ' ' || ptr[20] == '\t' ) ) { // BFPR - missileDlightRainbow
+			ptr += 20;
+			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
+				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
+				config->attacks[attackIdx].missileDlightRainbow = atoi( value );
+			} else {
+				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
+			}
 		} else if ( !Q_stricmpn( ptr, "missileTrailFunc", 16 ) && ( ptr[16] == ' ' || ptr[16] == '\t' ) ) {
 			ptr += 16;
 			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
@@ -333,6 +341,14 @@ static void CG_ParseSkinConfigBuffer( char *buf, bfpSkinConfig_t *config ) {
 			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
 				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
 				config->attacks[attackIdx].missileTrailRadius = atoi( value );
+			} else {
+				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
+			}
+		} else if ( !Q_stricmpn( ptr, "missileTrailRainbow", 19 ) && ( ptr[19] == ' ' || ptr[19] == '\t' ) ) { // BFPR - missileTrailRainbow
+			ptr += 19;
+			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
+				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
+				config->attacks[attackIdx].missileTrailRainbow = atoi( value );
 			} else {
 				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
 			}
@@ -769,6 +785,8 @@ void CG_SetDefaultSkinConfig( bfpSkinConfig_t *config ) {
 		a->missileTrailFunc = MISSILE_TRAIL_FUNC_ROCKET;
 		a->missileDlight = 200;
 		a->missileDlightColor[0] = 1.0f; a->missileDlightColor[1] = 0.75f; a->missileDlightColor[2] = 0.0f;
+		a->missileDlightRainbow = 0;
+		a->missileTrailRainbow = 0;
 		a->missileModelRotation = 0.2f;
 		a->explosionRing = 1;
 		a->explosionShell = 1;
@@ -932,10 +950,10 @@ void CG_LoadSkinConfig( clientInfo_t *ci ) {
 			a->missileSoundPath, a->missileSound, a->chargeSoundPath, a->chargeSound );
 		Com_Printf( "  ^6flashSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6firingSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
 			a->flashSoundPath, a->flashSound, a->firingSoundPath, a->firingSound );
-		Com_Printf( "  ^6missileDlight^7=^3%d^7, ^6color^7=(^3%f^7,^3%f^7,^3%f^7)\n",
-			a->missileDlight, a->missileDlightColor[0], a->missileDlightColor[1], a->missileDlightColor[2] );
-		Com_Printf( "  ^6missileTrailFunc^7=^3%d^7, ^6trailTime^7=^3%d^7, ^6trailRadius^7=^3%d\n",
-			a->missileTrailFunc, a->missileTrailTime, a->missileTrailRadius );
+		Com_Printf( "  ^6missileDlight^7=^3%d^7, ^6color^7=(^3%f^7,^3%f^7,^3%f^7)^7, ^6rainbow^7=^3%d^7\n",
+			a->missileDlight, a->missileDlightColor[0], a->missileDlightColor[1], a->missileDlightColor[2], a->missileDlightRainbow );
+		Com_Printf( "  ^6missileTrailFunc^7=^3%d^7, ^6trailTime^7=^3%d^7, ^6trailRadius^7=^3%d^7, ^6trailRainbow^7=^3%d^7\n",
+			a->missileTrailFunc, a->missileTrailTime, a->missileTrailRadius, a->missileTrailRainbow );
 		Com_Printf( "  ^6beamShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6spiralBeamShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
 			a->beamShaderName, a->beamShader, a->spiralBeamShaderName, a->spiralBeamShader );
 		Com_Printf( "  ^6flashModel^7=^3'%s'^7 (model^7=^3%d^7) ^6flashShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
