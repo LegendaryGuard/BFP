@@ -466,7 +466,7 @@ void CG_RocketTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) {
 
 	// BFP - Missile trail
 	if ( cg_oldRocketTrail.integer <= 0 ) {
-		CG_MissileTrail( ent->currentState.number, origin, skinAtkCfg->missileTrailRadius, cgs.media.railCoreShader, color, qfalse );
+		CG_MissileTrail( ent->currentState.number, origin, skinAtkCfg->missileTrailRadius, cgs.media.railCoreShader, color, skinAtkCfg->missileTrailRainbow );
 	}
 
 	if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
@@ -956,7 +956,13 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		// add lightning bolt
 		CG_LightningBolt( nonPredictedCent, nonPredictedCent->pe.muzzleOrigin, skinAtkCfg );
 
-		if ( skinAtkCfg->missileDlightColor[0] > 0
+		// BFPR - Missile dynamic rainbow light color
+		if ( skinAtkCfg->missileDlightRainbow ) {
+			float	rf, gf, bf;
+			float	elapsed = ( cg.time + cent->muzzleFlashTime + cent->currentState.number * 97 ) * 0.0006f;
+			CG_HSVtoRGB( elapsed, 1.0f, 1.0f, &rf, &gf, &bf );
+			trap_R_AddLightToScene( parent->origin, 300 + (rand()&31), rf, gf, bf );
+		} else if ( skinAtkCfg->missileDlightColor[0] > 0
 		|| skinAtkCfg->missileDlightColor[1] > 0
 		|| skinAtkCfg->missileDlightColor[1] > 0 ) {
 			trap_R_AddLightToScene( parent->origin, 300 + (rand()&31), skinAtkCfg->missileDlightColor[0], 

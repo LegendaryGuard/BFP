@@ -75,7 +75,8 @@ You'll notice some differences and things that the original Bid For Power didn't
 - piercing weapons, like Razor disk, emit spark particles when hitting a player
 - beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
 - new particles: charge smoke, which appears when charging ki near the ground
-- new cool missile trails (that replaces original Q3 missile smoke trails), includes rainbow option (it can be disabled by setting `cg_oldRocketTrail 1`). These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
+- new cool missile trails (it can be disabled by setting `cg_oldRocketTrail 1` to see Q3 missile smoke trails back). These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
+- `missileDlightRainbow [0/1]` to see rainbow dynamic rainbow light effect, and `missileTrailRainbow [0/1]` to see rainbow trail effect, in the skin config
 
 #### PMOVE:
 - balanced player pmove physics: 

@@ -433,8 +433,15 @@ static void CG_Missile( centity_t *cent ) {
 */
 	// add dynamic light
 	if ( skinAtkCfg->missileDlight ) {
-		trap_R_AddLightToScene(cent->lerpOrigin, skinAtkCfg->missileDlight, 
-			skinAtkCfg->missileDlightColor[0], skinAtkCfg->missileDlightColor[1], skinAtkCfg->missileDlightColor[2] );
+		if ( skinAtkCfg->missileDlightRainbow ) { // BFPR - Missile dynamic rainbow light color
+			float	rf, gf, bf;
+			float	elapsed = ( cg.time + cent->currentState.pos.trTime + cent->currentState.number * 97 ) * 0.0006f;
+			CG_HSVtoRGB( elapsed, 1.0f, 1.0f, &rf, &gf, &bf );
+			trap_R_AddLightToScene( cent->lerpOrigin, skinAtkCfg->missileDlight, rf, gf, bf );
+		} else {
+			trap_R_AddLightToScene( cent->lerpOrigin, skinAtkCfg->missileDlight, 
+				skinAtkCfg->missileDlightColor[0], skinAtkCfg->missileDlightColor[1], skinAtkCfg->missileDlightColor[2] );
+		}
 	}
 
 	// add missile sound

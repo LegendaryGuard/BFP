@@ -271,6 +271,7 @@ typedef struct localEntity_s {
 
 	float			light;
 	vec3_t			lightColor;
+	qboolean		lightRainbow;		// BFPR - Cycle lightColor through rainbow hues (missileDlightRainbow), overrides lightColor
 
 	leMarkType_t		leMarkType;		// mark to leave on fragment impact
 	leBounceSoundType_t	leBounceSoundType;
@@ -341,11 +342,13 @@ typedef struct {
 	// dynamic light
 	int			missileDlight;					// missile dynamic light
 	vec3_t		missileDlightColor;				// missile dynamic light color
+	qboolean	missileDlightRainbow;			// BFPR: missile dynamic light cycles through rainbow hues, overrides missileDlightColor
 
 	// trail
 	int			missileTrailFunc;				// missile trail function: "beam" / "rocket" / "spiralbeam" / "none"
 	int			missileTrailTime;				// missile trail time (rocket trail only)
 	int			missileTrailRadius;				// missile trail radius (rocket trail only)
+	qboolean	missileTrailRainbow;			// BFPR: missile trail cycles through rainbow hues, ignoring trail's fixed color
 
 	// beam
 	char		beamShaderName[MAX_QPATH];			// beam shader
@@ -1489,6 +1492,7 @@ void CG_KiTrail( int entityNum, vec3_t origin, qboolean remove, qhandle_t hShade
 void CG_BeamTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t hShader );
 void CG_CorkscrewTrail( int entityNum, vec3_t origin, vec3_t muzzleOrigin, qhandle_t beamShader, qhandle_t corkscrewShader );
 void CG_MissileTrail( int entityNum, vec3_t origin, float radius, qhandle_t hShader, vec3_t color, qboolean rainbow );
+void CG_HSVtoRGB( float h, float s, float v, float *r, float *g, float *b ); // BFPR - Missile trails rainbow
 void CG_DrawMissileTrails( void );
 
 //

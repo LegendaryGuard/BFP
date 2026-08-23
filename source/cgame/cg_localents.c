@@ -514,6 +514,7 @@ CG_AddExplosion
 */
 static void CG_AddExplosion( localEntity_t *ex ) {
 	refEntity_t	*ent;
+	vec3_t		rainbowColor = { 0, 0, 0 };	// BFPR - For missileDlightRainbow
 
 	ent = &ex->refEntity;
 
@@ -543,12 +544,29 @@ static void CG_AddExplosion( localEntity_t *ex ) {
 		VectorScale( ent->axis[2], scale, ent->axis[2] );
 	}
 
+	// BFPR - missileDlightRainbow
+	if ( ex->lightRainbow ) {
+		float	posOffset = ex->refEntity.origin[0] + ex->refEntity.origin[1] + ex->refEntity.origin[2];
+		float	elapsed = ( cg.time + ex->startTime + posOffset ) * 0.0006f;
+		CG_HSVtoRGB( elapsed, 1.0f, 1.0f, &rainbowColor[0], &rainbowColor[1], &rainbowColor[2] );
+	}
+
+	// BFPR - missileDlightRainbow, tint the explosion sphere shader with the rainbow color too,
+	// so the model itself cycles in sync with its dynamic light
+	if ( ex->leType == LE_EXPLOSION_SPHERE && ex->lightRainbow ) {
+		ent->shaderRGBA[0] = rainbowColor[0] * 0xff;
+		ent->shaderRGBA[1] = rainbowColor[1] * 0xff;
+		ent->shaderRGBA[2] = rainbowColor[2] * 0xff;
+		ent->shaderRGBA[3] = 0xff;
+	}
+
 	// add the entity
 	trap_R_AddRefEntityToScene(ent);
 
 	// add the dlight
 	if ( cg_lightExplosions.integer > 0 ) { // BFP - Dynamic explosion lights
 		float		light;
+		vec3_t		lightColor;
 
 		light = (float)( cg.time - ex->startTime ) / ( ex->endTime - ex->startTime );
 		if ( light < 0.5 ) {
@@ -557,7 +575,15 @@ static void CG_AddExplosion( localEntity_t *ex ) {
 			light = 1.0 - ( light - 0.5 ) * 2;
 		}
 		light = ex->light * light;
-		trap_R_AddLightToScene(ent->origin, light, ex->lightColor[0], ex->lightColor[1], ex->lightColor[2] );
+
+		// BFPR - missileDlightRainbow
+		if ( ex->lightRainbow ) {
+			VectorCopy( rainbowColor, lightColor );
+		} else {
+			VectorCopy( ex->lightColor, lightColor );
+		}
+
+		trap_R_AddLightToScene( ent->origin, light, lightColor[0], lightColor[1], lightColor[2] );
 	}
 }
 

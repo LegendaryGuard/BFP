@@ -872,8 +872,8 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 		skinAtkCfg->missileSoundPath, skinAtkCfg->missileSound, skinAtkCfg->chargeSoundPath, skinAtkCfg->chargeSound );
 	Com_Printf( "  ^6flashSound^7=^3'%s'^7 (sfx^7=^3%d^7) ^6firingSound^7=^3'%s'^7 (sfx^7=^3%d^7)\n",
 		skinAtkCfg->flashSoundPath, skinAtkCfg->flashSound, skinAtkCfg->firingSoundPath, skinAtkCfg->firingSound );
-	Com_Printf( "  ^6missileDlight^7=^3%d^7, ^6color^7=(^3%f^7,^3%f^7,^3%f^7)\n",
-		skinAtkCfg->missileDlight, skinAtkCfg->missileDlightColor[0], skinAtkCfg->missileDlightColor[1], skinAtkCfg->missileDlightColor[2] );
+	Com_Printf( "  ^6missileDlight^7=^3%d^7, ^6color^7=(^3%f^7,^3%f^7,^3%f^7)^7, ^6rainbow^7=^3%d^7\n",
+		skinAtkCfg->missileDlight, skinAtkCfg->missileDlightColor[0], skinAtkCfg->missileDlightColor[1], skinAtkCfg->missileDlightColor[2], skinAtkCfg->missileDlightRainbow );
 	Com_Printf( "  ^6missileTrailFunc^7=^3%d^7, ^6trailTime^7=^3%d^7, ^6trailRadius^7=^3%d\n",
 		skinAtkCfg->missileTrailFunc, skinAtkCfg->missileTrailTime, skinAtkCfg->missileTrailRadius );
 	Com_Printf( "  ^6beamShader^7=^3'%s'^7 (shader^7=^3%d^7) ^6spiralBeamShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
@@ -995,6 +995,8 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 				leSphere->lightColor[0] = missileDlightColor[0];
 				leSphere->lightColor[1] = missileDlightColor[1];
 				leSphere->lightColor[2] = missileDlightColor[2];
+				// BFPR - Missile dynamic rainbow light color
+				leSphere->lightRainbow = skinAtkCfg->missileDlightRainbow;
 			}
 	
 			if ( cg_bigExplosions.integer > 0 ) { // BFP - Big explosions
