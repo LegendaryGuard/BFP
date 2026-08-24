@@ -591,6 +591,14 @@ static void CG_ParseSkinConfigBuffer( char *buf, bfpSkinConfig_t *config ) {
 			} else {
 				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
 			}
+		} else if ( !Q_stricmpn( ptr, "explosionConfetti", 17 ) && ( ptr[17] == ' ' || ptr[17] == '\t' ) ) { // BFPR - explosionConfetti
+			ptr += 17;
+			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
+				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
+				config->attacks[attackIdx].explosionConfetti = atoi( value );
+			} else {
+				CG_SkinConfig_ReadToken( &ptr, value, sizeof( value ) );
+			}
 		} else if ( !Q_stricmpn( ptr, "explosionSmokeRadius", 20 ) && ( ptr[20] == ' ' || ptr[20] == '\t' ) ) {
 			ptr += 20;
 			if ( CG_SkinConfig_ReadAttackIndex( &ptr, &attackIdx ) ) {
@@ -968,8 +976,8 @@ void CG_LoadSkinConfig( clientInfo_t *ci ) {
 			a->missileRadius, a->missileRadiusChargeMult, a->missileScaleFactor, a->missileScaleFactorChargeMult );
 		Com_Printf( "  ^6explosionModel^7=^3'%s'^7 (model^7=^3%d^7) ^6explosionShader^7=^3'%s'^7 (shader^7=^3%d^7)\n",
 			a->explosionModelName, a->explosionModel, a->explosionShaderName, a->explosionShader );
-		Com_Printf( "  ^6explosionRing^7=^3%d^7, ^6explosionShell^7=^3%d^7, ^6explosionRocks^7=^3%d^7, ^6explosionSparks^7=^3%d\n",
-			a->explosionRing, a->explosionShell, a->explosionRocks, a->explosionSparks );
+		Com_Printf( "  ^6explosionRing^7=^3%d^7, ^6explosionShell^7=^3%d^7, ^6explosionRocks^7=^3%d^7, ^6explosionSparks^7=^3%d^7, ^6explosionConfetti^7=^3%d\n",
+			a->explosionRing, a->explosionShell, a->explosionRocks, a->explosionSparks, a->explosionConfetti );
 		Com_Printf( "  ^6explosionSmoke^7=^3%d^7, ^6smokeRadius^7=^3%d^7, ^6smokeLife^7=^3%d^7, ^6smokeSpeed^7=^3%d\n",
 			a->explosionSmoke, a->explosionSmokeRadius, a->explosionSmokeLife, a->explosionSmokeSpeed );
 		Com_Printf( "  ^6explosionScaleFactor^7=^3%f^7, ^6explosionScaleFactorChargeMult^7=^3%f\n",

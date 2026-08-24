@@ -957,6 +957,9 @@ void CG_ExplosionEffect( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinA
 			leRing = CG_SpawnExplosionModel( origin, dir, LE_EXPLOSION_RING, cgs.media.ringFlashModel, cgs.media.railExplosionShader, 500 );
 		}
 		CG_SmokeExplosion( origin, dir, skinAtkCfg ); // BFP - Explosion smoke
+		if ( skinAtkCfg->explosionConfetti > 0 ) { // BFPR - Confetti particles
+			CG_ParticleConfetti( cgs.media.whiteShader, origin, dir, skinAtkCfg->explosionConfetti, 5, 700.0f );
+		}
 
 		{
 			const float	MAX_SCALE = 25.0f, MAX_SCALEFACTOR = 6.0f; // limits to prevent too large scaling
