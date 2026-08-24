@@ -74,9 +74,8 @@ You'll notice some differences and things that the original Bid For Power didn't
 - 3d particles for bubbles, antigrav rock and rock debris, that can be enabled with `cg_3dparticles` cvar. For 3d rock particles, you need 3 models inside models/effects/ directory: `pebble1.md3`, `pebble2.md3` and `pebble3.md3`; otherwise, it will appear the standard ones. That option is included in BFP OPTIONS menu in VIEW & FX, also with a new explosion type option in EXPLOSIONS: Ultra Hardcore
 - piercing weapons, like Razor disk, emit spark particles when hitting a player
 - beam struggle emits spark particles in the middle of both beams (in original BFP, emits in the zeroed origin)
-- new particles: charge smoke, which appears when charging ki near the ground
+- new charge smoke particle, which appears when charging ki near the ground
 - new cool missile trails (it can be disabled by setting `cg_oldRocketTrail 1` to see Q3 missile smoke trails back). These trails are quite similar to the Rocket pod weapon from [Bazooka Q3 (BQ3)](https://planetquake.gamespy.com/View10ca.html?view=Articles.Detail&id=693) mod
-- `missileDlightRainbow [0/1]` to see rainbow dynamic rainbow light effect, and `missileTrailRainbow [0/1]` to see rainbow trail effect, in the skin config
 
 #### PMOVE:
 - balanced player pmove physics: 
@@ -139,6 +138,9 @@ You'll notice some differences and things that the original Bid For Power didn't
 ### NEW FEATURES (BFPR):
 
 - `missileArch [0/1]`: the projectile, with missile or rdmissile attack type, moves like an arch across the crosshair
+- `missileDlightRainbow [0/1]` to see rainbow dynamic rainbow light effect, and `missileTrailRainbow [0/1]` to see rainbow trail effect, in the skin config
+- new confetti particle, use `explosionConfetti <number of confetti leafs>` in the skin config for the explosion
+
 
 # How to build
 

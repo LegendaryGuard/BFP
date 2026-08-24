@@ -388,6 +388,7 @@ typedef struct {
 	qboolean	explosionShell;							// show explosion shell model
 	int			explosionRocks;							// number of rocks
 	int			explosionSparks;						// number of sparks
+	int			explosionConfetti;						// BFPR - number of confetti/leaf-like pieces
 	int			explosionSmoke;							// number of smokes
 	int			explosionSmokeRadius;					// explosion smoke radius
 	int			explosionSmokeLife;						// explosion smoke duration
@@ -1751,3 +1752,5 @@ void	CG_ParticleSparks (qhandle_t pshader, vec3_t origin, vec3_t vel);
 void	CG_ParticleChargeSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float radialVel, float baseRadius);
 // BFP - Beam struggle spark particle
 void	CG_ParticleBeamStruggleSpark (qhandle_t pshader, vec3_t origin, vec3_t vel);
+// BFPR - Confetti particle
+void CG_ParticleConfetti (qhandle_t pshader, vec3_t origin, vec3_t dir, int num, float size, float speed);

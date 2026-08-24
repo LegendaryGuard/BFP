@@ -41,6 +41,7 @@ typedef struct particle_s
 	vec3_t		vel;
 	vec3_t		accel;
 	int			color;
+	vec3_t		confettiColor; // BFPR - For confetti particle
 	float		alpha;
 	float		alphavel;
 	int			type;
@@ -84,6 +85,7 @@ typedef enum
 	P_SPARK, // BFP - Beam struggle spark
 	P_ROCK_DEBRIS, // BFP - Bouncing rock fragment (explosion impact on ground)
 	P_WATER_SPLASH, // BFP - Water entry splash bubble (upward arc, stops at surface)
+	P_CONFETTI, // BFPR - Falling confetti/leaf-like square that flutters down and flattens on landing
 	P_SPRITE
 } particle_type_t;
 
@@ -277,6 +279,159 @@ static void AddSparkParticle( cparticle_t *p, vec3_t org, float alpha )
 	Byte4Set( verts[3].modulate, 255, 255, 255, 255 * alpha );
 
 	trap_R_AddPolyToScene( p->pshader, 4, verts );
+}
+
+/*
+===================
+AddConfettiParticle
+===================
+*/
+static void AddConfettiParticle( cparticle_t *p, vec3_t org, float alpha ) // BFPR - Confetti particle
+{
+	polyVert_t	verts[4];
+	polyVert_t	backVerts[4];
+	vec3_t		right, up;
+	float		width, height;
+
+	// BFP - All confetti physics (initial soft bounce, landing/flattening
+	// against the slope, leaf-like flight) lives here because this is the
+	// function that actually runs every frame for P_CONFETTI (see the switch
+	// in CG_AddParticleToScene) -- the equivalent block inside
+	// AddGenericParticle is never reached for this type.
+	if ( !p->custom )
+	{
+		trace_t		trace;
+		vec3_t		confettiMins = {0, 0, -2};
+		qboolean	settled;
+		float		dt = (float)( timenonscaled - p->time ) * 0.001f; // seconds since last update
+		if ( dt < 0.0f ) {
+			dt = 0.0f;
+		} else if ( dt > 0.1f ) {
+			dt = 0.1f; // clamp against huge frame gaps (loading, hitches)
+		}
+
+		settled = ( VectorLength( p->vel ) < 100 );
+
+		// air drag on the burst velocity
+		if ( !settled )
+		{
+			float	dragFactor = 1.0f - ( 2.2f * dt );
+			if ( dragFactor < 0.0f ) {
+				dragFactor = 0.0f;
+			}
+			VectorScale( p->vel, dragFactor, p->vel );
+			settled = ( VectorLength( p->vel ) < 100 );
+		}
+
+		// same trace-every-frame pattern as P_ROCK_DEBRIS
+		CG_Trace( &trace, p->org, confettiMins, confettiMins, org, -1, CONTENTS_SOLID );
+		if ( trace.fraction < 1.0f )
+		{
+			VectorCopy( trace.endpos, p->org );
+			VectorCopy( trace.endpos, org );
+
+			if ( settled || trace.plane.normal[2] >= 0.7f )
+			{
+				VectorCopy( trace.plane.normal, p->accel );
+				p->custom = 1;
+				VectorClear( p->vel );
+				VectorClear( p->accel );
+			}
+		}
+		else
+		{
+			// No collision this frame -- just advance to the physical position
+			VectorCopy( org, p->org );
+
+			if ( settled )
+			{
+				// light, floaty gravity for the slow leaf-like fall
+				p->accel[2] = -500;
+				p->vel[2] = -130.0f;
+			}
+		}
+
+		if ( settled )
+		{
+			p->accumroll += 3;
+			p->rollBounceCount += 2;
+		}
+		else
+		{
+			// still carrying the explosion's burst speed: fast, erratic
+			// tumble, like a piece of paper being thrown
+			p->accumroll += 12;
+			p->rollBounceCount += 9;
+		}
+
+		if ( p->accumroll >= 360 ) {
+			p->accumroll -= 360;
+		}
+		if ( p->accumroll < 0 ) {
+			p->accumroll += 360;
+		}
+		if ( p->rollBounceCount >= 360 ) {
+			p->rollBounceCount -= 360;
+		}
+		if ( p->rollBounceCount < 0 ) {
+			p->rollBounceCount += 360;
+		}
+
+		p->time = timenonscaled;
+	}
+
+	if ( p->custom )
+	{
+		vec3_t	normal, tangent;
+		VectorCopy( p->accel, normal );
+		if ( VectorLength( normal ) < 0.5f ) {
+			VectorSet( normal, 0, 0, 1 ); // safety fallback
+		}
+		PerpendicularVector( tangent, normal );
+		RotatePointAroundVector( right, normal, tangent, (float)p->accumroll );
+		CrossProduct( normal, right, up );
+		width = p->width;
+		height = p->height;
+	}
+	else
+	{
+		vec3_t	angles;
+		vectoangles( rforward, angles );
+		angles[ROLL] += (float)p->accumroll;
+		angles[PITCH] += (float)p->rollBounceCount;
+		AngleVectors( angles, NULL, right, up );
+		width = p->width;
+		height = p->height;
+	}
+
+	VectorMA( org, -height, up, verts[0].xyz );
+	VectorMA( verts[0].xyz, -width, right, verts[0].xyz );
+	Vector2Set( verts[0].st, 0, 0 );
+	Byte4Set( verts[0].modulate, p->confettiColor[0]*255, p->confettiColor[1]*255, p->confettiColor[2]*255, alpha*255 );
+
+	VectorMA( org, -height, up, verts[1].xyz );
+	VectorMA( verts[1].xyz, width, right, verts[1].xyz );
+	Vector2Set( verts[1].st, 1, 0 );
+	Byte4Set( verts[1].modulate, p->confettiColor[0]*255, p->confettiColor[1]*255, p->confettiColor[2]*255, alpha*255 );
+
+	VectorMA( org, height, up, verts[2].xyz );
+	VectorMA( verts[2].xyz, width, right, verts[2].xyz );
+	Vector2Set( verts[2].st, 1, 1 );
+	Byte4Set( verts[2].modulate, p->confettiColor[0]*255, p->confettiColor[1]*255, p->confettiColor[2]*255, alpha*255 );
+
+	VectorMA( org, height, up, verts[3].xyz );
+	VectorMA( verts[3].xyz, -width, right, verts[3].xyz );
+	Vector2Set( verts[3].st, 0, 1 );
+	Byte4Set( verts[3].modulate, p->confettiColor[0]*255, p->confettiColor[1]*255, p->confettiColor[2]*255, alpha*255 );
+
+	trap_R_AddPolyToScene( p->pshader, 4, verts );
+
+	// draw the back face too, since whiteShader has normal backface culling
+	backVerts[0] = verts[0];
+	backVerts[1] = verts[3];
+	backVerts[2] = verts[2];
+	backVerts[3] = verts[1];
+	trap_R_AddPolyToScene( p->pshader, 4, backVerts );
 }
 
 /*
@@ -651,6 +806,9 @@ void CG_AddParticleToScene (cparticle_t *p, vec3_t org, float alpha)
 	case P_SPARK:
 		AddSparkParticle(p, org, alpha);
 		break;
+	case P_CONFETTI: // BFPR - Confetti particle
+		AddConfettiParticle(p, org, alpha);
+		break;
 	default:
 		AddGenericParticle(p, org, alpha);
 		break;
@@ -717,6 +875,7 @@ void CG_AddParticles (void)
 		|| p->type == P_AURA // BFP - Add P_AURA to remove particles
 		|| p->type == P_ROCK_DEBRIS // BFP - Add P_ROCK_DEBRIS to remove particles
 		|| p->type == P_WATER_SPLASH // BFP - Add P_WATER_SPLASH to remove particles
+		|| p->type == P_CONFETTI // BFPR - Add P_CONFETTI to remove particles
 		|| p->type == P_SPARK) // BFP - Add P_SPARK to remove particles
 		{
 			if (timenonscaled > p->endtime)
@@ -1443,4 +1602,82 @@ void CG_ParticleBeamStruggleSpark (qhandle_t pshader, vec3_t origin, vec3_t vel)
 	p->alphavel = 0;
 	p->pshader = pshader;
 	p->height = p->width = (rand() % 4) + 2;
+}
+
+// BFPR - Confetti particle
+void CG_ParticleConfetti (qhandle_t pshader, vec3_t origin, vec3_t dir, int num, float size, float speed) {
+	int i;
+	vec3_t right, up, forward;
+	vec3_t vel, spawnOrg;
+	float sz, rSpread, uSpread;
+
+	if ( num <= 0 ) {
+		return;
+	}
+
+	// Build axes for the spread
+	VectorCopy( dir, forward );
+	PerpendicularVector( right, forward );
+	CrossProduct( forward, right, up );
+	VectorNormalize( right );
+	VectorNormalize( up );
+
+	for ( i = 0; i < num; i++ ) {
+		cparticle_t *p;
+
+		if ( !free_particles ) return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		p->time = timenonscaled;
+		p->endtime = timenonscaled + 8000 + (rand() % 2000); // 8-10 seconds lifetime
+		p->startfade = p->endtime - 500; // starts fading out near the end
+
+		VectorSet( p->confettiColor, random(), random(), random() );
+		p->alpha = 1.0f;
+		p->alphavel = 0.0f; // fade is handled manually
+
+		p->pmodel = 0;
+		p->type = P_CONFETTI;
+		p->pshader = pshader;
+
+		// initial position with a bit of spread
+		VectorCopy( origin, spawnOrg );
+		spawnOrg[0] += (rand() % 20) - 10;
+		spawnOrg[1] += (rand() % 20) - 10;
+		spawnOrg[2] += (rand() % 20) - 10;
+		VectorCopy( spawnOrg, p->org );
+
+		// initial explosive burst velocity
+		rSpread = (rand() % 1800) - 1000;
+		uSpread = (rand() % 4500) - 1000;
+		VectorScale( dir, speed, vel );
+		VectorMA( vel, rSpread, right, vel );
+		VectorMA( vel, uSpread, up, vel );
+		VectorCopy( vel, p->vel );
+
+		p->accel[0] = 0;
+		p->accel[1] = 0;
+		p->accel[2] = -300.0f; // gravity
+
+		// random size
+		sz = size * (0.5f + random());
+		p->width = sz;
+		p->height = sz;
+		p->endwidth = sz;
+		p->endheight = sz;
+
+		// random initial rotation
+		p->rollBounceCount = rand() % 360;
+		p->accumroll = 360;
+
+		// phase/frequency for the leaf-like sideways sway
+		p->start = crandom() * (float)M_PI * 2.0f;
+		p->end = 1.5f + (crandom() * 1.5f);
+
+		p->stopped = qfalse;
+		p->custom = 0; // 0 = still airborne, 1 = landed and flattened
+	}
 }
