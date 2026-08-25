@@ -42,12 +42,16 @@ jobs:
           ./build.bat
         else
           # Linux build steps
-          make -j8 release ARCH="${{ matrix.arch }}"
-          make -j8 debug ARCH="${{ matrix.arch }}"
+          mkdir -p binaries/release-${{ matrix.platform }}-${{ matrix.arch }}
+          make -j14 install ARCH="${{ matrix.arch }}" DESTDIR=./binaries/release-${{ matrix.platform }}-${{ matrix.arch }}
+          mkdir -p binaries/debug-${{ matrix.platform }}-${{ matrix.arch }}
+          make -j14 install_debug ARCH="${{ matrix.arch }}" DESTDIR=./binaries/debug-${{ matrix.platform }}-${{ matrix.arch }}
 
           # that also works:
-          make -j8 release PLATFORM=windows ARCH="${{ matrix.arch }}"
-          make -j8 debug PLATFORM=windows ARCH="${{ matrix.arch }}"
+          mkdir -p binaries/release-windows-${{ matrix.arch }}
+          make -j14 install PLATFORM=windows ARCH="${{ matrix.arch }}" DESTDIR=./binaries/release-windows-${{ matrix.arch }}
+          mkdir -p binaries/debug-windows-${{ matrix.arch }}
+          make -j14 install_debug PLATFORM=windows ARCH="${{ matrix.arch }}" DESTDIR=./binaries/debug-windows-${{ matrix.arch }}
 
           # Get wine32-development package
           # sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install -y wine32-development
@@ -68,27 +72,46 @@ jobs:
         name: QVMs
         path: |
           *.pk3
+        archive: false
         if-no-files-found: error
         retention-days: 5
 
-    - name: Store Linux ${{ matrix.arch }} .so artifacts
+    - name: Store Linux release ${{ matrix.arch }} .so artifacts
       if: ${{ matrix.os != 'windows-latest' }}
       uses: actions/upload-artifact@v7
       with:
-        name: ${{ matrix.platform }}-${{ matrix.arch }}
+        name: release-${{ matrix.platform }}-${{ matrix.arch }}
         path: |
-          build/release-${{ matrix.platform }}-${{ matrix.arch }}
-          build/debug-${{ matrix.platform }}-${{ matrix.arch }}
+          binaries/release-${{ matrix.platform }}-${{ matrix.arch }}
         if-no-files-found: error
         retention-days: 5
 
-    - name: Store Windows ${{ matrix.arch }} DLL artifacts (compiled on Linux)
+    - name: Store Linux debug ${{ matrix.arch }} .so artifacts
       if: ${{ matrix.os != 'windows-latest' }}
       uses: actions/upload-artifact@v7
       with:
-        name: windows-${{ matrix.arch }}
+        name: debug-${{ matrix.platform }}-${{ matrix.arch }}
         path: |
-          build/release-windows-${{ matrix.arch }}
-          build/debug-windows-${{ matrix.arch }}
+          binaries/debug-${{ matrix.platform }}-${{ matrix.arch }}
+        if-no-files-found: error
+        retention-days: 5
+
+    - name: Store Windows release ${{ matrix.arch }} DLL artifacts (compiled on Linux)
+      if: ${{ matrix.os != 'windows-latest' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: release-windows-${{ matrix.arch }}
+        path: |
+          binaries/release-windows-${{ matrix.arch }}
+        if-no-files-found: error
+        retention-days: 5
+
+    - name: Store Windows debug ${{ matrix.arch }} DLL artifacts (compiled on Linux)
+      if: ${{ matrix.os != 'windows-latest' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: debug-windows-${{ matrix.arch }}
+        path: |
+          binaries/debug-windows-${{ matrix.arch }}
         if-no-files-found: error
         retention-days: 5
