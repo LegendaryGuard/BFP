@@ -30,7 +30,10 @@ A legendary Quake 3 Arena mod from the late 90s to early 2000s.
 > > > 3.3.2. [Building QVM (using .bat)](#building-qvm-using-bat-1)<br/>
 > > > 3.3.3. [Building shared libraries (.so)](#building-shared-libraries-so)
 > >
-> > 3.4. [Optional](#optional)
+> > 3.4. [macOS](#macos)
+> > > 3.4.1. [Building dynamic libraries (.dylib)](#building-dynamic-libraries-dylib)
+> >
+> > 3.5. [Optional](#optional)
 > 4. [Notes](#notes)
 > 5. [Legal](#legal)
 > 6. [Credits](#credits)
@@ -198,7 +201,7 @@ The information in the map file can be useful for debugging and performance anal
 
     To build, follow these instructions:
 
-    1. Install msys2 from https://msys2.github.io/, following the instructions there.It doesn’t matter which version you download, just get one appropriate for your OS.
+    1. Install msys2 from https://msys2.github.io/, following the instructions there. It doesn't matter which version you download, just get one appropriate for your OS.
 
     2. Start "MSYS2 MinGW 64-bit" from the Start Menu. If you're using 32-bit system, use "MSYS2 MinGW 32-bit".
 
@@ -269,7 +272,7 @@ The information in the map file can be useful for debugging and performance anal
     2. Build the solution
 
     In the *Solution Configurations* tab, you can switch `Debug` or `Release` and `Win32` or `x64`.<br/>
-    Right-click to the solution in the *Solution Explorer* and click `Build Solution`, check the log until the build is succeded. Go to `Win32` or `x64` folder in `win32-msvc`, look inside `Debug` or `Release` and get the dlls you built.
+    Right-click to the solution in the *Solution Explorer* and click `Build Solution`, check the log until the build succeeds. Go to `Win32` or `x64` folder in `win32-msvc`, look inside `Debug` or `Release` and get the dlls you built.
 
     3. Debugging
 
@@ -341,6 +344,27 @@ The information in the map file can be useful for debugging and performance anal
     ```
     3. And find .so files in `build/release-linux-x86_64`, for 32-bit: `build/release-linux-x86`. <br/><br/>
 
+- ### macOS:
+
+    * #### _Building dynamic libraries (.dylib)_:
+
+    Requires Xcode Command Line Tools (or full Xcode) to be installed. If you don't have them, install with:
+    ```sh
+    xcode-select --install
+    ```
+
+    1. Keep in mind you must be in the repository directory. Simply execute (`-j4` is the number of parallel jobs you want to run during the compilation, in that case is set to 4):
+    ```sh
+    make -j4
+    ```
+    By default, this builds for whatever architecture your Mac is running (`x86_64` on Intel Macs, `arm64` on Apple Silicon).
+
+    2. And find .dylib files in `build/release-darwin-x86_64` or `build/release-darwin-arm64` depending on the architecture you built.
+
+    > [!NOTE]
+    > **About 32-bit (`ARCH=x86`) on macOS**: this is *not* supported by any current Xcode/Clang toolchain, and it isn't something this Makefile can work around with flags — Apple removed the i386 SDK (including `libSystem`, the most basic system library) starting with Xcode 10 in 2018.
+    > 
+    > The Makefile still has an `ARCH=x86` code path under `PLATFORM=darwin` for the rare case where someone has an old Xcode 9 (or earlier) toolchain lying around, paired with an old macOS SDK (10.13/10.14-era). If you do get a working i386 build this way, keep in mind the resulting binary will only *run* on macOS 10.14 (Mojave) or earlier — Catalina (10.15) and every version after it refuse to execute 32-bit binaries at all, regardless of how they were compiled.
 
 - ### Optional:
 
@@ -348,6 +372,7 @@ The information in the map file can be useful for debugging and performance anal
     - [MSYS2 (mingw) (Building dynamic libraries (.dll))](#msys2-mingw-building-dynamic-libraries-dll)
     - [Cygwin (mingw) (Building dynamic libraries (.dll))](#cygwin-mingw-building-dynamic-libraries-dll)
     - [Building shared libraries (.so)](#building-shared-libraries-so)
+    - [macOS (Building dynamic libraries (.dylib))](#building-dynamic-libraries-dylib)
     
     You can execute optionally the parameters using the following ways:
 
@@ -361,7 +386,12 @@ The information in the map file can be useful for debugging and performance anal
     make ARCH=x86 PLATFORM=windows # compiles release x86 .dll builds (creates "release-windows-x86" directory inside "build")
     ```
 
-    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `PLATFORM=windows` (compiles dlls), `PLATFORM=linux` (compiles shared libraries (.so files)) ...
+    * To compile release arm64 (aarch64) .dylib builds on macOS:
+    ```sh
+    make ARCH=arm64 PLATFORM=darwin # compiles release arm64 .dylib builds (creates "release-darwin-arm64" directory inside "build")
+    ```
+
+    ... Optionally, you can play the parameters like `ARCH=x86_64` (compiles 64-bits builds), `ARCH=arm64` (compiles arm64(aarch64) builds, only for `PLATFORM=darwin` or Linux), `PLATFORM=windows` (compiles dlls), `PLATFORM=linux` (compiles shared libraries (.so files)), `PLATFORM=darwin` (compiles dynamic libraries (.dylib files), macOS only) ...
 
     * To compile and copy release builds at the destination directory, `DESTDIR` parameter is mandatory:
     ```sh
@@ -370,7 +400,7 @@ The information in the map file can be useful for debugging and performance anal
 
     * To compile and copy debug builds at the destination directory, `DESTDIR` parameter is mandatory:
     ```sh
-    make install DESTDIR=/your/path/q3/baseq3mod # compiles debug builds and copy the builds to the destination directory (you can also put ARCH=x86 PLATFORM=windows if you want)
+    make install_debug DESTDIR=/your/path/q3/baseq3mod # compiles debug builds and copy the builds to the destination directory (you can also put ARCH=x86 PLATFORM=windows if you want)
     ```
 
 <br/>

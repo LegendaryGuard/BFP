@@ -7,7 +7,10 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
-        arch: [x86, x86_64]
+        arch: [x86, x86_64, arm64]
+        exclude:
+          - os: windows-latest
+            arch: arm64
         include:
           # Windows
           - os: windows-latest
@@ -23,6 +26,9 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
             platform: linux
+          - os: ubuntu-latest
+            arch: arm64
+            platform: linux
 
     steps:
     - uses: actions/checkout@v7
@@ -32,7 +38,29 @@ jobs:
       shell: bash
       run: |
         sudo apt-get update # && sudo apt-get upgrade -y
-        sudo apt-get install -y build-essential libc6-dev-i386 g++-multilib gcc-mingw-w64 p7zip-full
+        sudo apt-get install -y build-essential p7zip-full
+        # 32-bit and multilib support only exists/is needed on x86 hosts;
+        # there's no i386 or multilib package on the arm64 runner
+        if [ "${{ matrix.arch }}" == "x86" ]; then
+          sudo apt-get install -y libc6-dev-i386 g++-multilib
+        fi
+        if [ "${{ matrix.arch }}" != "arm64" ]; then
+          sudo apt-get install -y gcc-mingw-w64
+        fi
+        if [ "${{ matrix.arch }}" == "arm64" ]; then
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+        fi
+
+    - name: Install llvm-mingw (arm64 Windows cross-compile)
+      if: ${{ matrix.os != 'windows-latest' && matrix.arch == 'arm64' }}
+      shell: bash
+      run: |
+        LLVM_MINGW_VERSION=20241203
+        HOST_ARCH=$(uname -m)
+        curl -L -o llvm-mingw.tar.xz \
+          "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-20.04-${HOST_ARCH}.tar.xz"
+        tar -xf llvm-mingw.tar.xz
+        echo "$PWD/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-ubuntu-20.04-${HOST_ARCH}/bin" >> "$GITHUB_PATH"
 
     - name: Build for ${{ matrix.os }} ${{ matrix.arch }}
       shell: bash
@@ -65,8 +93,8 @@ jobs:
         ARCHIVE: 1
 
     - name: Store QVM artifacts
-      # store only with Linux x86_64
-      if: ${{ matrix.os != 'windows-latest' && matrix.arch != 'x86' }}
+      # store only once, from Linux x86_64
+      if: ${{ matrix.os != 'windows-latest' && matrix.arch == 'x86_64' }}
       uses: actions/upload-artifact@v7
       with:
         name: QVMs
@@ -113,5 +141,41 @@ jobs:
         name: debug-windows-${{ matrix.arch }}
         path: |
           binaries/debug-windows-${{ matrix.arch }}
+        if-no-files-found: error
+        retention-days: 5
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Build native macOS
+      shell: bash
+      run: |
+        mkdir -p binaries/release-darwin-${{ matrix.arch }}
+        make -j$(sysctl -n hw.ncpu) install ARCH="${{ matrix.arch }}" DESTDIR=./binaries/release-darwin-${{ matrix.arch }}
+        mkdir -p binaries/debug-darwin-${{ matrix.arch }}
+        make -j$(sysctl -n hw.ncpu) install_debug ARCH="${{ matrix.arch }}" DESTDIR=./binaries/debug-darwin-${{ matrix.arch }}
+      env:
+        ARCHIVE: 1
+
+    - name: Store macOS release ${{ matrix.arch }} .dylib artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: release-darwin-${{ matrix.arch }}
+        path: |
+          binaries/release-darwin-${{ matrix.arch }}
+        if-no-files-found: error
+        retention-days: 5
+
+    - name: Store macOS debug ${{ matrix.arch }} .dylib artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: debug-darwin-${{ matrix.arch }}
+        path: |
+          binaries/debug-darwin-${{ matrix.arch }}
         if-no-files-found: error
         retention-days: 5
