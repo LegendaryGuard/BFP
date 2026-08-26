@@ -55,6 +55,10 @@ ARCH=$(COMPILE_ARCH)
 endif
 export ARCH
 
+ifeq ($(ARCH),arm64)
+  override ARCH=aarch64
+endif
+
 ifneq ($(PLATFORM),$(COMPILE_PLATFORM))
   CROSS_COMPILING=1
 else
@@ -127,7 +131,52 @@ ifeq ($(PLATFORM),linux)
     BASE_CFLAGS += -m32
   endif
 
+  ifeq ($(ARCH),aarch64)
+    LIB=lib64
+    ifeq ($(CROSS_COMPILING),1)
+      ifneq ($(filter $(CC),cc gcc),)
+        CC=aarch64-linux-gnu-gcc
+      endif
+    endif
+
+    CC_TARGET_MACHINE := $(shell $(CC) -dumpmachine 2>/dev/null)
+    ifeq (,$(findstring aarch64,$(CC_TARGET_MACHINE)))
+      $(error CC='$(CC)' does not target aarch64 (reports '$(CC_TARGET_MACHINE)'). \
+        Install an aarch64 cross-toolchain (e.g. 'apt install gcc-aarch64-linux-gnu' \
+        on Debian/Ubuntu) and/or pass CC=aarch64-linux-gnu-gcc explicitly, e.g.: \
+        make ARCH=aarch64 CC=aarch64-linux-gnu-gcc)
+    endif
+  endif
+
 endif #Linux
+
+
+ifeq ($(PLATFORM),darwin)
+
+  BASE_CFLAGS = -Wall -fno-strict-aliasing -Wimplicit -Wstrict-prototypes -pipe
+
+  OPTIMIZE = -O3 -fomit-frame-pointer -ffast-math
+
+  SHLIBEXT=dylib
+  SHLIBCFLAGS=-fPIC -fvisibility=hidden
+  SHLIBLDFLAGS=-bundle -flat_namespace -undefined suppress $(LDFLAGS)
+
+  LIBS= -lm
+
+  ifeq ($(ARCH),x86_64)
+    BASE_CFLAGS += -arch x86_64
+    SHLIBLDFLAGS += -arch x86_64
+  endif
+  ifeq ($(ARCH),aarch64)
+    BASE_CFLAGS += -march=armv8-a -arch arm64
+    SHLIBLDFLAGS += -arch arm64
+  endif
+  ifeq ($(ARCH),x86)
+    BASE_CFLAGS += -arch i386
+    SHLIBLDFLAGS += -arch i386
+  endif
+
+endif #Darwin
 
 
 ifdef MINGW
@@ -147,10 +196,23 @@ ifdef MINGW
     ifeq ($(ARCH),x86)
       MINGW_PREFIXES=i686-w64-mingw32 i586-mingw32msvc i686-pc-mingw32
     endif
+    ifeq ($(ARCH),aarch64)
+      MINGW_PREFIXES=aarch64-w64-mingw32
+      STRIP=aarch64-w64-mingw32-strip
+    endif
 
     ifndef CC
       CC=$(firstword $(strip $(foreach MINGW_PREFIX, $(MINGW_PREFIXES), \
          $(call bin_path, $(MINGW_PREFIX)-gcc))))
+    endif
+
+    ifeq ($(ARCH),aarch64)
+      ifeq ($(strip $(CC)),)
+        $(error No aarch64-w64-mingw32-gcc found on PATH for ARCH=aarch64 \
+          Windows cross-compile. Install llvm-mingw (provides the \
+          aarch64-w64-mingw32 toolchain) and ensure its bin/ directory is \
+          on PATH, then retry.)
+      endif
     endif
 
 #   STRIP=$(MINGW_PREFIX)-strip -g
@@ -201,10 +263,23 @@ ifeq ($(PLATFORM),windows)
   ifeq ($(ARCH),x86)
     MINGW_PREFIXES=i686-w64-mingw32 i586-mingw32msvc i686-pc-mingw32
   endif
+  ifeq ($(ARCH),aarch64)
+    MINGW_PREFIXES=aarch64-w64-mingw32
+    STRIP=aarch64-w64-mingw32-strip
+  endif
 
   ifndef CC
     CC=$(firstword $(strip $(foreach MINGW_PREFIX, $(MINGW_PREFIXES), \
         $(call bin_path, $(MINGW_PREFIX)-gcc))))
+  endif
+
+  ifeq ($(ARCH),aarch64)
+    ifeq ($(strip $(CC)),)
+      $(error No aarch64-w64-mingw32-gcc found on PATH for ARCH=aarch64 \
+        Windows cross-compile. Install llvm-mingw (provides the \
+        aarch64-w64-mingw32 toolchain) and ensure its bin/ directory is \
+        on PATH, then retry.)
+    endif
   endif
   
   STRIP=$(MINGW_PREFIX)-strip -g
