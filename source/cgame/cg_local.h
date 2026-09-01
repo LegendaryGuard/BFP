@@ -138,6 +138,10 @@ typedef struct {
 
 typedef struct {
 	lerpFrame_t		legs, torso, flag;
+	// BFPR - Head to avoid player model look deformed when dead while camera can move freely
+#ifdef BFPR_DEAD_CAMERA_FREE_MOVE
+	lerpFrame_t		head;
+#endif
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
 	//int				lightningFiring;
@@ -155,6 +159,13 @@ typedef struct {
 
 	qboolean		constantFireAtkPlayed;	// BFP - To play constantFireAttack fire sound once
 	int				lastChargeVoiceLevel;	// BFP - To play charge voice in one charge count once
+
+	// BFPR - For dead player angles
+#ifdef BFPR_DEAD_CAMERA_FREE_MOVE
+	qboolean		deadAnglesFrozen;
+	int				deadAnglesClientNum;
+	vec3_t			deadAnglesOrigin;
+#endif
 } playerEntity_t;
 
 //=================================================

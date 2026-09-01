@@ -415,6 +415,15 @@ void CopyToBodyQue( gentity_t *ent ) {
 	body->timestamp = level.time;
 	body->physicsObject = qtrue;
 	body->physicsBounce = 0;		// don't bounce
+
+	// BFPR - Use the angles frozen at the moment of death
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	if ( ent->client->hasDeathAngles ) {
+		VectorCopy( ent->client->deathAngles, body->s.angles );
+		VectorCopy( ent->client->deathAngles, body->s.apos.trBase );
+	}
+#endif
+
 	if ( body->s.groundEntityNum == ENTITYNUM_NONE ) {
 		body->s.pos.trType = TR_GRAVITY;
 		body->s.pos.trTime = level.time;
@@ -1500,6 +1509,11 @@ void ClientSpawn(gentity_t *ent) {
 
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH]; // BFP - Before Q3: + 25
+
+	// BFPR - Player is alive again; let the next death capture a fresh yaw
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	client->hasDeathAngles = qfalse;
+#endif
 
 	// BFP - Monster gamemode
 	if ( g_gametype.integer == GT_MONSTER && client->ps.clientNum == level.monsterClientNum

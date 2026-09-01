@@ -143,6 +143,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - `missileArch [0/1]`: the projectile, with missile or rdmissile attack type, moves like an arch across the crosshair
 - `missileDlightRainbow [0/1]` to see rainbow dynamic rainbow light effect, and `missileTrailRainbow [0/1]` to see rainbow trail effect, in the skin config
 - new confetti particle, use `explosionConfetti <number of confetti leafs>` in the skin config for the explosion
+- free-lock death camera, the player, as corpse, can see around their position 
 
 
 # How to build

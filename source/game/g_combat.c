@@ -884,6 +884,12 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	VectorCopy( self->s.angles, self->client->ps.viewangles );
 
+	// BFPR - Snapshot the real death angles
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	VectorCopy( self->s.angles, self->client->deathAngles );
+	self->client->hasDeathAngles = qtrue;
+#endif
+
 	self->s.loopSound = 0;
 
 	self->r.maxs[2] = -8;

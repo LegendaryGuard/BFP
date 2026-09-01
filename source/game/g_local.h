@@ -390,6 +390,12 @@ struct gclient_s {
 	int			zanzokenDelay;
 	int			zanzokenLastUsed;
 
+	// BFPR - Angles frozen at the exact moment of death
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	vec3_t		deathAngles;
+	qboolean	hasDeathAngles;
+#endif
+
 	char		*areabits;
 };
 

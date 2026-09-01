@@ -3078,9 +3078,12 @@ void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd ) {
 		return;		// no view changes at all
 	}
 
+	// BFPR - Make the camera move freely when the player is dead
+#if !BFPR_DEAD_CAMERA_FREE_MOVE
 	if ( ps->pm_type != PM_SPECTATOR && ps->stats[STAT_HEALTH] <= 0 ) {
 		return;		// no view changes at all
 	}
+#endif
 
 	// circularly clamp the angles with deltas
 	for (i=0 ; i<3 ; i++) {
