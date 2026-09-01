@@ -237,6 +237,9 @@ typedef struct {
 	int			(*pointcontents)( const vec3_t point, int passEntityNum );
 } pmove_t;
 
+// BFPR - A macro to enable/disable the camera to make freely move while the player is dead
+#define	BFPR_DEAD_CAMERA_FREE_MOVE	1
+
 // if a full pmove isn't done on the client, you can just update the angles
 void PM_UpdateViewAngles( playerState_t *ps, const usercmd_t *cmd );
 void Pmove (pmove_t *pmove);

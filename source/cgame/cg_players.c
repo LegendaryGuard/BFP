@@ -1102,6 +1102,46 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 	int			dir, clientNum;
 	clientInfo_t	*ci;
 
+	// BFPR - Make the camera move freely when the player is dead,
+	// keep player model angles, otherwise looks deformed
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	qboolean	isNewCorpseInstance;
+	if ( cent->currentState.eFlags & EF_DEAD ) {
+		isNewCorpseInstance = !cent->pe.deadAnglesFrozen
+				|| cent->pe.deadAnglesClientNum != cent->currentState.clientNum
+				|| !VectorCompare( cent->pe.deadAnglesOrigin, cent->lerpOrigin );
+
+		if ( isNewCorpseInstance ) {
+			cent->pe.head.yawAngle = AngleMod( cent->pe.head.yawAngle );
+			cent->pe.head.pitchAngle = 0;
+			cent->pe.legs.yawAngle = cent->pe.head.yawAngle;
+			cent->pe.legs.pitchAngle = 0;
+			cent->pe.torso.yawAngle = cent->pe.head.yawAngle;
+			cent->pe.torso.pitchAngle = 0;
+			cent->pe.deadAnglesFrozen = qtrue;
+			cent->pe.deadAnglesClientNum = cent->currentState.clientNum;
+			VectorCopy( cent->lerpOrigin, cent->pe.deadAnglesOrigin );
+		}
+
+		headAngles[YAW] = cent->pe.head.yawAngle;
+		headAngles[PITCH] = cent->pe.head.pitchAngle;
+		legsAngles[YAW] = cent->pe.legs.yawAngle;
+		legsAngles[PITCH] = cent->pe.legs.pitchAngle;
+		torsoAngles[YAW] = cent->pe.torso.yawAngle;
+		torsoAngles[PITCH] = cent->pe.torso.pitchAngle;
+
+		// pull the angles back out of the hierarchial chain
+		AnglesSubtract( headAngles, torsoAngles, headAngles );
+		AnglesSubtract( torsoAngles, legsAngles, torsoAngles );
+		AnglesToAxis( legsAngles, legs );
+		AnglesToAxis( torsoAngles, torso );
+		AnglesToAxis( headAngles, head );
+		return;
+	} else if ( cent->pe.deadAnglesFrozen ) {
+		cent->pe.deadAnglesFrozen = qfalse;
+	}
+#endif
+
 	VectorCopy( cent->lerpAngles, headAngles );
 	headAngles[YAW] = AngleMod( headAngles[YAW] );
 	VectorClear( legsAngles );
@@ -1211,6 +1251,12 @@ static void CG_PlayerAngles( centity_t *cent, vec3_t legs[3], vec3_t torso[3], v
 			torsoAngles[PITCH] += side;
 		}
 	}
+
+	// BFPR - Head angles to avoid player model look deformed
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	cent->pe.head.yawAngle = headAngles[YAW];
+	cent->pe.head.pitchAngle = headAngles[PITCH];
+#endif
 
 	// pain twitch
 	CG_AddPainTwitch( cent, torsoAngles );
@@ -2534,6 +2580,16 @@ void CG_ResetPlayerEntity( centity_t *cent ) {
 	cent->pe.torso.yawing = qfalse;
 	cent->pe.torso.pitchAngle = cent->rawAngles[PITCH];
 	cent->pe.torso.pitching = qfalse;
+
+	// BFPR - Reset head angles too, otherwise a freshly-spawned corpse entity
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	memset( &cent->pe.head, 0, sizeof( cent->pe.torso ) );
+	cent->pe.head.yawAngle = cent->rawAngles[YAW];
+	cent->pe.head.yawing = qfalse;
+	cent->pe.head.pitchAngle = 0;
+	cent->pe.head.pitching = qfalse;
+	cent->pe.deadAnglesFrozen = qfalse;
+#endif
 
 	if ( cg_debugPosition.integer ) {
 		CG_Printf("%i ResetPlayerEntity yaw=%i\n", cent->currentState.number, cent->pe.torso.yawAngle );

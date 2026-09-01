@@ -258,12 +258,15 @@ static void CG_OffsetThirdPersonView( void ) {
 
 	VectorCopy( cg.refdefViewAngles, focusAngles );
 
+	// BFPR - Make the camera move freely when the player is dead
+#if !BFPR_DEAD_CAMERA_FREE_MOVE
 	// if dead, look at killer
 	if ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) {
 		int totalYaw = cg.predictedPlayerState.damageYaw + cg.predictedPlayerState.damagePitch;
 		focusAngles[YAW] = totalYaw;
 		cg.refdefViewAngles[YAW] = totalYaw;
 	}
+#endif
 
 	AngleVectors( focusAngles, forward, NULL, NULL );
 
