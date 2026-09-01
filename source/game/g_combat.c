@@ -1208,9 +1208,10 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		float	mass;
 
 		mass = 200;
-		// BFP - Using hitscan weapons, the mass is different
+		// BFP - Using hitscan weapons without rail trail and splash damage, the mass is different
 		if ( targ->client != attacker->client
-		&& inflictor && inflictor->bfpWeapon && inflictor->bfpWeapon->attackType == ATK_HITSCAN ) {
+		&& inflictor && inflictor->bfpWeapon && inflictor->bfpWeapon->attackType == ATK_HITSCAN
+		&& inflictor->splashDamage <= 0 && !inflictor->bfpWeapon->railTrail ) {
 			mass = 50;
 		}
 
