@@ -1776,26 +1776,6 @@ static void Cmd_BFP_KiUseToggle_f( gentity_t* ent ) { // BFP - Ki use toggle
 }
 
 /*
-=====================
-Cmd_BFP_SelectCharacter_f
-=====================
-*/
-static void Cmd_BFP_SelectCharacter_f( gentity_t* ent ) { // BFP - Select character
-	char		characterselected[MAX_TOKEN_CHARS];
-
-	// BFP - NOTE: That command was left without finishing the implementation to change the character of this way
-	// What could it be?
-
-	if ( trap_Argc() != 2 ) {
-		return;
-	}
-	trap_Argv( 1, characterselected, sizeof( characterselected ) );
-
-	// that prints the info in the server
-	G_Printf( "Character: %s\n", characterselected );
-}
-
-/*
 =================
 Cmd_BFP_Block_f
 =================
@@ -1920,8 +1900,6 @@ void ClientCommand( int clientNum ) {
 		Cmd_BFP_Fly_f( ent );
 	else if (Q_stricmp (cmd, "kiusetoggle") == 0) // BFP - Ki use toggle
 		Cmd_BFP_KiUseToggle_f( ent );
-	else if (Q_stricmp (cmd, "selectcharacter") == 0) // BFP - Select character
-		Cmd_BFP_SelectCharacter_f( ent );
 	else if (Q_stricmp (cmd, "block") == 0) // BFP - Block
 		Cmd_BFP_Block_f( ent );
 	else

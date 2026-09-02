@@ -1351,11 +1351,11 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 			}
 			if ( wpCfg->attackType == ATK_HITSCAN ) {
 				if ( ucmd->buttons & BUTTON_ATTACK ) {
-					Client_KiConsumption( client, weaponTime, kiCost );
 					if ( client->ps.stats[STAT_KI] >= kiCost ) {
 						client->ps.eFlags |= EF_FIRING;
 						BG_AddPredictableEventToPlayerstate( EV_FIRE_WEAPON, 0, &ent->client->ps, -1 );
 					}
+					Client_KiConsumption( client, weaponTime, kiCost );
 					client->ps.weaponstate = WEAPON_READY;
 				} else {
 					client->ps.weaponstate = WEAPON_READY;
