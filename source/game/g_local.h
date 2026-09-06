@@ -290,6 +290,8 @@ typedef struct {
 	int			voteCount;			// to prevent people from constantly calling votes
 	int			teamVoteCount;		// to prevent people from constantly calling votes
 	qboolean	teamInfo;			// send team overlay updates?
+	qboolean	ignoredClients[MAX_CLIENTS];	// BFPR - Clients this player is ignoring (chat only)
+	char		guid[33];			// BFPR - Client's cl_guid
 } clientPersistant_t;
 
 // BFP - A macro to enable/disable switch team time delay
@@ -520,6 +522,7 @@ char *G_NewString( const char *string );
 // g_cmds.c
 //
 void Cmd_Score_f (gentity_t *ent);
+char *ConcatArgs( int start );
 void StopFollowing( gentity_t *ent );
 void BroadcastTeamChange( gclient_t *client, int oldTeam );
 void SetTeam( gentity_t *ent, char *s );
@@ -718,6 +721,10 @@ qboolean SpotWouldTelefrag( gentity_t *spot );
 qboolean	ConsoleCommand( void );
 void G_ProcessIPBans(void);
 qboolean G_FilterPacket (char *from);
+qboolean	G_IsSenderMuted( gentity_t *ent );	// BFPR - Mute the sender
+qboolean	G_IsSenderPlaybanned( gentity_t *ent );	// BFPR - Play-ban the sender
+qboolean	G_IsSenderVotebanned( gentity_t *ent );	// BFPR - Vote-ban the sender
+qboolean	G_BanMessageForSender( qboolean cp, gentity_t *ent, vmCvar_t *list, char *out, int outSize );	// BFPR - Format ban expiration and reason for a client
 
 //
 // g_weapon.c
@@ -890,6 +897,8 @@ qboolean	trap_GetEntityToken( char *buffer, int bufferSize );
 
 int		trap_DebugPolygonCreate(int color, int numPoints, vec3_t *points);
 void	trap_DebugPolygonDelete(int id);
+
+int		trap_RealTime( qtime_t *qtime );	// BFPR - Real (wall-clock) time in seconds since epoch, for ban expirations
 
 int		trap_BotLibSetup( void );
 int		trap_BotLibShutdown( void );

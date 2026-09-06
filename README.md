@@ -144,6 +144,12 @@ You'll notice some differences and things that the original Bid For Power didn't
 - `missileDlightRainbow [0/1]` to see rainbow dynamic rainbow light effect, and `missileTrailRainbow [0/1]` to see rainbow trail effect, in the skin config
 - new confetti particle, use `explosionConfetti <number of confetti leafs>` in the skin config for the explosion
 - free-lock death camera, the player, as corpse, can see around their position 
+- moderation features: 
+  - player list: list player entity ids, names, IPs (server admin side only), bot info (if there's) and teams, usage: `playerlist`
+  - ignore: (client side only) ignores a client in the chat and voice, usage: `ignore <client id>`; to remove from ignore list: `unignore <client id>`; to clear all ignored clients: `clear_ignores`
+  - muteban: (server side only) stores a ban to mute completely a client in the server, like ignore but in server permanently, usage: `mute <client id>`; to remove from mute ban list: `unmute <ban_id, ip or guid>`; to check mute ban list: `mutebans`
+  - voteban: (server side only) stores a ban to avoid calling a vote and voting in the server, usage: `voteban <client id>`; to remove from vote ban list: `unvoteban <ban_id, ip or guid>`; to check vote ban list: `votebans`
+  - playban: (server side only) stores a ban and forces to spectate a client in the server and cannot join in the matches, usage: `playban <client id>`; to remove from play ban list: `unplayban <ban_id, ip or guid>`; to check play ban list: `playbans`
 
 
 # How to build

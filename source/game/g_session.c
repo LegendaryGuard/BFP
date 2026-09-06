@@ -93,6 +93,13 @@ void G_ReadClientSessionData( gclient_t *client ) {
 	if ( (unsigned)client->sess.sessionTeam >= TEAM_NUM_TEAMS ) {
 		client->sess.sessionTeam = TEAM_SPECTATOR;
 	}
+
+	// BFPR - Play-banned players mustn't be restored to an active team from
+	// a session saved before the ban was applied (or while disconnected)
+	if ( client->sess.sessionTeam != TEAM_SPECTATOR
+	&& G_IsSenderPlaybanned( &g_entities[ client - level.clients ] ) ) {
+		client->sess.sessionTeam = TEAM_SPECTATOR;
+	}
 }
 
 
@@ -105,12 +112,16 @@ Called on a first-time connect
 */
 void G_InitSessionData( gclient_t *client, const char *team, qboolean isBot ) {
 	clientSession_t	*sess;
+	// BFPR - Check for play-banned players
+	qboolean		playbanned = !isBot && G_IsSenderPlaybanned( &g_entities[ client - level.clients ] );
 
 	sess = &client->sess;
 
 	// initial team determination
 	if ( g_gametype.integer >= GT_TEAM ) {
-		if ( team[0] == 's' || team[0] == 'S' ) {
+		if ( playbanned ) { // BFPR - Force to spectate while play-banned
+			sess->sessionTeam = TEAM_SPECTATOR;
+		} else if ( team[0] == 's' || team[0] == 'S' ) {
 			// a willing spectator, not a waiting-in-line
 			sess->sessionTeam = TEAM_SPECTATOR;
 		} else {
@@ -136,7 +147,9 @@ void G_InitSessionData( gclient_t *client, const char *team, qboolean isBot ) {
 		// BFP - Team Last Man Standing, keep selected team
 		client->selectedTeam = sess->sessionTeam;
 	} else {
-		if ( team[0] == 's' || team[0] == 'S' ) {
+		if ( playbanned ) { // BFPR - Force to spectate while play-banned
+			sess->sessionTeam = TEAM_SPECTATOR;
+		} else if ( team[0] == 's' || team[0] == 'S' ) {
 			// a willing spectator, not a waiting-in-line
 			sess->sessionTeam = TEAM_SPECTATOR;
 		} else {

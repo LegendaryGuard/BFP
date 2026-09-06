@@ -238,6 +238,154 @@ int ClientNumberFromString( gentity_t *to, char *s ) {
 }
 
 /*
+=================
+Cmd_Ignore_f
+=================
+*/
+static void Cmd_Ignore_f( gentity_t *ent ) { // BFPR - ignore <client id> command
+	int			targetNum;
+	char		arg[MAX_TOKEN_CHARS];
+
+	if ( trap_Argc() != 2 ) {
+		trap_SendServerCommand( ent-g_entities, "print \"usage: ignore <client id>\n\"" );
+		return;
+	}
+
+	trap_Argv( 1, arg, sizeof( arg ) );
+	targetNum = ClientNumberFromString( ent, arg );
+	if ( targetNum == -1 ) {
+		return;
+	}
+
+	if ( targetNum == ent->client - level.clients ) {
+		trap_SendServerCommand( ent-g_entities, "print \"You cannot ignore yourself.\n\"" );
+		return;
+	}
+
+	ent->client->pers.ignoredClients[targetNum] = qtrue;
+	trap_SendServerCommand( ent-g_entities, va( "print \"Ignoring %s\n\"",
+		level.clients[targetNum].pers.netname ) );
+}
+
+/*
+=================
+Cmd_Unignore_f
+=================
+*/
+static void Cmd_Unignore_f( gentity_t *ent ) { // BFPR - unignore <client id> command
+	int			targetNum;
+	char		arg[MAX_TOKEN_CHARS];
+
+	if ( trap_Argc() != 2 ) {
+		trap_SendServerCommand( ent-g_entities, "print \"usage: unignore <client id>\n\"" );
+		return;
+	}
+
+	trap_Argv( 1, arg, sizeof( arg ) );
+	targetNum = ClientNumberFromString( ent, arg );
+	if ( targetNum == -1 ) {
+		return;
+	}
+
+	ent->client->pers.ignoredClients[targetNum] = qfalse;
+	trap_SendServerCommand( ent-g_entities, va( "print \"No longer ignoring %s\n\"",
+		level.clients[targetNum].pers.netname ) );
+}
+
+/*
+=================
+Cmd_ClearIgnores_f
+=================
+*/
+static void Cmd_ClearIgnores_f( gentity_t *ent ) { // BFPR - clear_ignores command
+	memset( ent->client->pers.ignoredClients, 0, sizeof( ent->client->pers.ignoredClients ) );
+	trap_SendServerCommand( ent-g_entities, "print \"Cleared all ignores.\n\"" );
+}
+ 
+/*
+=================
+Cmd_PlayerList_f
+=================
+*/
+static void Cmd_PlayerList_f( gentity_t *ent ) { // BFPR - playerlist command (client, no IPs)
+	int			i;
+	gclient_t	*cl;
+	char		list[MAX_STRING_CHARS];
+	char		line[128];
+	char		userinfo[MAX_INFO_STRING];
+	char		*skillStr;
+	char		skillDisp[8];
+	qboolean	any = qfalse, hasBots = qfalse;
+	qboolean	isBot;
+
+	// only show the bot/skill columns if at least one bot is connected
+	for ( i = 0, cl = level.clients ; i < level.maxclients ; i++, cl++ ) {
+		if ( cl->pers.connected == CON_DISCONNECTED ) {
+			continue;
+		}
+		if ( g_entities[i].r.svFlags & SVF_BOT ) {
+			hasBots = qtrue;
+			break;
+		}
+	}
+
+	if ( hasBots ) {
+		Q_strncpyz( list, "id  name                             bot skill team\n"
+		                  "--- -------------------------------- --- ----- ----------\n", sizeof( list ) );
+	} else {
+		Q_strncpyz( list, "id  name                             team\n"
+		                  "--- -------------------------------- ----------\n", sizeof( list ) );
+	}
+
+	for ( i = 0, cl = level.clients ; i < level.maxclients ; i++, cl++ ) {
+		if ( cl->pers.connected == CON_DISCONNECTED ) {
+			continue;
+		}
+		any = qtrue;
+
+		isBot = ( g_entities[i].r.svFlags & SVF_BOT );
+
+		if ( hasBots ) {
+			if ( isBot ) {
+				trap_GetUserinfo( i, userinfo, sizeof( userinfo ) );
+				skillStr = Info_ValueForKey( userinfo, "skill" );
+				if ( !skillStr[0] ) {
+					skillStr = "?";
+				} else { // strip the float string
+					Com_sprintf( skillDisp, sizeof( skillDisp ), "%i", (int)( atof( skillStr ) + 0.5f ) );
+					skillStr = skillDisp;
+				}
+			} else {
+				skillStr = "-";
+			}
+
+			Com_sprintf( line, sizeof( line ), "%-3i %-32s %-3s %-5s %s\n", i, cl->pers.netname,
+				isBot ? "^3yes^7" : "no", skillStr,
+				cl->sess.sessionTeam == TEAM_SPECTATOR ? "spectator" :
+				cl->sess.sessionTeam == TEAM_RED ? "red" :
+				cl->sess.sessionTeam == TEAM_BLUE ? "blue" : "free" );
+		} else {
+			Com_sprintf( line, sizeof( line ), "%-3i %-32s %s\n", i, cl->pers.netname,
+				cl->sess.sessionTeam == TEAM_SPECTATOR ? "spectator" :
+				cl->sess.sessionTeam == TEAM_RED ? "red" :
+				cl->sess.sessionTeam == TEAM_BLUE ? "blue" : "free" );
+		}
+
+		if ( strlen( list ) + strlen( line ) >= sizeof( list ) ) {
+			break; // don't overflow MAX_STRING_CHARS
+		}
+		Q_strcat( list, sizeof( list ), line );
+	}
+
+	if ( !any ) {
+		Q_strncpyz( list, "No players connected.\n", sizeof( list ) );
+	}
+
+	trap_SendServerCommand( ent-g_entities, va( "print \"%s\"", list ) );
+}
+
+
+/*
 ==================
 Cmd_Give_f
 
@@ -609,6 +757,11 @@ void SetTeam( gentity_t *ent, char *s ) {
 		team = TEAM_SPECTATOR;
 	}
 
+	// BFPR - Play-banned players can only spectate
+	if ( team != TEAM_SPECTATOR && G_IsSenderPlaybanned( ent ) ) {
+		team = TEAM_SPECTATOR;
+	}
+
 	// BFP - Monster gamemode, check if the player monster is changing teams
 	if ( g_gametype.integer == GT_MONSTER 
 	&& ( ent->client->ps.eFlags & EF_MONSTER )
@@ -730,6 +883,8 @@ Cmd_Team_f
 void Cmd_Team_f( gentity_t *ent ) {
 	int			oldTeam;
 	char		s[MAX_TOKEN_CHARS];
+	// BFPR - Ban message display
+	char		banMsg[96];
 
 	if ( trap_Argc() != 2 ) {
 		oldTeam = ent->client->sess.sessionTeam;
@@ -793,6 +948,21 @@ void Cmd_Team_f( gentity_t *ent ) {
 #endif
 			return;
 		}
+	}
+
+	// BFPR - Play-banned players can only spectate
+	if ( Q_stricmp( s, "spectator" ) && Q_stricmp( s, "s" )
+	&& Q_stricmp( s, "scoreboard" ) && Q_stricmp( s, "score" )
+	&& G_IsSenderPlaybanned( ent ) ) {
+		trap_SendServerCommand( ent-g_entities, 
+			va( "cp \"^1You are banned from \n^1playing on this server.\n%s\n\"", 
+				G_BanMessageForSender( qtrue, ent, &g_playban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
+		trap_SendServerCommand( ent-g_entities, 
+			va( "print \"You are banned from playing on this server. %s\n\"",
+				G_BanMessageForSender( qfalse, ent, &g_playban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
+		return;
 	}
 
 	// BFP - Team Last Man Standing, show a centerprint message to switching teams when the player were fragged and forced to spectate
@@ -954,6 +1124,10 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 	if ( other->client->pers.connected != CON_CONNECTED ) {
 		return;
 	}
+	// BFPR - Ignore client in ignore list
+	if ( other->client->pers.ignoredClients[ ent - g_entities ] ) {
+		return;
+	}
 	if ( mode == SAY_TEAM  && !OnSameTeam(ent, other) ) {
 		return;
 	}
@@ -982,10 +1156,25 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) 
 	// don't let text be too long for malicious reasons
 	char		text[MAX_SAY_TEXT];
 	char		location[64];
+	// BFPR - Ban message display
+	char		banMsg[96];
 
 	// BFP - Allow spectator chat
 	if ( ent->client->ps.pm_type == PM_SPECTATOR 
 	&& g_allowSpectatorChat.integer <= 0 ) {
+		return;
+	}
+
+	// BFPR - Muted players cannot send chat
+	if ( G_IsSenderMuted( ent ) ) {
+		trap_SendServerCommand( ent-g_entities, 
+			va( "cp \"^1You are muted, \n^1because you are banned on this server.\n%s\n\"", 
+				G_BanMessageForSender( qtrue, ent, &g_muteban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
+		trap_SendServerCommand( ent-g_entities, 
+			va( "print \"You are muted, because you are banned on this server. %s\n\"", 
+				G_BanMessageForSender( qfalse, ent, &g_muteban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
 		return;
 	}
 
@@ -1114,6 +1303,14 @@ static void G_VoiceTo( gentity_t *ent, gentity_t *other, int mode, const char *i
 		return;
 	}
 	if (!other->client) {
+		return;
+	}
+	// BFPR - Muted players cannot send voice chat
+	if ( G_IsSenderMuted( ent ) ) {
+		return;
+	}
+	// BFPR - Ignore client in ignore list
+	if ( other->client->pers.ignoredClients[ ent - g_entities ] ) {
 		return;
 	}
 	if ( mode == SAY_TEAM && !OnSameTeam(ent, other) ) {
@@ -1363,6 +1560,7 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 	int		i;
 	char	arg1[MAX_STRING_TOKENS];
 	char	arg2[MAX_STRING_TOKENS];
+	char	banMsg[96];
 
 	if ( !g_allowVote.integer ) {
 		trap_SendServerCommand( ent-g_entities, "print \"Voting not allowed here.\n\"" );
@@ -1454,6 +1652,19 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "%s", level.voteString );
 	}
 
+	// BFPR - Vote-banned players cannot call votes
+	if ( G_IsSenderVotebanned( ent ) ) {
+		trap_SendServerCommand( ent-g_entities, 
+			va( "cp \"^1You are banned from \n^1calling votes on this server.\n%s\n\"", 
+				G_BanMessageForSender( qtrue, ent, &g_voteban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
+		trap_SendServerCommand( ent-g_entities, 
+			va( "print \"You are banned from calling votes on this server. %s\n\"",
+				G_BanMessageForSender( qfalse, ent, &g_voteban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
+		return;
+	}
+
 	trap_SendServerCommand( -1, va("print \"%s called a vote.\n\"", ent->client->pers.netname ) );
 
 	// start the voting, the caller autoamtically votes yes
@@ -1479,6 +1690,7 @@ Cmd_Vote_f
 */
 void Cmd_Vote_f( gentity_t *ent ) {
 	char		msg[64];
+	char		banMsg[96];
 
 	if ( !level.voteTime ) {
 		trap_SendServerCommand( ent-g_entities, "print \"No vote in progress.\n\"" );
@@ -1490,6 +1702,18 @@ void Cmd_Vote_f( gentity_t *ent ) {
 	}
 	if ( ent->client->sess.sessionTeam == TEAM_SPECTATOR ) {
 		trap_SendServerCommand( ent-g_entities, "print \"Not allowed to vote as spectator.\n\"" );
+		return;
+	}
+	// BFPR - votebanned players cannot cast votes
+	if ( G_IsSenderVotebanned( ent ) ) {
+		trap_SendServerCommand( ent-g_entities, 
+			va( "cp \"^1You are banned from \n^1voting on this server.\n%s\n\"", 
+				G_BanMessageForSender( qtrue, ent, &g_voteban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
+		trap_SendServerCommand( ent-g_entities, 
+			va( "print \"You are banned from voting on this server. %s\n\"", 
+				G_BanMessageForSender( qfalse, ent, &g_voteban_list, banMsg, sizeof(banMsg) ) ? banMsg : "" )
+		);
 		return;
 	}
 
@@ -1872,6 +2096,14 @@ void ClientCommand( int clientNum ) {
 		Cmd_TeamTask_f (ent);
 	else if (Q_stricmp (cmd, "levelshot") == 0)
 		Cmd_LevelShot_f (ent);
+	else if (Q_stricmp (cmd, "ignore") == 0) // BFPR - ignore <client id> command
+		Cmd_Ignore_f( ent );
+	else if (Q_stricmp (cmd, "unignore") == 0) // BFPR - unignore <client id> command
+		Cmd_Unignore_f( ent );
+	else if (Q_stricmp (cmd, "clear_ignores") == 0) // BFPR - clear_ignores command
+		Cmd_ClearIgnores_f( ent );
+	else if (Q_stricmp (cmd, "playerlist") == 0) // BFPR - playerlist command (client, no IPs)
+		Cmd_PlayerList_f( ent );
 	else if (Q_stricmp (cmd, "follow") == 0)
 		Cmd_Follow_f (ent);
 	else if (Q_stricmp (cmd, "follownext") == 0)

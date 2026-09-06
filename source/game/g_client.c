@@ -671,6 +671,10 @@ qboolean ClientUserinfoChanged( int clientNum ) {
 		client->pers.localClient = qtrue;
 	}
 
+	// BFPR - Resolve and persist the client's GUID
+	s = Info_ValueForKey( userinfo, "cl_guid" );
+	Q_strncpyz( client->pers.guid, s, sizeof(client->pers.guid) );
+
 	// check the item prediction
 	s = Info_ValueForKey( userinfo, "cg_predictItems" );
 	if ( !atoi( s ) ) {
