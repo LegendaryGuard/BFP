@@ -98,6 +98,9 @@ G_CVAR( g_podiumDrop, "g_podiumDrop", "70", 0, 0, qfalse )
 
 G_CVAR( g_allowVote, "g_allowVote", "1", CVAR_ARCHIVE, 0, qfalse )
 G_CVAR( g_listEntity, "g_listEntity", "0", 0, 0, qfalse )
+G_CVAR( g_muteban_list, "g_muteban_list", "", CVAR_ARCHIVE, 0, qfalse ) // BFPR - Mute ban list
+G_CVAR( g_playban_list, "g_playban_list", "", CVAR_ARCHIVE, 0, qfalse ) // BFPR - Play ban list
+G_CVAR( g_voteban_list, "g_voteban_list", "", CVAR_ARCHIVE, 0, qfalse ) // BFPR - Vote ban list
 
 G_CVAR( g_smoothClients, "g_smoothClients", "1", 0, 0, qfalse )
 G_CVAR( pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, qfalse )
