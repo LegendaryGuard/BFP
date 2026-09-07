@@ -368,10 +368,10 @@ The information in the map file can be useful for debugging and performance anal
 
     2. And find .dylib files in `build/release-darwin-x86_64` or `build/release-darwin-arm64` depending on the architecture you built.
 
-    > [!NOTE]
-    > **About 32-bit (`ARCH=x86`) on macOS**: this is *not* supported by any current Xcode/Clang toolchain, and it isn't something this Makefile can work around with flags — Apple removed the i386 SDK (including `libSystem`, the most basic system library) starting with Xcode 10 in 2018.
-    > 
-    > The Makefile still has an `ARCH=x86` code path under `PLATFORM=darwin` for the rare case where someone has an old Xcode 9 (or earlier) toolchain lying around, paired with an old macOS SDK (10.13/10.14-era). If you do get a working i386 build this way, keep in mind the resulting binary will only *run* on macOS 10.14 (Mojave) or earlier — Catalina (10.15) and every version after it refuse to execute 32-bit binaries at all, regardless of how they were compiled.
+> [!NOTE]
+> About 32-bit (`ARCH=x86`) on macOS: this is *not* supported by any current Xcode/Clang toolchain, and it isn't something this Makefile can work around with flags — Apple removed the i386 SDK (including `libSystem`, the most basic system library) starting with Xcode 10 in 2018.
+> 
+> The Makefile still has an `ARCH=x86` code path under `PLATFORM=darwin` for the rare case where someone has an old Xcode 9 (or earlier) toolchain lying around, paired with an old macOS SDK (10.13/10.14-era). If you do get a working i386 build this way, keep in mind the resulting binary will only *run* on macOS 10.14 (Mojave) or earlier — Catalina (10.15) and every version after it refuse to execute 32-bit binaries at all, regardless of how they were compiled.
 
 - ### Optional:
 
