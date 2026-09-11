@@ -504,6 +504,30 @@ typedef struct {
 
 	// BFP - Monster gamemode clientNum handling
 	int			monsterClientNum;
+
+	// BFPR - End-match voting (Xonotic-style)
+	int			emvPhase;					// EMV_* constant, broadcast via "emvstate" server command
+	int			emvPhaseStartTime;			// level.time the current phase started
+	int			emvPhaseEndTime;			// level.time the current phase will end
+	qboolean	emvLocked;					// qtrue once the g_endmatch_lock_time cutoff has fired for this phase
+
+	int			emvGametypeCandidates[MAX_ENDMATCH_GAMETYPE_CANDIDATES];		// gametype_t for real options, ignored for special ones
+	int			emvGametypeCandidateSpecial[MAX_ENDMATCH_GAMETYPE_CANDIDATES];	// EMV_OPT_* per candidate
+	int			emvGametypeCandidateCount;
+	int			emvGametypeVotes[MAX_ENDMATCH_GAMETYPE_CANDIDATES];
+	qboolean	emvGametypeLockedOut[MAX_ENDMATCH_GAMETYPE_CANDIDATES];		// set once emvLocked, non-leaders stay true for the rest of the phase
+
+	char		emvMapCandidates[MAX_ENDMATCH_MAP_CANDIDATES][MAX_QPATH];		// map name for real options, unused for special ones
+	int			emvMapCandidateSpecial[MAX_ENDMATCH_MAP_CANDIDATES];			// EMV_OPT_* per candidate
+	int			emvMapCandidateCount;
+	int			emvMapVotes[MAX_ENDMATCH_MAP_CANDIDATES];
+	qboolean	emvMapLockedOut[MAX_ENDMATCH_MAP_CANDIDATES];
+
+	int			emvWinnerGametype;
+	qboolean	emvWinnerIsRestart;			// map vote resolved to EMV_OPT_RESTART
+	char		emvWinnerMap[MAX_QPATH];
+
+	int			emvClientVote[MAX_CLIENTS];		// index voted for this phase, -1 if none yet - reset every phase
 } level_locals_t;
 
 
@@ -725,6 +749,7 @@ qboolean	G_IsSenderMuted( gentity_t *ent );	// BFPR - Mute the sender
 qboolean	G_IsSenderPlaybanned( gentity_t *ent );	// BFPR - Play-ban the sender
 qboolean	G_IsSenderVotebanned( gentity_t *ent );	// BFPR - Vote-ban the sender
 qboolean	G_BanMessageForSender( qboolean cp, gentity_t *ent, vmCvar_t *list, char *out, int outSize );	// BFPR - Format ban expiration and reason for a client
+void		Svcmd_EndMatch_f( void );	// BFPR - endmatch command
 
 //
 // g_weapon.c
@@ -759,6 +784,7 @@ void SendScoreboardMessageToAllClients( void );
 void QDECL G_Printf( const char *fmt, ... );
 void QDECL G_Error( const char *fmt, ... );
 void G_BroadcastServerCommand( int ignoreClient, const char *command );
+void LogExit( const char *string );
 
 //
 // g_client.c
@@ -806,6 +832,16 @@ void G_WriteClientSessionData( gclient_t *client );
 void UpdateTournamentInfo( void );
 void SpawnModelsOnVictoryPads( void );
 void Svcmd_AbortPodium_f( void );
+
+// BFPR - End-match voting (Xonotic-style)
+//
+// g_endmatch.c
+//
+void G_BeginEndMatchVote( void );
+void G_RunEndMatchVote( void );
+qboolean G_EndMatchVoteActive( void );
+void Cmd_EndMatchVote_f( gentity_t *ent );
+void G_SyncEndMatchVoteToClient( int clientNum );
 
 //
 // g_bot.c

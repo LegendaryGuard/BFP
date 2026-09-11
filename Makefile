@@ -479,6 +479,7 @@ CGOBJ_ = \
   $(B)/cgame/cg_draw.o \
   $(B)/cgame/cg_drawtools.o \
   $(B)/cgame/cg_effects.o \
+  $(B)/cgame/cg_endmatch.o \
   $(B)/cgame/cg_ents.o \
   $(B)/cgame/cg_event.o \
   $(B)/cgame/cg_info.o \
@@ -530,6 +531,7 @@ QAOBJ_ = \
   $(B)/game/g_client.o \
   $(B)/game/g_cmds.o \
   $(B)/game/g_combat.o \
+  $(B)/game/g_endmatch.o \
   $(B)/game/g_items.o \
   $(B)/game/g_mem.o \
   $(B)/game/g_misc.o \

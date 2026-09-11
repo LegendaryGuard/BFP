@@ -1142,6 +1142,19 @@ typedef struct {
 	qboolean		teamVoteModified[2];	// beep whenever changed
 	char			teamVoteString[2][MAX_STRING_TOKENS];
 
+	// BFPR - End-match voting (Xonotic-style)
+	int				emvPhase;				// EMV_* constant
+	int				emvPhaseStartTime, emvPhaseEndTime, emvOptionCount;
+	qboolean		emvLocked;				// mirrors level.emvLocked - non-leading options stop accepting votes
+	char			emvOptions[MAX_ENDMATCH_MAP_CANDIDATES][MAX_QPATH];
+	int				emvOptionSpecial[MAX_ENDMATCH_MAP_CANDIDATES];	// EMV_OPT_* per option
+	int				emvOptionVotes[MAX_ENDMATCH_MAP_CANDIDATES];
+	qboolean		emvOptionLockedOut[MAX_ENDMATCH_MAP_CANDIDATES];
+	int				emvWinnerIndex;			// -1 until emvresult is received for this phase
+	int				emvMyVoteIndex;			// this client's confirmed pick for the phase, -1 if none - reset whenever the phase changes
+	int				emvCursorIndex;			// arrow-key highlight, separate from the confirmed vote until Enter/Space is pressed - -1 if not yet moved, reset whenever the phase changes
+	qhandle_t		emvMapShaders[MAX_ENDMATCH_MAP_CANDIDATES];	// levelshot cache for the map vote grid, reset whenever emvopts arrives
+
 	int				levelStartTime;
 
 	int				scores1, scores2;		// from configstrings
@@ -1525,6 +1538,17 @@ void CG_DrawInformation( void );
 //
 qboolean CG_DrawOldScoreboard( void );
 void CG_DrawOldTourneyScoreboard( void );
+
+// BFPR - End-match voting (Xonotic-style)
+//
+// cg_endmatch.c
+//
+void CG_EndMatchVoteOptions( void );
+void CG_EndMatchVoteResult( void );
+void CG_EndMatchVoteState( void );
+void CG_DrawEndMatchVote( void );
+void CG_EndMatchCastVote( int index );
+qboolean CG_EndMatchVoteShowsScoreboard( void );
 
 //
 // cg_consolecmds.c

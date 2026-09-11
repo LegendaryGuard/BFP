@@ -81,7 +81,7 @@ QA_SRC = \
  bg_misc bg_lib bg_pmove bg_slidemove bg_weaponconfig \
  q_math q_shared \
  ai_bfp ai_dmnet ai_dmq3 ai_team ai_main ai_chat ai_cmd ai_vcmd \
- g_active g_arenas g_bot g_client g_cmds g_combat g_items g_mem g_misc \
+ g_active g_arenas g_bot g_client g_cmds g_combat g_endmatch g_items g_mem g_misc \
  g_missile g_mover g_session g_spawn g_svcmds g_target g_team \
  g_trigger g_utils g_weapon \
 
@@ -91,7 +91,7 @@ QA_SRC = \
 
 CG_SRC = \
  cg_main $(CGDIR)/cg_syscalls.asm \
- cg_aura cg_consolecmds cg_draw cg_drawtools cg_effects cg_ents cg_event cg_info \
+ cg_aura cg_consolecmds cg_draw cg_drawtools cg_effects cg_endmatch cg_ents cg_event cg_info \
  cg_localents cg_marks cg_particles cg_players cg_playerstate cg_predict cg_scoreboard \
  cg_servercmds cg_skinconfig cg_snapshot cg_trails cg_view cg_weapons \
  bg_weaponconfig bg_slidemove bg_pmove bg_lib bg_misc \

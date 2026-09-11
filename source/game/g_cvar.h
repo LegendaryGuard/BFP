@@ -108,4 +108,10 @@ G_CVAR( pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, qfalse )
 
 G_CVAR( g_rankings, "g_rankings", "0", 0, 0, qfalse )
 
+// BFPR - End-match voting (Xonotic-style)
+G_CVAR( g_endmatch_map_count, "g_endmatch_map_count", "6", CVAR_ARCHIVE, 0, qfalse )
+G_CVAR( g_endmatch_gametype_options, "g_endmatch_gametype_options", "0 3 5", CVAR_ARCHIVE, 0, qfalse )
+G_CVAR( g_endmatch_timeout, "g_endmatch_timeout", "30", CVAR_ARCHIVE, 0, qfalse )
+G_CVAR( g_endmatch_lock_time, "g_endmatch_lock_time", "5", CVAR_ARCHIVE, 0, qfalse )
+
 #undef G_CVAR

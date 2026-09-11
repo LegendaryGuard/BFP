@@ -44,6 +44,39 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	VOTE_TIME			30000	// 30 seconds before vote times out
 
+
+/*
+================================================================
+*/
+// BFPR - End-match voting (Xonotic-style)
+// set to 0 to fall back to vanilla Q3 behavior (readyToExit / CheckIntermissionExit)
+#define	BFPR_XONOTIC_STYLE_ENDMATCH			1
+
+#define	MAX_ENDMATCH_GAMETYPE_CANDIDATES	8
+// up to 25 real map candidates shown per vote, +1 for "Don't care"
+#define	MAX_ENDMATCH_MAP_CANDIDATES			26
+
+// end-match vote phases, sent to cgame via server commands
+#define	EMV_INACTIVE			0	// no end-match vote in progress
+#define	EMV_SCOREBOARD			1	// fixed scoreboard display, no voting yet
+#define	EMV_GAMETYPE_VOTE		2	// voting on next gametype
+#define	EMV_MAP_VOTE			3	// voting on next map
+#define	EMV_MAP_REVEAL			4	// showing the winning map before changing level
+
+// special, non-real end-match vote options: 
+// Sent alongside the option name so the client UI and 
+// the server's winner-resolution logic can tell a real gametype/map apart from these
+#define	EMV_OPT_NONE			0	// a normal, real gametype/map candidate
+#define	EMV_OPT_DONT_CARE		1	// "I don't mind", counts as an abstention
+// EMV_OPT_RESTART is not an offered vote option (Xonotic doesn't do that
+// either) - it's only used internally to mark that the map phase was
+// skipped entirely because the server only has a single map installed
+#define	EMV_OPT_RESTART			2
+/*
+================================================================
+*/
+
+
 #define	MINS_Z				-24
 #define	DEFAULT_VIEWHEIGHT	26
 #define CROUCH_VIEWHEIGHT	12

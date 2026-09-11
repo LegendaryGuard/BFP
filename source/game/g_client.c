@@ -1269,6 +1269,12 @@ void ClientBegin( int clientNum ) {
 	}
 	G_LogPrintf( "ClientBegin: %i\n", clientNum );
 
+	// BFPR - End-match voting (Xonotic-style)
+	// if this client is connecting while a vote sequence is already in progress, 
+	// bring them up to speed immediately instead of leaving them 
+	// without any vote UI until the next phase change
+	G_SyncEndMatchVoteToClient( clientNum );
+
 	// count current clients and rank for scoreboard
 	CalculateRanks();
 }

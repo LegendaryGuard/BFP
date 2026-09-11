@@ -1116,7 +1116,13 @@ void BeginIntermission( void ) {
 
 	// send the current scoring to all clients
 	SendScoreboardMessageToAllClients();
-
+	
+	// BFPR - End-match voting (Xonotic-style)
+#if BFPR_XONOTIC_STYLE_ENDMATCH
+	// kick off the scoreboard/gametype-vote/map-vote sequence instead
+	// of just waiting on readyToExit
+	G_BeginEndMatchVote();
+#endif
 }
 
 
@@ -1283,6 +1289,18 @@ void CheckIntermissionExit( void ) {
 	if ( g_gametype.integer == GT_SINGLE_PLAYER ) {
 		return;
 	}
+
+	// BFPR - End-match voting (Xonotic-style)
+#if BFPR_XONOTIC_STYLE_ENDMATCH
+	// let it drive the intermission instead of waiting on readyToExit
+	if ( g_endmatch_map_count.integer > 0 ) {
+		if ( !G_EndMatchVoteActive() ) { // make sure we don't get stuck if it didn't
+			G_BeginEndMatchVote();
+		}
+		G_RunEndMatchVote();
+		return;
+	}
+#endif
 
 	// see which players are ready
 	ready = 0;

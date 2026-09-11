@@ -150,6 +150,12 @@ You'll notice some differences and things that the original Bid For Power didn't
   - muteban: (server side only) stores a ban to mute completely a client in the server, like ignore but in server permanently, usage: `mute <client id>`; to remove from mute ban list: `unmute <ban_id, ip or guid>`; to check mute ban list: `mutebans`
   - voteban: (server side only) stores a ban to avoid calling a vote and voting in the server, usage: `voteban <client id>`; to remove from vote ban list: `unvoteban <ban_id, ip or guid>`; to check vote ban list: `votebans`
   - playban: (server side only) stores a ban and forces to spectate a client in the server and cannot join in the matches, usage: `playban <client id>`; to remove from play ban list: `unplayban <ban_id, ip or guid>`; to check play ban list: `playbans`
+- `endmatch` command to end the match instantly instead of waiting 1 minute with `timelimit 1`, also it can be called in votes
+- when a match is ended, appears gametype voting and after that, appears map voting with random maps on list, new cvars: 
+  - `g_endmatch_map_count <number of maps>`: number of maps as vote options
+  - `g_endmatch_gametype_options <0 ... 7>`: set gamemodes as vote options, e.g. '0 3 4 6' shows FFA, Survival, Monster and TDM gamemodes, '' means no gamemode vote will be displayed
+  - `g_endmatch_timeout <seconds>`: voting time
+  - `g_endmatch_lock_time <seconds>`: seconds after locking randomly vote options and leaving 3 or 2 to be voted
 
 
 # How to build

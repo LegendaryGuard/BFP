@@ -1459,6 +1459,27 @@ void	Svcmd_ForceTeam_f( void ) {
 
 
 /*
+===================
+Svcmd_EndMatch_f
+===================
+*/
+void Svcmd_EndMatch_f( void ) { // BFPR - endmatch command
+	if ( level.intermissiontime || level.intermissionQueued ) {
+		G_Printf( "endmatch: the match has already ended.\n" );
+		return;
+	}
+
+	if ( g_gametype.integer == GT_SINGLE_PLAYER ) {
+		G_Printf( "endmatch: not usable in single player.\n" );
+		return;
+	}
+
+	trap_SendServerCommand( -1, "print \"Match ended.\n\"" );
+	LogExit( "Endmatch called." );
+}
+
+
+/*
 =================
 ConsoleCommand
 
@@ -1501,6 +1522,11 @@ qboolean	ConsoleCommand( void ) {
 
 	if (Q_stricmp (cmd, "abort_podium") == 0) {
 		Svcmd_AbortPodium_f();
+		return qtrue;
+	}
+
+	if ( Q_stricmp ( cmd, "endmatch" ) == 0 ) { // BFPR - endmatch command
+		Svcmd_EndMatch_f();
 		return qtrue;
 	}
 
