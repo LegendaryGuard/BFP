@@ -2262,7 +2262,15 @@ static void CG_DrawIntermission( void ) {
 		return;
 	}
 	cg.scoreFadeTime = cg.time;
-	cg.scoreBoardShowing = CG_DrawScoreboard();
+
+	// BFPR - End-match voting (Xonotic-style)
+	if ( CG_EndMatchVoteShowsScoreboard() ) {
+		cg.scoreBoardShowing = CG_DrawScoreboard();
+	} else {
+		cg.scoreBoardShowing = qfalse;
+	}
+
+	CG_DrawEndMatchVote();
 }
 
 /*

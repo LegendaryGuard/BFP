@@ -1603,9 +1603,10 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 	} else if ( !Q_stricmp( arg1, "g_allowSpectatorChat" ) ) { // BFP - Allow spectator chat
 	} else if ( !Q_stricmp( arg1, "g_meleeOnly" ) ) { // BFP - Melee only
 	} else if ( !Q_stricmp( arg1, "g_noFlight" ) ) { // BFP - No flight
+	} else if ( !Q_stricmp( arg1, "endmatch" ) ) { // BFPR - endmatch command
 	} else {
 		trap_SendServerCommand( ent-g_entities, "print \"Invalid vote string.\n\"" );
-		trap_SendServerCommand( ent-g_entities, "print \"Vote commands are: map_restart, nextmap, map <mapname>, g_gametype <n>, kick <player>, clientkick <clientnum>, g_doWarmup, timelimit <time>, fraglimit <frags>, g_basePL <base pl>, g_hitStun <0/1>, g_allowSpectatorChat <0/1>, g_meleeOnly <0/1>, g_noFlight <0/1>.\n\"" );
+		trap_SendServerCommand( ent-g_entities, "print \"Vote commands are: map_restart, nextmap, map <mapname>, g_gametype <n>, kick <player>, clientkick <clientnum>, g_doWarmup, timelimit <time>, fraglimit <frags>, g_basePL <base pl>, g_hitStun <0/1>, g_allowSpectatorChat <0/1>, g_meleeOnly <0/1>, g_noFlight <0/1>, endmatch.\n\"" );
 		return;
 	}
 
@@ -1646,6 +1647,9 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 			return;
 		}
 		Com_sprintf( level.voteString, sizeof( level.voteString ), "vstr nextmap");
+		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "%s", level.voteString );
+	} else if ( !Q_stricmp( arg1, "endmatch" ) ) { // BFPR - endmatch command in callvote
+		Com_sprintf( level.voteString, sizeof( level.voteString ), "endmatch" );
 		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "%s", level.voteString );
 	} else {
 		Com_sprintf( level.voteString, sizeof( level.voteString ), "%s \"%s\"", arg1, arg2 );
@@ -2073,6 +2077,11 @@ void ClientCommand( int clientNum ) {
 	}
 	if (Q_stricmp (cmd, "score") == 0) {
 		Cmd_Score_f (ent);
+		return;
+	}
+	// BFPR - End-match voting (Xonotic-style)
+	if ( Q_stricmp ( cmd, "endmatchvote" ) == 0 ) {
+		Cmd_EndMatchVote_f( ent );
 		return;
 	}
 

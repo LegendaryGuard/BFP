@@ -877,6 +877,20 @@ static void CG_ServerCommand( void ) {
 		return;
 	}
 
+	// BFPR - End-match voting (Xonotic-style)
+	if ( !strcmp( cmd, "emvopts" ) ) {
+		CG_EndMatchVoteOptions();
+		return;
+	}
+	if ( !strcmp( cmd, "emvresult" ) ) {
+		CG_EndMatchVoteResult();
+		return;
+	}
+	if ( !strcmp( cmd, "emvstate" ) ) {
+		CG_EndMatchVoteState();
+		return;
+	}
+
   if ( Q_stricmp (cmd, "remapShader") == 0 ) {
 		if (trap_Argc() == 4) {
 			trap_R_RemapShader(CG_Argv(1), CG_Argv(2), CG_Argv(3));

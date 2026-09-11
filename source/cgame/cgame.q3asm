@@ -6,6 +6,7 @@ cg_consolecmds
 cg_draw
 cg_drawtools
 cg_effects
+cg_endmatch
 cg_ents
 cg_event
 cg_info
