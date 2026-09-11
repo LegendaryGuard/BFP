@@ -2190,7 +2190,11 @@ CG_DrawVote
 */
 static void CG_DrawVote(void) {
 	char	*s;
-	int		sec;
+	// BFPR - Xonotic-style call vote box
+	char	yesLabel[32], noLabel[32];
+	int		sec, i, w, yesBars, noBars;
+	float	boxX, boxY, boxW, boxH, yesCx, noCx;
+	vec4_t	bgColor = { 0, 0, 0.75, 0.15f };
 
 	if ( !cgs.voteTime ) {
 		return;
@@ -2206,8 +2210,68 @@ static void CG_DrawVote(void) {
 	if ( sec < 0 ) {
 		sec = 0;
 	}
-	s = va("VOTE(%i):%s yes:%i no:%i", sec, cgs.voteString, cgs.voteYes, cgs.voteNo );
-	CG_DrawSmallString( 0, 58, s, 1.0F );
+
+	// BFPR - Xonotic-style call vote box
+	// panel geometry
+	boxX = 0;
+	boxY = 58;
+	boxW = 260;
+	boxH = 92;
+
+	// box
+	CG_FillRect( boxX, boxY, boxW, boxH, bgColor );
+
+	// title
+	s = "A vote has been called for:";
+	w = CG_DrawStrlen( s ) * SMALLCHAR_WIDTH;
+	CG_DrawSmallStringColor( boxX + ( boxW - w ) * 0.5f, boxY + 4, s, colorWhite );
+
+	// timer
+	s = va( "%i", sec );
+	w = CG_DrawStrlen( s ) * SMALLCHAR_WIDTH;
+	CG_DrawSmallStringColor( boxX + boxW - w - 4, boxY + 4, s, colorWhite );
+
+	// chain vote
+	w = CG_DrawStrlen( cgs.voteString ) * SMALLCHAR_WIDTH;
+	CG_DrawSmallStringColor( boxX + ( boxW - w ) * 0.5f, boxY + 24, cgs.voteString, colorYellow );
+
+	yesBars = ( cgs.voteYes > 10 ) ? 10 : cgs.voteYes;
+	noBars  = ( cgs.voteNo  > 10 ) ? 10 : cgs.voteNo;
+
+	Com_sprintf( yesLabel, sizeof(yesLabel), "Yes (%i)", cgs.voteYes );
+	Com_sprintf( noLabel,  sizeof(noLabel), "No (%i)", cgs.voteNo );
+
+	yesCx = boxX + boxW * 0.25f;
+	noCx  = boxX + boxW * 0.75f;
+
+	// labels
+	w = CG_DrawStrlen( yesLabel ) * SMALLCHAR_WIDTH;
+	CG_DrawSmallStringColor( yesCx - w * 0.5f, boxY + 50, yesLabel, colorGreen );
+	w = CG_DrawStrlen( noLabel ) * SMALLCHAR_WIDTH;
+	CG_DrawSmallStringColor( noCx - w * 0.5f, boxY + 50, noLabel, colorRed );
+
+	// vote bars
+	{
+		const float	BAR_WIDTH = 8.0f;
+		const float	BAR_HEIGHT = 10.0f;
+		const float	BAR_GAP = 2.0f;
+		const float	BAR_GROUP_WIDTH = 10.0f * BAR_WIDTH + 9.0f * BAR_GAP; // 98 px
+		const float	BAR_Y = boxY + 70;
+		const float	YES_START_X = yesCx - BAR_GROUP_WIDTH * 0.5f;
+		const float	NO_START_X = noCx - BAR_GROUP_WIDTH * 0.5f;
+		const int	NUM_BARS = 10;
+		vec4_t	yesOn = { 0.20f, 1.00f, 0.20f, 1.00f };
+		vec4_t	yesOff = { 0.20f, 1.00f, 0.20f, 0.25f };
+		vec4_t	noOn = { 1.00f, 0.20f, 0.20f, 1.00f };
+		vec4_t	noOff = { 1.00f, 0.20f, 0.20f, 0.25f };
+
+		for ( i = 0; i < NUM_BARS; i++ ) {
+			CG_FillRect( YES_START_X + i * ( BAR_WIDTH + BAR_GAP ), BAR_Y, BAR_WIDTH, BAR_HEIGHT,
+			             ( i < yesBars ) ? yesOn : yesOff );
+			CG_FillRect( NO_START_X + i * ( BAR_WIDTH + BAR_GAP ), BAR_Y, BAR_WIDTH, BAR_HEIGHT,
+			             ( i < noBars ) ? noOn : noOff );
+		}
+	}
 }
 
 /*

@@ -156,6 +156,7 @@ You'll notice some differences and things that the original Bid For Power didn't
   - `g_endmatch_gametype_options <0 ... 7>`: set gamemodes as vote options, e.g. '0 3 4 6' shows FFA, Survival, Monster and TDM gamemodes, '' means no gamemode vote will be displayed
   - `g_endmatch_timeout <seconds>`: voting time
   - `g_endmatch_lock_time <seconds>`: seconds after locking randomly vote options and leaving 3 or 2 to be voted
+- new call voting HUD box
 
 
 # How to build
