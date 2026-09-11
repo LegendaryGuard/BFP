@@ -867,9 +867,6 @@ void G_ChargeDamageScaling( gentity_t *ent, float radius ) { // BFP - Charge dam
 	if ( chargeLevel < 0 ) {
 		chargeLevel = 0;
 	}
-	if ( chargeLevel > totalCharge ) { // don't surpass the total
-		chargeLevel = totalCharge;
-	}
 
 	r = radius + chargeLevel * ent->bfpWeapon->chargeRadiusMult;
 	er = ent->bfpWeapon->explosionRadius + chargeLevel * ent->bfpWeapon->chargeExpRadiusMult;
