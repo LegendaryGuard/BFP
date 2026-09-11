@@ -85,8 +85,6 @@ vmCvar_t bot_interbreedwrite;
 
 char mapname[MAX_QPATH];
 
-void ExitLevel( void );
-
 
 /*
 ==================

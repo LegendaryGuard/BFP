@@ -941,12 +941,10 @@ static void CG_DrawEndMatchMapReveal( void ) {
 	// labels anchored to the final position, not the animated one, so they don't jitter;
 	// fade them in with the same curve so they don't pop in ahead of the shader
 	{
-		vec4_t	labelGreen, labelWhite;
+		vec4_t	labelGreen;
 
 		Vector4Copy( colorGreen, labelGreen );
 		labelGreen[3] = alpha;
-		Vector4Copy( colorWhite, labelWhite );
-		labelWhite[3] = alpha;
 
 		UI_DrawProportionalString( 320, finalY + EMV_MAP_REVEAL_SHADER_SIZE + 10, mapName,
 			UI_CENTER|UI_BIGFONT|UI_DROPSHADOW, labelGreen );
