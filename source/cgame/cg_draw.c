@@ -2185,6 +2185,58 @@ static void CG_DrawSpectator(void) {
 
 /*
 =================
+CG_DrawMatchTime
+=================
+*/
+static void CG_DrawMatchTime( void ) { // BFPR - Match time
+	int		elapsedMsec, displaySecs, mins, secs, w;
+	char	*s;
+	vec4_t	color;
+
+	// don't bother during intermission / single player podium
+	if ( cg.snap->ps.pm_type == PM_INTERMISSION ) {
+		return;
+	}
+	if ( cgs.gametype == GT_SINGLE_PLAYER ) {
+		return;
+	}
+
+	elapsedMsec = cg.time - cgs.levelStartTime;
+	if ( elapsedMsec < 0 ) {
+		elapsedMsec = 0;
+	}
+
+	if ( cgs.timelimit > 0 ) { // count down, timelimit (minutes) - elapsed
+		displaySecs = cgs.timelimit * 60 - ( elapsedMsec * 0.001 );
+		if ( displaySecs < 0 ) {
+			displaySecs = 0;
+		}
+
+		// color feedback based on remaining time
+		if ( displaySecs <= 60 ) { // <= 1 minute left
+			Vector4Copy( colorRed, color );
+		} else if ( displaySecs <= 5 * 60 ) { // <= 5 minutes left
+			Vector4Copy( colorYellow, color );
+		} else { // normal
+			Vector4Copy( colorWhite, color );
+		}
+	} else { // infinite, count up from 00:00 - always white
+		displaySecs = elapsedMsec * 0.001;
+		Vector4Copy( colorWhite, color );
+	}
+
+	mins = displaySecs / 60;
+	secs = displaySecs % 60;
+
+	s = va( "%2i:%02i", mins, secs );
+	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
+
+	// set to top-center
+	CG_DrawBigStringColor( ( SCREEN_WIDTH - w ) / 2, 4, s, color );
+}
+
+/*
+=================
 CG_DrawVote
 =================
 */
@@ -2662,6 +2714,7 @@ static void CG_Draw2D( void ) {
 		}
 	}
 
+	CG_DrawMatchTime(); // BFPR - Match time
 	CG_DrawVote();
 	CG_DrawTeamVote();
 

@@ -157,6 +157,8 @@ You'll notice some differences and things that the original Bid For Power didn't
   - `g_endmatch_timeout <seconds>`: voting time
   - `g_endmatch_lock_time <seconds>`: seconds after locking randomly vote options and leaving 3 or 2 to be voted
 - new call voting HUD box
+- gamemode name in the top of the scoreboard
+- match timer HUD in top-center
 
 
 # How to build

@@ -73,7 +73,27 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 static qboolean localClient; // true if local client has been displayed
 
 
-							 /*
+/*
+=================
+CG_ScoreboardGametypeName
+=================
+*/
+static const char *CG_ScoreboardGametypeName( void ) { // BFPR - Show gametype name
+	switch ( cgs.gametype ) {
+	case GT_FFA:			return "Free For All";
+	case GT_SINGLE_PLAYER:	return "Single Player";
+	case GT_TOURNAMENT:		return "Tournament";
+	case GT_SURVIVAL:		return "Survival";					// BFP - Survival
+	case GT_MONSTER:		return "Monster";					// BFP - Monster
+	case GT_TEAM:			return "Team Deathmatch";
+	case GT_TLMS:			return "Team Last Man Standing";	// BFP - Team Last Man Standing
+	case GT_CTF:			return "Capture The Flag";
+	default:				return "Unknown Gametype";
+	}
+}
+
+
+/*
 =================
 CG_DrawScoreboard
 =================
@@ -299,6 +319,12 @@ qboolean CG_DrawOldScoreboard( void ) {
 		fade = *fadeColor;
 	}
 
+	// BFPR - Show current gametype name above the scoreboard
+	{
+		const char	*gametypeName = CG_ScoreboardGametypeName();
+		int	gw = CG_DrawStrlen( gametypeName ) * BIGCHAR_WIDTH;
+		CG_DrawBigString( ( SCREEN_WIDTH - gw ) / 2, 40, gametypeName, fade );
+	}
 
 	// fragged by ... line
 	if ( cg.killerName[0] ) {
