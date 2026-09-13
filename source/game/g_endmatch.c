@@ -27,7 +27,8 @@ static const char *gametypeVoteNames[] = {
 	"Capture the Flag"
 };
 
-#define	EMV_MAP_LIST_BUFFER_SIZE	32768
+#define	EMV_ARENA_LIST_BUFFER_SIZE	32768
+#define	EMV_ARENA_FILE_BUFFER_SIZE	4096
 
 /*
 ==================
@@ -44,34 +45,138 @@ static const char *G_EndMatchGametypeName( int gametype ) {
 
 /*
 ==================
-G_ListServerMaps
+G_EndMatchGametypeBits
+
+Parses a .arena "type" value (space-separated tokens like "ffa tourney")
+into a bitmask of 1<<gametype_t, so a map's arena file works the 
+same way here as it does there
 ==================
 */
-static int G_ListServerMaps( char names[][MAX_QPATH], int maxNames ) {
-	static char	listBuf[EMV_MAP_LIST_BUFFER_SIZE];
-	int			total;
-	int			i;
-	const char	*ptr;
-	char		trimmed[MAX_QPATH];
-	int			len;
+static int G_EndMatchGametypeBits( const char *string ) {
+	int		bits;
+	char	*p, *token;
+	char	buf[EMV_ARENA_FILE_BUFFER_SIZE];
 
-	total = trap_FS_GetFileList( "maps", ".bsp", listBuf, sizeof( listBuf ) );
+	Q_strncpyz( buf, string, sizeof( buf ) );
+	p = buf;
+	bits = 0;
 
-	ptr = listBuf;
-	for ( i = 0 ; i < total ; i++ ) {
-		if ( i < maxNames ) {
-			Q_strncpyz( trimmed, ptr, sizeof( trimmed ) );
-			len = (int)strlen( trimmed );
-			// strip the ".bsp" extension
-			if ( len > 4 && !Q_stricmp( trimmed + len - 4, ".bsp" ) ) {
-				trimmed[len - 4] = 0;
-			}
-			Q_strncpyz( names[i], trimmed, MAX_QPATH );
+	while ( 1 ) {
+		token = COM_ParseExt( &p, qfalse );
+		if ( token[0] == 0 ) {
+			break;
 		}
-		ptr += strlen( ptr ) + 1;
+
+		if ( !Q_stricmp( token, "ffa" ) ) {
+			bits |= 1 << GT_FFA;
+		} else if ( !Q_stricmp( token, "tourney" ) ) {
+			bits |= 1 << GT_TOURNAMENT;
+		} else if ( !Q_stricmp( token, "single" ) ) {
+			bits |= 1 << GT_SINGLE_PLAYER;
+		} else if ( !Q_stricmp( token, "survival" ) ) { // BFP - Survival
+			bits |= 1 << GT_SURVIVAL;
+		} else if ( !Q_stricmp( token, "monster" ) || !Q_stricmp( token, "oozaru" ) ) { // BFP - Monster
+			bits |= 1 << GT_MONSTER;
+		} else if ( !Q_stricmp( token, "team" ) ) {
+			bits |= 1 << GT_TEAM;
+		} else if ( !Q_stricmp( token, "ctf" ) ) {
+			bits |= 1 << GT_CTF;
+		} else if ( !Q_stricmp( token, "lms" ) || !Q_stricmp( token, "tlms" ) ) { // BFP - Team Last Man Standing
+			bits |= 1 << GT_TLMS;
+		}
 	}
 
-	return total;
+	return bits;
+}
+
+
+/*
+==================
+G_ListServerMapsForGametype
+
+Reads every scripts/filename.arena file and returns the "map" of each one whose
+"type" bitmask includes the given gametype
+==================
+*/
+static int G_ListServerMapsForGametype( int gametype, char names[][MAX_QPATH], int maxNames ) {
+	static char	arenaList[EMV_ARENA_LIST_BUFFER_SIZE];
+	int			numArenaFiles, i, count;
+	const char	*ptr;
+	int			wantBit;
+
+	wantBit = 1 << gametype;
+	count = 0;
+
+	numArenaFiles = trap_FS_GetFileList( "scripts", ".arena", arenaList, sizeof( arenaList ) );
+
+	ptr = arenaList;
+	for ( i = 0 ; i < numArenaFiles ; i++ ) {
+		fileHandle_t	f;
+		int				len;
+		char			fileBuf[EMV_ARENA_FILE_BUFFER_SIZE];
+		char			*text_p, *token;
+		char			info[EMV_ARENA_FILE_BUFFER_SIZE];
+		const char		*mapName, *typeString;
+
+		len = trap_FS_FOpenFile( va( "scripts/%s", ptr ), &f, FS_READ );
+		if ( f && len > 0 && len < (int)sizeof( fileBuf ) - 1 ) {
+			trap_FS_Read( fileBuf, len, f );
+			fileBuf[len] = 0;
+		} else {
+			fileBuf[0] = 0;
+		}
+		if ( f ) {
+			trap_FS_FCloseFile( f );
+		}
+		ptr += strlen( ptr ) + 1;
+
+		if ( !fileBuf[0] ) {
+			continue;
+		}
+
+		// .arena files are a single { ... } info-string-like block;
+		// pull it out between the braces so Info_ValueForKey can read it
+		text_p = fileBuf;
+		token = COM_ParseExt( &text_p, qtrue );
+		if ( token[0] != '{' ) {
+			continue;
+		}
+
+		info[0] = 0;
+		while ( 1 ) {
+			char	key[MAX_TOKEN_CHARS];
+
+			token = COM_ParseExt( &text_p, qtrue );
+			if ( !token[0] ) {
+				break;
+			}
+			if ( token[0] == '}' ) {
+				break;
+			}
+			Q_strncpyz( key, token, sizeof( key ) );
+
+			token = COM_ParseExt( &text_p, qfalse );
+
+			Info_SetValueForKey( info, key, token );
+		}
+
+		mapName = Info_ValueForKey( info, "map" );
+		typeString = Info_ValueForKey( info, "type" );
+		if ( !mapName[0] ) {
+			continue;
+		}
+
+		if ( !( G_EndMatchGametypeBits( typeString ) & wantBit ) ) {
+			continue;
+		}
+
+		if ( count < maxNames ) {
+			Q_strncpyz( names[count], mapName, MAX_QPATH );
+		}
+		count++;
+	}
+
+	return count;
 }
 
 
@@ -141,16 +246,17 @@ static void G_ParseGametypePool( void ) {
 ==================
 G_CountRealGametypeCandidates
 
-How many *real* (non "Don't care") gametypes are in the pool. 
-Used to decide whether the gametype vote phase should run at all
+How many real (non-"Don't care") gametypes in 
+g_endmatch_gametype_options resolves to
 ==================
 */
-static int G_CountRealGametypeCandidates( void ) {
+static int G_CountRealGametypeCandidates( int *onlyGametype ) {
 	char	buf[MAX_STRING_CHARS];
 	char	*s, *tok;
-	int		gt, count;
+	int		gt, count, last;
 
 	count = 0;
+	last = g_gametype.integer;
 
 	Q_strncpyz( buf, g_endmatch_gametype_options.string, sizeof( buf ) );
 	s = buf;
@@ -177,9 +283,18 @@ static int G_CountRealGametypeCandidates( void ) {
 			continue;
 		}
 		count++;
+		last = gt;
 	}
 
-	return count ? count : 1; // the g_gametype.integer fallback counts as one real option
+	if ( !count ) {
+		count = 1; // g_gametype.integer fallback counts as one real option
+	}
+
+	if ( count == 1 && onlyGametype ) {
+		*onlyGametype = last;
+	}
+
+	return count;
 }
 
 
@@ -200,7 +315,7 @@ static void G_PickRandomMapCandidates( void ) {
 
 	level.emvMapCandidateCount = 0;
 
-	totalOnDisk = G_ListServerMaps( allMaps, (int)ARRAY_LEN( allMaps ) );
+	totalOnDisk = G_ListServerMapsForGametype( level.emvWinnerGametype, allMaps, (int)ARRAY_LEN( allMaps ) );
 	poolCount = totalOnDisk;
 	if ( poolCount > (int)ARRAY_LEN( allMaps ) ) {
 		poolCount = (int)ARRAY_LEN( allMaps );
@@ -247,13 +362,13 @@ static void G_PickRandomMapCandidates( void ) {
 ==================
 G_CountRealMapCandidates
 
-How many .bsp files exist under maps/. Used to decide whether the map
-vote phase should run at all (a single-map server always just restarts)
+How many maps advertise the given gametype in their .arena file. 
+To decide whether the map vote phase should run at all
 ==================
 */
-static int G_CountRealMapCandidates( void ) {
+static int G_CountRealMapCandidates( int gametype ) {
 	static char	allMaps[64][MAX_QPATH];
-	return G_ListServerMaps( allMaps, (int)ARRAY_LEN( allMaps ) );
+	return G_ListServerMapsForGametype( gametype, allMaps, (int)ARRAY_LEN( allMaps ) );
 }
 
 
@@ -387,16 +502,12 @@ void G_SyncEndMatchVoteToClient( int clientNum ) {
 	if ( level.emvPhase == EMV_GAMETYPE_VOTE || level.emvPhase == EMV_MAP_VOTE ) {
 		G_SendEndMatchVoteOptions( clientNum );
 	} else if ( level.emvPhase == EMV_MAP_REVEAL ) {
-		// the vote that led to this reveal already happened before this
-		// client connected - replay its result too, using whichever
-		// phase actually produced the map reveal we're currently in
+		trap_SendServerCommand( clientNum, va( "emvopts %i 1 %i \"%s\"", EMV_GAMETYPE_VOTE, EMV_OPT_NONE, G_EndMatchGametypeName( level.emvWinnerGametype ) ) );
+		G_SendEndMatchVoteResult( clientNum, EMV_GAMETYPE_VOTE, 0 );
+
 		if ( level.emvWinnerIsRestart ) {
 			G_SendEndMatchVoteResult( clientNum, EMV_MAP_VOTE, -1 );
 		} else {
-			// the client has no candidate list for a phase that's
-			// already over, but CG_EndMatchVoteResult only needs the
-			// winner's name, so send a one-option "list" carrying just
-			// that map, with index 0 as the winner
 			trap_SendServerCommand( clientNum, va( "emvopts %i 1 %i \"%s\"", EMV_MAP_VOTE, EMV_OPT_NONE, level.emvWinnerMap ) );
 			G_SendEndMatchVoteResult( clientNum, EMV_MAP_VOTE, 0 );
 		}
@@ -792,21 +903,26 @@ void G_RunEndMatchVote( void ) {
 	}
 
 	switch ( level.emvPhase ) {
-	case EMV_SCOREBOARD:
-		if ( G_CountRealGametypeCandidates() <= 1 ) {
-			// only one real gametype available - skip the vote silently
+	case EMV_SCOREBOARD: {
+		int	onlyGametype = g_gametype.integer;
+
+		if ( G_CountRealGametypeCandidates( &onlyGametype ) <= 1 ) {
+			level.emvWinnerGametype = onlyGametype;
+			trap_SendServerCommand( -1, va( "emvopts %i 1 %i \"%s\"", EMV_GAMETYPE_VOTE, EMV_OPT_NONE, G_EndMatchGametypeName( onlyGametype ) ) );
+			G_SendEndMatchVoteResult( -1, EMV_GAMETYPE_VOTE, 0 );
 			G_EndMatchEnterPhase( EMV_MAP_VOTE );
 		} else {
 			G_EndMatchEnterPhase( EMV_GAMETYPE_VOTE );
 		}
 		break;
+	}
 
 	case EMV_GAMETYPE_VOTE:
 		winnerIndex = G_PickWinner( level.emvGametypeVotes, level.emvGametypeCandidateSpecial, level.emvGametypeLockedOut, level.emvGametypeCandidateCount );
 		level.emvWinnerGametype = level.emvGametypeCandidates[winnerIndex];
 		G_SendEndMatchVoteResult( -1, EMV_GAMETYPE_VOTE, winnerIndex );
 
-		if ( G_CountRealMapCandidates() <= 1 ) {
+		if ( G_CountRealMapCandidates( level.emvWinnerGametype ) <= 1 ) {
 			// single-map server - nothing to vote on, just restart
 			level.emvWinnerIsRestart = qtrue;
 			G_SendEndMatchVoteResult( -1, EMV_MAP_VOTE, -1 );
