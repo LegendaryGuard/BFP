@@ -1546,6 +1546,7 @@ void CG_DrawOldTourneyScoreboard( void );
 void CG_EndMatchVoteOptions( void );
 void CG_EndMatchVoteResult( void );
 void CG_EndMatchVoteState( void );
+void CG_DrawEndMatchCountdown( void );
 void CG_DrawEndMatchVote( void );
 void CG_EndMatchCastVote( int index );
 qboolean CG_EndMatchVoteShowsScoreboard( void );

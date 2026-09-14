@@ -954,6 +954,80 @@ static void CG_DrawEndMatchMapReveal( void ) {
 
 /*
 ==================
+CG_DrawEndMatchNextMatchBanner
+==================
+*/
+static void CG_DrawEndMatchNextMatchBanner( void ) {
+	const char	*msg = "LOADING MATCH...";
+	float		textW, boxW, boxH, boxX, boxY, alpha;
+	vec4_t		bgColor, border;
+	int			pulse;
+
+	textW = CG_DrawStrlen( msg ) * BIGCHAR_WIDTH;
+	boxW = textW + 60.0f;
+	boxH = BIGCHAR_HEIGHT + 40.0f;
+	boxX = ( SCREEN_WIDTH  - boxW ) * 0.5f;
+	boxY = ( SCREEN_HEIGHT - boxH ) * 0.5f - 40.0f;
+
+	// pulse the alpha so it feels alive (400 ms on/off)
+	pulse = ( cg.time / 400 ) & 1;
+	alpha = pulse ? 0.80f : 0.55f;
+
+	bgColor[0] = 0.75f;
+	bgColor[1] = 0.00f;
+	bgColor[2] = 0.00f;
+	bgColor[3] = alpha;
+
+	border[0] = 1.00f;
+	border[1] = 0.25f;
+	border[2] = 0.25f;
+	border[3] = 0.90f;
+
+	CG_FillRect( boxX, boxY, boxW, boxH, bgColor );
+	CG_DrawRect( boxX, boxY, boxW, boxH, 2.0f, border );
+	CG_DrawBigStringColor( (int)( ( SCREEN_WIDTH  - textW ) * 0.5f ),
+						(int)( boxY + ( boxH - BIGCHAR_HEIGHT ) * 0.5f ),
+						msg, colorWhite );
+}
+
+
+/*
+==================
+CG_DrawEndMatchCountdown
+==================
+*/
+void CG_DrawEndMatchCountdown( void ) {
+	int		seconds, w;
+	char	*s;
+	vec4_t	color;
+
+	if ( cgs.emvPhase != EMV_SCOREBOARD ) {
+		return;
+	}
+
+	seconds = ( cgs.emvPhaseEndTime - cg.time + 999 ) / 1000;
+	if ( seconds <= 0 ) {
+		return;
+	}
+
+	s = va( "%i %s left", seconds, ( seconds == 1 ) ? "second" : "seconds" );
+	w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
+
+	if ( seconds <= 5 ) {
+		Vector4Copy( colorRed, color );
+	} else if ( seconds <= 10 ) {
+		Vector4Copy( colorYellow, color );
+	} else {
+		Vector4Copy( colorWhite, color );
+	}
+
+	// top-center, just below match time
+	CG_DrawBigStringColor( ( SCREEN_WIDTH - w ) / 2, 8, s, color );
+}
+
+
+/*
+==================
 CG_DrawEndMatchVote
 ==================
 */
@@ -965,7 +1039,14 @@ void CG_DrawEndMatchVote( void ) {
 		if ( CG_EndMatchScoreboardKeyHeld() ) {
 			return; // caller draws the normal scoreboard for us
 		}
+		if ( cgs.emvOptionCount <= 0 ) {
+			break;  // nothing cached (e.g. very late joiner)
+		}
 		CG_DrawEndMatchOptionList( 56, "Decide the gametype" );
+		break;
+
+	case EMV_FINAL_HOLD:
+		CG_DrawEndMatchNextMatchBanner();
 		break;
 
 	case EMV_MAP_VOTE:
@@ -997,8 +1078,8 @@ qboolean CG_EndMatchVoteShowsScoreboard( void ) {
 	if ( cgs.emvPhase == EMV_MAP_REVEAL ) {
 		return qfalse;
 	}
-	if ( cgs.emvPhase != EMV_GAMETYPE_VOTE && cgs.emvPhase != EMV_MAP_VOTE ) {
-		return qtrue;
+	if ( cgs.emvPhase == EMV_GAMETYPE_VOTE || cgs.emvPhase == EMV_MAP_VOTE ) {
+		return CG_EndMatchScoreboardKeyHeld();
 	}
-	return CG_EndMatchScoreboardKeyHeld();
+	return qtrue;
 }

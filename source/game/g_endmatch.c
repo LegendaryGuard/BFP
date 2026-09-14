@@ -746,6 +746,7 @@ static void G_EndMatchEnterPhase( int phase ) {
 		duration = g_endmatch_timeout.integer * 1000;
 		break;
 	case EMV_MAP_REVEAL:
+	case EMV_FINAL_HOLD:
 		duration = 2500;
 		break;
 	}
@@ -868,6 +869,76 @@ static qboolean G_EndMatchUnanimousVote( void ) {
 
 /*
 ==================
+G_IsRealMapName
+==================
+*/
+static qboolean G_IsRealMapName( const char *name, int gametype ) {
+	static char	allMaps[64][MAX_QPATH];
+	int			count, i;
+
+	if ( !name || !name[0] ) {
+		return qfalse;
+	}
+
+	count = G_ListServerMapsForGametype( gametype, allMaps, (int)ARRAY_LEN( allMaps ) );
+	for ( i = 0 ; i < count ; i++ ) {
+		if ( !Q_stricmp( name, allMaps[i] ) ) {
+			return qtrue;
+		}
+	}
+	return qfalse;
+}
+
+
+/*
+==================
+G_GetPendingNextmap
+==================
+*/
+static qboolean G_GetPendingNextmap( int gametype, char *out, int outSize ) {
+	char	buf[MAX_CVAR_VALUE_STRING];
+	char	*p, *end;
+
+	out[0] = 0;
+	trap_Cvar_VariableStringBuffer( "nextmap", buf, sizeof(buf) );
+	if ( !buf[0] ) {
+		return qfalse;
+	}
+
+	p = buf;
+	if ( !Q_stricmpn( p, "map ", 4 ) ) {
+		p += 4;
+	}
+
+	// remote quotes
+	if ( *p == '"' ) {
+		p++;
+	}
+	end = p;
+	while ( *end && *end != '"' && *end != ';' && *end != ' ' ) {
+		end++;
+	}
+	*end = 0;
+
+	if ( !p[0] ) {
+		return qfalse;
+	}
+
+	if ( strchr( p, ';' ) || strchr( p, ' ' ) ) {
+		return qfalse;
+	}
+
+	if ( !G_IsRealMapName( p, gametype ) ) {
+		return qfalse;
+	}
+
+	Q_strncpyz( out, p, outSize );
+	return qtrue;
+}
+
+
+/*
+==================
 G_RunEndMatchVote
 ==================
 */
@@ -904,13 +975,23 @@ void G_RunEndMatchVote( void ) {
 
 	switch ( level.emvPhase ) {
 	case EMV_SCOREBOARD: {
-		int	onlyGametype = g_gametype.integer;
+		int		onlyGametype = g_gametype.integer;
+		char	pendingMap[MAX_QPATH];
 
 		if ( G_CountRealGametypeCandidates( &onlyGametype ) <= 1 ) {
 			level.emvWinnerGametype = onlyGametype;
-			trap_SendServerCommand( -1, va( "emvopts %i 1 %i \"%s\"", EMV_GAMETYPE_VOTE, EMV_OPT_NONE, G_EndMatchGametypeName( onlyGametype ) ) );
+			trap_SendServerCommand( -1, va( "emvopts %i 1 %i \"%s\"",
+				EMV_GAMETYPE_VOTE, EMV_OPT_NONE,
+				G_EndMatchGametypeName( onlyGametype ) ) );
 			G_SendEndMatchVoteResult( -1, EMV_GAMETYPE_VOTE, 0 );
-			G_EndMatchEnterPhase( EMV_MAP_VOTE );
+
+			if ( G_GetPendingNextmap( onlyGametype, pendingMap, sizeof( pendingMap ) ) ) {
+				Q_strncpyz( level.emvWinnerMap, pendingMap, sizeof( level.emvWinnerMap ) );
+				level.emvWinnerIsRestart = qfalse;
+				G_EndMatchEnterPhase( EMV_FINAL_HOLD );
+			} else {
+				G_EndMatchEnterPhase( EMV_MAP_VOTE );
+			}
 		} else {
 			G_EndMatchEnterPhase( EMV_GAMETYPE_VOTE );
 		}
@@ -921,6 +1002,13 @@ void G_RunEndMatchVote( void ) {
 		winnerIndex = G_PickWinner( level.emvGametypeVotes, level.emvGametypeCandidateSpecial, level.emvGametypeLockedOut, level.emvGametypeCandidateCount );
 		level.emvWinnerGametype = level.emvGametypeCandidates[winnerIndex];
 		G_SendEndMatchVoteResult( -1, EMV_GAMETYPE_VOTE, winnerIndex );
+
+		// if it has been decided by calling a vote for 'nextmap', skip
+		if ( G_GetPendingNextmap( level.emvWinnerGametype, level.emvWinnerMap, sizeof( level.emvWinnerMap ) ) ) {
+			level.emvWinnerIsRestart = qfalse;
+			G_EndMatchEnterPhase( EMV_FINAL_HOLD );
+			break;
+		}
 
 		if ( G_CountRealMapCandidates( level.emvWinnerGametype ) <= 1 ) {
 			// single-map server - nothing to vote on, just restart
@@ -948,6 +1036,20 @@ void G_RunEndMatchVote( void ) {
 			trap_Cvar_Set( "nextmap", va( "map \"%s\"", level.emvWinnerMap ) );
 		}
 		// restarts the current map
+		level.emvPhase = EMV_INACTIVE;
+		G_BroadcastEndMatchState();
+
+		ExitLevel();
+		break;
+
+	case EMV_FINAL_HOLD:
+		// used when a 'nextmap' was already decided, skip map vote and map reveal phases
+		if ( level.emvWinnerGametype != g_gametype.integer ) {
+			trap_Cvar_Set( "g_gametype", va( "%i", level.emvWinnerGametype ) );
+		}
+		if ( !level.emvWinnerIsRestart && level.emvWinnerMap[0] ) {
+			trap_Cvar_Set( "nextmap", va( "map \"%s\"", level.emvWinnerMap ) );
+		}
 		level.emvPhase = EMV_INACTIVE;
 		G_BroadcastEndMatchState();
 

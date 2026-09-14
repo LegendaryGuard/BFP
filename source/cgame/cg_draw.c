@@ -2247,6 +2247,9 @@ static void CG_DrawVote(void) {
 	int		sec, i, w, yesBars, noBars;
 	float	boxX, boxY, boxW, boxH, yesCx, noCx;
 	vec4_t	bgColor = { 0, 0, 0.75, 0.15f };
+	char	displayVote[MAX_STRING_TOKENS];
+	const int	MAX_CHARS = 32;
+	const int	NUM_BARS = 10;
 
 	if ( !cgs.voteTime ) {
 		return;
@@ -2284,11 +2287,17 @@ static void CG_DrawVote(void) {
 	CG_DrawSmallStringColor( boxX + boxW - w - 4, boxY + 4, s, colorWhite );
 
 	// chain vote
-	w = CG_DrawStrlen( cgs.voteString ) * SMALLCHAR_WIDTH;
-	CG_DrawSmallStringColor( boxX + ( boxW - w ) * 0.5f, boxY + 24, cgs.voteString, colorYellow );
+	Q_strncpyz( displayVote, cgs.voteString, sizeof( displayVote ) );
+	if ( CG_DrawStrlen( displayVote ) > MAX_CHARS ) {
+		displayVote[MAX_CHARS - 2] = '.';
+		displayVote[MAX_CHARS - 1] = '.';
+		displayVote[MAX_CHARS] = 0;
+	}
+	w = CG_DrawStrlen( displayVote ) * SMALLCHAR_WIDTH;
+	CG_DrawSmallStringColor( boxX + ( boxW - w ) * 0.5f, boxY + 24, displayVote, colorYellow );
 
-	yesBars = ( cgs.voteYes > 10 ) ? 10 : cgs.voteYes;
-	noBars  = ( cgs.voteNo  > 10 ) ? 10 : cgs.voteNo;
+	yesBars = ( cgs.voteYes > NUM_BARS ) ? NUM_BARS : cgs.voteYes;
+	noBars = ( cgs.voteNo  > NUM_BARS ) ? NUM_BARS : cgs.voteNo;
 
 	Com_sprintf( yesLabel, sizeof(yesLabel), "Yes (%i)", cgs.voteYes );
 	Com_sprintf( noLabel,  sizeof(noLabel), "No (%i)", cgs.voteNo );
@@ -2311,7 +2320,6 @@ static void CG_DrawVote(void) {
 		const float	BAR_Y = boxY + 70;
 		const float	YES_START_X = yesCx - BAR_GROUP_WIDTH * 0.5f;
 		const float	NO_START_X = noCx - BAR_GROUP_WIDTH * 0.5f;
-		const int	NUM_BARS = 10;
 		vec4_t	yesOn = { 0.20f, 1.00f, 0.20f, 1.00f };
 		vec4_t	yesOff = { 0.20f, 1.00f, 0.20f, 0.25f };
 		vec4_t	noOn = { 1.00f, 0.20f, 0.20f, 1.00f };
@@ -2387,6 +2395,7 @@ static void CG_DrawIntermission( void ) {
 	}
 
 	CG_DrawEndMatchVote();
+	CG_DrawEndMatchCountdown(); // BFPR - X seconds left until next transition
 }
 
 /*

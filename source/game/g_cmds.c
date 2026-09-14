@@ -1637,17 +1637,62 @@ void Cmd_CallVote_f( gentity_t *ent ) {
 		} else {
 			Com_sprintf( level.voteString, sizeof( level.voteString ), "%s %s", arg1, arg2 );
 		}
-		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "%s", level.voteString );
+		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "map %s", arg2 );
 	} else if ( !Q_stricmp( arg1, "nextmap" ) ) {
 		char	s[MAX_STRING_CHARS];
+		// BFPR - Make nextmap work like the server does
+		char	mapName[MAX_STRING_CHARS];
+		char	*p;
 
-		trap_Cvar_VariableStringBuffer( "nextmap", s, sizeof(s) );
-		if (!*s) {
-			trap_SendServerCommand( ent-g_entities, "print \"nextmap not set.\n\"" );
-			return;
+		if ( arg2[0] ) {
+			Q_strncpyz( mapName, arg2, sizeof( mapName ) );
+			if ( strchr( mapName, ';' ) || strchr( mapName, ' ' ) || strchr( mapName, '"' ) ) {
+				trap_SendServerCommand( ent-g_entities, "print \"Invalid map name.\n\"" );
+				return;
+			}
+			Com_sprintf( level.voteString, sizeof( level.voteString ),
+						"set nextmap \"map %s\"", mapName );
+			Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
+						"nextmap %s", mapName );
+		} else {
+			trap_Cvar_VariableStringBuffer( "nextmap", s, sizeof(s) );
+			if ( !*s ) {
+				trap_SendServerCommand( ent-g_entities, "print \"nextmap not set.\n\"" );
+				return;
+			}
+
+			p = s;
+			if ( !Q_stricmpn( p, "map ", 4 ) ) {
+				p += 4;
+			}
+
+			if ( *p == '"' ) {
+				p++;
+				Q_strncpyz( mapName, p, sizeof( mapName ) );
+				p = Q_strrchr( mapName, '"' );
+				if ( p ) {
+					*p = 0;
+				}
+			} else {
+				Q_strncpyz( mapName, p, sizeof( mapName ) );
+			}
+
+			p = strchr( mapName, ';' );
+			if ( p ) {
+				*p = 0;
+			}
+
+			{
+				int	len = (int)strlen( mapName );
+				while ( len > 0 && mapName[len - 1] == ' ' ) {
+					mapName[--len] = 0;
+				}
+			}
 		}
-		Com_sprintf( level.voteString, sizeof( level.voteString ), "vstr nextmap");
-		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "%s", level.voteString );
+
+		Com_sprintf( level.voteString, sizeof( level.voteString ), "%s %s", arg1, mapName );
+		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ),
+					"nextmap %s", mapName[0] ? mapName : "???" );
 	} else if ( !Q_stricmp( arg1, "endmatch" ) ) { // BFPR - endmatch command in callvote
 		Com_sprintf( level.voteString, sizeof( level.voteString ), "endmatch" );
 		Com_sprintf( level.voteDisplayString, sizeof( level.voteDisplayString ), "%s", level.voteString );

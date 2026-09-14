@@ -62,6 +62,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	EMV_GAMETYPE_VOTE		2	// voting on next gametype
 #define	EMV_MAP_VOTE			3	// voting on next map
 #define	EMV_MAP_REVEAL			4	// showing the winning map before changing level
+#define	EMV_FINAL_HOLD			5	// hold on the previous vote screen, then change level
 
 // special, non-real end-match vote options: 
 // Sent alongside the option name so the client UI and 
