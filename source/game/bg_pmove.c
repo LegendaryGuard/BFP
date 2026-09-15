@@ -3460,6 +3460,11 @@ void PmoveSingle (pmove_t *pmove) {
 	// footstep events / legs animations
 	PM_Footsteps();
 
+	// BFP - Drifting while on knockback
+	if ( pm->ps->pm_flags & PMF_TIME_KNOCKBACK ) {
+		PM_Drifting();
+	}
+
 	// entering / leaving water splashes
 	PM_WaterEvents();
 

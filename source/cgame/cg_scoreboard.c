@@ -323,7 +323,11 @@ qboolean CG_DrawOldScoreboard( void ) {
 	{
 		const char	*gametypeName = CG_ScoreboardGametypeName();
 		int	gw = CG_DrawStrlen( gametypeName ) * BIGCHAR_WIDTH;
-		CG_DrawBigString( ( SCREEN_WIDTH - gw ) / 2, 25, gametypeName, fade );
+		int	gy = 45;
+		if ( !cg.warmup ) {
+			gy = 25;
+		}
+		CG_DrawBigString( ( SCREEN_WIDTH - gw ) / 2, gy, va( "^5%s", gametypeName ), fade );
 	}
 
 	// fragged by ... line
