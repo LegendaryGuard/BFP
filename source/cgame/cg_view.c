@@ -234,7 +234,7 @@ static void CG_OffsetThirdPersonView( void ) {
 	camAngle  =  cg_thirdPersonAngle.value;
 	camHeight =  cg_thirdPersonHeight.value;
 	camRange  =  cg_thirdPersonRange.value;
-	if ( cg_fixedThirdPerson.integer >= 1 ) { // BFP - Fixed third person camera
+	if ( cg_fixedThirdPerson.integer >= 1 && cg_cameraOrbit.integer <= 0 ) { // BFP - Fixed third person camera
 		camAngle  =   0.0f;
 		camHeight = -60.0f;
 		camRange  = 110.0f;

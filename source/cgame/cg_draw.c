@@ -794,6 +794,9 @@ static float CG_DrawFPS( float y ) {
 	return y + BIGCHAR_HEIGHT + 4;
 }
 
+// BFPR - Q3 timer to be enabled with a macro
+#define Q3_TIMER	0
+#if Q3_TIMER
 /*
 =================
 CG_DrawTimer
@@ -820,6 +823,7 @@ static float CG_DrawTimer( float y ) {
 
 	return y + BIGCHAR_HEIGHT + 4;
 }
+#endif
 
 
 /*
@@ -1018,9 +1022,12 @@ static void CG_DrawUpperRight( void ) {
 	if ( cg_drawFPS.integer ) {
 		y = CG_DrawFPS( y );
 	}
+	// BFPR - Q3 timer to be enabled with a macro
+#if Q3_TIMER
 	if ( cg_drawTimer.integer ) {
 		y = CG_DrawTimer( y );
 	}
+#endif
 	if ( cg_drawAttacker.integer ) {
 		y = CG_DrawAttacker( y );
 	}
@@ -2723,7 +2730,10 @@ static void CG_Draw2D( void ) {
 		}
 	}
 
-	CG_DrawMatchTime(); // BFPR - Match time
+	// BFPR - Match time
+	if ( cg_drawTimer.integer > 0 ) {
+		CG_DrawMatchTime();
+	}
 	CG_DrawVote();
 	CG_DrawTeamVote();
 

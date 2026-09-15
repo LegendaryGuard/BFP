@@ -1436,6 +1436,7 @@ static void PM_WalkMove( void ) {
 
 	if ( ( pml.groundTrace.surfaceFlags & SURF_SLICK ) || ( pm->ps->pm_flags & PMF_TIME_KNOCKBACK ) ) {
 		pm->ps->velocity[2] -= pm->ps->gravity * pml.frametime;
+		PM_Drifting(); // BFP - Drifting
 	} else {
 		// don't reset the z velocity for slopes
 //		pm->ps->velocity[2] = 0;
