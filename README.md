@@ -434,9 +434,11 @@ The information in the map file can be useful for debugging and performance anal
 - bg_weaponconfig.c
 - cg_aura.c
 - cg_cvar.h
+- cg_endmatch.c
 - cg_skinconfig.c
 - cg_trails.c
 - g_cvar.h
+- g_endmatch.c
 - ui_bfpoptions.c
 - ui_cvar.h
 
