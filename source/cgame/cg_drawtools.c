@@ -251,7 +251,7 @@ void CG_DrawSmallStringColor( int x, int y, const char *s, vec4_t color ) {
 
 // new font renderer
 
-#ifdef USE_NEW_FONT_RENDERER
+#if USE_NEW_FONT_RENDERER
 
 #define MAX_FONT_SHADERS 4
 

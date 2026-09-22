@@ -1294,7 +1294,7 @@ void CG_DrawRect( float x, float y, float width, float height, float size, const
 void CG_DrawSides(float x, float y, float w, float h, float size);
 void CG_DrawTopBottom(float x, float y, float w, float h, float size);
 
-#define USE_NEW_FONT_RENDERER
+#define USE_NEW_FONT_RENDERER	0
 
 // flags for CG_DrawString
 enum {
@@ -1304,7 +1304,7 @@ enum {
 	DS_CENTER = 0x8,	// alignment
 	DS_RIGHT  = 0x10	// alignment
 };
-#ifdef USE_NEW_FONT_RENDERER
+#if USE_NEW_FONT_RENDERER
 void CG_LoadFonts( void );
 void CG_SelectFont( int index );
 #endif
