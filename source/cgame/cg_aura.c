@@ -79,6 +79,31 @@ qhandle_t CG_AuraPowerlevelSetShaderColor( centity_t *cent ) {
 }
 
 /*
+==========================
+CG_AuraPowerlevelGetColor
+==========================
+*/
+static void CG_AuraPowerlevelGetColor( centity_t *cent, vec3_t outColor ) {
+	entityState_t	*state = &cent->currentState;
+	int				powerlevel = state->frame;
+
+	if ( state->clientNum == cg.snap->ps.clientNum ) {
+		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
+	}
+
+	// blue
+	VectorSet( outColor, 0.2f, 0.2f, 1.0f );
+	if ( powerlevel < 100
+	|| ( cgs.gametype >= GT_TEAM && cgs.clientinfo[ state->clientNum ].team == TEAM_BLUE ) ) {
+		VectorSet( outColor, 0.2f, 0.2f, 1.0f );
+	} else if ( powerlevel >= 1000 && !( cgs.gametype >= GT_TEAM ) ) { // yellow
+		VectorSet( outColor, 1.0f, 1.0f, 0.2f );
+	} else { // red
+		VectorSet( outColor, 1.0f, 0.2f, 0.2f );
+	}
+}
+
+/*
 ===============
 CG_AuraAnims
 
@@ -182,32 +207,15 @@ CG_SpriteAura
 Adds sprite aura, just one quad
 ============
 */
-static void CG_SpriteAura( refEntity_t aura ) { // BFP - Sprite aura
-	// BFP - NOTE: Originally, BFP didn't finish the shader to attach or they forgot...
-	// That radius looks a bit big for an aura, maybe they thought to fit the texture that way or some circular aura?
-	// And... What the heck? This sprite view depends of pitch angle until some client connects?
-	// Also when cg_smallOwnAura cvar is enabled, it doesn't display any aura to the client itself. 
-	// Moreover, the lights are disabled as mentioned previously in CG_DynamicAuraLight function comments
-	// In the future, the shader should be added, not sure what kind of aura is this...
-	float pitchView = cg.refdefViewAngles[PITCH];
-	int i, connectedClients = 1;
-
-	for ( i = 0; i < MAX_CLIENTS; ++i ) {
-		if ( cg_entities[i].currentValid ) {
-			++connectedClients;
-		}
-	}
+static void CG_SpriteAura( refEntity_t aura, vec3_t color ) { // BFP - Sprite aura
 	aura.reType = RT_SPRITE;
 	aura.customShader = cgs.media.spriteAura;
-	aura.radius += 75;
-	if ( connectedClients > 1 ) {
-		pitchView = -15;
-	}
-	aura.rotation = pitchView;
+	aura.radius += 95;
+	aura.origin[2] += 25;
 
-	aura.shaderRGBA[0] = 255;
-	aura.shaderRGBA[1] = 255;
-	aura.shaderRGBA[2] = 255;
+	aura.shaderRGBA[0] = (byte)( color[0] * 255 );
+	aura.shaderRGBA[1] = (byte)( color[1] * 255 );
+	aura.shaderRGBA[2] = (byte)( color[2] * 255 );
 	aura.shaderRGBA[3] = 255;
 	trap_R_AddRefEntityToScene( &aura );
 }
@@ -379,11 +387,15 @@ void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int renderfx, re
 		// BFP - Sprite aura
 		if ( ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer <= 0 ) 
 		|| ( cg_spriteAura.integer > 0 && cg_smallOwnAura.integer > 0 && clientNum != cg.snap->ps.clientNum ) ) {
+			vec3_t	auraColor;
+
 			// BFP - Monster gamemode, player monster sprite aura is bigger
 			if ( cent->currentState.eFlags & EF_MONSTER ) {
-				aura.radius = 325;
+				aura.radius = 525;
+				aura.origin[2] += 105;
 			}
-			CG_SpriteAura( aura );
+			CG_AuraPowerlevelGetColor( cent, auraColor );
+			CG_SpriteAura( aura, auraColor );
 			return;
 		}
 

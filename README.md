@@ -70,7 +70,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - there's code about real impact crack mark, when projectiles/ki attacks impact something solid on ground, walls or slopes
 - projectile with missile attack type using beam trail applies where the beam muzzle was started
 - particle aura is implemented, "powerups/particleaura" shader can be used
-- sprite aura looks implemented, "powerups/spriteeaura" shader can be used
+- sprite aura is implemented, "powerups/spriteeaura" shader can be used
 - while charging ki near water, bubble particles appear
 - when player is still moving with/without friction and charging ki, antigrav rock particles appear
 - when antigrav rock and rock debris particles fall in a slope or inclined places, bounce and slide, that makes the movements more realistic
