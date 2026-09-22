@@ -761,67 +761,190 @@ void CG_BeamStruggleEffect( vec3_t origin, vec3_t dir ) { // BFP - Beam struggle
 
 /*
 =================
+CG_SmokeExplosionPuffs
+=================
+*/
+static void CG_SmokeExplosionPuffs( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg ) {
+	// BFP - explosionSmoke <weaponNum> <numSmokes(int)>
+	int	i, numSmokes = skinAtkCfg->explosionSmoke;
+	// BFP - explosionSmokeRadius <weaponNum> <radius(int)>
+	int	explosionSmokeRadius = skinAtkCfg->explosionSmokeRadius;
+	// BFP - explosionSmokeLife <weaponNum> <lifetime(int)>
+	int	explosionSmokeLife = skinAtkCfg->explosionSmokeLife;
+	// BFP - explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
+	int	explosionSmokeSpeed = skinAtkCfg->explosionSmokeSpeed;
+
+	// for spreading smoke
+	vec3_t up = {0, 0, 1};
+	vec3_t right, forward;
+
+	// BFP - To randomize the vertical speed
+	float	minVert = 10 * explosionSmokeSpeed;
+	float	maxVert = 50 * explosionSmokeSpeed;
+	
+	VectorCopy( dir, forward );
+	CrossProduct( forward, up, right );
+	if ( VectorLength( right ) < 0.1f ) {
+		vec3_t side = {1, 0, 0};
+		CrossProduct( forward, side, right );
+	}
+	VectorNormalize( right );
+	CrossProduct( right, forward, up );
+	VectorNormalize( up );
+	
+	for ( i = 0; i < numSmokes; ++i ) {
+		localEntity_t	*leSmoke;
+		vec3_t	vel, smokeOrg, spreadDir;
+		float	rightSpread = crandom() * 500;
+		float	upSpread = crandom() * 500;
+
+		VectorCopy( dir, spreadDir );
+		VectorMA( spreadDir, rightSpread, right, spreadDir );
+		VectorMA( spreadDir, upSpread, up, spreadDir );
+		VectorNormalize( spreadDir );
+
+		// position smoke offset in the spread direction
+		VectorMA( origin, 20 + ( crandom() * 80 ), spreadDir, smokeOrg );
+
+		// velocity moves outward in spread direction
+		VectorScale( spreadDir, 150 + ( rand() % 500 ), vel );
+		vel[2] = maxVert + ( crandom() * minVert );
+
+		leSmoke = CG_SmokePuff( smokeOrg, vel, 
+			explosionSmokeRadius,
+			1, 1, 1, 0.33f,
+			explosionSmokeLife,
+			cg.time, 0, 0,
+			cgs.media.particleSmokeShader );
+
+		// change to this type, don't use the common smoke puff
+		leSmoke->leType = LE_MOVE_DONT_SCALE_FADE;
+	}
+}
+
+
+/*
+=================
+CG_ESFStyle_SmokeExplosion
+=================
+*/
+static void CG_ESFStyle_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFPR - Earth's Special Forces (ESF) style smoke explosion
+	const int	BFP_EXPSMOKE_PUFF_INTERVAL			= 70;		// ms of stagger represented between puffs within one trail chain
+	const int	BFP_EXPSMOKE_NUM_PUFFS_PER_TRAIL	= 16;		// number of puffs per trail
+	const int	BFP_EXPSMOKE_MIN_PUFFS				= 3;		// minimum number of puffs per trail
+	const int	BFP_EXPSMOKE_MIN_LIFE				= 1500;		// ms - floor so a heavily pre-aged puff still has visible life left
+	const float	BFP_EXPSMOKE_FALLOFF_DIST			= 340.0f;	// world units of (notional) travel over which puff radius falls off to its floor
+	const float	BFP_EXPSMOKE_FAR_RADIUS_FRAC		= 0.095f;	// smallest a far puff's radius shrinks to, as a fraction of explosionSmokeRadius
+	const float	BFP_EXPSMOKE_CENTER_RADIUS_MUL		= 1.6f;		// how much bigger the single center puff is than explosionSmokeRadius
+	const float	BFP_EXPSMOKE_GRAVITY				= 300.0f;	// world units/sec^2 of downward pull applied to the notional layout path, so the trail arcs up and falls instead of running in a straight line
+	// BFP - explosionSmoke <weaponNum> <numSmokes(int)> as trail/chain count
+	int		numTrails = skinAtkCfg->explosionSmoke;
+	int		explosionSmokeRadius = skinAtkCfg->explosionSmokeRadius;
+	int		explosionSmokeLife = skinAtkCfg->explosionSmokeLife;
+	int		explosionSmokeSpeed = skinAtkCfg->explosionSmokeSpeed;
+	int		puffsPerTrail = BFP_EXPSMOKE_NUM_PUFFS_PER_TRAIL; //explosionSmokeLife / BFP_EXPSMOKE_PUFF_INTERVAL;
+	int		t, p;
+
+	// for spreading each trail's base direction around the blast
+	vec3_t	up = { 0, 0, 1 };
+	vec3_t	right, forward;
+
+	float	minVert = 10 * explosionSmokeSpeed;
+	float	maxVert = 50 * explosionSmokeSpeed;
+
+	if ( puffsPerTrail < BFP_EXPSMOKE_MIN_PUFFS ) {
+		puffsPerTrail = BFP_EXPSMOKE_MIN_PUFFS;
+	}
+
+	VectorCopy( dir, forward );
+	CrossProduct( forward, up, right );
+	if ( VectorLength( right ) < 0.1f ) {
+		vec3_t side = { 1, 0, 0 };
+		CrossProduct( forward, side, right );
+	}
+	VectorNormalize( right );
+	CrossProduct( right, forward, up );
+	VectorNormalize( up );
+
+	// one big puff sitting right on the blast center
+	CG_SmokePuff( origin, vec3_origin,
+		(float)explosionSmokeRadius * BFP_EXPSMOKE_CENTER_RADIUS_MUL,
+		1, 1, 1, 0.33f,
+		explosionSmokeLife,
+		cg.time, 0,
+		LEF_PUFF_DONT_SCALE,
+		cgs.media.particleSmokeShader );
+
+	for ( t = 0; t < numTrails; ++t ) {
+		vec3_t	trailDir, layoutVel;
+		float	rightSpread = crandom() * 500;
+		float	upSpread = crandom() * 500;
+
+		VectorCopy( dir, trailDir );
+		VectorMA( trailDir, rightSpread, right, trailDir );
+		VectorMA( trailDir, upSpread, up, trailDir );
+		VectorNormalize( trailDir );
+
+		VectorScale( trailDir, 150 + ( rand() % 500 ), layoutVel );
+		// reinforce the push along dir itself
+		VectorMA( layoutVel, maxVert + ( crandom() * minVert ), dir, layoutVel );
+
+		for ( p = 0; p < puffsPerTrail; ++p ) {
+			vec3_t	puffOrg;
+			int		headStartMs = p * BFP_EXPSMOKE_PUFF_INTERVAL;
+			int		puffLife = explosionSmokeLife - headStartMs;
+			float	distFromOrigin, distFrac, puffRadius;
+			float	tSec = (float)headStartMs * 0.001f;
+
+			if ( puffLife < BFP_EXPSMOKE_MIN_LIFE ) {
+				puffLife = BFP_EXPSMOKE_MIN_LIFE;
+			}
+
+			VectorMA( origin, tSec, layoutVel, puffOrg );
+			// apply a notional downward acceleration
+			puffOrg[2] -= 0.5f * BFP_EXPSMOKE_GRAVITY * tSec * tSec;
+
+			// skip puffs that would already be inside water/lava partway up
+			if ( trap_CM_PointContents( puffOrg, 0 ) & MASK_WATER ) {
+				continue;
+			}
+
+			// radius is driven by how far this puff's spawn point
+			distFromOrigin = Distance( origin, puffOrg );
+			distFrac = distFromOrigin / BFP_EXPSMOKE_FALLOFF_DIST;
+			if ( distFrac > 1.0f ) {
+				distFrac = 1.0f;
+			}
+			puffRadius = (float)explosionSmokeRadius *
+				( 1.0f - ( 1.0f - BFP_EXPSMOKE_FAR_RADIUS_FRAC ) * distFrac );
+
+			CG_SmokePuff( puffOrg, vec3_origin,
+				puffRadius,
+				1, 1, 1, 0.33f,
+				(float)( headStartMs + puffLife ),
+				cg.time,
+				cg.time + headStartMs,
+				LEF_PUFF_DONT_SCALE,
+				cgs.media.particleSmokeShader );
+		}
+	}
+}
+
+/*
+=================
 CG_SmokeExplosion
 =================
 */
 void CG_SmokeExplosion( vec3_t origin, vec3_t dir, bfpAttackSkinConfig_t *skinAtkCfg ) { // BFP - Explosion smoke
-	if ( cg_explosionSmoke.integer > 0 && skinAtkCfg && skinAtkCfg->explosionSmoke > 0
-	&& !( trap_CM_PointContents( origin, 0 ) & MASK_WATER ) ) { // don't spawn smoke under water, lava or any liquid
-		// BFP - explosionSmoke <weaponNum> <numSmokes(int)>
-		int	i, numSmokes = skinAtkCfg->explosionSmoke;
-		// BFP - explosionSmokeRadius <weaponNum> <radius(int)>
-		int	explosionSmokeRadius = skinAtkCfg->explosionSmokeRadius;
-		// BFP - explosionSmokeLife <weaponNum> <lifetime(int)>
-		int	explosionSmokeLife = skinAtkCfg->explosionSmokeLife;
-		// BFP - explosionSmokeSpeed <weaponNum> <initialSpeed(int)>
-		int	explosionSmokeSpeed = skinAtkCfg->explosionSmokeSpeed;
+	if ( cg_explosionSmoke.integer <= 0 || !skinAtkCfg || skinAtkCfg->explosionSmoke <= 0
+	|| ( trap_CM_PointContents( origin, 0 ) & MASK_WATER ) ) { // don't spawn smoke under water, lava or any liquid
+		return;
+	}
 
-		// for spreading smoke
-		vec3_t up = {0, 0, 1};
-		vec3_t right, forward;
-
-		// BFP - To randomize the vertical speed
-		float	minVert = 10 * explosionSmokeSpeed;
-		float	maxVert = 50 * explosionSmokeSpeed;
-		
-		VectorCopy( dir, forward );
-		CrossProduct( forward, up, right );
-		if ( VectorLength( right ) < 0.1f ) {
-			vec3_t side = {1, 0, 0};
-			CrossProduct( forward, side, right );
-		}
-		VectorNormalize( right );
-		CrossProduct( right, forward, up );
-		VectorNormalize( up );
-		
-		for ( i = 0; i < numSmokes; ++i ) {
-			localEntity_t	*leSmoke;
-			vec3_t	vel, smokeOrg, spreadDir;
-			float	rightSpread = crandom() * 500;
-			float	upSpread = crandom() * 500;
-
-			VectorCopy( dir, spreadDir );
-			VectorMA( spreadDir, rightSpread, right, spreadDir );
-			VectorMA( spreadDir, upSpread, up, spreadDir );
-			VectorNormalize( spreadDir );
-
-			// position smoke offset in the spread direction
-			VectorMA( origin, 20 + ( crandom() * 80 ), spreadDir, smokeOrg );
-
-			// velocity moves outward in spread direction
-			VectorScale( spreadDir, 150 + ( rand() % 500 ), vel );
-			vel[2] = maxVert + ( crandom() * minVert );
-
-			leSmoke = CG_SmokePuff( smokeOrg, vel, 
-				explosionSmokeRadius,
-				1, 1, 1, 0.33f,
-				explosionSmokeLife,
-				cg.time, 0, 0,
-				cgs.media.particleSmokeShader );
-
-			// change to this type, don't use the common smoke puff
-			leSmoke->leType = LE_MOVE_DONT_SCALE_FADE;
-		}
+	if ( cg_explosionSmoke.integer >= 2 ) { // BFPR - cg_explosionSmoke 2: (ESF-style) shrinking smoke trail chains
+		CG_ESFStyle_SmokeExplosion( origin, dir, skinAtkCfg );
+	} else { // BFPR - cg_explosionSmoke 1: original BFP, scattered smoke puffs
+		CG_SmokeExplosionPuffs( origin, dir, skinAtkCfg );
 	}
 }
 

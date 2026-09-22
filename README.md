@@ -159,6 +159,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - new call voting HUD box
 - gamemode name in the top of the scoreboard
 - match timer HUD in top-center
+- ESF-style explosion smoke, it can be enabled with `cg_explosionSmoke 2`
 
 
 # How to build
