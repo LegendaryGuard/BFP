@@ -1153,6 +1153,9 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 	}
 	ent->inuse = qtrue;
 
+	// BFPR - Restart end-match vote
+	level.emvClientVote[clientNum] = -1;
+
 	// get and distribute relevant paramters
 	G_LogPrintf( "ClientConnect: %i\n", clientNum );
 
@@ -1659,6 +1662,9 @@ void ClientDisconnect( int clientNum ) {
 		// Especially important for stuff like CTF flags
 		TossClientItems( ent );
 	}
+
+	// BFPR - Clean end-match vote
+	level.emvClientVote[clientNum] = -1;
 
 	G_LogPrintf( "ClientDisconnect: %i\n", clientNum );
 

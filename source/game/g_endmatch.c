@@ -802,31 +802,37 @@ void G_BeginEndMatchVote( void ) {
 
 /*
 ==================
-G_EndMatchUnanimousVote
+G_EndMatchRecountVotes
+
+The vote counts are derived from per-client state rather 
+than tracked incrementally. 
+This makes disconnects, slot reuse and  mid-phase option lockouts 
+work for free: there is no bookkeeping to keep in sync
 ==================
 */
-static qboolean G_EndMatchUnanimousVote( void ) {
-	const int	*votes, *special;
-	int			count, i, voters, realVoted = 0;
+static void G_EndMatchRecountVotes( void ) {
+	int				*votes;
+	const qboolean	*lockedOut;
+	int				count, i, idx;
 
 	switch ( level.emvPhase ) {
 	case EMV_GAMETYPE_VOTE:
 		votes = level.emvGametypeVotes;
-		special = level.emvGametypeCandidateSpecial;
+		lockedOut = level.emvGametypeLockedOut;
 		count = level.emvGametypeCandidateCount;
 		break;
 	case EMV_MAP_VOTE:
 		votes = level.emvMapVotes;
-		special = level.emvMapCandidateSpecial;
+		lockedOut = level.emvMapLockedOut;
 		count = level.emvMapCandidateCount;
 		break;
 	default:
-		return qfalse;
+		return;
 	}
 
-	// count only humans
-	voters = 0;
-	for ( i = 0; i < MAX_CLIENTS; i++ ) {
+	Com_Memset( votes, 0, sizeof( int ) * count );
+
+	for ( i = 0 ; i < MAX_CLIENTS ; i++ ) {
 		gentity_t	*ent = &g_entities[i];
 
 		if ( !ent->client ) {
@@ -836,34 +842,126 @@ static qboolean G_EndMatchUnanimousVote( void ) {
 			continue; // slot in use but not fully connected yet
 		}
 		if ( ent->r.svFlags & SVF_BOT ) {
-			continue; // bots don't vote here
+			continue; // bots don't vote
 		}
 
-		voters++;
-		if ( level.emvClientVote[i] == -1 ) {
-			return qfalse; // still waiting on this player
-		}
-	}
-
-	if ( voters == 0 ) {
-		return qfalse; // no human playing, nothing to short-circuit
-	}
-
-	// everyone voted: count how many distinct real options received a vote
-	for ( i = 0 ; i < count ; i++ ) {
-		if ( votes[i] <= 0 ) {
+		idx = level.emvClientVote[i];
+		if ( idx < 0 || idx >= count ) {
 			continue;
 		}
-		if ( special[i] != EMV_OPT_NONE ) {
-			continue; // skip "Don't care"
+
+		// if the client's option was locked out mid-phase, 
+		// drop the vote and treat the client as undecided again
+		if ( lockedOut[idx] ) {
+			level.emvClientVote[i] = -1;
+			continue;
 		}
-		realVoted++;
-		if ( realVoted > 1 ) {
-			return qfalse; // two real options have votes, split
+
+		votes[idx]++;
+	}
+}
+
+
+/*
+==================
+G_EndMatchVoteDecided
+
+When the leading real option has an unreachable lead:
+the leader wins outright if it holds strictly more than 
+half of the non-abstaining voters, because even an 
+unanimous swing of every other vote toward a single competing
+option could not catch up.
+Abstain votes ("Don't care") are excluded from the voter pool entirely,
+so abstaining neither delays nor prevents early resolution
+==================
+*/
+static qboolean G_EndMatchVoteDecided( void ) {
+	const int		*votes, *special;
+	const qboolean	*lockedOut;
+	int				count, i, abstainIdx, leaderIdx, leaderVotes, votersReal;
+
+	switch ( level.emvPhase ) {
+	case EMV_GAMETYPE_VOTE:
+		votes = level.emvGametypeVotes;
+		special = level.emvGametypeCandidateSpecial;
+		lockedOut = level.emvGametypeLockedOut;
+		count = level.emvGametypeCandidateCount;
+		break;
+	case EMV_MAP_VOTE:
+		votes = level.emvMapVotes;
+		special = level.emvMapCandidateSpecial;
+		lockedOut = level.emvMapLockedOut;
+		count = level.emvMapCandidateCount;
+		break;
+	default:
+		return qfalse;
+	}
+
+	// locate the abstain option, if the pool has one
+	abstainIdx = -1;
+	for ( i = 0 ; i < count ; i++ ) {
+		if ( special[i] == EMV_OPT_DONT_CARE ) {
+			abstainIdx = i;
+			break;
 		}
 	}
 
-	return qtrue; // 0 or 1 real option(s) got a vote - unanimous
+	// count every connected human, whether they've voted yet or not
+	votersReal = 0;
+	for ( i = 0 ; i < MAX_CLIENTS ; i++ ) {
+		gentity_t	*ent = &g_entities[i];
+
+		if ( !ent->client ) {
+			continue;
+		}
+		if ( ent->client->pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		if ( ent->r.svFlags & SVF_BOT ) {
+			continue;
+		}
+
+		votersReal++;
+	}
+
+	// abstainers opt out of the vote entirely, 
+	// so they don't count as voters who could still push a competing option
+	if ( abstainIdx >= 0 ) {
+		votersReal -= votes[abstainIdx];
+		if ( votersReal < 0 ) {
+			votersReal = 0;
+		}
+	}
+
+	if ( votersReal == 0 ) {
+		return qfalse; // nothing to resolve
+	}
+
+	// find the leading real (non-abstain) option that is still in play
+	leaderIdx = -1;
+	leaderVotes = 0;
+	for ( i = 0 ; i < count ; i++ ) {
+		if ( special[i] != EMV_OPT_NONE ) {
+			continue;
+		}
+		if ( lockedOut[i] ) {
+			continue;
+		}
+		if ( votes[i] > leaderVotes ) {
+			leaderVotes = votes[i];
+			leaderIdx = i;
+		}
+	}
+
+	if ( leaderIdx == -1 || leaderVotes == 0 ) {
+		return qfalse; // nobody has voted for any real option yet
+	}
+
+	// the leader is safe when even if every other voter 
+	// (the ones who picked other options and the ones who haven't voted at all)
+	// switched to a single competing option, the leader would still
+	// come out on top. Equivalent to leaderVotes > votersReal / 2
+	return ( leaderVotes * 2 > votersReal );
 }
 
 
@@ -952,8 +1050,13 @@ void G_RunEndMatchVote( void ) {
 
 	inVotePhase = ( level.emvPhase == EMV_GAMETYPE_VOTE || level.emvPhase == EMV_MAP_VOTE );
 
-	// check unanimous votes
-	if ( inVotePhase && !level.emvLocked && G_EndMatchUnanimousVote() ) {
+	// rebuild the live tally from per-client vote state every frame
+	if ( inVotePhase ) {
+		G_EndMatchRecountVotes();
+	}
+
+	// close the phase early once the leader's lead is mathematically unreachable
+	if ( inVotePhase && !level.emvLocked && G_EndMatchVoteDecided() ) {
 		level.emvPhaseEndTime = level.time;
 		G_BroadcastEndMatchState();
 	}
@@ -965,6 +1068,7 @@ void G_RunEndMatchVote( void ) {
 
 		if ( lockWindowMs > 0 && timeLeft <= lockWindowMs ) {
 			G_ApplyEndMatchLockout();
+			G_EndMatchRecountVotes();
 			G_BroadcastEndMatchState();
 		}
 	}
@@ -1067,13 +1171,12 @@ void G_RunEndMatchVote( void ) {
 ==================
 Cmd_EndMatchVote_f
 
-Client command: "endmatchvote <index>"
+Client command: "endmatchvote <option number>"
 ==================
 */
 void Cmd_EndMatchVote_f( gentity_t *ent ) {
 	char	arg[16];
 	int		index, clientNum, count;
-	int		*votes;
 	qboolean	*lockedOut;
 
 	if ( !ent->client ) {
@@ -1086,15 +1189,18 @@ void Cmd_EndMatchVote_f( gentity_t *ent ) {
 		return;
 	}
 
+	if ( trap_Argc() < 2 ) {
+		trap_SendServerCommand( clientNum, "print \"Usage: endmatchvote <option number>\n\"" );
+		return;
+	}
+
 	trap_Argv( 1, arg, sizeof( arg ) );
 	index = atoi( arg );
 
 	if ( level.emvPhase == EMV_GAMETYPE_VOTE ) {
-		votes = level.emvGametypeVotes;
 		lockedOut = level.emvGametypeLockedOut;
 		count = level.emvGametypeCandidateCount;
 	} else {
-		votes = level.emvMapVotes;
 		lockedOut = level.emvMapLockedOut;
 		count = level.emvMapCandidateCount;
 	}
@@ -1109,15 +1215,12 @@ void Cmd_EndMatchVote_f( gentity_t *ent ) {
 		return;
 	}
 
-	// move the vote: remove it from whatever they picked before (if
-	// anything), then add it to the new pick
-	if ( level.emvClientVote[clientNum] != -1 ) {
-		votes[level.emvClientVote[clientNum]]--;
-	}
-	votes[index]++;
+	// only record the client's choice
 	level.emvClientVote[clientNum] = index;
 
 	// trap_SendServerCommand( clientNum, "print \"Vote cast.\n\"" );
+
+	G_EndMatchRecountVotes();
 
 	// let everyone see live vote counts on the vote UI
 	G_BroadcastEndMatchState();
