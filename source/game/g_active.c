@@ -1119,6 +1119,17 @@ static void Client_Weapon( gentity_t *ent, usercmd_t *ucmd, pmove_t *pm ) { // B
 		return;
 	}
 
+	// disable ki charge when using a weapon with movementPenalty 
+	if ( wpCfg->movementPenalty > 0
+	&& ( ( ucmd->buttons & BUTTON_ATTACK )
+		|| client->ps.weaponstate == WEAPON_ACTIVE
+		|| client->ps.weaponstate == WEAPON_FIRING
+		|| client->ps.weaponstate == WEAPON_BEAMSTRUGGLE
+		|| client->ps.weaponstate == WEAPON_STUN ) ) {
+		ucmd->buttons &= ~BUTTON_KI_CHARGE;
+		client->pers.cmd.buttons &= ~BUTTON_KI_CHARGE;
+	}
+
 	// if it isn't unlocked, or it has no active ammo locked by powerlevel, force to the first valid weapon selection
 	if ( ucmd->weapon < BFP_NUM_WEAPONS ) {
 		if ( !( client->ps.stats[STAT_WEAPONS] & ( 1 << ucmd->weapon ) )
