@@ -301,20 +301,20 @@ void CG_Aura( centity_t *cent, int clientNum, clientInfo_t *ci, int renderfx, re
 			if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYA
 			|| ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_FLYB ) {
 				bubbleOrigin[2] += 6; // put the origin near the player origin point
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 700, bubbleRange, bubbleSize );
 			} else if ( ( cent->currentState.legsAnim & ~ANIM_TOGGLEBIT ) == LEGS_CHARGE ) {
 				bubbleOrigin[2] += -3; // put the origin a little below
 				bubbleRange *= 2;
 
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
-				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
+				CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, bubbleOrigin, trace.endpos, 0, bubbleRange, bubbleSize );
 			}
 		}
 

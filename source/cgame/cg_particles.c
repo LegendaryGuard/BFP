@@ -921,7 +921,7 @@ void CG_AddParticles (void)
 	active_particles = active;
 }
 
-void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, qhandle_t pmodel, vec3_t origin, vec3_t origin2, int turbtime, float range, float size)
+void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, qhandle_t p3dshader, qhandle_t pmodel, vec3_t origin, vec3_t origin2, int turbtime, float range, float size)
 {
 	cparticle_t	*p;
 
@@ -961,6 +961,7 @@ void CG_ParticleBubble (centity_t *cent, qhandle_t pshader, qhandle_t pmodel, ve
 	if ( cg_3dparticles.integer > 0 && pmodel ) {
 		p->width = p->width * 0.075;
 		p->height = p->width;
+		p->pshader = p3dshader;
 	}
 
 	VectorCopy(origin, p->org);

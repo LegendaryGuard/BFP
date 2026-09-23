@@ -852,6 +852,7 @@ typedef struct {
 
 	qhandle_t	smokePuffShader;
 	qhandle_t	waterBubbleShader;
+	qhandle_t	waterBubble3dShader; // BFP - 3D water bubble shader
 	qhandle_t	bloodTrailShader;
 
 	qhandle_t	numberShaders[11];
@@ -1769,7 +1770,7 @@ qboolean	trap_GetEntityToken( char *buffer, int bufferSize );
 void	CG_ClearParticles (void);
 void	CG_AddParticles (void);
 // BFP - Bubble particle
-void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, qhandle_t pmodel, vec3_t origin, vec3_t origin2, int turbtime, float range, float size);
+void	CG_ParticleBubble (centity_t *cent, qhandle_t pshader, qhandle_t p3dshader, qhandle_t pmodel, vec3_t origin, vec3_t origin2, int turbtime, float range, float size);
 // BFP - Dash smoke particle for ki boost when moving in the ground
 void	CG_ParticleDashSmoke (centity_t *cent, qhandle_t pshader, vec3_t origin, float size, float velocityDisp, float upVelocity, float accel);
 // BFP - Antigrav rock particles for charging

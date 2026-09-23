@@ -615,6 +615,9 @@ static void CG_RegisterGraphics( void ) {
 
 	cgs.media.waterBubbleShader = trap_R_RegisterShader( "waterBubble" );
 
+	// BFP - 3D water bubble shader
+	cgs.media.waterBubble3dShader = trap_R_RegisterShader( "waterBubble3d" );
+
 	cgs.media.tracerShader = trap_R_RegisterShader( "gfx/misc/tracer" );
 	cgs.media.selectShader = trap_R_RegisterShader( "gfx/2d/select" );
 

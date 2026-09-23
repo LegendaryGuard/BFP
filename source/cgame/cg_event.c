@@ -693,11 +693,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 			}
 
 			// Blub, blub, blub...
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, splashOrigin, end, 700, bubbleRange, bubbleSize );
 		}
 		break;
 

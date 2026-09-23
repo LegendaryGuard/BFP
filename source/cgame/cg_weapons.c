@@ -473,9 +473,9 @@ void CG_RocketTrail( centity_t *ent, bfpAttackSkinConfig_t *skinAtkCfg ) {
 		if ( ( contents & lastContents & CONTENTS_WATER ) 
 		&& cg.frametime > 0.0f ) { // BFP - If paused, don't spawn bubble particles (cg_paused.integer < 1 is another solution, but not good enough for server responses)
 			// BFP - Apply particle bubble effect in that case
-			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, origin, lastPos, 900, 10, 2 );
-			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, origin, lastPos, 900, 10, 2 );
-			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, origin, lastPos, 900, 10, 2 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, origin, lastPos, 900, 10, 2 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, origin, lastPos, 900, 10, 2 );
+			CG_ParticleBubble( ent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, origin, lastPos, 900, 10, 2 );
 			// CG_BubbleTrail( lastPos, origin, 8 );
 		}
 		return;

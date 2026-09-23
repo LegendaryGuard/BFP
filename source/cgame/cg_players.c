@@ -1644,9 +1644,9 @@ static void CG_ChargeSmokeBubbles( centity_t *cent, vec3_t mins, vec3_t maxs,
 			waterTrace.endpos[2] -= 20;
 		}
 		if ( waterTrace.fraction >= 0 && waterTrace.fraction <= 0.70f ) {
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
-			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
+			CG_ParticleBubble( cent, cgs.media.waterBubbleShader, cgs.media.waterBubble3dShader, cgs.media.lowPolySphereModel, waterTrace.endpos, end, 700, bubbleRange, bubbleSize );
 		}
 	}
 }
