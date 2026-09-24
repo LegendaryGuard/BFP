@@ -160,6 +160,7 @@ You'll notice some differences and things that the original Bid For Power didn't
 - gamemode name in the top of the scoreboard
 - match timer HUD in top-center
 - ESF-style explosion smoke, it can be enabled with `cg_explosionSmoke 2`
+- toggleable spectator camera modes: first person, first person vis mode, third person, third person free follow look (it can be toggled with `+button9` (charge ki) while following a player on third person camera)
 
 
 # How to build

@@ -675,6 +675,12 @@ typedef struct {
 	int				spectatorOffset;										// current offset from start
 	int				spectatorPaintLen; 									// current offset from start
 
+	// BFPR - Spectator camera mode
+	int			spectatorCameraMode;
+	vec3_t		spectatorFreeLookAngles;
+	qboolean	spectatorFreeLookButton, lastFollowState;
+	qboolean	effectiveThirdPerson, effectiveDrawOwnModel, effectiveSpectatorFreeLook;
+
 	// centerprinting
 	int			centerPrintTime;
 	int			centerPrintCharWidth;
@@ -782,6 +788,12 @@ typedef struct {
 
 } cg_t;
 
+// BFPR - Spectator camera modes while following a player
+#define	SPECCAM_FIRST_PERSON		0
+#define	SPECCAM_FIRST_PERSON_VIS	1
+#define	SPECCAM_THIRD_PERSON		2
+#define	SPECCAM_THIRD_PERSON_FREE	3
+#define	SPECCAM_NUM_MODES			4
 
 // all of the model, shader, and sound references that are
 // loaded at gamestate time are stored in cgMedia_t

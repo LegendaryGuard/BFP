@@ -2475,7 +2475,7 @@ void CG_Player( centity_t *cent ) {
 
 	// BFP - First person vis mode doesn't have head model to be displayed
 	savedHead = head;
-	if ( cg_drawOwnModel.integer >= 1 && cg_thirdPerson.integer <= 0
+	if ( cg.effectiveDrawOwnModel && !cg.effectiveThirdPerson
 	&& clientNum == cg.snap->ps.clientNum
 	&& !( cent->currentState.eFlags & EF_DEAD ) ) {
 		memset( &head, 0, sizeof(head) );
@@ -2505,7 +2505,7 @@ void CG_Player( centity_t *cent ) {
 	}
 
 	// BFP - First person camera setup
-	if ( cg_thirdPerson.integer <= 0 
+	if ( !cg.effectiveThirdPerson
 	&& clientNum == cg.snap->ps.clientNum ) { // BFP - Avoid every time some player/bot enters in the server and changes the view into the other player
 		static vec3_t	deadOriginDrawOwnModel;
 
@@ -2516,7 +2516,7 @@ void CG_Player( centity_t *cent ) {
 			CG_OffsetFirstPersonView( cent, &savedHead, savedHead.hModel /*ci->headModel*/ );
 		} else if ( cg.snap->ps.stats[STAT_HEALTH] <= 0
 		&& ( cent->currentState.eFlags & EF_DEAD )
-		&& cg_drawOwnModel.integer >= 1 ) { // BFP - Death camera only for First person vis
+		&& cg.effectiveDrawOwnModel ) { // BFP - Death camera only for First person vis
 			VectorCopy( deadOriginDrawOwnModel, cg.refdef.vieworg );
 			cg.refdefViewAngles[YAW] = cg.snap->ps.damageYaw + cg.snap->ps.damagePitch;
 		}

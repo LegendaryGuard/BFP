@@ -2414,6 +2414,8 @@ static qboolean CG_DrawFollow( void ) {
 	float		x;
 	vec4_t		color;
 	const char	*name;
+	// BFPR - Spectator camera mode, variable info about camera modes
+	const char	*camModeStr;
 
 	if ( !(cg.snap->ps.pm_flags & PMF_FOLLOW) ) {
 		return qfalse;
@@ -2431,6 +2433,25 @@ static qboolean CG_DrawFollow( void ) {
 	x = 0.5 * ( 640 - GIANT_WIDTH * CG_DrawStrlen( name ) );
 
 	CG_DrawStringExt( x, 40, name, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
+
+	// BFPR - Spectator camera mode, show the current spectator camera mode under the followed player's name
+	switch ( cg.spectatorCameraMode ) {
+	default:
+	case SPECCAM_FIRST_PERSON:
+		camModeStr = "First Person";
+		break;
+	case SPECCAM_FIRST_PERSON_VIS:
+		camModeStr = "First Person Vis Mode";
+		break;
+	case SPECCAM_THIRD_PERSON:
+		camModeStr = "Third Person";
+		break;
+	case SPECCAM_THIRD_PERSON_FREE:
+		camModeStr = "Third Person Free Look";
+		break;
+	}
+	CG_DrawBigString( 320 - ( CG_DrawStrlen( camModeStr ) * BIGCHAR_WIDTH ) / 2,
+						92, camModeStr, 1.0f );
 
 	return qtrue;
 }

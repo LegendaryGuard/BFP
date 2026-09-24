@@ -536,6 +536,19 @@ void CG_PredictPlayerState( void ) {
 
 	cg.hyperspace = qfalse;	// will be set if touching a trigger_teleport
 
+	// BFPR - Init camera mode from user's cvars when entering follow mode
+	if ( ( cg.snap->ps.pm_flags & PMF_FOLLOW ) && !cg.lastFollowState ) {
+		if ( cg_thirdPerson.integer > 0 ) {
+			cg.spectatorCameraMode = SPECCAM_THIRD_PERSON;
+		} else if ( cg_drawOwnModel.integer > 0 ) {
+			cg.spectatorCameraMode = SPECCAM_FIRST_PERSON_VIS;
+		} else {
+			cg.spectatorCameraMode = SPECCAM_FIRST_PERSON;
+		}
+		cg.spectatorFreeLookButton = qfalse;
+	}
+	cg.lastFollowState = ( cg.snap->ps.pm_flags & PMF_FOLLOW );
+
 	// if this is the first frame we must guarantee
 	// predictedPlayerState is valid even if there is some
 	// other error condition
@@ -547,7 +560,39 @@ void CG_PredictPlayerState( void ) {
 
 	// demo playback just copies the moves
 	if ( cg.demoPlayback || (cg.snap->ps.pm_flags & PMF_FOLLOW) ) {
-		CG_InterpolatePlayerState( qfalse );
+		// BFPR - Spectator free follow look, when following a player in third person,
+		// let the spectator rotate the camera freely around the followed player
+		if ( !cg.demoPlayback && ( cg.snap->ps.pm_flags & PMF_FOLLOW ) ) {
+			usercmd_t		cmd;
+			int				cmdNum;
+			playerState_t	tempPS;
+			qboolean		buttonDown;
+
+			CG_InterpolatePlayerState( qfalse );
+
+			cmdNum = trap_GetCurrentCmdNumber();
+			trap_GetUserCmd( cmdNum, &cmd );
+
+			// cycle camera mode on rising edge
+			buttonDown = ( cmd.buttons & BUTTON_KI_CHARGE );
+			if ( buttonDown && !cg.spectatorFreeLookButton ) {
+				cg.spectatorCameraMode = ( cg.spectatorCameraMode + 1 ) % SPECCAM_NUM_MODES;
+			}
+			cg.spectatorFreeLookButton = buttonDown;
+
+			tempPS = cg.predictedPlayerState;	// inherits delta_angles from the followed player
+			// avoid changing delta_angles of the followed player, that happens while flying and looking very up/down
+			tempPS.delta_angles[0] = 0;
+			tempPS.delta_angles[1] = 0;
+			tempPS.delta_angles[2] = 0;
+
+			PM_UpdateViewAngles( &tempPS, &cmd );
+
+			VectorCopy( tempPS.viewangles, cg.spectatorFreeLookAngles );
+		} else {
+			CG_InterpolatePlayerState( qfalse );
+			cg.spectatorFreeLookButton = qfalse;	// reset edge detector when not following
+		}
 		return;
 	}
 

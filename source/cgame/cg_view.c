@@ -407,7 +407,7 @@ void CG_OffsetFirstPersonView( centity_t *cent, refEntity_t *parent, qhandle_t p
 	}
 
 	// BFP - First person vis mode
-	if ( cg_drawOwnModel.integer >= 1 && parentModel ) {
+	if ( cg.effectiveDrawOwnModel && parentModel ) {
 		if ( trap_R_LerpTag( &tagOrient, parentModel, parent->oldframe, parent->frame, 1.0 - parent->backlerp, "tag_eyes" ) ) {
 			VectorCopy( parent->origin, cg.refdef.vieworg );
 #if FPVISMODE_Q3BOBBING_MOVE
@@ -500,7 +500,7 @@ _q3fpscam:
 //===================================
 
 	// add view height
-	if ( cg_drawOwnModel.integer < 1 ) { // BFP - For Q3 first person view
+	if ( !cg.effectiveDrawOwnModel ) { // BFP - For Q3 first person view
 		origin[2] += cg.predictedPlayerState.viewheight;
 	}
 
@@ -750,6 +750,13 @@ static int CG_CalcViewValues( void ) {
 	}
 	VectorCopy( ps->viewangles, cg.refdefViewAngles );
 
+	// BFPR - Spectator free follow look, use the spectator's own view angles for the camera
+	if ( cg.effectiveSpectatorFreeLook ) {
+		VectorCopy( cg.spectatorFreeLookAngles, cg.refdefViewAngles );
+	} else {
+		VectorCopy( ps->viewangles, cg.refdefViewAngles );
+	}
+
 	if (cg_cameraOrbit.integer) {
 		if (cg.time > cg.nextOrbitTime) {
 			cg.nextOrbitTime = cg.time + cg_cameraOrbitDelay.integer;
@@ -784,7 +791,7 @@ static int CG_CalcViewValues( void ) {
 	} else {
 		// offset for local bobbing and kicks
 		// BFP - That only handles if cg_drawOwnModel is disabled
-		if ( cg_thirdPerson.integer <= 0 && cg_drawOwnModel.integer <= 0 ) {
+		if ( !cg.effectiveThirdPerson && !cg.effectiveDrawOwnModel ) {
 			CG_OffsetFirstPersonView( NULL, NULL, 0 );
 		}
 	}
@@ -907,9 +914,40 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	// update cg.predictedPlayerState
 	CG_PredictPlayerState();
 
+	// BFPR - Spectator camera mode
+	if ( !cg.demoPlayback && ( cg.snap->ps.pm_flags & PMF_FOLLOW ) ) {
+		switch ( cg.spectatorCameraMode ) {
+		case SPECCAM_FIRST_PERSON:
+			cg.effectiveThirdPerson = qfalse;
+			cg.effectiveDrawOwnModel = qfalse;
+			cg.effectiveSpectatorFreeLook = qfalse;
+			break;
+		case SPECCAM_FIRST_PERSON_VIS:
+			cg.effectiveThirdPerson = qfalse;
+			cg.effectiveDrawOwnModel = qtrue;
+			cg.effectiveSpectatorFreeLook = qfalse;
+			break;
+		case SPECCAM_THIRD_PERSON:
+			cg.effectiveThirdPerson = qtrue;
+			cg.effectiveDrawOwnModel = qfalse;
+			cg.effectiveSpectatorFreeLook = qfalse;
+			break;
+		case SPECCAM_THIRD_PERSON_FREE:
+		default:
+			cg.effectiveThirdPerson = qtrue;
+			cg.effectiveDrawOwnModel = qfalse;
+			cg.effectiveSpectatorFreeLook = qtrue;
+			break;
+		}
+	} else {
+		cg.effectiveThirdPerson = ( cg_thirdPerson.integer > 0 );
+		cg.effectiveDrawOwnModel = ( cg_drawOwnModel.integer  > 0 );
+		cg.effectiveSpectatorFreeLook = qfalse;
+	}
+
 	// decide on third person view
 	// BFP - Also cg_drawOwnModel handles
-	cg.renderingThirdPerson = cg_thirdPerson.integer || cg_drawOwnModel.integer || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
+	cg.renderingThirdPerson = cg.effectiveThirdPerson || cg.effectiveDrawOwnModel || (cg.snap->ps.stats[STAT_HEALTH] <= 0);
 
 	// build cg.refdef
 	inwater = CG_CalcViewValues();
