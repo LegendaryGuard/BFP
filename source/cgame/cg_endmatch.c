@@ -960,7 +960,7 @@ CG_DrawEndMatchNextMatchBanner
 static void CG_DrawEndMatchNextMatchBanner( void ) {
 	const char	*msg = "LOADING MATCH...";
 	float		textW, boxW, boxH, boxX, boxY, alpha;
-	vec4_t		bgColor, border;
+	vec4_t		bgColor;
 	int			pulse;
 
 	textW = CG_DrawStrlen( msg ) * BIGCHAR_WIDTH;
@@ -978,13 +978,7 @@ static void CG_DrawEndMatchNextMatchBanner( void ) {
 	bgColor[2] = 0.00f;
 	bgColor[3] = alpha;
 
-	border[0] = 1.00f;
-	border[1] = 0.25f;
-	border[2] = 0.25f;
-	border[3] = 0.90f;
-
 	CG_FillRect( boxX, boxY, boxW, boxH, bgColor );
-	CG_DrawRect( boxX, boxY, boxW, boxH, 2.0f, border );
 	CG_DrawBigStringColor( (int)( ( SCREEN_WIDTH  - textW ) * 0.5f ),
 						(int)( boxY + ( boxH - BIGCHAR_HEIGHT ) * 0.5f ),
 						msg, colorWhite );

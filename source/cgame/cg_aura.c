@@ -200,6 +200,7 @@ static void CG_DynamicAuraLight( centity_t *cent, int clientNum, float r, float 
 		}
 	}
 }
+
 /*
 ============
 CG_SpriteAura
