@@ -1363,6 +1363,7 @@ const char *CG_GameTypeString( void );
 qboolean CG_YourTeamHasFlag( void );
 qboolean CG_OtherTeamHasFlag( void );
 qhandle_t CG_StatusHandle(int task);
+void CG_DrawRadar( void ); // BFPR - Radar
 
 
 

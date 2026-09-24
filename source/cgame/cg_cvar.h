@@ -123,6 +123,12 @@ CG_CVAR( cg_scorePlum, "cg_scorePlums", "1", CVAR_USERINFO | CVAR_ARCHIVE )
 CG_CVAR( cg_smoothClients, "cg_smoothClients", "0", CVAR_USERINFO | CVAR_ARCHIVE )
 // CG_CVAR( cg_cameraMode, "com_cameraMode", "0", CVAR_CHEAT ) // BFP - cg_cameraMode cvar doesn't exist
 
+CG_CVAR( cg_radar, "cg_radar", "0", CVAR_ARCHIVE ) // BFPR - Radar
+CG_CVAR( cg_radarSize, "cg_radarSize", "60", CVAR_ARCHIVE ) // BFPR - Radar screen radius
+CG_CVAR( cg_radarDotSize, "cg_radarDotSize", "7", CVAR_ARCHIVE ) // BFPR - Radar dot size
+CG_CVAR( cg_radarX, "cg_radarX", "16", CVAR_ARCHIVE ) // BFPR - Radar X offset
+CG_CVAR( cg_radarY, "cg_radarY", "28", CVAR_ARCHIVE ) // BFPR - Radar Y offset
+
 CG_CVAR( pmove_fixed, "pmove_fixed", "0", 0 )
 CG_CVAR( pmove_msec, "pmove_msec", "8", 0 )
 CG_CVAR( cg_noTaunt, "cg_noTaunt", "0", CVAR_ARCHIVE )

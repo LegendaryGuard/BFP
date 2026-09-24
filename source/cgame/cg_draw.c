@@ -2700,6 +2700,238 @@ static void CG_DrawWarmup( void ) {
 }
 
 /*
+===========================================================================
+BFPR - Radar
+===========================================================================
+*/
+
+static vec4_t	radarCrossColor		= {0.75f, 0.75f, 0.75f, 0.35f};
+static vec4_t	radarSelfColor		= {1.00f, 1.00f, 1.00f, 1.00f};
+static vec4_t	radarFreeColor		= {0.81f, 0.00f, 0.48f, 1.00f};	// free/FFA
+static vec4_t	radarRedColor		= {1.00f, 0.15f, 0.15f, 1.00f};	// red team
+static vec4_t	radarBlueColor		= {0.15f, 0.40f, 1.00f, 1.00f};	// blue team
+static vec4_t	radarMonsterColor	= {0.95f, 0.00f, 0.00f, 1.00f};	// monster
+
+/*
+=================
+CG_DrawRadarCircleFilled
+=================
+*/
+static void CG_DrawRadarCircleFilled( float cx, float cy, float radius, const vec4_t color ) {
+	int		numStrips, i;
+	float	stripHeight, rSq;
+
+	if ( radius <= 1.0f ) {
+		return;
+	}
+
+	numStrips = (int)( radius );
+	if ( numStrips < 32 ) {
+		numStrips = 32;
+	}
+	if ( numStrips > 200 ) {
+		numStrips = 200;
+	}
+
+	stripHeight = ( radius * 2.0f ) / (float)numStrips;
+	rSq = radius * radius;
+
+	for ( i = 0; i < numStrips; i++ ) {
+		float	yTop = -radius + i * stripHeight;
+		float	yMid = yTop + stripHeight * 0.5f;
+		float	ySq  = yMid * yMid;
+		float	halfW;
+
+		if ( ySq >= rSq ) {
+			continue;
+		}
+		halfW = sqrt( rSq - ySq );
+		CG_FillRect( cx - halfW, cy + yTop, halfW * 2.0f, stripHeight + 2, color );
+	}
+}
+
+/*
+=================
+CG_DrawRadar
+=================
+*/
+void CG_DrawRadar( void ) {
+	const float	RADAR_RANGE = 3500;
+	const float	RADAR_HEIGHT_RANGE = 800.0f;
+	const float	RADAR_MIN_HEIGHT_SCALE = 0.35f;
+	float		cx, cy, radius, scale;
+	float		dotSize, monsterDotSize;
+	vec3_t		playerOrigin, forward, right;
+	vec4_t		bgColor;
+	int			i;
+
+	if ( cg_radar.integer <= 0 ) {
+		return;
+	}
+
+	if ( !cg.snap || cg.snap->ps.pm_type == PM_INTERMISSION ) {
+		return;
+	}
+
+	if ( cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+		return;
+	}
+
+	// radar radius
+	radius = cg_radarSize.value;
+	if ( radius < 32.0f ) {
+		radius = 32.0f;
+	}
+	if ( radius > 200.0f ) {
+		radius = 200.0f;
+	}
+
+	cx = radius + cg_radarX.value;
+	if ( cx < radius ) {
+		cx = radius;
+	}
+	if ( cx > SCREEN_WIDTH - radius ) {
+		cx = SCREEN_WIDTH - radius;
+	}
+
+	cy = radius + cg_radarY.value;
+	if ( cy < radius ) {
+		cy = radius;
+	}
+	if ( cy > SCREEN_HEIGHT - radius ) {
+		cy = SCREEN_HEIGHT - radius;
+	}
+
+	dotSize = cg_radarDotSize.value;
+	if ( dotSize < 1.0f ) {
+		dotSize = 1.0f;
+	}
+	if ( dotSize > 20.0f ) {
+		dotSize = 20.0f;
+	}
+
+	monsterDotSize = cg_radarDotSize.value * 2;
+	if ( monsterDotSize < dotSize + 4.0f ) {
+		monsterDotSize = dotSize + 4.0f;
+	}
+	if ( monsterDotSize < 8.0f ) {
+		monsterDotSize = 8.0f;
+	}
+	if ( monsterDotSize > 40.0f ) {
+		monsterDotSize = 40.0f;
+	}
+
+	scale = radius / RADAR_RANGE;
+
+	// background
+	bgColor[0] = 0.05f;
+	bgColor[1] = 0.05f;
+	bgColor[2] = 0.05f;
+	bgColor[3] = 0.05f;
+
+	CG_DrawRadarCircleFilled( cx, cy, radius, bgColor );
+
+	// central cross
+	trap_R_SetColor( radarCrossColor );
+	CG_DrawPic( cx - radius + 4.0f, cy - 0.5f, ( radius - 4.0f ) * 2.0f, 1.0f, cgs.media.whiteShader );
+	CG_DrawPic( cx - 0.5f, cy - radius + 4.0f, 1.0f, ( radius - 4.0f ) * 2.0f, cgs.media.whiteShader );
+	trap_R_SetColor( NULL );
+
+	// player origin
+	VectorCopy( cg.predictedPlayerState.origin, playerOrigin );
+	AngleVectors( cg.refdefViewAngles, forward, right, NULL );
+	forward[2] = 0;
+	right[2] = 0;
+	VectorNormalize( forward );
+	VectorNormalize( right );
+
+	// nearly entities
+	for ( i = 0; i < MAX_CLIENTS; ++i ) {
+		centity_t		*cent = &cg_entities[i];
+		clientInfo_t	*ci   = &cgs.clientinfo[i];
+		vec3_t			delta;
+		float			dx, dy, screenX, screenY, distSq, rSq;
+		float			dot, baseDot, absDeltaZ, heightScale;
+		vec4_t			*dotColor;
+
+		if ( i == cg.snap->ps.clientNum ) {
+			continue;
+		}
+		if ( !ci->infoValid ) {
+			continue;
+		}
+		if ( cent->currentState.eType != ET_PLAYER ) {
+			continue;
+		}
+		if ( cent->currentState.eFlags & EF_DEAD ) {
+			continue;
+		}
+
+		VectorSubtract( cent->lerpOrigin, playerOrigin, delta );
+		distSq = delta[0] * delta[0] + delta[1] * delta[1];
+		rSq = RADAR_RANGE * RADAR_RANGE;
+
+		if ( distSq > rSq ) {
+			continue;
+		}
+
+		absDeltaZ = fabs( delta[2] );
+		if ( absDeltaZ >= RADAR_HEIGHT_RANGE ) {
+			heightScale = RADAR_MIN_HEIGHT_SCALE;
+		} else {
+			heightScale = 1.0f - ( absDeltaZ / RADAR_HEIGHT_RANGE )
+				* ( 1.0f - RADAR_MIN_HEIGHT_SCALE );
+		}
+
+		delta[2] = 0;
+		dx = DotProduct( delta, right );
+		dy = DotProduct( delta, forward );
+
+		screenX = cx + dx * scale;
+		screenY = cy - dy * scale; // forward = upward screen
+
+		if ( cent->currentState.eFlags & EF_MONSTER ) {
+			dotColor = &radarMonsterColor;
+			baseDot = monsterDotSize;
+		} else if ( cgs.gametype >= GT_TEAM && ci->team != TEAM_SPECTATOR ) {
+			if ( ci->team == TEAM_RED ) {
+				dotColor = &radarRedColor;
+			} else if ( ci->team == TEAM_BLUE ) {
+				dotColor = &radarBlueColor;
+			} else {
+				dotColor = &radarFreeColor;
+			}
+			baseDot = dotSize;
+		} else {
+			dotColor = &radarFreeColor;
+			baseDot = dotSize;
+		}
+
+		// apply the vertical scale to the dot size, never below 1 px
+		dot = baseDot * heightScale;
+		if ( dot < 1.0f ) {
+			dot = 1.0f;
+		}
+
+		trap_R_SetColor( *dotColor );
+		CG_DrawPic( screenX - dot * 0.5f, screenY - dot * 0.5f, dot, dot, cgs.media.whiteShader );
+		trap_R_SetColor( NULL );
+	}
+
+	// player in the center
+	trap_R_SetColor( radarSelfColor );
+	CG_DrawPic( cx - dotSize * 0.5f, cy - dotSize * 0.5f, dotSize, dotSize, cgs.media.whiteShader );
+	trap_R_SetColor( NULL );
+}
+
+/*
+===========================================================================
+BFPR - End of radar feature
+===========================================================================
+*/
+
+
+/*
 =================
 CG_Draw2D
 =================
@@ -2721,6 +2953,9 @@ static void CG_Draw2D( void ) {
 
 	// BFP - Draw blind effect (Blinding Flash)
 	CG_DrawBlindEffect();
+
+	// BFPR - Radar
+	CG_DrawRadar();
 
 /*
 	if (cg.cameraMode) {
