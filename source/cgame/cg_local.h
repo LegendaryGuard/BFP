@@ -138,10 +138,7 @@ typedef struct {
 
 typedef struct {
 	lerpFrame_t		legs, torso, flag;
-	// BFPR - Head to avoid player model look deformed when dead while camera can move freely
-#ifdef BFPR_DEAD_CAMERA_FREE_MOVE
-	lerpFrame_t		head;
-#endif
+
 	int				painTime;
 	int				painDirection;	// flip from 0 to 1
 	//int				lightningFiring;
@@ -161,11 +158,9 @@ typedef struct {
 	int				lastChargeVoiceLevel;	// BFP - To play charge voice in one charge count once
 
 	// BFPR - For dead player angles
-#ifdef BFPR_DEAD_CAMERA_FREE_MOVE
 	qboolean		deadAnglesFrozen;
 	int				deadAnglesClientNum;
 	vec3_t			deadAnglesOrigin;
-#endif
 } playerEntity_t;
 
 //=================================================
@@ -675,6 +670,9 @@ typedef struct {
 	int				spectatorOffset;										// current offset from start
 	int				spectatorPaintLen; 									// current offset from start
 
+	// BFPR - Free camera while dead
+	qboolean	deadFreeLook;
+
 	// BFPR - Spectator camera mode
 	int			spectatorCameraMode;
 	vec3_t		spectatorFreeLookAngles;
@@ -787,6 +785,9 @@ typedef struct {
 	qboolean		testGun;
 
 } cg_t;
+
+// BFPR - A macro to enable/disable the camera to make freely move while the player is dead
+#define	BFPR_DEAD_CAMERA_FREE_MOVE	1
 
 // BFPR - Spectator camera modes while following a player
 #define	SPECCAM_FIRST_PERSON		0

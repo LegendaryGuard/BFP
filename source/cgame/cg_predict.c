@@ -602,6 +602,68 @@ void CG_PredictPlayerState( void ) {
 		return;
 	}
 
+	// BFPR - Free camera while dead
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	cg.deadFreeLook = qfalse;
+	{
+		// first frame look up at the killer
+		static qboolean	deathDeltaInit = qfalse;
+		if ( cg.snap->ps.stats[STAT_HEALTH] <= 0 ) {
+			static int		deathDelta[3];
+			usercmd_t		cmd;
+			int				cmdNum;
+			playerState_t	tempPS;
+
+			cmdNum = trap_GetCurrentCmdNumber();
+			trap_GetUserCmd( cmdNum, &cmd );
+
+			if ( !deathDeltaInit ) {
+				float	killerYaw = cg.snap->ps.damageYaw + cg.snap->ps.damagePitch;
+				float	killerPitch = 0;
+				int		attackerNum = cg.snap->ps.persistant[PERS_ATTACKER];
+
+				if ( attackerNum >= 0 && attackerNum < MAX_CLIENTS
+				&& attackerNum != cg.snap->ps.clientNum ) {
+					vec3_t	dir;
+					float	forwardLen;
+
+					VectorSubtract( cg_entities[ attackerNum ].lerpOrigin,
+									cg.snap->ps.origin, dir );
+
+					forwardLen = sqrt( dir[0]*dir[0] + dir[1]*dir[1] );
+					if ( forwardLen > 0.1f || Q_fabs( dir[2] ) > 0.1f ) {
+						killerYaw = atan2( dir[1], dir[0] ) * 180.0f / M_PI;
+						if ( killerYaw < 0 ) {
+							killerYaw += 360.0f;
+						}
+						// Q3 pitch convention: positive looks down, negative looks up
+						killerPitch = -atan2( dir[2], forwardLen ) * 180.0f / M_PI;
+					}
+				}
+
+				deathDelta[PITCH] = ANGLE2SHORT( killerPitch ) - cmd.angles[PITCH];
+				deathDelta[YAW] = ANGLE2SHORT( killerYaw ) - cmd.angles[YAW];
+				deathDelta[ROLL] = ANGLE2SHORT( 0 ) - cmd.angles[ROLL];
+
+				deathDeltaInit = qtrue;
+			}
+
+			tempPS = cg.predictedPlayerState;
+			tempPS.pm_type = PM_SPECTATOR;
+			tempPS.delta_angles[PITCH] = deathDelta[PITCH];
+			tempPS.delta_angles[YAW] = deathDelta[YAW];
+			tempPS.delta_angles[ROLL] = deathDelta[ROLL];
+
+			PM_UpdateViewAngles( &tempPS, &cmd );
+
+			VectorCopy( tempPS.viewangles, cg.spectatorFreeLookAngles );
+			cg.deadFreeLook = qtrue;
+		} else {
+			deathDeltaInit = qfalse;
+		}
+	}
+#endif
+
 	// prepare for pmove
 	cg_pmove.ps = &cg.predictedPlayerState;
 	cg_pmove.trace = CG_Trace;

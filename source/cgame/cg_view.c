@@ -751,7 +751,11 @@ static int CG_CalcViewValues( void ) {
 	VectorCopy( ps->viewangles, cg.refdefViewAngles );
 
 	// BFPR - Spectator free follow look, use the spectator's own view angles for the camera
-	if ( cg.effectiveSpectatorFreeLook ) {
+	if ( cg.effectiveSpectatorFreeLook
+#if BFPR_DEAD_CAMERA_FREE_MOVE
+	|| cg.deadFreeLook
+#endif
+ ) {
 		VectorCopy( cg.spectatorFreeLookAngles, cg.refdefViewAngles );
 	} else {
 		VectorCopy( ps->viewangles, cg.refdefViewAngles );
