@@ -384,6 +384,9 @@ struct gclient_s {
 	int			tierUnlockedTime;
 	int			ultimateTierUnlockedTime;
 
+	// BFP - Preserve powerlevel when respawning without being killed
+	qboolean	preservePowerlevel;
+
 	// BFP - Zanzoken handlers
 	int			zanzokenPressTime;
 	qboolean	zanzokenNow;

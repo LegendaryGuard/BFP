@@ -472,6 +472,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position, int entityNum ) {
 		break;
 	case EV_TIER_4:					// 18
 		trap_S_StartSound ( NULL, es->otherEntityNum, CHAN_BODY, cgs.media.tierUpSound );
+    	cg_entities[es->otherEntityNum].pe.tierAuraTime = cg.time + 4200;
 		if ( es->otherEntityNum == cg.snap->ps.clientNum ) {
 			// BFP - Monster gamemode, avoid forcing weapon selection, really uses 1 slot
 			if ( !( cgs.gametype == GT_MONSTER && cgs.monster > 0

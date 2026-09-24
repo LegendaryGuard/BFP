@@ -1297,6 +1297,9 @@ void ClientSpawn(gentity_t *ent) {
 	// BFP - Team Last Man Standing, save force to spectate and selected team
 	qboolean	savedForcedToSpectate;
 	team_t	savedSelectedTeam;
+	// BFP - Preserve powerlevel when respawning without being killed and unlocked tier time
+	qboolean	savedPreservePowerlevel;
+	int		savedTierUnlockedTime, savedUltimateTierUnlockedTime;
 //	char	*savedAreaBits;
 	int		accuracy_hits, accuracy_shots;
 	int		eventSequence;
@@ -1367,6 +1370,11 @@ void ClientSpawn(gentity_t *ent) {
 	savedForcedToSpectate = client->forceToSpectate;
 	savedSelectedTeam = client->selectedTeam;
 
+	// BFP - Preserve powerlevel when respawning without being killed and unlocked tier time
+	savedPreservePowerlevel = client->preservePowerlevel;
+	savedTierUnlockedTime = client->tierUnlockedTime;
+	savedUltimateTierUnlockedTime = client->ultimateTierUnlockedTime;
+
 	savedPing = client->ps.ping;
 //	savedAreaBits = client->areabits;
 	accuracy_hits = client->accuracy_hits;
@@ -1383,6 +1391,11 @@ void ClientSpawn(gentity_t *ent) {
 	// BFP - Team Last Man Standing, keep force to spectate and selected team
 	client->forceToSpectate = savedForcedToSpectate;
 	client->selectedTeam = savedSelectedTeam;
+
+	// BFP - Preserve powerlevel when respawning without being killed and unlocked tier time
+	client->preservePowerlevel = savedPreservePowerlevel;
+	client->tierUnlockedTime = savedTierUnlockedTime;
+	client->ultimateTierUnlockedTime = savedUltimateTierUnlockedTime;
 
 	client->ps.ping = savedPing;
 //	client->areabits = savedAreaBits;
@@ -1433,11 +1446,13 @@ void ClientSpawn(gentity_t *ent) {
 	client->ps.clientNum = index;
 
 	// BFP - Powerlevel start
-	if ( client->ps.persistant[PERS_POWERLEVEL] < g_basePL.integer ) {
-		client->ps.persistant[PERS_POWERLEVEL] = g_basePL.integer;
-	} else {
-		if ( level.numConnectedClients > 1 ) {
-			client->ps.persistant[PERS_POWERLEVEL] = ClientGetAveragePowerlevel();
+	if ( !client->preservePowerlevel ) { // BFP - Preserve powerlevel when respawning without being killed
+		if ( client->ps.persistant[PERS_POWERLEVEL] < g_basePL.integer ) {
+			client->ps.persistant[PERS_POWERLEVEL] = g_basePL.integer;
+		} else {
+			if ( level.numConnectedClients > 1 ) {
+				client->ps.persistant[PERS_POWERLEVEL] = ClientGetAveragePowerlevel();
+			}
 		}
 	}
 	if ( client->ps.persistant[PERS_POWERLEVEL] > 1000 || g_basePL.integer > 998 ) {
@@ -1446,7 +1461,8 @@ void ClientSpawn(gentity_t *ent) {
 
 	// BFP - Max spawn powerlevel, only when g_maxSpawnPL is higher than 0
 	if ( g_maxSpawnPL.integer > 0 && client->ps.persistant[PERS_POWERLEVEL] > g_maxSpawnPL.integer
-	&& g_basePL.integer < 999 ) {
+	&& g_basePL.integer < 999
+	&& !client->preservePowerlevel ) { // BFP - Preserve powerlevel when respawning without being killed
 		client->ps.persistant[PERS_POWERLEVEL] = g_maxSpawnPL.integer;
 	}
 

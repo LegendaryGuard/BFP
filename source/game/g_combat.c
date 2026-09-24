@@ -555,6 +555,7 @@ static void CheckMonsterGamemodeRules( gentity_t *self, gentity_t *attacker, int
 		level.monsterClientNum = attacker->client->ps.clientNum;
 		self->client->ps.eFlags &= ~EF_MONSTER;
 		attacker->client->ps.eFlags |= EF_MONSTER;
+		attacker->client->preservePowerlevel = qtrue;
 
 		respawn( attacker );
 	}
