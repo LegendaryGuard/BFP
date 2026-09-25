@@ -2969,16 +2969,18 @@ static void CG_Draw2D( void ) {
 	} else {
 		// BFP - Q3 before: don't draw any status if dead or the scoreboard is being explicitly shown
 		if ( cg.snap->ps.stats[STAT_HEALTH] > 0 ) {
-			CG_DrawStatusBar();
-			CG_DrawKiWarning(); // BFP - ki warning
-			CG_DrawHitStun(); // BFP - Hit stun bottom centerprint
-			CG_DrawReadyKiAttack(); // BFP - Ready message in the bottom centerprint when charging attacks
-			CG_DrawNumAlivePlayers(); // BFP - Number of alive players
+			if ( cg_drawStatus.integer ) {
+				CG_DrawStatusBar();
+				CG_DrawKiWarning(); // BFP - ki warning
+				CG_DrawHitStun(); // BFP - Hit stun bottom centerprint
+				CG_DrawReadyKiAttack(); // BFP - Ready message in the bottom centerprint when charging attacks
+				CG_DrawHoldableItem();
+				CG_DrawReward();
+			}
 			CG_DrawCrosshair();
 			CG_DrawCrosshairNames();
+			CG_DrawNumAlivePlayers(); // BFP - Number of alive players
 			CG_DrawWeaponSelect();
-			CG_DrawHoldableItem();
-			CG_DrawReward();
 		}
     
 		if ( cgs.gametype >= GT_TEAM ) {
@@ -2996,8 +2998,10 @@ static void CG_Draw2D( void ) {
 	CG_DrawLagometer();
 	CG_DrawUpperRight();
 
-	CG_DrawLowerRight();
-	CG_DrawLowerLeft();
+	if ( cg_drawStatus.integer ) {
+		CG_DrawLowerRight();
+		CG_DrawLowerLeft();
+	}
 
 	if ( !CG_DrawFollow() ) {
 		CG_DrawWarmup();

@@ -91,15 +91,13 @@ static void CG_AuraPowerlevelGetColor( centity_t *cent, vec3_t outColor ) {
 		powerlevel = cg.snap->ps.persistant[PERS_POWERLEVEL];
 	}
 
-	// blue
-	VectorSet( outColor, 0.2f, 0.2f, 1.0f );
 	if ( powerlevel < 100
-	|| ( cgs.gametype >= GT_TEAM && cgs.clientinfo[ state->clientNum ].team == TEAM_BLUE ) ) {
-		VectorSet( outColor, 0.2f, 0.2f, 1.0f );
+	|| ( cgs.gametype >= GT_TEAM && cgs.clientinfo[ state->clientNum ].team == TEAM_BLUE ) ) { // blue
+		VectorSet( outColor, 0.07f, 0.39f, 1.0f );
 	} else if ( powerlevel >= 1000 && !( cgs.gametype >= GT_TEAM ) ) { // yellow
-		VectorSet( outColor, 1.0f, 1.0f, 0.2f );
+		VectorSet( outColor, 0.96f, 1.0f, 0.06f );
 	} else { // red
-		VectorSet( outColor, 1.0f, 0.2f, 0.2f );
+		VectorSet( outColor, 1.0f, 0.06f, 0.06f );
 	}
 }
 
