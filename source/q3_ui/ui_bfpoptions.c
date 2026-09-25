@@ -70,6 +70,11 @@ BFP OPTIONS MENU
 #define	HARDCORE_EXPLOSION			3
 #define	ULTRA_HARDCORE_EXPLOSION	4
 
+// BFPR - Explosion smoke options
+#define	EXPLOSMOKE_OFF		0
+#define	EXPLOSMOKE_ON		1
+#define	EXPLOSMOKE_ESF		2
+
 static const char *auraType_items[] = {
 	"Sprite Aura",
 	"Lightweight Aura",
@@ -96,6 +101,14 @@ static const char* explosionType_items[] = {
 	NULL
 };
 
+// BFPR - Explosion smoke options
+static const char *explosionSmoke_items[] = {
+	"Off",
+	"BFP",
+	"ESF",
+	NULL
+};
+
 typedef struct {
 	menuframework_s		menu;
 	menubitmap_s		menubg;
@@ -117,7 +130,7 @@ typedef struct {
 	menuradiobutton_s	dynExploLights;
 	menuradiobutton_s	bigExplosions;
 	menuradiobutton_s	explosionShell;
-	menuradiobutton_s	explosionSmoke;
+	menulist_s			explosionSmoke;		// BFPR - Explosion smoke options, 3-state spin control (Off / BFP / ESF)
 	menuradiobutton_s	explosionRing;
 	menuslider_s		kiTrailLength;
 	menuslider_s		beamComplexity;
@@ -168,7 +181,6 @@ static void BFPOptions_SetMenuItems( void ) {
 	BFPOptions_MenuItem( &s_bfpoptions.dynExploLights.curvalue,		"cg_lightExplosions",		0 );
 	BFPOptions_MenuItem( &s_bfpoptions.bigExplosions.curvalue,		"cg_bigExplosions",			0 );
 	BFPOptions_MenuItem( &s_bfpoptions.explosionShell.curvalue,		"cg_explosionShell",		0 );
-	BFPOptions_MenuItem( &s_bfpoptions.explosionSmoke.curvalue,		"cg_explosionSmoke",		0 );
 	BFPOptions_MenuItem( &s_bfpoptions.explosionRing.curvalue,		"cg_explosionRing",			0 );
 	BFPOptions_MenuItem( &s_bfpoptions.transformationAura.curvalue,	"cg_transformationAura",	0 );
 	BFPOptions_MenuItem( &s_bfpoptions.smallAura.curvalue,			"cg_smallOwnAura",			0 );
@@ -182,6 +194,15 @@ static void BFPOptions_SetMenuItems( void ) {
 	BFPOptions_MenuItem( &s_bfpoptions.defaultSkins.curvalue,		"cg_forceSkin",				0 );
 	BFPOptions_MenuItem( &s_bfpoptions.stfu.curvalue,				"cg_stfu",					0 );
 	BFPOptions_MenuItem( &s_bfpoptions.lowPolySphere.curvalue,		"cg_lowPolySphere",			0 );
+
+	// BFPR - Explosion smoke options
+	s_bfpoptions.explosionSmoke.curvalue = trap_Cvar_VariableValue( "cg_explosionSmoke" );
+	if ( s_bfpoptions.explosionSmoke.curvalue < EXPLOSMOKE_OFF ) {
+		s_bfpoptions.explosionSmoke.curvalue = EXPLOSMOKE_OFF;
+	}
+	if ( s_bfpoptions.explosionSmoke.curvalue > EXPLOSMOKE_ESF ) {
+		s_bfpoptions.explosionSmoke.curvalue = EXPLOSMOKE_ESF;
+	}
 }
 
 static void BFPOptions_AuraType_Setup( int sprite, int highpoly, int poly, int light, int particle ) {
@@ -727,13 +748,14 @@ void BFPExplosionsOptions_MenuInit( void ) {
 	s_bfpoptions.lowPolySphere.generic.y		= y;
 
 	y += BFPOPTIONS_SECTION_Y;
-	s_bfpoptions.explosionSmoke.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.explosionSmoke.generic.type		= MTYPE_SPINCONTROL;
 	s_bfpoptions.explosionSmoke.generic.name		= "Smoke:";
 	s_bfpoptions.explosionSmoke.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
 	s_bfpoptions.explosionSmoke.generic.callback	= BFPOptions_Event;
 	s_bfpoptions.explosionSmoke.generic.id			= ID_EXPLOSIONSMOKE;
 	s_bfpoptions.explosionSmoke.generic.x			= BFPOPTIONS_X_POS;
 	s_bfpoptions.explosionSmoke.generic.y			= y;
+	s_bfpoptions.explosionSmoke.itemnames			= explosionSmoke_items;
 
 	y += BIGCHAR_HEIGHT + 2;
 	s_bfpoptions.explosionShell.generic.type		= MTYPE_RADIOBUTTON;
