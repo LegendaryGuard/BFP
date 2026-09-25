@@ -344,6 +344,14 @@ extern	vec4_t		colorLtGrey;
 extern	vec4_t		colorMdGrey;
 extern	vec4_t		colorDkGrey;
 
+// BFPR - Radar colors
+extern vec4_t		radarCrossColor;
+extern vec4_t		radarSelfColor;
+extern vec4_t		radarFreeColor;		// free/FFA
+extern vec4_t		radarRedColor;		// red team
+extern vec4_t		radarBlueColor;		// blue team
+extern vec4_t		radarMonsterColor;	// monster
+
 #define Q_COLOR_ESCAPE	'^'
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE )
 

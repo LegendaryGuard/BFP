@@ -40,6 +40,14 @@ vec4_t		colorLtGrey	= {0.75, 0.75, 0.75, 1};
 vec4_t		colorMdGrey	= {0.5, 0.5, 0.5, 1};
 vec4_t		colorDkGrey	= {0.25, 0.25, 0.25, 1};
 
+// BFPR - Radar colors
+vec4_t		radarCrossColor		= {0.75f, 0.75f, 0.75f, 0.35f};
+vec4_t		radarSelfColor		= {1.00f, 1.00f, 1.00f, 1.00f};
+vec4_t		radarFreeColor		= {0.81f, 0.00f, 0.48f, 1.00f};	// free/FFA
+vec4_t		radarRedColor		= {1.00f, 0.15f, 0.15f, 1.00f};	// red team
+vec4_t		radarBlueColor		= {0.15f, 0.40f, 1.00f, 1.00f};	// blue team
+vec4_t		radarMonsterColor	= {0.95f, 0.00f, 0.00f, 1.00f};	// monster
+
 vec4_t	g_color_table[8] =
 	{
 	{0.0, 0.0, 0.0, 1.0},

@@ -2705,13 +2705,6 @@ BFPR - Radar
 ===========================================================================
 */
 
-static vec4_t	radarCrossColor		= {0.75f, 0.75f, 0.75f, 0.35f};
-static vec4_t	radarSelfColor		= {1.00f, 1.00f, 1.00f, 1.00f};
-static vec4_t	radarFreeColor		= {0.81f, 0.00f, 0.48f, 1.00f};	// free/FFA
-static vec4_t	radarRedColor		= {1.00f, 0.15f, 0.15f, 1.00f};	// red team
-static vec4_t	radarBlueColor		= {0.15f, 0.40f, 1.00f, 1.00f};	// blue team
-static vec4_t	radarMonsterColor	= {0.95f, 0.00f, 0.00f, 1.00f};	// monster
-
 /*
 =================
 CG_DrawRadarCircleFilled

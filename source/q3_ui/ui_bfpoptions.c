@@ -48,6 +48,13 @@ BFP OPTIONS MENU
 #define	ID_AURASCONFIG			165
 #define	ID_EXPLOSIONSCONFIG		166
 #define	ID_VIEWEFFSNDCONFIG		167
+// BFPR - Radar
+#define	ID_RADARCONFIG			168
+#define	ID_RADARONOFF			169
+#define	ID_RADARSIZE			170
+#define	ID_RADARDOTSIZE			171
+#define	ID_RADARX				172
+#define	ID_RADARY				173
 
 // Macros to handle the cases in that order
 #define SPRITE_AURA				0
@@ -127,6 +134,14 @@ typedef struct {
 	menuradiobutton_s	stfu;
 	menuradiobutton_s	lowPolySphere;
 	menubitmap_s		back;
+
+	// BFPR - Radar
+	menutext_s			radarButton;
+	menuradiobutton_s	radarOnOff;
+	menuslider_s		radarSize;
+	menuslider_s		radarDotSize;
+	menuslider_s		radarX;
+	menuslider_s		radarY;
 } bfpoptions_t;
 
 static bfpoptions_t s_bfpoptions;
@@ -136,6 +151,10 @@ static int menuBarOption = ID_AURASCONFIG;
 void BFPAuraOptions_MenuInit( void );
 void BFPExplosionsOptions_MenuInit( void );
 void BFPViewEffSndsOptions_MenuInit( void );
+
+// BFPR - Radar
+void BFPRadarOptions_MenuInit( void );
+static void BFPRadarOptions_MenuDraw( void );
 
 static void BFPOptions_MenuItem( int *menu_item_curvalue, const char *cvar, int value ) {
 	*menu_item_curvalue = trap_Cvar_VariableValue( cvar ) != value;
@@ -430,6 +449,44 @@ static void BFPOptions_Event( void* ptr, int notification ) {
 		trap_Cvar_SetValue( "cg_lowPolySphere", s_bfpoptions.lowPolySphere.curvalue );
 		break;
 
+/*
+======================================
+BFPR - Radar
+======================================
+*/
+	case ID_RADARCONFIG:
+		if ( menuBarOption != ID_RADARCONFIG ) {
+			menuBarOption = ID_RADARCONFIG;
+			BFPRadarOptions_MenuInit();
+		}
+		break;
+
+	case ID_RADARONOFF:
+		trap_Cvar_SetValue( "cg_radar", s_bfpoptions.radarOnOff.curvalue );
+		break;
+
+	case ID_RADARSIZE:
+		trap_Cvar_SetValue( "cg_radarSize", s_bfpoptions.radarSize.curvalue );
+		break;
+
+	case ID_RADARDOTSIZE:
+		trap_Cvar_SetValue( "cg_radarDotSize", s_bfpoptions.radarDotSize.curvalue );
+		break;
+
+	case ID_RADARX:
+		trap_Cvar_SetValue( "cg_radarX", s_bfpoptions.radarX.curvalue );
+		break;
+
+	case ID_RADARY:
+		trap_Cvar_SetValue( "cg_radarY", s_bfpoptions.radarY.curvalue );
+		break;
+
+/*
+===========================================================================
+BFPR - End of radar
+===========================================================================
+*/
+
 	case ID_BACK:
 		UI_PopMenu();
 		break;
@@ -500,9 +557,21 @@ static void BFPButtonOptions_MenuSet( void ) {
 	s_bfpoptions.viewEffectsSoundsButton.style					= UI_RIGHT;
 	s_bfpoptions.viewEffectsSoundsButton.color					= color_white;
 
+	// BFPR - Radar
+	s_bfpoptions.radarButton.generic.type		= MTYPE_PTEXT;
+	s_bfpoptions.radarButton.generic.flags		= ( menuBarOption == ID_RADARCONFIG ) ? QMF_RIGHT_JUSTIFY : (QMF_RIGHT_JUSTIFY|QMF_PULSEIFFOCUS);
+	s_bfpoptions.radarButton.generic.id			= ID_RADARCONFIG;
+	s_bfpoptions.radarButton.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.radarButton.generic.x			= 216;
+	s_bfpoptions.radarButton.generic.y			= 240 + PROP_HEIGHT;
+	s_bfpoptions.radarButton.string				= "RADAR";
+	s_bfpoptions.radarButton.style				= UI_RIGHT;
+	s_bfpoptions.radarButton.color				= color_white;
+
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.aurasButton );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.explosionsButton );
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.viewEffectsSoundsButton );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.radarButton ); // BFPR - Radar
 }
 
 
@@ -920,6 +989,253 @@ void BFPViewEffSndsOptions_MenuInit( void ) {
 	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.back );
 
 	BFPOptions_SetMenuItems();
+}
+
+
+/*
+===============
+BFPRadarMenu_DrawCircle
+===============
+*/
+static void BFPRadarMenu_DrawCircle( float cx, float cy, float radius, const vec4_t color ) { // BFPR - Radar
+	int		numStrips, i;
+	float	stripHeight, rSq;
+
+	if ( radius <= 1.0f ) {
+		return;
+	}
+
+	numStrips = (int)( radius );
+	if ( numStrips < 32 ) {
+		numStrips = 32;
+	}
+	if ( numStrips > 200 ) {
+		numStrips = 200;
+	}
+
+	stripHeight = ( radius * 2.0f ) / (float)numStrips;
+	rSq = radius * radius;
+
+	for ( i = 0; i < numStrips; i++ ) {
+		float	yTop = -radius + i * stripHeight;
+		float	yMid = yTop + stripHeight * 0.5f;
+		float	ySq  = yMid * yMid;
+		float	halfW;
+
+		if ( ySq >= rSq ) {
+			continue;
+		}
+		halfW = sqrt( rSq - ySq );
+		UI_FillRect( cx - halfW, cy + yTop, halfW * 2.0f, stripHeight + 2, color );
+	}
+}
+
+/*
+===============
+BFPRadarOptions_DrawPreview
+===============
+*/
+static void BFPRadarOptions_DrawPreview( void ) { // BFPR - Radar
+	float	radius, dotSize, monsterDotSize, cx, cy;
+	vec4_t	bgColor;
+
+	// radius
+	radius = trap_Cvar_VariableValue( "cg_radarSize" );
+	if ( radius < 32.0f ) {
+		radius = 32.0f;
+	}
+	if ( radius > 200.0f ) {
+		radius = 200.0f;
+	}
+
+	// dot sizes
+	dotSize = trap_Cvar_VariableValue( "cg_radarDotSize" );
+	if ( dotSize < 1.0f ) {
+		dotSize = 1.0f;
+	}
+	if ( dotSize > 20.0f ) {
+		dotSize = 20.0f;
+	}
+
+	monsterDotSize = dotSize * 2;
+	if ( monsterDotSize < dotSize + 4.0f ) {
+		monsterDotSize = dotSize + 4.0f;
+	}
+	if ( monsterDotSize < 8.0f ) {
+		monsterDotSize = 8.0f;
+	}
+	if ( monsterDotSize > 40.0f ) {
+		monsterDotSize = 40.0f;
+	}
+
+	// center position
+	cx = radius + trap_Cvar_VariableValue( "cg_radarX" );
+	if ( cx < radius ) {
+		cx = radius;
+	}
+	if ( cx > SCREEN_WIDTH - radius ) {
+		cx = SCREEN_WIDTH - radius;
+	}
+
+	cy = radius + trap_Cvar_VariableValue( "cg_radarY" );
+	if ( cy < radius ) {
+		cy = radius;
+	}
+	if ( cy > SCREEN_HEIGHT - radius ) {
+		cy = SCREEN_HEIGHT - radius;
+	}
+
+	// background circle
+	bgColor[0] = 0.05f;
+	bgColor[1] = 0.05f;
+	bgColor[2] = 0.05f;
+	bgColor[3] = 0.05f;
+	BFPRadarMenu_DrawCircle( cx, cy, radius, bgColor );
+
+	// central cross
+	UI_SetColor( radarCrossColor );
+	UI_DrawHandlePic( cx - radius + 4.0f, cy - 0.5f, ( radius - 4.0f ) * 2.0f, 1.0f, uis.whiteShader );
+	UI_DrawHandlePic( cx - 0.5f, cy - radius + 4.0f, 1.0f, ( radius - 4.0f ) * 2.0f, uis.whiteShader );
+
+	// fake dots to show colors and sizes (scaled with the radar radius so
+	// they stay inside the circle at any size)
+	UI_SetColor( radarRedColor );
+	UI_DrawHandlePic( cx - 0.60f * radius - dotSize * 0.5f,
+						cy - 0.40f * radius - dotSize * 0.5f,
+						dotSize, dotSize, uis.whiteShader );
+
+	UI_SetColor( radarBlueColor );
+	UI_DrawHandlePic( cx + 0.50f * radius - dotSize * 0.5f,
+						cy - 0.60f * radius - dotSize * 0.5f,
+						dotSize, dotSize, uis.whiteShader );
+
+	UI_SetColor( radarFreeColor );
+	UI_DrawHandlePic( cx + 0.70f * radius - dotSize * 0.5f,
+						cy + 0.30f * radius - dotSize * 0.5f,
+						dotSize, dotSize, uis.whiteShader );
+
+	UI_SetColor( radarMonsterColor );
+	UI_DrawHandlePic( cx - 0.20f * radius - monsterDotSize * 0.5f,
+						cy + 0.50f * radius - monsterDotSize * 0.5f,
+						monsterDotSize, monsterDotSize, uis.whiteShader );
+
+	// player's own dot in the center
+	UI_SetColor( radarSelfColor );
+	UI_DrawHandlePic( cx - dotSize * 0.5f, cy - dotSize * 0.5f, dotSize, dotSize, uis.whiteShader );
+
+	UI_SetColor( NULL );
+}
+
+
+/*
+===============
+BFPRadarOptions_MenuDraw
+===============
+*/
+static void BFPRadarOptions_MenuDraw( void ) { // BFPR - Radar
+	Menu_Draw( &s_bfpoptions.menu );
+	BFPRadarOptions_DrawPreview();
+}
+
+
+/*
+===============
+BFPRadarOptions_MenuInit
+===============
+*/
+void BFPRadarOptions_MenuInit( void ) { // BFPR - Radar
+	int		y;
+
+	memset( &s_bfpoptions, 0, sizeof(bfpoptions_t) );
+
+	BFPOptions_Cache();
+
+	s_bfpoptions.menu.wrapAround = qtrue;
+	s_bfpoptions.menu.fullscreen = qtrue;
+
+	y = 240 - 2 * (BIGCHAR_HEIGHT + 2);
+
+	s_bfpoptions.radarOnOff.generic.type		= MTYPE_RADIOBUTTON;
+	s_bfpoptions.radarOnOff.generic.name		= "Enable Radar:";
+	s_bfpoptions.radarOnOff.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.radarOnOff.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.radarOnOff.generic.id			= ID_RADARONOFF;
+	s_bfpoptions.radarOnOff.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.radarOnOff.generic.y			= y;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.radarSize.generic.type			= MTYPE_SLIDER;
+	s_bfpoptions.radarSize.generic.name			= "Radar Radius:";
+	s_bfpoptions.radarSize.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.radarSize.generic.callback		= BFPOptions_Event;
+	s_bfpoptions.radarSize.generic.id			= ID_RADARSIZE;
+	s_bfpoptions.radarSize.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.radarSize.generic.y			= y;
+	s_bfpoptions.radarSize.minvalue				= 32;
+	s_bfpoptions.radarSize.maxvalue				= 200;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.radarDotSize.generic.type		= MTYPE_SLIDER;
+	s_bfpoptions.radarDotSize.generic.name		= "Dot Size:";
+	s_bfpoptions.radarDotSize.generic.flags		= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.radarDotSize.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.radarDotSize.generic.id		= ID_RADARDOTSIZE;
+	s_bfpoptions.radarDotSize.generic.x			= BFPOPTIONS_X_POS;
+	s_bfpoptions.radarDotSize.generic.y			= y;
+	s_bfpoptions.radarDotSize.minvalue			= 1;
+	s_bfpoptions.radarDotSize.maxvalue			= 20;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.radarX.generic.type			= MTYPE_SLIDER;
+	s_bfpoptions.radarX.generic.name			= "Screen X Offset:";
+	s_bfpoptions.radarX.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.radarX.generic.callback		= BFPOptions_Event;
+	s_bfpoptions.radarX.generic.id				= ID_RADARX;
+	s_bfpoptions.radarX.generic.x				= BFPOPTIONS_X_POS;
+	s_bfpoptions.radarX.generic.y				= y;
+	s_bfpoptions.radarX.minvalue				= 16;
+	s_bfpoptions.radarX.maxvalue				= 520;
+
+	y += BIGCHAR_HEIGHT + 2;
+	s_bfpoptions.radarY.generic.type			= MTYPE_SLIDER;
+	s_bfpoptions.radarY.generic.name			= "Screen Y Offset:";
+	s_bfpoptions.radarY.generic.flags			= QMF_PULSEIFFOCUS|QMF_SMALLFONT;
+	s_bfpoptions.radarY.generic.callback		= BFPOptions_Event;
+	s_bfpoptions.radarY.generic.id				= ID_RADARY;
+	s_bfpoptions.radarY.generic.x				= BFPOPTIONS_X_POS;
+	s_bfpoptions.radarY.generic.y				= y;
+	s_bfpoptions.radarY.minvalue				= 28;
+	s_bfpoptions.radarY.maxvalue				= 358;
+
+	s_bfpoptions.back.generic.type		= MTYPE_BITMAP;
+	s_bfpoptions.back.generic.name		= ART_BACK0;
+	s_bfpoptions.back.generic.flags		= QMF_LEFT_JUSTIFY|QMF_PULSEIFFOCUS;
+	s_bfpoptions.back.generic.callback	= BFPOptions_Event;
+	s_bfpoptions.back.generic.id		= ID_BACK;
+	s_bfpoptions.back.generic.x			= 0;
+	s_bfpoptions.back.generic.y			= 480-80;
+	s_bfpoptions.back.width				= 80;
+	s_bfpoptions.back.height			= 80;
+	s_bfpoptions.back.focuspic			= ART_BACK1;
+
+	BFPButtonOptions_MenuSet();
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.radarOnOff );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.radarSize );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.radarDotSize );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.radarX );
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.radarY );
+
+	// load current cvar values
+	s_bfpoptions.radarOnOff.curvalue	= trap_Cvar_VariableValue( "cg_radar" );
+	s_bfpoptions.radarSize.curvalue		= trap_Cvar_VariableValue( "cg_radarSize" );
+	s_bfpoptions.radarDotSize.curvalue	= trap_Cvar_VariableValue( "cg_radarDotSize" );
+	s_bfpoptions.radarX.curvalue		= trap_Cvar_VariableValue( "cg_radarX" );
+	s_bfpoptions.radarY.curvalue		= trap_Cvar_VariableValue( "cg_radarY" );
+
+	Menu_AddItem( &s_bfpoptions.menu, &s_bfpoptions.back );
+
+	s_bfpoptions.menu.draw = BFPRadarOptions_MenuDraw;
 }
 
 
